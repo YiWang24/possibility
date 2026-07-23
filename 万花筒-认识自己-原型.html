@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万花筒 KALEIDO · 高保真交互原型</title>
+<style>
+:root{
+  color-scheme: dark;
+  --stage:#05070D;
+  --paper:#0A0C12;
+  --card:#13161F;
+  --raised:#1B1F2B;
+  --ink:#F2F4F9;
+  --sub:#98A0B3;
+  --faint:#5A6172;
+  --line:rgba(255,255,255,.08);
+  --blue:#5E96FF;
+  --blue-deep:#2F63E8;
+  --violet:#5E96FF;
+  --violet-soft:#8F7BFF;
+  --pink:#F06ACD;
+  --magenta:#E35CC1;
+  --orange:#FF7A4D;
+  --apricot:#FFB067;
+  --teal:#3ED9A4;
+  --lime:#D7F464;
+  --aurora:linear-gradient(135deg,#5E96FF 0%,#8F7BFF 40%,#E35CC1 75%,#FF7A4D 100%);
+  --aurora-deep:linear-gradient(135deg,#2F63E8,#B03390 60%,#E8542F);
+  --btn-g:linear-gradient(135deg,#6FA5FF,#2F63E8);
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",sans-serif;
+  --shadow-card:0 2px 16px -4px rgba(0,0,0,.55);
+  --shadow-float:0 16px 40px -12px rgba(0,0,0,.75);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:var(--stage);
+  background-image:
+    radial-gradient(1000px 640px at 78% -8%, rgba(64,110,255,.25), transparent 60%),
+    radial-gradient(800px 560px at 6% 108%, rgba(227,92,193,.12), transparent 60%),
+    radial-gradient(700px 500px at 50% 55%, rgba(64,110,255,.06), transparent 65%);
+  font-family:var(--sans);
+  color:var(--ink);
+  display:flex;align-items:center;justify-content:center;gap:72px;
+  min-height:100vh;padding:40px 24px;
+}
+
+/* ============ 左侧规格栏 ============ */
+.spec{width:300px;flex:none}
+.spec .logo{font-size:40px;letter-spacing:.1em;font-weight:700}
+.spec .logo em{font-style:normal;background:var(--aurora);-webkit-background-clip:text;background-clip:text;color:transparent}
+.spec .en{margin-top:6px;font-size:11px;letter-spacing:.5em;color:var(--faint);text-transform:uppercase}
+.spec p.desc{margin-top:20px;font-size:13px;line-height:2;color:var(--sub)}
+.spec h4{margin-top:32px;font-size:11px;letter-spacing:.3em;color:var(--faint);font-weight:500}
+.spec .jump{margin-top:12px;display:flex;flex-direction:column;gap:2px}
+.spec .jump button{
+  all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;
+  padding:9px 12px;border-radius:10px;font-size:13.5px;color:var(--sub);
+  transition:background .2s,color .2s;
+}
+.spec .jump button:hover,.spec .jump button:focus-visible{background:rgba(255,255,255,.06);color:var(--ink)}
+.spec .jump button.on{background:rgba(94,150,255,.12);color:var(--blue)}
+.spec .jump button i{font-style:normal;font-size:11px;color:var(--faint);width:20px}
+.spec .sw{margin-top:12px;display:flex;gap:8px}
+.spec .sw span{width:26px;height:26px;border-radius:9px;border:1px solid rgba(255,255,255,.12)}
+.spec .note{margin-top:24px;font-size:12px;line-height:1.9;color:var(--sub);border-left:2px solid rgba(94,150,255,.45);padding-left:14px}
+
+/* ============ 手机壳 ============ */
+.stage{flex:none}
+.phone{
+  position:relative;width:390px;height:844px;
+  background:var(--paper);
+  border-radius:52px;
+  box-shadow:0 0 0 10px #0D0F16,0 0 0 11px rgba(255,255,255,.09),0 60px 120px -30px rgba(0,0,0,.9);
+  overflow:hidden;
+}
+.notch{position:absolute;top:12px;left:50%;transform:translateX(-50%);width:120px;height:34px;background:#04050A;border-radius:20px;z-index:80}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:56px;z-index:75;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px 0;font-size:14.5px;font-weight:600;letter-spacing:.02em;
+  color:var(--ink);pointer-events:none;
+}
+.statusbar .icons{display:flex;gap:6px;align-items:center}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:130px;height:5px;border-radius:3px;background:rgba(255,255,255,.28);z-index:80}
+
+/* ============ 屏幕通用 ============ */
+.screen{
+  position:absolute;inset:0;
+  padding:76px 22px 116px;
+  overflow-y:auto;scrollbar-width:none;
+  opacity:0;visibility:hidden;transform:translateY(8px);
+  transition:opacity .28s ease,transform .28s ease,visibility .28s;
+  background:
+    radial-gradient(rgba(255,255,255,.045) 1px, transparent 1.35px) 0 0/18px 18px,
+    radial-gradient(500px 340px at 108% -40px, rgba(74,116,255,.16), transparent 65%),
+    radial-gradient(420px 300px at -60px 30%, rgba(227,92,193,.07), transparent 60%),
+    var(--paper);
+}
+.screen::-webkit-scrollbar{display:none}
+.screen.on{opacity:1;visibility:visible;transform:none}
+
+.eyebrow{font-size:11px;letter-spacing:.35em;color:var(--faint)}
+h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-card)}
+.sec-t{display:flex;justify-content:space-between;align-items:baseline;margin:28px 2px 12px}
+.sec-t h3{font-size:15px;font-weight:600;letter-spacing:.06em}
+.sec-t span{font-size:12px;color:var(--faint)}
+.sec-t .lnk{all:unset;cursor:pointer;font-size:12px;color:var(--blue)}
+
+.btn-ink{
+  all:unset;cursor:pointer;display:block;text-align:center;
+  padding:15px 0;border-radius:999px;font-size:15px;font-weight:600;letter-spacing:.08em;
+  color:#fff;background:var(--btn-g);
+  box-shadow:0 10px 28px -10px rgba(79,125,255,.6);
+  transition:transform .15s,opacity .2s;
+}
+.btn-ink:active{transform:scale(.97)}
+.btn-ink:focus-visible,button:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.btn-ink[disabled]{opacity:.35;pointer-events:none}
+.btn-cta{width:230px;margin-left:auto;margin-right:auto;padding:16px 0;font-size:15px;letter-spacing:.3em;text-indent:.3em}
+.btn-ghost{
+  all:unset;cursor:pointer;display:inline-block;padding:11px 20px;border-radius:999px;
+  border:1.5px solid rgba(94,150,255,.45);font-size:13px;color:var(--blue);letter-spacing:.08em;
+  transition:background .2s;
+}
+.btn-ghost:hover{background:rgba(94,150,255,.1)}
+
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  all:unset;cursor:pointer;padding:8px 15px;border-radius:999px;font-size:12.5px;color:var(--sub);
+  background:var(--raised);border:1px solid var(--line);transition:all .18s;
+}
+.chip.on{color:#fff;background:var(--blue-deep);border-color:rgba(111,165,255,.6);font-weight:500}
+.chip.soft.on{color:#9DBCFF;background:rgba(94,150,255,.14);border-color:rgba(94,150,255,.5)}
+.gochip{
+  all:unset;cursor:pointer;padding:8px 20px;border-radius:999px;font-size:12.5px;font-weight:600;
+  color:#fff;background:var(--btn-g);box-shadow:0 6px 18px -6px rgba(79,125,255,.65);
+  transition:transform .15s;
+}
+.gochip:active{transform:scale(.95)}
+
+/* ============ 万花筒光球（签名元素） ============ */
+.orb{
+  position:relative;border-radius:50%;
+  background:conic-gradient(from 0deg,#5E96FF,#8F7BFF,#E35CC1,#FF7A4D,#5E96FF);
+  animation:orbspin 26s linear infinite;
+}
+.orb::before{
+  content:"";position:absolute;inset:14%;border-radius:50%;
+  background:conic-gradient(from 140deg,#FF7A4D,#5E96FF,#E35CC1,#FF7A4D);
+  filter:blur(6px);opacity:.9;
+  animation:orbspin 18s linear infinite reverse;
+}
+.orb::after{
+  content:"";position:absolute;inset:30%;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #FFFFFF 0%, rgba(232,240,255,.7) 45%, rgba(232,240,255,0) 75%);
+}
+.orb-halo{position:relative}
+.orb-halo::before{
+  content:"";position:absolute;inset:-16%;border-radius:50%;
+  background:radial-gradient(circle, rgba(94,150,255,.5), rgba(227,92,193,.25) 55%, transparent 72%);
+  filter:blur(10px);animation:breathe 6s ease-in-out infinite;
+}
+@keyframes orbspin{to{transform:rotate(360deg)}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .orb,.orb::before,.orb-halo::before,.kal-disc,.kal-disc .k-l2,.kal-disc .k-flower,.wave i{animation:none !important}
+}
+
+/* ============ 01 认识自己 ============ */
+.greet{display:flex;justify-content:space-between;align-items:flex-end}
+.greet .r{text-align:right;font-size:12px;color:var(--sub);line-height:1.7}
+.greet .r b{font-size:16px;font-weight:700;background:var(--aurora);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.diary{margin-top:18px;padding:18px 20px 16px}
+.diary .top{display:flex;justify-content:space-between;align-items:center}
+.diary .top h3{font-size:14.5px;font-weight:600}
+.diary .top button{all:unset;cursor:pointer;font-size:12.5px;color:var(--blue);font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(94,150,255,.12)}
+.dweek{display:flex;justify-content:space-between;margin-top:14px}
+.dday{text-align:center;width:36px}
+.dday i{
+  display:block;width:30px;height:30px;margin:0 auto;border-radius:50%;
+  background:var(--raised);font-style:normal;font-size:15px;line-height:30px;
+}
+.dday.f i{background:linear-gradient(135deg,#3E77F2,#B03390);box-shadow:0 3px 10px -2px rgba(79,125,255,.55)}
+.dday.t i{outline:2px dashed rgba(94,150,255,.55);outline-offset:2px}
+.dday span{display:block;font-size:10px;color:var(--faint);margin-top:6px}
+.dday.t span{color:var(--blue)}
+.recorder{display:none;margin-top:14px;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(94,150,255,.14),rgba(227,92,193,.1))}
+.recorder.show{display:flex}
+.wave{flex:1;display:flex;align-items:center;gap:3px;height:26px}
+.wave i{flex:1;background:var(--lime);border-radius:2px;opacity:.75;animation:wv 1s ease-in-out infinite}
+@keyframes wv{0%,100%{height:22%}50%{height:95%}}
+.recorder .tm{font-size:12px;color:var(--lime);font-variant-numeric:tabular-nums;width:38px}
+.recorder .done{all:unset;cursor:pointer;font-size:12.5px;color:#fff;background:var(--btn-g);padding:7px 14px;border-radius:999px;font-weight:500}
+.diary-res{display:none;margin-top:14px;padding-top:13px;border-top:1px dashed var(--line);animation:msgin .4s ease}
+.diary-res.show{display:block}
+.diary-res .lb2{font-size:11px;color:var(--faint);margin-bottom:8px}
+.diary-res .row2{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.emo-pill{font-size:11.5px;color:#0B0F18;background:var(--lime);padding:4px 11px;border-radius:999px;font-weight:600}
+.kw{font-size:11.5px;color:#9DBCFF;background:rgba(94,150,255,.13);border:1px solid rgba(94,150,255,.3);padding:4px 11px;border-radius:999px}
+
+.ask{
+  position:relative;margin-top:22px;border-radius:28px;overflow:hidden;
+  background:
+    radial-gradient(340px 240px at 82% -12%, rgba(111,165,255,.5), transparent 62%),
+    radial-gradient(280px 220px at -12% 112%, rgba(143,123,255,.28), transparent 62%),
+    linear-gradient(160deg,#141A34 0%,#1A2350 55%,#10132A 100%);
+  border:1px solid rgba(122,158,255,.3);
+  box-shadow:var(--shadow-card);
+  padding:24px 22px 22px;
+}
+.ask .glow{position:absolute;top:-70px;right:-60px;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle at 45% 45%, rgba(111,165,255,.6), rgba(143,123,255,.25) 50%, transparent 72%);
+  filter:blur(8px);animation:breathe 7s ease-in-out infinite;pointer-events:none}
+.ask .tag{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.28em;color:#9DBCFF}
+.ask .tag::before{content:"";width:18px;height:1.5px;background:rgba(157,188,255,.6)}
+.ask h2{position:relative;font-size:22px;line-height:1.55;margin-top:12px;font-weight:700;letter-spacing:.01em}
+.ask h2 em{font-style:normal;color:var(--blue)}
+.askbox{position:relative;margin-top:16px;background:rgba(6,8,16,.45);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:12px 14px;backdrop-filter:blur(6px)}
+.askcat{
+  display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#9DBCFF;
+  background:rgba(94,150,255,.16);border:1px solid rgba(94,150,255,.4);
+  padding:4px 11px;border-radius:999px;margin-bottom:8px;
+}
+.askcat b{font-weight:600}
+.askbox textarea{
+  width:100%;height:58px;resize:none;border:none;background:transparent;
+  font-family:var(--sans);font-size:15px;line-height:1.8;color:var(--ink);
+}
+.askbox textarea::placeholder{color:var(--faint);font-size:13.5px}
+.askbox textarea:focus{outline:none}
+.askfoot{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.askfoot .cnt{font-size:11px;color:var(--faint)}
+.send{
+  all:unset;cursor:pointer;padding:10px 24px;border-radius:999px;font-size:13.5px;font-weight:600;
+  color:#fff;background:var(--btn-g);letter-spacing:.08em;transition:transform .15s;
+  box-shadow:0 8px 20px -8px rgba(79,125,255,.6);
+}
+.send:active{transform:scale(.95)}
+.ask .chips{margin-top:14px;position:relative}
+.ask .chip{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+
+.portrait{margin-top:12px;padding:24px 20px 18px;text-align:center;position:relative;overflow:hidden}
+.portrait .orb-halo{width:96px;height:96px;margin:4px auto 0}
+.portrait .orb{width:96px;height:96px}
+.portrait .pname{font-size:15px;font-weight:600;margin-top:16px}
+.portrait .prole{font-size:11.5px;color:var(--faint);letter-spacing:.2em;margin-top:4px}
+.pbar{margin:16px auto 0;max-width:250px;display:flex;align-items:center;gap:10px}
+.pbar .tr{flex:1;height:5px;border-radius:3px;background:var(--raised);overflow:hidden}
+.pbar .tr i{display:block;height:100%;width:60%;border-radius:3px;background:var(--aurora);transition:width .6s ease}
+.pbar span{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
+.dims{margin-top:16px;text-align:left;display:flex;flex-direction:column;gap:9px}
+.dim{
+  all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-radius:16px;background:var(--raised);border:1px solid var(--line);
+  transition:transform .15s,background .2s;
+}
+.dim:active{transform:scale(.98)}
+.dim .ic{width:34px;height:34px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.dim .tx{flex:1}
+.dim .tx b{font-size:13.5px;font-weight:600;display:block}
+.dim .tx p{font-size:11.5px;color:var(--sub);margin-top:3px}
+.dim .tx p.empty{color:var(--faint)}
+.dim .ar{color:var(--faint);font-size:14px}
+.dim.todo{border-style:dashed;border-color:rgba(94,150,255,.4);background:rgba(94,150,255,.06)}
+.dim.todo .tx p{color:var(--blue)}
+
+/* ============ 探索对话（push） ============ */
+.push{
+  position:absolute;inset:0;z-index:47;background:var(--paper);
+  transform:translateX(100%);transition:transform .32s cubic-bezier(.32,.72,.32,1);
+  display:flex;flex-direction:column;
+}
+.push.open{transform:none}
+.push .top{flex:none;padding:64px 22px 12px;display:flex;align-items:center;gap:13px;background:linear-gradient(rgba(10,12,18,.96),rgba(10,12,18,.85));backdrop-filter:blur(8px);z-index:5}
+.backbtn{all:unset;cursor:pointer;width:36px;height:36px;border-radius:50%;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card)}
+.push .top h2{font-size:16px;font-weight:600;letter-spacing:.08em}
+.push .top .sub2{font-size:11px;color:var(--faint);margin-top:2px}
+.push .scroll{flex:1;overflow-y:auto;padding:10px 20px 24px;scrollbar-width:none}
+.push .scroll::-webkit-scrollbar{display:none}
+.c-input{
+  flex:none;display:flex;gap:10px;padding:12px 18px 32px;
+  border-top:1px solid var(--line);background:rgba(10,12,18,.92);backdrop-filter:blur(10px);
+}
+.c-input input{
+  flex:1;border:none;background:var(--raised);border:1px solid var(--line);
+  border-radius:999px;padding:12px 18px;color:var(--ink);font-size:13.5px;font-family:var(--sans);
+}
+.c-input input::placeholder{color:var(--faint)}
+.c-input input:focus{outline:1px solid rgba(111,165,255,.6)}
+.c-send{
+  all:unset;cursor:pointer;padding:0 22px;border-radius:999px;background:var(--btn-g);
+  color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;
+  box-shadow:0 6px 16px -6px rgba(79,125,255,.6);
+}
+
+.msg{display:flex;margin-top:14px;opacity:0;transform:translateY(10px);animation:msgin .4s ease forwards}
+@keyframes msgin{to{opacity:1;transform:none}}
+.msg.me{justify-content:flex-end}
+.bubble{
+  max-width:82%;padding:13px 16px;border-radius:20px;font-size:14px;line-height:1.8;
+}
+.msg.me .bubble{background:linear-gradient(135deg,#3E77F2,#2A50D6);color:#fff;border-bottom-right-radius:6px;font-size:14.5px}
+.msg.ai .bubble{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px;box-shadow:var(--shadow-card)}
+.msg.ai .bubble b{color:var(--blue)}
+.aithink{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:12px;color:var(--faint)}
+.aithink .miniorb{width:18px;height:18px;flex:none}
+.chatchips{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 0 4px;opacity:0;animation:msgin .4s .1s ease forwards}
+.simrow{
+  display:flex;gap:10px;overflow-x:auto;margin:12px -20px 0;padding:4px 20px 8px;
+  scrollbar-width:none;opacity:0;animation:msgin .4s ease forwards;
+  scroll-snap-type:x proximity;cursor:grab;
+}
+.simrow:active{cursor:grabbing}
+.simrow::-webkit-scrollbar{display:none}
+.simcard{
+  flex:none;width:168px;border-radius:18px;background:var(--card);border:1px solid var(--line);
+  box-shadow:var(--shadow-card);overflow:hidden;cursor:pointer;transition:transform .15s;
+  scroll-snap-align:start;
+}
+.simcard:active{transform:scale(.97)}
+.simcard .hd{height:52px;position:relative}
+.simcard .av{position:absolute;left:14px;bottom:-14px;width:36px;height:36px;border-radius:50%;border:2.5px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff}
+.simcard .bd{padding:20px 14px 14px}
+.simcard .nm{font-size:13px;font-weight:600}
+.simcard .qt{font-size:11px;color:var(--sub);line-height:1.6;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stags{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.stag{font-size:10px;color:#9DBCFF;background:rgba(94,150,255,.13);padding:3px 8px;border-radius:999px}
+.chatcta{margin:16px 0 0;opacity:0;animation:msgin .4s ease forwards}
+.swipe-hint{font-size:10.5px;color:var(--faint);margin:6px 4px 0;letter-spacing:.1em}
+
+/* ============ 02 人生实验室 ============ */
+.labq{margin-top:18px;padding:18px 20px}
+.labq .lb{font-size:11px;letter-spacing:.25em;color:var(--faint)}
+.labq h2{font-size:16.5px;line-height:1.7;margin-top:8px;font-weight:700}
+.labq .sw{margin-top:10px;display:flex;justify-content:flex-end}
+.labq .swap{all:unset;cursor:pointer;font-size:12px;color:var(--blue);padding:4px 8px;border-radius:8px;transition:background .2s}
+.labq .swap:hover{background:rgba(94,150,255,.1)}
+.labq-edit{display:none;margin-top:12px}
+.labq-edit.show{display:block;animation:msgin .3s ease}
+.labq-edit textarea{
+  width:100%;height:72px;resize:none;border:none;
+  background:rgba(6,8,16,.5);border:1px solid rgba(111,165,255,.4);border-radius:14px;
+  padding:12px 14px;color:var(--ink);font-size:14px;line-height:1.7;font-family:var(--sans);
+}
+.labq-edit textarea:focus{outline:1px solid rgba(111,165,255,.7)}
+.le-row{display:flex;justify-content:flex-end;gap:10px;margin-top:10px}
+.le-cancel{all:unset;cursor:pointer;font-size:12.5px;color:var(--faint);padding:8px 14px}
+.le-save{
+  all:unset;cursor:pointer;font-size:12.5px;font-weight:600;color:#fff;
+  background:var(--btn-g);padding:8px 20px;border-radius:999px;
+  box-shadow:0 6px 16px -6px rgba(79,125,255,.6);
+}
+
+.dial-wrap{margin:30px auto 0;width:260px;position:relative}
+.dial{
+  position:relative;width:260px;height:260px;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 42%, #1E222E 0%, #161923 55%, #0F1118 100%);
+  border:1px solid rgba(255,255,255,.09);
+  box-shadow:var(--shadow-card), inset 0 2px 14px rgba(0,0,0,.5);
+  touch-action:none;cursor:grab;
+}
+.dial:active{cursor:grabbing}
+.dial .glowring{
+  position:absolute;inset:-14px;border-radius:50%;z-index:-1;pointer-events:none;
+  background:conic-gradient(from 210deg,#5E96FF,#8F7BFF,#E35CC1,#FF7A4D,#5E96FF);
+  filter:blur(18px);opacity:.55;
+  transition:transform .55s cubic-bezier(.3,1,.4,1);
+}
+.dial .ring{
+  position:absolute;inset:-3px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 210deg,#5E96FF,#8F7BFF,#E35CC1,#FF7A4D,#5E96FF);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4.5px),#000 calc(100% - 3px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 4.5px),#000 calc(100% - 3px));
+  transition:transform .55s cubic-bezier(.3,1,.4,1);
+}
+.tickring{position:absolute;inset:0;border-radius:50%;pointer-events:none}
+.tick{position:absolute;inset:0}
+.tick i{
+  position:absolute;left:50%;top:8px;width:1.5px;height:6px;
+  transform:translateX(-50%);border-radius:1px;background:rgba(157,188,255,.28);
+}
+.tick.major i{height:12px;width:2.5px;background:rgba(157,188,255,.65)}
+.tick.major.on i{background:#fff;box-shadow:0 0 8px rgba(111,165,255,.9)}
+.tick span{
+  position:absolute;left:50%;top:24px;font-size:9.5px;color:var(--faint);
+  font-variant-numeric:tabular-nums;font-weight:600;
+}
+.tick.major.on span{color:#fff}
+.dial .arm{
+  position:absolute;inset:56px;pointer-events:none;
+  transition:transform .45s cubic-bezier(.34,1.35,.45,1);
+}
+.dial .arm::before{
+  content:"";position:absolute;left:50%;top:12px;height:16px;width:2.5px;
+  transform:translateX(-50%);border-radius:2px;
+  background:linear-gradient(to bottom,rgba(111,165,255,.85),rgba(111,165,255,0));
+}
+.dial .arm .handle{
+  position:absolute;left:50%;top:-8px;transform:translateX(-50%);
+  width:16px;height:16px;border-radius:50%;background:#F2F4F9;
+  box-shadow:0 3px 10px rgba(0,0,0,.5),0 0 0 3px rgba(255,255,255,.15);
+}
+.dial .arm .handle::after{
+  content:"";position:absolute;inset:3.5px;border-radius:50%;
+  background:var(--aurora-deep);
+}
+.dial.dragging .arm,.dial.dragging .ring,.dial.dragging .glowring{transition:none}
+.dial .core{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 44px;pointer-events:none}
+.dial .core .lab-lb{font-size:10.5px;letter-spacing:.3em;color:var(--faint)}
+.dial .core .pick{font-size:17px;font-weight:700;margin-top:8px;line-height:1.5;min-height:28px}
+.dial .core .yr{font-size:12px;color:var(--sub);margin-top:8px}
+.dial .core .yr b{color:var(--blue);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.yr-presets{display:flex;justify-content:center;gap:8px;margin-top:18px}
+.yp{
+  all:unset;cursor:pointer;padding:8px 16px;border-radius:999px;
+  background:var(--raised);border:1px solid var(--line);
+  font-size:12px;color:var(--sub);transition:all .2s;font-variant-numeric:tabular-nums;
+}
+.yp.on{background:var(--btn-g);color:#fff;border-color:rgba(111,165,255,.6);font-weight:600;box-shadow:0 6px 16px -6px rgba(79,125,255,.55)}
+.knob-hint{text-align:center;font-size:11px;color:var(--faint);margin-top:12px;letter-spacing:.1em}
+
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px}
+.choice{
+  all:unset;cursor:grab;position:relative;padding:18px 15px 15px;border-radius:18px;
+  background:var(--card);border:1.5px solid var(--line);box-shadow:var(--shadow-card);
+  transition:border-color .18s,background .18s,opacity .18s,transform .18s;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+.choice:active{cursor:grabbing}
+.choice.dragging{opacity:.25;transform:scale(.96)}
+.choice .g{font-size:19px}
+.choice b{display:block;font-size:14px;font-weight:600;margin-top:9px}
+.choice p{font-size:11px;color:var(--sub);margin-top:4px;line-height:1.55}
+.choice.on{border-color:rgba(111,165,255,.7);background:linear-gradient(150deg,rgba(94,150,255,.16),rgba(143,123,255,.08))}
+.choice.on::after{
+  content:"✓";position:absolute;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
+  background:var(--btn-g);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;
+}
+.drag-ghost{
+  position:absolute;left:0;top:0;z-index:70;pointer-events:none;
+  display:flex;align-items:center;gap:8px;
+  padding:12px 18px;border-radius:16px;background:rgba(22,26,38,.94);
+  border:1.5px solid rgba(111,165,255,.55);box-shadow:var(--shadow-float),0 0 24px rgba(79,125,255,.35);
+  font-size:14px;font-weight:600;white-space:nowrap;backdrop-filter:blur(6px);
+  will-change:transform;
+}
+.dial.drop-hot .ring{filter:saturate(1.5) brightness(1.15);opacity:1}
+.dial.drop-hot .glowring{opacity:.9;filter:blur(22px)}
+.dial.drop-hot::before{
+  content:"";position:absolute;inset:12px;border-radius:50%;
+  border:2px dashed rgba(111,165,255,.55);
+  animation:orbspin 16s linear infinite;
+}
+.dial.drop-hot .core .pick{color:var(--blue)}
+.pick.pop{animation:pickpop .45s cubic-bezier(.3,1.5,.4,1)}
+@keyframes pickpop{0%{transform:scale(.7);opacity:.3}100%{transform:scale(1);opacity:1}}
+.lab-go{margin-top:26px}
+
+/* 推演加载 */
+.simload{
+  position:absolute;inset:0;z-index:46;background:rgba(8,10,16,.94);backdrop-filter:blur(10px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;
+}
+.simload.show{display:flex}
+.simload .orb{width:110px;height:110px}
+.simload h3{font-size:18px;font-weight:700}
+.simload p{font-size:12.5px;color:var(--sub);line-height:2}
+
+/* 结果页 */
+.rs-head{padding:0 0 4px}
+.rs-head .q{font-size:12px;color:var(--sub);line-height:1.7;margin-top:2px}
+.rs-head .q b{color:var(--ink)}
+.seg{display:flex;background:var(--raised);border-radius:999px;padding:4px;margin-top:16px}
+.seg button{
+  all:unset;cursor:pointer;flex:1;text-align:center;padding:9px 0;border-radius:999px;
+  font-size:13px;color:var(--sub);transition:all .2s;
+}
+.seg button.on{background:var(--btn-g);color:#fff;font-weight:600;box-shadow:0 4px 14px -4px rgba(79,125,255,.5)}
+.rs-panel{display:none;margin-top:16px;animation:msgin .35s ease}
+.rs-panel.on{display:block}
+.rs-sum{padding:20px;border-radius:22px;position:relative;overflow:hidden;box-shadow:var(--shadow-card)}
+.rs-sum .k{font-size:11px;letter-spacing:.28em}
+.rs-sum h3{font-size:16px;line-height:1.75;margin-top:10px;font-weight:700}
+.rs-dims{margin-top:12px;padding:6px 20px}
+.rs-dim{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.rs-dim:last-child{border-bottom:none}
+.rs-dim .lb{flex:none;width:60px;font-size:12px;color:var(--faint)}
+.rs-dim p{font-size:13px;line-height:1.7}
+.rs-two{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px}
+.rs-list{padding:16px;border-radius:18px}
+.rs-list h5{font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rs-list h5 i{width:7px;height:7px;border-radius:50%;font-style:normal}
+.rs-list li{font-size:11.5px;color:var(--sub);line-height:1.6;list-style:none;padding:4px 0 4px 12px;position:relative}
+.rs-list li::before{content:"";position:absolute;left:0;top:12px;width:4px;height:4px;border-radius:50%;background:var(--faint)}
+.rs-key{margin-top:12px;padding:15px 18px;border-radius:16px;background:linear-gradient(135deg,rgba(94,150,255,.12),rgba(215,244,100,.08));border:1px dashed rgba(111,165,255,.45);font-size:12.5px;line-height:1.8;color:var(--sub)}
+.rs-key b{color:var(--ink)}
+
+/* ============ 03 万花筒社区 ============ */
+.comm-tabs{display:flex;gap:20px;margin-top:16px;align-items:baseline}
+.comm-tabs button{all:unset;cursor:pointer;font-size:15px;color:var(--faint);padding-bottom:6px;position:relative;transition:color .2s}
+.comm-tabs button.on{color:var(--ink);font-weight:700;font-size:17px}
+.comm-tabs button.on::after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:18px;height:3px;border-radius:2px;background:var(--aurora)}
+.masonry{margin-top:16px;column-count:2;column-gap:11px}
+.ucard{
+  break-inside:avoid;margin-bottom:11px;border-radius:20px;background:var(--card);border:1px solid var(--line);
+  box-shadow:var(--shadow-card);overflow:hidden;cursor:pointer;transition:transform .15s;
+}
+.ucard:active{transform:scale(.97)}
+.ucard .hd{height:64px;position:relative}
+.ucard .av{position:absolute;left:14px;bottom:-16px;width:40px;height:40px;border-radius:50%;border:3px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#fff}
+.ucard .bd{padding:22px 14px 14px}
+.ucard .nm{font-size:13.5px;font-weight:600}
+.ucard .qt{font-size:11.5px;color:var(--sub);line-height:1.7;margin-top:6px}
+.ucard .go{margin-top:11px;font-size:11.5px;color:var(--blue);font-weight:500}
+.bounty{
+  break-inside:avoid;margin-bottom:11px;border-radius:20px;background:var(--card);border:1px solid var(--line);
+  box-shadow:var(--shadow-card);padding:16px 15px;cursor:pointer;
+}
+.bounty .bdg{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--apricot);background:rgba(255,176,103,.14);padding:4px 10px;border-radius:999px;font-weight:600}
+.bounty h4{font-size:13.5px;line-height:1.7;margin-top:10px;font-weight:600}
+.bounty p{font-size:11px;color:var(--faint);margin-top:8px}
+.drawfab{
+  all:unset;position:absolute;right:20px;bottom:118px;z-index:40;
+  cursor:pointer;display:none;align-items:center;gap:8px;
+  padding:13px 20px;border-radius:999px;
+  background:var(--btn-g);color:#fff;font-size:13.5px;font-weight:600;letter-spacing:.05em;
+  box-shadow:0 12px 30px -8px rgba(79,125,255,.65);transition:transform .15s;
+}
+.drawfab:active{transform:scale(.94)}
+.drawfab.show{display:flex}
+.drawfab .miniorb{width:20px;height:20px}
+.miniorb{border-radius:50%;background:conic-gradient(from 0deg,#5E96FF,#8F7BFF,#E35CC1,#FF7A4D,#5E96FF);animation:orbspin 8s linear infinite}
+
+/* 万花筒抽取浮层 */
+.kal{
+  position:absolute;inset:0;z-index:62;display:none;flex-direction:column;align-items:center;
+  background:
+    radial-gradient(600px 500px at 50% 28%, rgba(64,110,255,.28), transparent 70%),
+    radial-gradient(500px 400px at 50% 92%, rgba(227,92,193,.16), transparent 70%),
+    rgba(6,8,14,.97);
+  backdrop-filter:blur(12px);
+  padding:100px 28px 60px;text-align:center;
+}
+.kal.show{display:flex}
+.kal h2{font-size:20px;font-weight:700;letter-spacing:.03em}
+.kal .s{font-size:12px;color:var(--sub);margin-top:8px;line-height:1.8}
+.kal-opts{display:flex;gap:12px;margin-top:26px;width:100%}
+.kal-opt{
+  all:unset;cursor:pointer;flex:1;padding:20px 14px;border-radius:20px;background:var(--card);
+  border:1.5px solid var(--line);box-shadow:var(--shadow-card);text-align:center;transition:all .2s;
+}
+.kal-opt .g{font-size:22px}
+.kal-opt b{display:block;font-size:13.5px;margin-top:10px;font-weight:600}
+.kal-opt p{font-size:11px;color:var(--sub);margin-top:5px;line-height:1.6}
+.kal-opt.on{border-color:rgba(111,165,255,.7);background:linear-gradient(150deg,rgba(94,150,255,.16),rgba(227,92,193,.1));transform:translateY(-2px)}
+.kal-disc-wrap{position:relative;width:230px;height:230px;margin-top:34px;display:none}
+.kal-disc-wrap.show{display:block}
+.kal-disc{
+  position:absolute;inset:0;border-radius:50%;overflow:hidden;
+  box-shadow:0 0 70px rgba(96,112,222,.55), 0 0 24px rgba(168,111,227,.4), inset 0 0 30px rgba(255,255,255,.15);
+}
+.kal-disc svg{display:block;width:100%;height:100%}
+.kal-disc .k-l2,.kal-disc .k-flower{transform-box:view-box;transform-origin:center}
+.kal-disc.spin{animation:kspin 2.6s cubic-bezier(.2,.8,.2,1) forwards}
+.kal-disc.spin .k-l2{animation:klayer2 2.6s cubic-bezier(.2,.8,.2,1) forwards}
+.kal-disc.spin .k-flower{animation:kflower 2.6s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes kspin{0%{transform:rotate(0);filter:blur(0)}30%{filter:blur(2.5px)}100%{transform:rotate(1170deg);filter:blur(0)}}
+@keyframes klayer2{to{transform:rotate(-660deg)}}
+@keyframes kflower{to{transform:rotate(420deg)}}
+.kal-hint{margin-top:20px;font-size:12px;color:var(--faint);letter-spacing:.15em}
+.kal-actions{margin-top:auto;width:100%;display:flex;flex-direction:column;gap:10px;align-items:center}
+.kal-actions .btn-ink{width:100%}
+.kal-close{all:unset;cursor:pointer;font-size:12.5px;color:var(--faint);padding:8px}
+.kal-result{display:none;width:100%;margin-top:26px;animation:msgin .5s ease}
+.kal-result.show{display:block}
+.kal-rescard{border-radius:24px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-float);overflow:hidden;text-align:left}
+.kal-rescard .hd{height:74px;position:relative}
+.kal-rescard .av{position:absolute;left:20px;bottom:-20px;width:52px;height:52px;border-radius:50%;border:3.5px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:#fff}
+.kal-rescard .bd{padding:28px 20px 20px}
+.kal-rescard .nm{font-size:16px;font-weight:600}
+.kal-rescard .qt{font-size:13px;color:var(--sub);line-height:1.85;margin-top:8px}
+
+/* ============ 用户主页（push） ============ */
+.prof-hero{position:relative;margin:6px -22px 0;padding:26px 22px 22px}
+.prof-hero .bgw{position:absolute;inset:0;opacity:.6;pointer-events:none}
+.prof-row{display:flex;align-items:center;gap:15px;position:relative}
+.prof-av{width:62px;height:62px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:600;color:#fff;box-shadow:var(--shadow-card)}
+.prof-row h2{font-size:19px;font-weight:700}
+.prof-row .bio{font-size:12.5px;color:var(--sub);margin-top:5px}
+.prof-hero .stags{margin-top:14px;position:relative}
+.prof-hero .stag{font-size:11px;padding:5px 12px;background:rgba(94,150,255,.15)}
+.traj{padding:20px 20px 8px;margin-top:4px}
+.tj{display:flex;gap:16px;position:relative;padding-bottom:22px}
+.tj::before{content:"";position:absolute;left:7px;top:20px;bottom:0;width:1.5px;background:linear-gradient(rgba(143,123,255,.6),rgba(143,123,255,.1))}
+.tj:last-child::before{display:none}
+.tj .nd{flex:none;width:15px;height:15px;border-radius:50%;background:var(--aurora-deep);border:3px solid var(--card);box-shadow:0 0 0 1.5px rgba(143,123,255,.5);margin-top:3px}
+.tj .age{font-size:12px;color:var(--blue);font-weight:600}
+.tj h4{font-size:14px;font-weight:600;margin-top:3px}
+.tj p{font-size:12px;color:var(--sub);line-height:1.7;margin-top:4px}
+.prof-dims{padding:20px;margin-top:12px}
+.prof-dims .orb-halo{width:76px;height:76px;margin:0 auto}
+.prof-dims .orb{width:76px;height:76px}
+.prof-dims .cap{text-align:center;font-size:11px;color:var(--faint);letter-spacing:.25em;margin-top:14px}
+.hello{position:sticky;bottom:0;padding:14px 0 6px;background:linear-gradient(transparent,var(--paper) 40%)}
+
+/* ============ 我擅长 浮层 ============ */
+.backdrop{position:absolute;inset:0;z-index:58;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .3s}
+.backdrop.open{opacity:1;visibility:visible}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:60;max-height:78%;overflow-y:auto;scrollbar-width:none;
+  background:#10131C;border-radius:30px 30px 0 0;border-top:1px solid rgba(255,255,255,.1);
+  padding:14px 24px 40px;
+  transform:translateY(105%);transition:transform .34s cubic-bezier(.32,.72,.32,1);
+  box-shadow:0 -20px 60px rgba(0,0,0,.6);
+}
+.sheet::-webkit-scrollbar{display:none}
+.sheet.open{transform:none}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 20px}
+.sheet h2{font-size:19px;font-weight:700}
+.sheet .q1{margin-top:20px;font-size:14px;font-weight:600}
+.sheet .q1 i{font-style:normal;color:var(--blue);margin-right:6px}
+.sheet .chips{margin-top:12px}
+.tests{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px}
+.test{
+  all:unset;cursor:pointer;padding:16px 14px;border-radius:18px;position:relative;overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);box-shadow:var(--shadow-card);transition:transform .15s;
+}
+.test:active{transform:scale(.97)}
+.test b{display:block;font-size:13.5px;font-weight:600;position:relative}
+.test p{font-size:11px;color:var(--sub);margin-top:5px;position:relative;line-height:1.6}
+.test .tm2{display:inline-block;margin-top:10px;font-size:10.5px;color:#9DBCFF;background:rgba(255,255,255,.08);padding:3px 9px;border-radius:999px;position:relative}
+
+/* ============ Toast & TabBar ============ */
+.toast{
+  position:absolute;left:50%;bottom:150px;transform:translate(-50%,16px);z-index:90;
+  background:rgba(22,26,38,.95);color:#CFE0FF;border:1px solid rgba(111,165,255,.4);
+  padding:12px 22px;border-radius:999px;font-size:13px;
+  opacity:0;visibility:hidden;transition:all .3s;white-space:nowrap;
+  box-shadow:var(--shadow-float);
+}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+.tabbar{
+  position:absolute;left:0;right:0;bottom:0;z-index:45;height:90px;
+  background:rgba(9,11,17,.86);backdrop-filter:blur(20px);
+  border-top:1px solid var(--line);
+  display:flex;padding:10px 14px 26px;
+}
+.tab{all:unset;cursor:pointer;flex:1;text-align:center;color:var(--faint);transition:color .2s}
+.tab svg{display:block;margin:0 auto}
+.tab span{font-size:10.5px;letter-spacing:.12em;display:block;margin-top:5px}
+.tab.on{color:var(--ink)}
+.tab.on span{font-weight:600}
+.tab .ind{width:4px;height:4px;border-radius:50%;background:var(--blue);margin:4px auto 0;opacity:0;transition:opacity .2s}
+.tab.on .ind{opacity:1}
+
+@media (max-width:1100px){body{gap:0}.spec{display:none}}
+@media (max-width:460px){
+  body{padding:0}
+  .phone{width:100vw;height:100vh;border-radius:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= 左侧规格栏 ================= -->
+<aside class="spec">
+  <div class="logo">万花筒<em>·</em></div>
+  <div class="en">KALEIDO · Prototype</div>
+  <p class="desc">一款「认识自己 + 人生推演 + 真人参照社区」App 的高保真交互原型。一束光，折出千万种人生 —— 把重大人生选择，先在万花筒里转一转。</p>
+
+  <h4>页面导航</h4>
+  <div class="jump" id="jumpNav">
+    <button data-go="home" class="on"><i>01</i>认识自己 · 探索与画像</button>
+    <button data-go="lab"><i>02</i>人生实验室 · 时间旋钮</button>
+    <button data-go="comm"><i>03</i>万花筒社区 · 真人参照</button>
+  </div>
+
+  <h4>色板</h4>
+  <div class="sw">
+    <span style="background:#0A0C12"></span>
+    <span style="background:#13161F"></span>
+    <span style="background:#5E96FF"></span>
+    <span style="background:#E35CC1"></span>
+    <span style="background:#FF7A4D"></span>
+    <span style="background:#D7F464"></span>
+  </div>
+
+  <p class="note">可交互：语音日记提取情绪与关键词 · 探索标签进输入框 · 对话可继续提问 · 实验室拖入选择卡 + 1–10 年连续旋钮 · 更换问题 · 万花筒抽取 · 用户主页。</p>
+</aside>
+
+<!-- ================= 手机 ================= -->
+<div class="stage">
+<div class="phone">
+  <div class="notch"></div>
+  <div class="statusbar">
+    <span>9:41</span>
+    <span class="icons">
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1" opacity=".35"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="15" height="8" rx="2" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity=".4"/></svg>
+    </span>
+  </div>
+
+  <!-- ============ 01 认识自己 ============ -->
+  <section class="screen on" id="scr-home">
+    <div class="greet">
+      <div>
+        <div class="eyebrow">7月23日 · 周四</div>
+        <h1 class="page">晚上好，屿岸</h1>
+      </div>
+      <div class="r">已探索<br><b>第 47 天</b></div>
+    </div>
+
+    <div class="card diary">
+      <div class="top">
+        <h3>我的语音日记</h3>
+        <button id="recBtn" onclick="toggleRec()">◉ 记录今日</button>
+      </div>
+      <div class="dweek">
+        <div class="dday f"><i>😌</i><span>四</span></div>
+        <div class="dday f"><i>🙂</i><span>五</span></div>
+        <div class="dday f"><i>😮‍💨</i><span>六</span></div>
+        <div class="dday f"><i>😊</i><span>日</span></div>
+        <div class="dday f"><i>😐</i><span>一</span></div>
+        <div class="dday f"><i>🙂</i><span>二</span></div>
+        <div class="dday t" id="todayDot"><i></i><span>今天</span></div>
+      </div>
+      <div class="recorder" id="recorder">
+        <div class="wave">
+          <i style="animation-delay:0s"></i><i style="animation-delay:.12s"></i><i style="animation-delay:.24s"></i><i style="animation-delay:.06s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.18s"></i><i style="animation-delay:.02s"></i><i style="animation-delay:.26s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.05s"></i><i style="animation-delay:.28s"></i>
+        </div>
+        <span class="tm" id="recTime">0:00</span>
+        <button class="done" onclick="finishRec()">完成</button>
+      </div>
+      <div class="diary-res" id="diaryResult"></div>
+    </div>
+
+    <div class="ask">
+      <div class="glow"></div>
+      <div class="tag">今天想探索什么</div>
+      <h2>说出那个<br><em>在心里盘旋</em>的问题</h2>
+      <div class="askbox">
+        <div class="askcat">✦ <b id="askCatTag">职业</b> 分类下提问</div>
+        <textarea id="askText" maxlength="200" placeholder="比如：我是否要从交互设计师转为产品经理？">我是否要从交互设计师转为产品经理？</textarea>
+        <div class="askfoot">
+          <span class="cnt">灵感来自你 3 天前的日记</span>
+          <button class="send" onclick="startChat()">发送</button>
+        </div>
+      </div>
+      <div class="chips" id="topicChips">
+        <button class="chip soft on" data-topic="职业">职业</button>
+        <button class="chip soft" data-topic="家庭">家庭</button>
+        <button class="chip soft" data-topic="升学">升学</button>
+        <button class="chip soft" data-topic="情感">情感</button>
+      </div>
+    </div>
+
+    <div class="sec-t"><h3>我的动态画像</h3><button class="lnk" onclick="toast('画像会随每次探索自动生长')">探索更多画像 ›</button></div>
+    <div class="card portrait">
+      <div class="orb-halo"><div class="orb"></div></div>
+      <div class="pname">屿岸 · 动态数字人</div>
+      <div class="prole">探索者 LV.3</div>
+      <div class="pbar"><div class="tr"><i id="pfill"></i></div><span id="ppct">60%</span></div>
+      <div class="dims">
+        <button class="dim" onclick="openSheet()">
+          <span class="ic" style="background:rgba(94,150,255,.15)">✦</span>
+          <span class="tx"><b>我擅长</b><p id="dimSkill">结构化思考 · 共情 · 视觉表达</p></span>
+          <span class="ar">›</span>
+        </button>
+        <button class="dim" onclick="toast('「我喜欢」已由 12 篇日记归纳生成')">
+          <span class="ic" style="background:rgba(227,92,193,.15)">♡</span>
+          <span class="tx"><b>我喜欢</b><p>把混乱变有序 · 独处的清晨 · 手绘</p></span>
+          <span class="ar">›</span>
+        </button>
+        <button class="dim todo" onclick="toast('回答 3 个小问题即可点亮这一面')">
+          <span class="ic" style="background:rgba(255,122,77,.16)">✿</span>
+          <span class="tx"><b>我在情感关系中在意</b><p class="empty">待探索 · 回答 3 个小问题点亮</p></span>
+          <span class="ar">›</span>
+        </button>
+        <button class="dim todo" onclick="toast('回答 3 个小问题即可点亮这一面')">
+          <span class="ic" style="background:rgba(62,217,164,.14)">⌂</span>
+          <span class="tx"><b>我在家庭关系中在意</b><p class="empty">待探索 · 回答 3 个小问题点亮</p></span>
+          <span class="ar">›</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 人生实验室 ============ -->
+  <section class="screen" id="scr-lab">
+    <div class="eyebrow">LIFE LAB</div>
+    <h1 class="page">人生实验室</h1>
+
+    <div class="card labq">
+      <div class="lb">当前探索问题</div>
+      <h2 id="labQText">我是否要从交互设计师转为产品经理？</h2>
+      <div class="labq-edit" id="labqEdit">
+        <textarea id="labqInput" maxlength="100"></textarea>
+        <div class="le-row">
+          <button class="le-cancel" onclick="toggleEditQ(false)">取消</button>
+          <button class="le-save" onclick="saveEditQ()">确定</button>
+        </div>
+      </div>
+      <div class="sw"><button class="swap" id="swapBtn" onclick="toggleEditQ(true)">更换问题 ›</button></div>
+    </div>
+
+    <div class="dial-wrap">
+      <div class="dial" id="dial">
+        <div class="glowring" id="glowring"></div>
+        <div class="ring" id="ringEl"></div>
+        <div class="tickring" id="tickring"></div>
+        <div class="arm" id="arm"><i class="handle"></i></div>
+        <div class="core">
+          <div class="lab-lb">时间旋钮 · 年</div>
+          <div class="pick" id="dialPick">把选择卡拖进来</div>
+          <div class="yr">推演 <b id="dialYear">5</b> 年后的你</div>
+        </div>
+      </div>
+    </div>
+    <div class="yr-presets">
+      <button class="yp" data-y="1" onclick="setYear(1)">1年</button>
+      <button class="yp" data-y="3" onclick="setYear(3)">3年</button>
+      <button class="yp on" data-y="5" onclick="setYear(5)">5年</button>
+      <button class="yp" data-y="10" onclick="setYear(10)">10年</button>
+    </div>
+    <div class="knob-hint">拖动旋钮，1 – 10 年任意停留</div>
+
+    <div class="sec-t"><h3>我的选择卡</h3><span>按住卡片，拖进上方实验室</span></div>
+    <div class="choices" id="choices">
+      <button class="choice" data-name="继续做设计" onclick="pickChoice(this)">
+        <span class="g">🎨</span><b>继续做设计</b><p>深耕交互，走专家路线</p>
+      </button>
+      <button class="choice" data-name="转 AI 产品" onclick="pickChoice(this)">
+        <span class="g">🧭</span><b>转 AI 产品</b><p>换赛道，做 AI 产品经理</p>
+      </button>
+      <button class="choice" data-name="边做边尝试" onclick="pickChoice(this)">
+        <span class="g">🌱</span><b>边做边尝试</b><p>不辞职，用业余时间试水</p>
+      </button>
+      <button class="choice" data-name="放弃探索" onclick="pickChoice(this)">
+        <span class="g">🍃</span><b>放弃探索</b><p>先安顿好现在的生活</p>
+      </button>
+    </div>
+
+    <button class="btn-ink btn-cta lab-go" id="simBtn" disabled onclick="runSim()">开始推演</button>
+    <p style="text-align:center;font-size:11px;color:var(--faint);margin-top:14px;line-height:1.8">推演基于你的动态画像与 1,842 位相似旅人的真实经历<br>它不是预言，是一面镜子</p>
+  </section>
+
+  <!-- ============ 03 万花筒社区 ============ -->
+  <section class="screen" id="scr-comm">
+    <div class="eyebrow">KALEIDOSCOPE</div>
+    <h1 class="page">万花筒社区</h1>
+
+    <div class="comm-tabs" id="commTabs">
+      <button class="on" onclick="commTab(0,this)">为你推荐</button>
+      <button onclick="commTab(1,this)">悬赏贴</button>
+    </div>
+
+    <div class="masonry" id="commFeed"></div>
+  </section>
+
+  <!-- ============ 探索对话 push ============ -->
+  <section class="push" id="chatPage">
+    <div class="top">
+      <button class="backbtn" onclick="closePush('chatPage')" aria-label="返回">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div>
+        <h2 id="chatTitle">探索 · 职业</h2>
+        <div class="sub2">和你的动态画像一起想清楚</div>
+      </div>
+    </div>
+    <div class="scroll" id="chatScroll"></div>
+    <div class="c-input">
+      <input id="chatInput" type="text" placeholder="想到什么，直接问…">
+      <button class="c-send" onclick="sendChat()">发送</button>
+    </div>
+  </section>
+
+  <!-- ============ 推演结果 push ============ -->
+  <section class="push" id="resultPage">
+    <div class="top">
+      <button class="backbtn" onclick="closePush('resultPage')" aria-label="返回选择">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div>
+        <h2>推演结果</h2>
+        <div class="sub2" id="resultSub">转 AI 产品 · 5 年后</div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="rs-head">
+        <p class="q">「<b id="rsQText">我是否要从交互设计师转为产品经理？</b>」的三种可能 —— 先看一般情况，再看两端。</p>
+        <div class="seg" id="rsSeg">
+          <button onclick="rsTab(0,this)">最好的结果</button>
+          <button class="on" onclick="rsTab(1,this)">一般情况</button>
+          <button onclick="rsTab(2,this)">最坏的结果</button>
+        </div>
+      </div>
+
+      <!-- 最好 -->
+      <div class="rs-panel" id="rsp0">
+        <div class="rs-sum" style="background:radial-gradient(280px 180px at 85% -20%,rgba(240,106,205,.4),transparent 60%),linear-gradient(150deg,#2C1533 0%,#1A1226 100%);border:1px solid rgba(240,106,205,.35)">
+          <div class="k" style="color:#F06ACD">BEST · 顺光面</div>
+          <h3>你顺利转型为优秀的 AI 产品经理，在行业中建立起个人的影响力。</h3>
+        </div>
+        <div class="card rs-dims">
+          <div class="rs-dim"><span class="lb">职业状态</span><p>负责核心产品方向，影响重要决策</p></div>
+          <div class="rs-dim"><span class="lb">收入趋势</span><p>显著提升，进入行业中上水平</p></div>
+          <div class="rs-dim"><span class="lb">生活节奏</span><p>更忙，但成就感和掌控感强</p></div>
+          <div class="rs-dim"><span class="lb">内心感受</span><p>笃定、自信，对未来更有掌控感</p></div>
+        </div>
+        <div class="rs-two">
+          <div class="card rs-list">
+            <h5><i style="background:var(--teal)"></i>可能获得</h5>
+            <li>快速的职业成长</li><li>更高的收入和回报</li><li>更广的行业资源和人脉</li>
+          </div>
+          <div class="card rs-list">
+            <h5><i style="background:var(--apricot)"></i>需要满足的条件</h5>
+            <li>持续学习和深度投入</li><li>获得关键项目和机会</li><li>敢于承担错误和责任</li>
+          </div>
+        </div>
+      </div>
+
+      <!-- 一般 -->
+      <div class="rs-panel on" id="rsp1">
+        <div class="rs-sum" style="background:radial-gradient(280px 180px at 85% -20%,rgba(111,165,255,.45),transparent 60%),linear-gradient(150deg,#152048 0%,#11142B 100%);border:1px solid rgba(111,165,255,.35)">
+          <div class="k" style="color:#6FA5FF">LIKELY · 大概率</div>
+          <h3>你可能成为有设计背景的 AI 产品经理，开始独立负责项目。</h3>
+        </div>
+        <div class="card rs-dims">
+          <div class="rs-dim"><span class="lb">职业状态</span><p>完成转型，独立负责项目</p></div>
+          <div class="rs-dim"><span class="lb">收入趋势</span><p>前期持平，后期有增长</p></div>
+          <div class="rs-dim"><span class="lb">生活节奏</span><p>学习和工作时间明显增加</p></div>
+          <div class="rs-dim"><span class="lb">内心感受</span><p>成长感增强，压力也更大</p></div>
+        </div>
+        <div class="rs-two">
+          <div class="card rs-list">
+            <h5><i style="background:var(--teal)"></i>可能获得</h5>
+            <li>更大的产品决策权</li><li>AI 行业的一手经验</li><li>设计与产品的复合优势</li>
+          </div>
+          <div class="card rs-list">
+            <h5><i style="background:var(--pink)"></i>可能付出的代价</h5>
+            <li>短期收入和稳定性波动</li><li>私人时间减少</li><li>需要重建专业话语权</li>
+          </div>
+        </div>
+        <div class="rs-key">最关键的条件：<b>能在第一年获得至少一个真实的 AI 项目经历。</b></div>
+      </div>
+
+      <!-- 最坏 -->
+      <div class="rs-panel" id="rsp2">
+        <div class="rs-sum" style="background:radial-gradient(280px 180px at 85% -20%,rgba(255,122,77,.4),transparent 60%),linear-gradient(150deg,#33160E 0%,#1C0F0C 100%);border:1px solid rgba(255,122,77,.35)">
+          <div class="k" style="color:#FF8A5E">WORST · 背光面</div>
+          <h3>转型过程困难，方向反复，最终回到原岗位，信心受挫。</h3>
+        </div>
+        <div class="card rs-dims">
+          <div class="rs-dim"><span class="lb">职业状态</span><p>转型未达预期，回到设计岗位</p></div>
+          <div class="rs-dim"><span class="lb">收入趋势</span><p>短期收入下降，恢复缓慢</p></div>
+          <div class="rs-dim"><span class="lb">生活节奏</span><p>焦虑、反复尝试，精力消耗大</p></div>
+          <div class="rs-dim"><span class="lb">内心感受</span><p>失落、自我怀疑，动力下降</p></div>
+        </div>
+        <div class="rs-two">
+          <div class="card rs-list">
+            <h5><i style="background:var(--pink)"></i>可能的风险</h5>
+            <li>缺乏真实项目经验</li><li>学习碎片化，难以落地</li><li>对产品工作兴趣不足</li>
+          </div>
+          <div class="card rs-list">
+            <h5><i style="background:var(--violet-soft)"></i>但仍会留下的价值</h5>
+            <li>拓宽了认知边界</li><li>积累了跨领域经验</li><li>更清楚自己真正想要的</li>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec-t"><h3>类似经验的人</h3><span>左右滑动查看</span></div>
+      <div class="simrow" style="margin-top:2px;opacity:1;animation:none" id="rsPeople"></div>
+
+      <button class="btn-ink btn-cta" style="margin-top:24px" onclick="closePush('resultPage');toast('回到实验室，换一张选择卡试试')">重新选择</button>
+      <div style="height:30px"></div>
+    </div>
+  </section>
+
+  <!-- ============ 用户主页 push ============ -->
+  <section class="push" id="profilePage">
+    <div class="top">
+      <button class="backbtn" onclick="closePush('profilePage')" aria-label="返回">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div><h2>用户主页</h2></div>
+    </div>
+    <div class="scroll" id="profileScroll"></div>
+  </section>
+
+  <!-- ============ 推演加载 ============ -->
+  <div class="simload" id="simload">
+    <div class="orb-halo"><div class="orb"></div></div>
+    <h3>正在推演 <span id="loadName">转 AI 产品</span></h3>
+    <p id="loadStep">读取你的动态画像……</p>
+  </div>
+
+  <!-- ============ 万花筒抽取浮层 ============ -->
+  <div class="kal" id="kal">
+    <button class="kal-close" style="position:absolute;top:66px;right:20px" onclick="closeKal()">关闭 ✕</button>
+    <h2 id="kalTitle">你想看见哪一面的人生？</h2>
+    <p class="s" id="kalSub">万花筒会为你转出一位真实的旅人</p>
+
+    <div class="kal-opts" id="kalOpts">
+      <button class="kal-opt on" data-mode="similar" onclick="kalMode(this)">
+        <span class="g">🪞</span><b>和我有类似经历</b><p>在同路人身上<br>看见自己的下一步</p>
+      </button>
+      <button class="kal-opt" data-mode="opposite" onclick="kalMode(this)">
+        <span class="g">🔭</span><b>和我经历完全相反</b><p>在另一种人生里<br>看见没走过的路</p>
+      </button>
+    </div>
+
+    <div class="kal-disc-wrap" id="kalDiscWrap">
+      <div class="kal-disc" id="kalDisc">
+        <svg viewBox="0 0 230 230" aria-hidden="true">
+          <defs>
+            <radialGradient id="gSil" cx="35%" cy="30%" r="80%">
+              <stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#C9C2D6"/><stop offset="1" stop-color="#4A4556"/>
+            </radialGradient>
+            <radialGradient id="gBlu" cx="35%" cy="30%" r="80%">
+              <stop offset="0" stop-color="#9FBEFF"/><stop offset="1" stop-color="#2338B8"/>
+            </radialGradient>
+            <linearGradient id="gMag" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#E883D6"/><stop offset="1" stop-color="#7C2168"/>
+            </linearGradient>
+            <linearGradient id="gPet" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#D9B3F5"/><stop offset=".5" stop-color="#A86FE3"/><stop offset="1" stop-color="#7C3FC4"/>
+            </linearGradient>
+            <g id="kwedge">
+              <circle cx="115" cy="24" r="12" fill="url(#gSil)" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
+              <path d="M99 55 L115 39 L131 55 L131 64 L115 48 L99 64 Z" fill="#2A2F9E"/>
+              <rect x="86" y="52" width="18" height="7" rx="2" fill="#7FB4D9" transform="rotate(-40 95 55)"/>
+              <rect x="124" y="46" width="12" height="10" rx="2.5" fill="url(#gMag)" transform="rotate(18 130 51)"/>
+              <circle cx="140" cy="30" r="6" fill="url(#gBlu)"/>
+            </g>
+            <path id="kpetal" d="M115 50 C104 66 103 94 115 106 C127 94 126 66 115 50 Z" fill="url(#gPet)" stroke="rgba(255,255,255,.28)" stroke-width="1"/>
+          </defs>
+          <circle cx="115" cy="115" r="115" fill="#6070DE"/>
+          <g class="k-layer" id="kl1"></g>
+          <g class="k-layer k-l2" id="kl2" opacity=".45" style="mix-blend-mode:screen"></g>
+          <g class="k-flower" id="kflower"></g>
+          <circle cx="115" cy="115" r="113.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+    <div class="kal-hint" id="kalHint" style="display:none">光在旋转，人生在折叠……</div>
+
+    <div class="kal-result" id="kalResult">
+      <div class="kal-rescard" id="kalCard"></div>
+      <div class="kal-actions" style="margin-top:14px">
+        <button class="btn-ink" onclick="kalView()">查看详情</button>
+        <button class="btn-ghost" style="text-align:center" onclick="spinKal()">换一个</button>
+      </div>
+    </div>
+
+    <div class="kal-actions" id="kalConfirm">
+      <button class="btn-ink" onclick="spinKal()">转动万花筒</button>
+    </div>
+  </div>
+
+  <!-- ============ 我擅长 浮层 ============ -->
+  <div class="backdrop" id="backdrop" onclick="closeSheet()"></div>
+  <div class="sheet" id="skillSheet">
+    <div class="grab"></div>
+    <h2>我擅长</h2>
+    <div class="q1"><i>01</i>你是否清楚自己擅长什么？</div>
+    <div class="chips" id="skillChips">
+      <button class="chip">还不清楚</button>
+      <button class="chip on">结构化表达</button>
+      <button class="chip">沟通</button>
+      <button class="chip on">共情别人的想法</button>
+      <button class="chip">文字表达</button>
+    </div>
+    <div class="q1"><i>02</i>或者，用科学工具测一测</div>
+    <div class="tests">
+      <button class="test" style="background:radial-gradient(200px 130px at 85% -20%,rgba(111,165,255,.4),transparent 65%),#161A28" onclick="toast('霍兰德职业测评 · 已开始')">
+        <b>霍兰德职业测评</b><p>你的兴趣更接近哪种职业性格</p><span class="tm2">约 8 分钟</span>
+      </button>
+      <button class="test" style="background:radial-gradient(200px 130px at 85% -20%,rgba(240,106,205,.35),transparent 65%),#1D1424" onclick="toast('MBTI 测评 · 已开始')">
+        <b>MBTI 测评</b><p>你与世界相处的惯用方式</p><span class="tm2">约 12 分钟</span>
+      </button>
+      <button class="test" style="grid-column:1/-1;background:radial-gradient(300px 130px at 85% -20%,rgba(255,122,77,.35),transparent 65%),#221310" onclick="toast('选择卡排序 · 已开始')">
+        <b>选择卡排序</b><p>把 30 张价值卡排出顺序，看看你把什么放在最前面</p><span class="tm2">约 5 分钟</span>
+      </button>
+    </div>
+    <button class="btn-ink" style="margin-top:22px" onclick="saveSkill()">保存到我的画像</button>
+  </div>
+
+  <button class="drawfab show" id="drawfab" onclick="openKal()">
+    <span class="miniorb"></span>随机抽取
+  </button>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ Tab Bar ============ -->
+  <nav class="tabbar">
+    <button class="tab on" data-tab="home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.6" r="3.6"/><path d="M5 20.2c1.1-3.5 3.8-5.3 7-5.3s5.9 1.8 7 5.3"/></svg>
+      <span>认识自己</span><span class="ind"></span>
+    </button>
+    <button class="tab" data-tab="lab">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3h5M10.5 3v5.2L5.4 17a2.4 2.4 0 0 0 2.1 3.6h9a2.4 2.4 0 0 0 2.1-3.6l-5.1-8.8V3"/><path d="M7.5 14.5h9"/></svg>
+      <span>人生实验室</span><span class="ind"></span>
+    </button>
+    <button class="tab" data-tab="comm">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.6"/><path d="M12 3.4v17.2M4.6 7.7l14.8 8.6M4.6 16.3L19.4 7.7"/></svg>
+      <span>万花筒社区</span><span class="ind"></span>
+    </button>
+  </nav>
+
+  <div class="homebar"></div>
+</div>
+</div>
+
+<script>
+/* ================= 数据 ================= */
+const HUES = [
+  {g:'linear-gradient(135deg,#0F1F52,#2E5EDB 55%,#6FA5FF)', a:'#3D6EF0'},
+  {g:'linear-gradient(135deg,#3A1035,#B03390 55%,#F06ACD)', a:'#C445A4'},
+  {g:'linear-gradient(135deg,#0E2A22,#1F8A66 60%,#8FD84B)', a:'#2FA98C'},
+  {g:'linear-gradient(135deg,#3A140C,#D14A24 60%,#FF8A54)', a:'#E85A34'},
+  {g:'linear-gradient(135deg,#171243,#4A3BD1 60%,#8F7BFF)', a:'#6E58E8'},
+];
+const USERS = [
+  { id:1, name:'未命名的海', ini:'海', hue:0, sim:true,
+    quote:'转过来才发现，最难的不是学技能，是重建身份认同。',
+    tags:['交互转产品','3 年'],
+    bio:'前大厂交互设计师，现 AI 产品负责人',
+    traj:[
+      {age:'26 岁',t:'入行交互设计',d:'校招进大厂，画了三年原型图，开始怀疑「我只是需求的翻译器」。'},
+      {age:'30 岁',t:'转型产品经理',d:'降薪去创业公司，第一年被业务按在地上摩擦，但第一次为结果负责。'},
+      {age:'33 岁',t:'AI 产品负责人',d:'带 6 人小组做 AI 工具，设计背景成了最大的差异化优势。'},
+    ],
+    dims:[['我擅长','把模糊的想法拆成能落地的步骤'],['我喜欢','爬山 · 把混乱变有序'],['我是什么样的人','慢热，但认定了就很轴'],['我希望认识什么样的人','正在换赛道、心里没底的人']]},
+  { id:2, name:'慢速行星', ini:'慢', hue:2, sim:true,
+    quote:'30 岁重新读本科，同学叫我姐。但我第一次觉得时间是自己的。',
+    tags:['30 重读本科','裸辞'],
+    bio:'前运营，现心理学在读',
+    traj:[
+      {age:'24 岁',t:'专科毕业做运营',d:'六年换了四家公司，越做越熟练，也越做越空。'},
+      {age:'30 岁',t:'重读本科',d:'考了两次，读心理学。存款只够两年，但睡得着了。'},
+    ],
+    dims:[['我擅长','把大目标切成每天能做完的小事'],['我喜欢','图书馆闭馆前的最后一小时'],['我是什么样的人','大器晚成型选手'],['我希望认识什么样的人','也在「重来一次」的人']]},
+  { id:3, name:'第七次日落', ini:'落', hue:1, sim:false,
+    quote:'裸辞第 200 天，存款减半，睡眠翻倍。',
+    tags:['大厂裸辞','gap 一年'],
+    bio:'gap 中，正在环岛骑行',
+    traj:[
+      {age:'27 岁',t:'大厂高级运营',d:'年终 3.75，代价是耳鸣和凌晨两点的地铁。'},
+      {age:'29 岁',t:'裸辞 gap',d:'没有计划的一年。骑行到第三个月，才停止每天打开招聘软件。'},
+    ],
+    dims:[['我擅长','把日子过得便宜又有质感'],['我喜欢','海边的烂天气'],['我是什么样的人','用力过猛后学会松手的人'],['我希望认识什么样的人','敢浪费时间的人']]},
+  { id:4, name:'晚风收集者', ini:'晚', hue:4, sim:true,
+    quote:'一个人做产品：白天写代码，晚上画图标，半夜回用户邮件。',
+    tags:['设计转独立开发','两年'],
+    bio:'独立开发者，产品月收入刚过房租',
+    traj:[
+      {age:'28 岁',t:'辞职做独立开发',d:'用设计功底做了三款小工具，死了两款，活下来的那款养活了自己。'},
+    ],
+    dims:[['我擅长','一个人当一支队伍'],['我喜欢','发版后的第一条好评'],['我是什么样的人','悲观的行动派'],['我希望认识什么样的人','也在一个人做事的人']]},
+  { id:5, name:'低电量诗人', ini:'诗', hue:3, sim:true,
+    quote:'从改需求到听人说话，我终于不用假装外向了。',
+    tags:['转行心理咨询','35+'],
+    bio:'前产品经理，现实习咨询师',
+    traj:[
+      {age:'35 岁',t:'转行心理咨询',d:'读了三年在职硕士，时薪从 500 变成 0，又慢慢变回 300。'},
+    ],
+    dims:[['我擅长','听出话背后的那句话'],['我喜欢','来访者说「被你说中了」的瞬间'],['我是什么样的人','内向但不冷'],['我希望认识什么样的人','35 岁以后才换方向的人']]},
+];
+const BOUNTIES = [
+  {q:'有没有人从设计转数据分析？想听第一年最难的是什么', r:'悬赏 3 个真实故事', n:'12 人回应'},
+  {q:'26 岁要不要辞职考研？家里催我先稳定下来', r:'悬赏 5 个亲历者', n:'31 人回应'},
+  {q:'想去小城市生活，又怕后悔，有回不来的人吗？', r:'悬赏 3 个真实故事', n:'8 人回应'},
+];
+const TOPIC_SAMPLES = {
+  '职业':'我是否要从交互设计师转为产品经理？',
+  '家庭':'要不要搬回父母所在的城市生活？',
+  '升学':'26 岁了，还要不要辞职去读研？',
+  '情感':'异地三年，要不要为 TA 换一座城市？',
+};
+
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2300);
+}
+function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(); return d.firstChild; }
+
+/* ================= Tab ================= */
+function go(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  $('#scr-'+tab).classList.add('on');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+  document.querySelectorAll('#jumpNav button').forEach(b=>b.classList.toggle('on', b.dataset.go===tab));
+  $('#drawfab').classList.toggle('show', tab==='comm');
+  document.querySelectorAll('.push').forEach(p=>p.classList.remove('open'));
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>go(b.dataset.tab)));
+document.querySelectorAll('#jumpNav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+function closePush(id){ $('#'+id).classList.remove('open'); }
+
+/* ================= 语音日记：情绪 + 事件关键词 ================= */
+let recTimer, recSec=0, recorded=false;
+function toggleRec(){
+  if(recorded){ toast('今天已经记录过啦，明天见'); return; }
+  const r = $('#recorder');
+  if(r.classList.contains('show')){ finishRec(); return; }
+  r.classList.add('show');
+  $('#recBtn').textContent = '● 录音中';
+  recSec = 0;
+  recTimer = setInterval(()=>{
+    recSec++;
+    $('#recTime').textContent = Math.floor(recSec/60)+':'+String(recSec%60).padStart(2,'0');
+  }, 1000);
+}
+function finishRec(){
+  clearInterval(recTimer);
+  $('#recorder').classList.remove('show');
+  $('#recBtn').textContent = '◉ 记录今日';
+  recorded = true;
+  const today = $('#todayDot');
+  today.classList.add('f');
+  today.querySelector('i').textContent = '😌';
+  const res = $('#diaryResult');
+  res.innerHTML = `
+    <div class="lb2">AI 从这段语音里听到了 —— 已归档到 7月23日</div>
+    <div class="row2">
+      <span class="emo-pill">😌 平静中带一点犹豫</span>
+      <span class="kw"># 转岗的决定</span>
+      <span class="kw"># 和导师聊了 40 分钟</span>
+      <span class="kw"># 最近睡得晚</span>
+    </div>`;
+  res.classList.add('show');
+  toast('情绪与关键词已存入语音日记 ✦');
+}
+
+/* ================= 探索话题标签 → 输入框 ================= */
+let currentTopic = '职业';
+document.querySelectorAll('#topicChips .chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#topicChips .chip').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+    currentTopic = c.dataset.topic;
+    $('#askCatTag').textContent = currentTopic;
+    $('#askText').value = TOPIC_SAMPLES[currentTopic];
+    $('#askText').focus();
+  });
+});
+
+/* ================= 探索对话 ================= */
+function scrollBottom(){ const s=$('#chatScroll'); s.scrollTop = s.scrollHeight; }
+function simCardHTML(u){
+  const h = HUES[u.hue];
+  return `<div class="simcard" onclick="openProfile(${u.id})">
+    <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${u.ini}</div></div>
+    <div class="bd"><div class="nm">${u.name}</div><div class="qt">${u.quote}</div>
+    <div class="stags">${u.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div></div>
+  </div>`;
+}
+let chatStarted = false;
+function startChat(){
+  const q = $('#askText').value.trim();
+  if(!q){ toast('先写下你的问题吧'); return; }
+  $('#chatTitle').textContent = '探索 · ' + currentTopic;
+  $('#chatPage').classList.add('open');
+  if(chatStarted) return;
+  chatStarted = true;
+  const s = $('#chatScroll');
+  s.appendChild(el(`<div class="msg me"><div class="bubble">${q}</div></div>`));
+  const think = el(`<div class="aithink"><span class="miniorb"></span>正在看你的个人动态画像……</div>`);
+  setTimeout(()=>{ s.appendChild(think); scrollBottom(); }, 500);
+  setTimeout(()=>{
+    think.remove();
+    s.appendChild(el(`<div class="msg ai"><div class="bubble">看了你的画像 —— 你擅长<b>结构化思考</b>，也在意<b>创造的实感</b>。这两点在产品岗位上其实都用得上。<br><br>先聊聊：这次纠结，最主要的原因有哪些？</div></div>`));
+    const chips = el(`<div class="chatchips" id="reasonChips">
+      <button class="chip">怕收入不稳定</button>
+      <button class="chip">怕浪费七年积累</button>
+      <button class="chip">不确定自己合不合适</button>
+      <button class="chip">家人不理解</button>
+      <button class="gochip" id="reasonDone">选好了 →</button>
+    </div>`);
+    s.appendChild(chips); scrollBottom();
+    chips.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click',()=>c.classList.toggle('on'));
+    });
+    chips.querySelector('#reasonDone').addEventListener('click', reasonsDone);
+  }, 1900);
+}
+let reasonsAnswered = false;
+function reasonsDone(){
+  if(reasonsAnswered) return;
+  const sel = [...document.querySelectorAll('#reasonChips .chip.on')].map(c=>c.textContent);
+  if(!sel.length){ toast('至少选一个原因'); return; }
+  reasonsAnswered = true;
+  const s = $('#chatScroll');
+  s.appendChild(el(`<div class="msg me"><div class="bubble" style="font-size:13.5px">${sel.join('、')}</div></div>`));
+  scrollBottom();
+  setTimeout(()=>{
+    s.appendChild(el(`<div class="msg ai"><div class="bubble">「${sel[0]}」—— 很多转型的人第一年都卡在这里。<br><br>比起继续想，不如先<b>看看走过这条路的人</b>。社区里有 23 位旅人做过类似选择：</div></div>`));
+    const row = el(`<div class="simrow">${USERS.filter(u=>u.sim).map(simCardHTML).join('')}</div>`);
+    s.appendChild(row);
+    s.appendChild(el(`<div class="swipe-hint">← 左右滑动，看更多同路人</div>`));
+    const cta = el(`<div class="chatcta"><button class="btn-ink" style="width:100%" onclick="closePush('chatPage');go('lab');toast('把这个选择放进实验室转一转')">去人生实验室推演这个选择</button></div>`);
+    s.appendChild(cta);
+    scrollBottom();
+  }, 1500);
+}
+/* 对话输入框 */
+const AI_REPLIES = [
+  '这个问题值得记下来。我把它加进了你的画像线索里 —— 你最近在意的，似乎都绕不开<b>「确定感」</b>。',
+  '换个角度想：如果是<b>三年后的你</b>回头看今天，你希望自己当时怎么选？也可以把它放进人生实验室转一转。',
+  '我听到了。不急着现在回答，今晚的语音日记里，可以只聊这一件事。',
+];
+let aiReplyIdx = 0;
+function sendChat(){
+  const v = $('#chatInput').value.trim();
+  if(!v) return;
+  if(!chatStarted){ chatStarted = true; }
+  const s = $('#chatScroll');
+  s.appendChild(el(`<div class="msg me"><div class="bubble" style="font-size:13.5px">${v}</div></div>`));
+  $('#chatInput').value = '';
+  scrollBottom();
+  const think = el(`<div class="aithink"><span class="miniorb"></span>正在思考……</div>`);
+  setTimeout(()=>{ s.appendChild(think); scrollBottom(); }, 400);
+  setTimeout(()=>{
+    think.remove();
+    s.appendChild(el(`<div class="msg ai"><div class="bubble">${AI_REPLIES[aiReplyIdx++ % AI_REPLIES.length]}</div></div>`));
+    scrollBottom();
+  }, 1700);
+}
+$('#chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
+
+/* ================= 横滑卡片行：鼠标拖动滚动 ================= */
+document.addEventListener('pointerdown', e=>{
+  const row = e.target.closest('.simrow');
+  if(!row || e.pointerType !== 'mouse') return;
+  const sx = e.clientX, sl = row.scrollLeft;
+  let moved = false;
+  const mv = ev=>{
+    const dx = ev.clientX - sx;
+    if(Math.abs(dx) > 6) moved = true;
+    row.scrollLeft = sl - dx;
+  };
+  const up = ()=>{
+    document.removeEventListener('pointermove', mv);
+    document.removeEventListener('pointerup', up);
+    if(moved){
+      row.dataset.justScrolled = '1';
+      setTimeout(()=>{ delete row.dataset.justScrolled; }, 80);
+    }
+  };
+  document.addEventListener('pointermove', mv);
+  document.addEventListener('pointerup', up);
+});
+document.addEventListener('click', e=>{
+  const row = e.target.closest('.simrow');
+  if(row && row.dataset.justScrolled){ e.stopPropagation(); e.preventDefault(); }
+}, true);
+
+/* ================= 实验室：更换问题 ================= */
+function toggleEditQ(show){
+  const ed = $('#labqEdit'), h2 = $('#labQText'), swap = $('#swapBtn');
+  if(show){
+    $('#labqInput').value = h2.textContent.trim();
+    ed.classList.add('show');
+    h2.style.display = 'none';
+    swap.style.display = 'none';
+    $('#labqInput').focus();
+  } else {
+    ed.classList.remove('show');
+    h2.style.display = '';
+    swap.style.display = '';
+  }
+}
+function saveEditQ(){
+  const v = $('#labqInput').value.trim();
+  if(!v){ toast('问题不能为空'); return; }
+  $('#labQText').textContent = v;
+  $('#rsQText').textContent = v;
+  toggleEditQ(false);
+  toast('探索问题已更新');
+}
+
+/* ================= 实验室：连续时间旋钮 ================= */
+let labYear = 5, labPick = null;
+const YMIN = 1, YMAX = 10;
+const yearToAng = y => -90 + (y - YMIN) * (180 / (YMAX - YMIN));
+const angToYear = a => YMIN + (a + 90) * ((YMAX - YMIN) / 180);
+const dialEl = document.getElementById('dial');
+function buildTicks(){
+  let html = '';
+  for(let a = -90; a <= 90; a += 4){
+    const major = ((a + 90) % 20 === 0);
+    const y = Math.round(angToYear(a));
+    html += `<div class="tick${major ? ' major' : ''}" ${major ? `data-y="${y}"` : ''} style="transform:rotate(${a}deg)">
+      <i></i>${major ? `<span style="transform:translateX(-50%) rotate(${-a}deg)">${y}</span>` : ''}
+    </div>`;
+  }
+  $('#tickring').innerHTML = html;
+}
+function applyRot(a){
+  $('#arm').style.transform = `rotate(${a}deg)`;
+  $('#ringEl').style.transform = `rotate(${a}deg)`;
+  $('#glowring').style.transform = `rotate(${a}deg)`;
+}
+function hlYear(y){
+  $('#dialYear').textContent = y;
+  document.querySelectorAll('.yp').forEach(b=>b.classList.toggle('on', +b.dataset.y === y));
+  document.querySelectorAll('#tickring .tick.major').forEach(t=>t.classList.toggle('on', +t.dataset.y === y));
+}
+function setYear(y){
+  labYear = y;
+  hlYear(y);
+  applyRot(yearToAng(y));
+}
+/* 拖动旋钮：1–10 年连续 */
+let dialDrag = false;
+function dialAngle(e){
+  const r = dialEl.getBoundingClientRect();
+  const a = Math.atan2(e.clientX-(r.left+r.width/2), (r.top+r.height/2)-e.clientY)*180/Math.PI;
+  return Math.max(-90, Math.min(90, a));
+}
+dialEl.addEventListener('pointerdown', e=>{
+  dialDrag = true;
+  dialEl.classList.add('dragging');
+  dialEl.setPointerCapture(e.pointerId);
+  const a = dialAngle(e);
+  applyRot(a); hlYear(Math.round(angToYear(a)));
+});
+dialEl.addEventListener('pointermove', e=>{
+  if(!dialDrag) return;
+  const a = dialAngle(e);
+  applyRot(a); hlYear(Math.round(angToYear(a)));
+});
+['pointerup','pointercancel'].forEach(ev=>dialEl.addEventListener(ev, e=>{
+  if(!dialDrag) return;
+  dialDrag = false;
+  dialEl.classList.remove('dragging');
+  const y = Math.round(angToYear(dialAngle(e)));
+  labYear = y;
+  hlYear(y);
+  applyRot(yearToAng(y));
+}));
+
+/* ================= 拖拽选择卡进实验室（rAF 平滑跟随） ================= */
+const phoneEl = document.querySelector('.phone');
+let cardDrag = null, justDragged = false;
+function overDialPt(x, y){
+  const dr = dialEl.getBoundingClientRect();
+  return Math.hypot(x-(dr.left+dr.width/2), y-(dr.top+dr.height/2)) < dr.width/2 + 30;
+}
+function ghostLoop(st){
+  if(st.done){ return; }
+  st.gx += (st.tx - st.gx) * .4;
+  st.gy += (st.ty - st.gy) * .4;
+  const tilt = Math.max(-7, Math.min(7, (st.tx - st.gx) * .12));
+  st.ghost.style.transform = `translate(${st.gx}px,${st.gy}px) translate(-50%,-50%) rotate(${tilt}deg)`;
+  st.raf = requestAnimationFrame(()=>ghostLoop(st));
+}
+document.querySelectorAll('.choice').forEach(card=>{
+  card.addEventListener('pointerdown', e=>{
+    document.querySelectorAll('.drag-ghost').forEach(g=>g.remove());
+    cardDrag = {card, sx:e.clientX, sy:e.clientY, active:false, ghost:null, hot:false, done:false};
+    card.setPointerCapture(e.pointerId);
+  });
+  card.addEventListener('pointermove', e=>{
+    if(!cardDrag || cardDrag.card!==card) return;
+    const pr = phoneEl.getBoundingClientRect();
+    if(!cardDrag.active){
+      if(Math.hypot(e.clientX-cardDrag.sx, e.clientY-cardDrag.sy) < 8) return;
+      cardDrag.active = true;
+      const g = document.createElement('div');
+      g.className = 'drag-ghost';
+      g.innerHTML = `<span>${card.querySelector('.g').textContent}</span>${card.dataset.name}`;
+      phoneEl.appendChild(g);
+      cardDrag.ghost = g;
+      cardDrag.gx = cardDrag.tx = e.clientX - pr.left;
+      cardDrag.gy = cardDrag.ty = e.clientY - pr.top;
+      g.style.transform = `translate(${cardDrag.gx}px,${cardDrag.gy}px) translate(-50%,-50%)`;
+      card.classList.add('dragging');
+      ghostLoop(cardDrag);
+    }
+    cardDrag.tx = e.clientX - pr.left;
+    cardDrag.ty = e.clientY - pr.top;
+    const hot = overDialPt(e.clientX, e.clientY);
+    dialEl.classList.toggle('drop-hot', hot);
+    if(hot !== cardDrag.hot){
+      $('#dialPick').textContent = hot ? '松手，放入实验室' : (labPick || '把选择卡拖进来');
+      cardDrag.hot = hot;
+    }
+  });
+  ['pointerup','pointercancel'].forEach(ev=>card.addEventListener(ev, e=>{
+    if(!cardDrag || cardDrag.card!==card) return;
+    const st = cardDrag; cardDrag = null;
+    if(!st.active) return; /* 纯点击：交给 onclick */
+    st.done = true;
+    if(st.raf) cancelAnimationFrame(st.raf);
+    justDragged = true;
+    card.classList.remove('dragging');
+    dialEl.classList.remove('drop-hot');
+    const pr = phoneEl.getBoundingClientRect();
+    const ghost = st.ghost;
+    if(overDialPt(e.clientX, e.clientY)){
+      const dr = dialEl.getBoundingClientRect();
+      ghost.style.transition = 'transform .38s cubic-bezier(.3,.9,.3,1), opacity .38s ease';
+      ghost.style.transform = `translate(${dr.left+dr.width/2-pr.left}px,${dr.top+dr.height/2-pr.top}px) translate(-50%,-50%) scale(.2)`;
+      ghost.style.opacity = '0';
+      setTimeout(()=>ghost.remove(), 420);
+      pickChoice(card);
+      const pk = $('#dialPick');
+      pk.classList.remove('pop'); void pk.offsetWidth; pk.classList.add('pop');
+      toast(`「${card.dataset.name}」已放入实验室`);
+    } else {
+      const cr = card.getBoundingClientRect();
+      ghost.style.transition = 'transform .3s ease, opacity .3s ease';
+      ghost.style.transform = `translate(${cr.left+cr.width/2-pr.left}px,${cr.top+cr.height/2-pr.top}px) translate(-50%,-50%) scale(.6)`;
+      ghost.style.opacity = '0';
+      setTimeout(()=>ghost.remove(), 340);
+      $('#dialPick').textContent = labPick || '把选择卡拖进来';
+    }
+  }));
+});
+document.getElementById('choices').addEventListener('click', e=>{
+  if(justDragged){ e.stopPropagation(); e.preventDefault(); justDragged = false; }
+}, true);
+
+function pickChoice(c){
+  document.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+  labPick = c.dataset.name;
+  $('#dialPick').textContent = labPick;
+  $('#simBtn').disabled = false;
+  $('#simBtn').removeAttribute('disabled');
+}
+const LOAD_STEPS = ['读取你的动态画像……','匹配 1,842 位相似旅人的经历……','折出三种可能的未来……'];
+function runSim(){
+  if(!labPick){ toast('先拖一张选择卡进实验室'); return; }
+  $('#loadName').textContent = labPick;
+  const load = $('#simload');
+  load.classList.add('show');
+  let i = 0;
+  $('#loadStep').textContent = LOAD_STEPS[0];
+  const step = setInterval(()=>{
+    i++;
+    if(i < LOAD_STEPS.length){ $('#loadStep').textContent = LOAD_STEPS[i]; }
+    else{
+      clearInterval(step);
+      load.classList.remove('show');
+      $('#resultSub').textContent = `${labPick} · ${labYear} 年后`;
+      $('#rsPeople').innerHTML = USERS.filter(u=>u.sim).map(simCardHTML).join('');
+      $('#resultPage').classList.add('open');
+    }
+  }, 1100);
+}
+function rsTab(i, btn){
+  document.querySelectorAll('#rsSeg button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.rs-panel').forEach((p,idx)=>p.classList.toggle('on', idx===i));
+}
+
+/* ================= 社区 ================= */
+function ucardHTML(u){
+  const h = HUES[u.hue];
+  return `<div class="ucard" onclick="openProfile(${u.id})">
+    <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${u.ini}</div></div>
+    <div class="bd">
+      <div class="nm">${u.name}</div>
+      <div class="qt">${u.quote}</div>
+      <div class="stags">${u.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div>
+      <div class="go">查看详情 ›</div>
+    </div>
+  </div>`;
+}
+function bountyHTML(b){
+  return `<div class="bounty" onclick="toast('悬赏贴详情 · 原型未展开')">
+    <span class="bdg">✦ ${b.r}</span>
+    <h4>${b.q}</h4>
+    <p>${b.n}</p>
+  </div>`;
+}
+function commTab(i, btn){
+  document.querySelectorAll('#commTabs button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderComm(i);
+}
+function renderComm(mode){
+  const f = $('#commFeed');
+  if(mode===1){ f.innerHTML = BOUNTIES.map(bountyHTML).join(''); }
+  else{ f.innerHTML = USERS.map(ucardHTML).join(''); }
+}
+
+/* ================= 万花筒抽取 ================= */
+let kalM = 'similar', kalUser = null, kalTimer = null;
+function openKal(){
+  $('#kal').classList.add('show');
+  resetKal();
+}
+function closeKal(){ clearTimeout(kalTimer); $('#kal').classList.remove('show'); }
+function resetKal(){
+  $('#kalOpts').style.display = 'flex';
+  $('#kalConfirm').style.display = 'flex';
+  $('#kalDiscWrap').classList.remove('show');
+  $('#kalHint').style.display = 'none';
+  $('#kalResult').classList.remove('show');
+  $('#kalTitle').textContent = '你想看见哪一面的人生？';
+  $('#kalSub').textContent = '万花筒会为你转出一位真实的旅人';
+}
+function kalMode(btn){
+  document.querySelectorAll('.kal-opt').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  kalM = btn.dataset.mode;
+}
+function spinKal(){
+  clearTimeout(kalTimer);
+  $('#kalOpts').style.display = 'none';
+  $('#kalConfirm').style.display = 'none';
+  $('#kalResult').classList.remove('show');
+  $('#kalTitle').textContent = kalM==='similar' ? '寻找和你同路的人' : '寻找你没走过的路';
+  $('#kalSub').textContent = '';
+  const wrap = $('#kalDiscWrap');
+  wrap.classList.add('show');
+  $('#kalHint').style.display = 'block';
+  const disc = $('#kalDisc');
+  disc.classList.remove('spin');
+  void disc.offsetWidth;
+  disc.classList.add('spin');
+  kalTimer = setTimeout(()=>{
+    const pool = USERS.filter(u=> kalM==='similar' ? u.sim : !u.sim);
+    kalUser = pool[Math.floor(Math.random()*pool.length)];
+    wrap.classList.remove('show');
+    $('#kalHint').style.display = 'none';
+    $('#kalTitle').textContent = kalM==='similar' ? '与你的画像最相似的人' : '与你的轨迹完全相反的人';
+    $('#kalSub').textContent = '看看 TA 的人生轨迹';
+    const h = HUES[kalUser.hue];
+    $('#kalCard').innerHTML = `
+      <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${kalUser.ini}</div></div>
+      <div class="bd">
+        <div class="nm">${kalUser.name}</div>
+        <div class="qt">「${kalUser.quote}」</div>
+        <div class="stags" style="margin-top:12px">${kalUser.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div>
+      </div>`;
+    $('#kalResult').classList.add('show');
+  }, 2750);
+}
+function kalView(){
+  closeKal();
+  openProfile(kalUser.id);
+}
+
+/* ================= 用户主页 ================= */
+function openProfile(id){
+  const u = USERS.find(x=>x.id===id);
+  const h = HUES[u.hue];
+  $('#profileScroll').innerHTML = `
+    <div class="prof-hero">
+      <div class="bgw" style="background:radial-gradient(360px 220px at 20% 0%,${u.hue===2?'rgba(62,217,164,.22)':'rgba(94,150,255,.22)'},transparent 70%)"></div>
+      <div class="prof-row">
+        <div class="prof-av" style="background:${h.g}">${u.ini}</div>
+        <div>
+          <h2>${u.name}</h2>
+          <p class="bio">${u.bio} · 人生是旷野，不是轨道</p>
+        </div>
+      </div>
+      <div class="stags">${u.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div>
+    </div>
+
+    <div class="sec-t"><h3>人生关键轨迹</h3><span>${u.traj.length} 个转折点</span></div>
+    <div class="card traj">
+      ${u.traj.map(t=>`<div class="tj"><div class="nd"></div><div><div class="age">${t.age}</div><h4>${t.t}</h4><p>${t.d}</p></div></div>`).join('')}
+    </div>
+
+    <div class="sec-t"><h3>动态画像</h3><span>由 TA 的记录生成</span></div>
+    <div class="card prof-dims">
+      <div class="orb-halo"><div class="orb"></div></div>
+      <div class="cap">动态数字人 · 探索者</div>
+      <div class="dims" style="margin-top:16px">
+        ${u.dims.map(d=>`<div class="dim" style="cursor:default"><span class="tx"><b>${d[0]}</b><p>${d[1]}</p></span></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="hello">
+      <button class="btn-ink" style="width:100%" onclick="toast('已向 ${u.name} 打招呼，等 TA 的回声')">打个招呼</button>
+    </div>
+    <div style="height:26px"></div>`;
+  $('#profilePage').classList.add('open');
+}
+
+/* ================= 我擅长浮层 ================= */
+function openSheet(){
+  $('#backdrop').classList.add('open');
+  $('#skillSheet').classList.add('open');
+}
+function closeSheet(){
+  $('#backdrop').classList.remove('open');
+  $('#skillSheet').classList.remove('open');
+}
+document.querySelectorAll('#skillChips .chip').forEach(c=>{
+  c.addEventListener('click',()=>c.classList.toggle('on'));
+});
+function saveSkill(){
+  const sel = [...document.querySelectorAll('#skillChips .chip.on')].map(c=>c.textContent).filter(t=>t!=='还不清楚');
+  closeSheet();
+  if(sel.length){
+    $('#dimSkill').textContent = sel.join(' · ');
+    $('#pfill').style.width = '72%';
+    $('#ppct').textContent = '72%';
+    toast('画像已更新 · 完成度 72%');
+  } else {
+    toast('「还不清楚」也是一种诚实的答案');
+  }
+}
+
+/* ================= 初始化 ================= */
+/* 万花筒图案：12 个镜像分段 + 中心六瓣花 */
+function buildKaleido(){
+  const ring = id=>{
+    let s = '';
+    for(let i=0;i<12;i++){
+      const a = i*30;
+      const t = (i%2===0)
+        ? `rotate(${a} 115 115)`
+        : `rotate(${a} 115 115) translate(230 0) scale(-1 1)`;
+      s += `<use href="#kwedge" transform="${t}"/>`;
+    }
+    document.getElementById(id).innerHTML = s;
+  };
+  ring('kl1'); ring('kl2');
+  let f = '';
+  for(let i=0;i<6;i++){ f += `<use href="#kpetal" transform="rotate(${i*60} 115 115)"/>`; }
+  f += `<polygon points="115,104 124.5,109.5 124.5,120.5 115,126 105.5,120.5 105.5,109.5" fill="#2A2F9E" stroke="#B9A5F0" stroke-width="1"/>`;
+  document.getElementById('kflower').innerHTML = f;
+}
+buildKaleido();
+buildTicks();
+setYear(5);
+renderComm(0);
+</script>
+</body>
+</html>
