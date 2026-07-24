@@ -5,6 +5,7 @@ import SwiftUI
 // hero（头像 / 徽章 / 转型条 / 标签 / 编辑）→ 4 tab：动态画像 / 我的故事 / 经验与建议 / 提供服务。
 
 struct MeView: View {
+    @Environment(SupabaseService.self) private var supabase
     @State private var store = MyProfileStore()
     @State private var editMode: MeEditMode?
     /// 编辑保存后刷新画像 item（依赖 UserDefaults 的部分）
@@ -24,6 +25,10 @@ struct MeView: View {
         }
         .scrollIndicators(.hidden)
         .screenBackground()
+        .task {
+            // 真实优先 + 静默兜底：本地缓存已先渲染，这里拉云端 public_profile 合并刷新
+            await store.syncFromRemote(using: supabase)
+        }
         .fullScreenCover(item: $editMode, onDismiss: { tick += 1 }) { mode in
             MeEditView(store: store, mode: mode)
         }
@@ -412,6 +417,7 @@ struct MeTimeline: View {
 
 #Preview {
     MeView()
+        .environment(SupabaseService())
         .environment(ToastCenter())
         .preferredColorScheme(.dark)
 }

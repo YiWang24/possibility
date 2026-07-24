@@ -237,7 +237,8 @@ struct PortraitCard: View {
 
     // 数字形象舞台：画像驱动的 Canvas 抽象形态（原型 .digital-human-stage）
     private var digitalHumanStage: some View {
-        PersonaStageView(model: model.personaModel, userName: model.userName, paused: animationPaused)
+        PersonaStageView(model: model.personaModel, userName: model.userName,
+                         summary: model.personaSummary, paused: animationPaused)
             .padding(.horizontal, -20)   // 贴卡横向出血（原型 margin:0 -20px）
             .padding(.top, -22)
     }

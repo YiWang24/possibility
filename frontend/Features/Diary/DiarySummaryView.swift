@@ -1,18 +1,27 @@
 import SwiftUI
 
 // MARK: - 月度 / 年度总结视图（原型 renderDiarySummary）
+//
+// 真实优先：diary-summary（entry_count / top_emotions / top_keywords / insight / highlights）
+// 渲染到现有 UI 结构；未加载 / 失败回退硬编码 demo 文案。
 
 struct DiarySummaryView: View {
     @Bindable var model: DiaryModel
     let isMonth: Bool
     @Environment(ToastCenter.self) private var toast
+    @Environment(SupabaseService.self) private var supabase
+
+    /// 当前 tab 对应的云端总结
+    private var remote: DiarySummaryResponse? {
+        isMonth ? model.monthSummary : model.yearSummary
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             DiaryViewHead(
                 eyebrow: isMonth ? "MONTHLY REVIEW" : "YEARLY REVIEW",
-                title: isMonth ? "2026年7月" : "2026年度",
-                subtitle: isMonth ? "\(model.entries.count)篇日记已纳入总结" : "143篇日记已纳入总结",
+                title: titleText,
+                subtitle: subtitleText,
                 trailing: { AnyView(refreshButton) }
             )
 
@@ -20,16 +29,34 @@ struct DiarySummaryView: View {
         }
     }
 
-    // MARK: 更新总结（850ms 假加载）
+    /// "2026-07" → "2026年7月"；年 → "2026年度"
+    private var titleText: String {
+        if isMonth {
+            let ref = remote?.ref ?? DiaryModel.currentMonthRef
+            let parts = ref.split(separator: "-")
+            if parts.count == 2, let month = Int(parts[1]) {
+                return "\(parts[0])年\(month)月"
+            }
+            return "2026年7月"
+        }
+        return "\(remote?.ref ?? DiaryModel.currentYearRef)年度"
+    }
+
+    private var subtitleText: String {
+        if let remote { return "\(remote.entryCount)篇日记已纳入总结" }
+        return isMonth ? "\(model.entries.count)篇日记已纳入总结" : "143篇日记已纳入总结"
+    }
+
+    // MARK: 更新总结（真实重新拉取 diary-summary）
 
     private var refreshButton: some View {
         Button {
             guard !model.refreshing else { return }
-            model.refreshing = true
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(850))
-                model.refreshing = false
-                toast.show(isMonth ? "月度总结已根据最新日记更新" : "年度总结已根据最新日记更新")
+            Task {
+                let ok = await model.refreshSummary(isMonth: isMonth, using: supabase)
+                toast.show(ok
+                    ? (isMonth ? "月度总结已根据最新日记更新" : "年度总结已根据最新日记更新")
+                    : "暂时无法更新总结，展示最近内容")
             }
         } label: {
             Text(model.refreshing ? "总结中…" : "更新总结")
@@ -45,6 +72,51 @@ struct DiarySummaryView: View {
     // MARK: 月度
 
     private var monthContent: some View {
+        Group {
+            if let summary = model.monthSummary {
+                remoteMonthContent(summary)
+            } else {
+                fallbackMonthContent
+            }
+        }
+    }
+
+    private func remoteMonthContent(_ s: DiarySummaryResponse) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            summaryHero(cap: "MONTH IN VOICE · \(titleText)",
+                        headline: "这个月的声音\n汇成了一段属于你的洞察",
+                        body: s.insight,
+                        stats: [
+                            DiaryData.Stat(value: "\(s.entryCount)", label: "纳入日记"),
+                            DiaryData.Stat(value: "\(s.topEmotions.count)", label: "情绪主题"),
+                            DiaryData.Stat(value: "\(s.topKeywords.count)", label: "高频关键词"),
+                        ])
+                .padding(.top, 15)
+
+            if !s.topEmotions.isEmpty {
+                summaryCard {
+                    DiaryBlockHead(title: "本月情绪光谱", note: "按出现频次排序")
+                    DiaryKeywordFlow(items: s.topEmotions.map { "# \($0)" }).padding(.top, 12)
+                }
+            }
+
+            if !s.topKeywords.isEmpty {
+                summaryCard {
+                    DiaryBlockHead(title: "反复出现的主题", note: "跨 \(s.entryCount) 篇日记")
+                    DiaryKeywordFlow(items: s.topKeywords.map { "# \($0)" }).padding(.top, 12)
+                }
+            }
+
+            if !s.highlights.isEmpty {
+                summaryCard {
+                    DiaryBlockHead(title: "本月高光片段", note: "AI 从日记中提取")
+                    highlightList(s.highlights).padding(.top, 13)
+                }
+            }
+        }
+    }
+
+    private var fallbackMonthContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             summaryHero(cap: DiaryData.MonthSummary.cap,
                         headline: DiaryData.MonthSummary.headline,
@@ -91,6 +163,51 @@ struct DiarySummaryView: View {
     // MARK: 年度
 
     private var yearContent: some View {
+        Group {
+            if let summary = model.yearSummary {
+                remoteYearContent(summary)
+            } else {
+                fallbackYearContent
+            }
+        }
+    }
+
+    private func remoteYearContent(_ s: DiarySummaryResponse) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            summaryHero(cap: "YOUR \(s.ref) · 年度声音",
+                        headline: "这一年的声音\n汇成了一段属于你的回望",
+                        body: s.insight,
+                        stats: [
+                            DiaryData.Stat(value: "\(s.entryCount)", label: "纳入日记"),
+                            DiaryData.Stat(value: "\(s.topEmotions.count)", label: "情绪主题"),
+                            DiaryData.Stat(value: "\(s.topKeywords.count)", label: "高频关键词"),
+                        ])
+                .padding(.top, 15)
+
+            if !s.topKeywords.isEmpty {
+                summaryCard {
+                    DiaryBlockHead(title: "年度关键词", note: "按出现与情绪权重排序")
+                    DiaryKeywordFlow(items: s.topKeywords.map { "# \($0)" }).padding(.top, 12)
+                }
+            }
+
+            if !s.topEmotions.isEmpty {
+                summaryCard {
+                    DiaryBlockHead(title: "年度情绪底色", note: "按出现频次排序")
+                    DiaryKeywordFlow(items: s.topEmotions.map { "# \($0)" }).padding(.top, 12)
+                }
+            }
+
+            if !s.highlights.isEmpty {
+                summaryCard {
+                    DiaryBlockHead(title: "这一年的高光时刻", note: "AI 年度回望")
+                    highlightList(s.highlights).padding(.top, 13)
+                }
+            }
+        }
+    }
+
+    private var fallbackYearContent: some View {
         VStack(alignment: .leading, spacing: 14) {
             summaryHero(cap: DiaryData.YearSummary.cap,
                         headline: DiaryData.YearSummary.headline,
@@ -113,6 +230,28 @@ struct DiarySummaryView: View {
                 insightCard(DiaryData.YearSummary.letter).padding(.top, 13)
             }
         }
+    }
+
+    /// 高光片段列表（发光圆点 + 文本，观感对齐 .diary-year-line 节点）
+    private func highlightList(_ items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(Array(items.enumerated()), id: \.offset) { _, text in
+                HStack(alignment: .top, spacing: 10) {
+                    Circle()
+                        .fill(Color(hex: 0x8F7BFF))
+                        .frame(width: 6, height: 6)
+                        .shadow(color: Color(hex: 0x8F7BFF, alpha: 0.6), radius: 4)
+                        .padding(.top, 5)
+                    Text(text)
+                        .font(.system(size: 11.5)).lineSpacing(6).foregroundStyle(Theme.sub)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(13)
+        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .strokeBorder(.white.opacity(0.06), lineWidth: 1))
     }
 
     /// 年度时间轴（.diary-year-line：左竖线 + 发光节点）

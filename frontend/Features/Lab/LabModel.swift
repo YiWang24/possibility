@@ -3,7 +3,9 @@ import Observation
 
 // MARK: - 人生实验室视图模型（技术设计文档 §9.2）
 //
-// 转盘设年限 + 选择卡 → POST /simulate → {general, optimistic, cautionary} 三种结局。
+// POST /lab-choices 按问题生成动态选择卡（内置 4 张为兜底）。
+// 转盘设年限 + 选择卡 (+ 底线卡 carry_cards) → POST /simulate →
+// {general, optimistic, cautionary} 三结局 + bottom_line_analysis + recommended_traveler_ids。
 // 现场抖动回退 canned scenarios（§13）。
 
 @Observable
@@ -16,6 +18,8 @@ final class LabModel {
         let name: String
         let desc: String
         var isCustom: Bool = false
+        /// LLM 卡的 CSS 颜色（#RRGGBB / rgba(...)）；nil 走默认卡面视觉
+        var color: String? = nil
     }
 
     var question = ExploreTopic.career.sampleQuestion
@@ -41,7 +45,16 @@ final class LabModel {
     private(set) var customChoices: [Choice] = []
     private static let customStoreKey = "kaleido_custom_choices_v1"
 
-    var choices: [Choice] { Self.builtinChoices + customChoices }
+    /// LLM 动态选择卡（POST /lab-choices）；nil = 未生成，回退内置卡组
+    private(set) var remoteChoices: [Choice]?
+    /// 动态卡请求中（扇形卡区展示加载指示）
+    private(set) var choicesLoading = false
+    /// 已成功生成动态卡的问题（避免同一问题重复请求）
+    private var loadedChoicesQuestion: String?
+    /// 请求代际：问题更换后丢弃过期响应
+    private var choicesRequestID = 0
+
+    var choices: [Choice] { (remoteChoices ?? Self.builtinChoices) + customChoices }
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.customStoreKey),
@@ -69,6 +82,48 @@ final class LabModel {
         if let data = try? JSONEncoder().encode(customChoices) {
             UserDefaults.standard.set(data, forKey: Self.customStoreKey)
         }
+    }
+
+    // MARK: 动态选择卡（POST /lab-choices，真实优先 + 静默兜底）
+
+    /// 按当前问题生成动态选择卡；15s 超时或失败时静默保留内置卡组。
+    func loadChoices(supabase: SupabaseService) async {
+        let q = question
+        if loadedChoicesQuestion == q, remoteChoices != nil { return }
+
+        choicesRequestID += 1
+        let requestID = choicesRequestID
+        choicesLoading = true
+
+        let fetch = Task { try await supabase.labChoices(question: q) }
+        let watchdog = Task {
+            try? await Task.sleep(for: .seconds(15))
+            fetch.cancel()
+        }
+        let response = try? await fetch.value
+        watchdog.cancel()
+
+        // 已有更新的请求在跑：本次结果整体作废（loading 由新请求收尾）
+        guard requestID == choicesRequestID else { return }
+        choicesLoading = false
+        // 问题已更换或请求失败/超时：静默兜底，不打扰用户
+        guard q == question, let cards = response?.cards, !cards.isEmpty else { return }
+
+        var seen = Set(customChoices.map(\.name))
+        var mapped: [Choice] = []
+        for card in cards {
+            let name = String(card.title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(18))
+            let desc = String(card.description.trimmingCharacters(in: .whitespacesAndNewlines).prefix(42))
+            guard !name.isEmpty, !desc.isEmpty, seen.insert(name).inserted else { continue }
+            mapped.append(Choice(emoji: card.glyph.isEmpty ? "✦" : card.glyph,
+                                 name: name, desc: desc, color: card.color))
+        }
+        guard !mapped.isEmpty else { return }
+
+        remoteChoices = mapped
+        loadedChoicesQuestion = q
+        // 旧卡被替换后，失效的选中态清空
+        if let picked = pick, !choices.contains(where: { $0.name == picked }) { pick = nil }
     }
 
     static let loadSteps = ["读取你的动态画像……", "匹配 1,842 位相似旅人的经历……", "折出三种可能的未来……"]
@@ -139,30 +194,44 @@ final class LabModel {
 
     // MARK: 推演
 
+    /// 最近一次推演返回的底线分析（nil = 服务端未返回，Result 页不展示该区块）
+    private(set) var bottomLine: SimulationResult.BottomLineAnalysis?
+
     func runSim(supabase: SupabaseService) async {
         guard let pick, !loading else { return }
         loading = true
         loadStep = 0
 
         // 加载步骤动画与网络请求并行；保证最短展示时长，节奏稳
-        async let scenarios: Simulation.Scenarios = fetchScenarios(pick: pick, supabase: supabase)
+        async let simulation: SimulationResult? = fetchSimulation(pick: pick, supabase: supabase)
         async let _: Void = runLoadingSteps()
-        let resolved = await scenarios
+        let remote = await simulation
 
+        bottomLine = remote?.bottomLineAnalysis
+        let scenarios = remote?.scenarios ?? Self.cannedScenarios(choice: pick, years: year)
+
+        // 相似旅人：优先用服务端 recommended_traveler_ids，空/无效时回退本地筛选
         let pool = supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
-        let people = Array(pool.filter { $0.isSimilar }.prefix(3))
+        var people: [Traveler] = []
+        if let ids = remote?.recommendedTravelerIds, !ids.isEmpty {
+            people = ids.compactMap { id in pool.first { $0.id == id } }
+        }
+        if people.isEmpty {
+            people = Array(pool.filter { $0.isSimilar }.prefix(3))
+        }
+        if people.isEmpty { people = Array(pool.prefix(3)) }
 
         result = SimResultData(question: question, choice: pick, years: year,
-                               scenarios: resolved, people: people.isEmpty ? Array(pool.prefix(3)) : people,
+                               scenarios: scenarios, people: people,
                                carry: carry)
         loading = false
     }
 
-    private func fetchScenarios(pick: String, supabase: SupabaseService) async -> Simulation.Scenarios {
-        if let remote = try? await supabase.simulate(question: question, choice: pick, years: year) {
-            return remote
-        }
-        return Self.cannedScenarios(choice: pick, years: year)
+    private func fetchSimulation(pick: String, supabase: SupabaseService) async -> SimulationResult? {
+        // 底线卡以卡名传给 LLM（服务端直接拼进 prompt）
+        let carryNames = carry.compactMap { Self.carryCard($0)?.name }
+        return try? await supabase.simulateFull(question: question, choice: pick, years: year,
+                                                carryCards: carryNames.isEmpty ? nil : carryNames)
     }
 
     private func runLoadingSteps() async {

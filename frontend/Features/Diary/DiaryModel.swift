@@ -23,7 +23,7 @@ final class DiaryModel {
     var view: ViewKind = .day
     var selectedDate: String
     var isPlaying = false
-    /// 「更新总结」假加载中
+    /// 「更新总结」加载中（真实重新拉取 diary-summary）
     var refreshing = false
 
     /// 今天是否已录音（由首页 HomeModel.analysis 推导传入）
@@ -31,6 +31,10 @@ final class DiaryModel {
 
     /// 云端真实日记（list-diary，按日期覆盖 demo 底座）
     private var remoteNotes: [DiaryNote] = []
+
+    /// 云端月/年总结（diary-summary）；nil = 未加载 / 失败（视图回退硬编码 demo）
+    private(set) var monthSummary: DiarySummaryResponse?
+    private(set) var yearSummary: DiarySummaryResponse?
 
     init(launch: DiaryLaunch, hasRecordedToday: Bool) {
         self.hasRecordedToday = hasRecordedToday
@@ -48,6 +52,47 @@ final class DiaryModel {
     func loadRemote(using supabase: SupabaseService) async {
         guard let rows = try? await supabase.listDiary() else { return }
         remoteNotes = rows.compactMap(Self.note(from:))
+    }
+
+    // MARK: 月/年总结（diary-summary 真实聚合，失败回退硬编码 demo）
+
+    /// 当前月 ref："2026-07"
+    static var currentMonthRef: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy-MM"
+        return f.string(from: Date())
+    }
+
+    /// 当前年 ref："2026"
+    static var currentYearRef: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy"
+        return f.string(from: Date())
+    }
+
+    /// 并发拉取月 + 年总结（冷启动调用；任一失败静默保留兜底）
+    func loadSummaries(using supabase: SupabaseService) async {
+        async let month = try? supabase.diarySummary(period: "month", ref: Self.currentMonthRef)
+        async let year = try? supabase.diarySummary(period: "year", ref: Self.currentYearRef)
+        if let m = await month { monthSummary = m }
+        if let y = await year { yearSummary = y }
+    }
+
+    /// 「更新总结」：重新拉取对应周期；返回是否成功（供 toast 提示）
+    func refreshSummary(isMonth: Bool, using supabase: SupabaseService) async -> Bool {
+        guard !refreshing else { return false }
+        refreshing = true
+        defer { refreshing = false }
+        if isMonth {
+            guard let m = try? await supabase.diarySummary(period: "month", ref: Self.currentMonthRef) else { return false }
+            monthSummary = m
+        } else {
+            guard let y = try? await supabase.diarySummary(period: "year", ref: Self.currentYearRef) else { return false }
+            yearSummary = y
+        }
+        return true
     }
 
     /// 远端行 → DiaryNote（真实表无标题 / emoji / 时长等富字段，做合理降级）

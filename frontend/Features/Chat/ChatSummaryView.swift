@@ -2,11 +2,16 @@ import SwiftUI
 
 // MARK: - 下一步面板（原型 .chat-next-panel）
 //
-// 「信息已经足够 · 选择下一步」：去人生实验室（primary 跨两列）/ 看相似经历 /
+// 「信息已经足够 · 选择下一步」：去人生实验室（primary 跨两列）/ 看走过这条路的人
+// （/match 命中时展示 3 位旅人卡，点击进主页；失败回退「看相似经历」切 Tab）/
 // 分享这次探索（系统分享）+ 可选「先查看完整总结 →」链接。
 
 struct ChatNextPanel: View {
     var showSummaryLink: Bool
+    /// /match 命中的旅人（空 = 未命中/失败 → 回退「看相似经历」按钮）
+    var matchedTravelers: [Traveler] = []
+    /// traveler_id → 推荐理由
+    var matchReasons: [Int: String] = [:]
     var onGoLab: () -> Void
     var onGoSimilar: () -> Void
     var shareText: String
@@ -32,24 +37,39 @@ struct ChatNextPanel: View {
             .buttonStyle(PressScaleStyle())
             .padding(.top, 11)
 
-            HStack(spacing: 8) {
-                Button(action: onGoSimilar) {
-                    pathLabel(icon: "⌁", title: "看相似经历", note: "去社区找走过这段路的人")
-                        .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(Theme.line, lineWidth: 1))
-                }
-                .buttonStyle(PressScaleStyle())
+            if matchedTravelers.isEmpty {
+                HStack(spacing: 8) {
+                    Button(action: onGoSimilar) {
+                        pathLabel(icon: "⌁", title: "看相似经历", note: "去社区找走过这段路的人")
+                            .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(Theme.line, lineWidth: 1))
+                    }
+                    .buttonStyle(PressScaleStyle())
 
-                ShareLink(item: shareText) {
-                    pathLabel(icon: "↗", title: "分享这次探索", note: "发给一个你信任的人")
-                        .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(Theme.line, lineWidth: 1))
+                    shareCell
                 }
-                .buttonStyle(PressScaleStyle())
+                .padding(.top, 8)
+            } else {
+                // /match 命中：看看走过这条路的人（点击旅人卡 → 旅人主页）
+                Text("看看走过这条路的人")
+                    .font(.system(size: 9)).tracking(1.6).foregroundStyle(Color(hex: 0x91B1FF))
+                    .padding(.top, 13)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(matchedTravelers) { t in
+                            TravelerProfileLink(travelerId: t.id) {
+                                SimCard(traveler: t, reason: matchReasons[t.id])
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                .padding(.top, 7)
+
+                shareCell
+                    .padding(.top, 8)
             }
-            .padding(.top, 8)
 
             if showSummaryLink {
                 Button("先查看完整总结 →", action: onOpenSummary)
@@ -67,6 +87,17 @@ struct ChatNextPanel: View {
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
             .strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.2), lineWidth: 1))
         .transition(.opacity)
+    }
+
+    /// 分享这次探索（系统分享）
+    private var shareCell: some View {
+        ShareLink(item: shareText) {
+            pathLabel(icon: "↗", title: "分享这次探索", note: "发给一个你信任的人")
+                .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Theme.line, lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
     }
 
     private func pathLabel(icon: String, title: String, note: String) -> some View {
@@ -113,6 +144,8 @@ struct ChatSummaryView: View {
                          body: "未来 7 天，做一次成本很低、可以撤回的小尝试。记录行动前后的期待、精力和抗拒，再判断你是\u{201C}不想要\u{201D}，还是\u{201C}暂时承担不起\u{201D}。",
                          accent: Color(hex: 0x3ED9A4, alpha: 0.25))
                     ChatNextPanel(showSummaryLink: false,
+                                  matchedTravelers: model.matchedTravelers,
+                                  matchReasons: model.matchReasons,
                                   onGoLab: onGoLab, onGoSimilar: onGoSimilar,
                                   shareText: model.shareText)
                         .padding(.top, 2)
@@ -148,9 +181,9 @@ struct ChatSummaryView: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("\(model.launch.topic?.rawValue ?? "此刻的选择") · EXPLORATION NOTE")
+            Text("\(model.displayTopic ?? "此刻的选择") · EXPLORATION NOTE")
                 .font(.system(size: 10)).tracking(2).foregroundStyle(Color(hex: 0x91B1FF))
-            Text(model.launch.question)
+            Text(model.displayQuestion)
                 .font(.system(size: 22, weight: .bold)).lineSpacing(7).foregroundStyle(Theme.ink)
                 .padding(.top, 10)
             Text("这份总结来自刚才的对话，只记录你此刻认可的理解，不替你下结论。")

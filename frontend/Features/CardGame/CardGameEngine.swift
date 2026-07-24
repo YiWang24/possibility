@@ -175,6 +175,7 @@ final class CardGameEngine {
     // MARK: 结果保存
 
     /// 保存结果：life 写人生底牌签名，其余写画像维度。返回写入的关键词。
+    /// 本地写入后异步整局上云（save_card_game），失败静默（本地已存）。
     func saveResult(home: HomeModel, supabase: SupabaseService?) -> [String] {
         let cards = heldCards
         let tags = cards.map(\.name)
@@ -187,7 +188,37 @@ final class CardGameEngine {
         } else if let key = config.kind.targetDimension {
             home.saveDimension(key, keywords: tags, using: supabase)
         }
+        CardGameLocalRecord.markDone(config.kind)
+        uploadResult(cards: cards, using: supabase)
         return tags
+    }
+
+    /// 整局结果上云：kind + 最终 3 张底牌 + 轮次 + 接受/交换记录。
+    /// 真实优先 + 静默兜底：无 supabase 或请求失败都不打扰用户（本地已保存）。
+    private func uploadResult(cards: [GameCard], using supabase: SupabaseService?) {
+        guard let supabase else { return }
+        let kind = config.kind.rawValue
+        let rounds = round
+        let finalCards = cards.map {
+            CardGameCardPayload(id: $0.id, name: $0.name, glyph: $0.glyph, group: $0.group)
+        }
+        let acceptedEvents = accepted.map {
+            CardGameAcceptedEvent(scenario: $0.scenario.title, severity: $0.severity)
+        }
+        let tradedEvents = traded.map { entry in
+            CardGameTradedEvent(
+                scenario: entry.scenario.title,
+                ids: entry.ids,
+                reasons: [entry.cannotAccept, entry.abandon].filter { !$0.isEmpty })
+        }
+        Task {
+            try? await supabase.saveCardGameRemote(
+                kind: kind,
+                finalCards: finalCards,
+                rounds: rounds,
+                accepted: acceptedEvents,
+                traded: tradedEvents)
+        }
     }
 
     // MARK: 结果分析
@@ -359,5 +390,25 @@ final class CardGameEngine {
             spectrum: spectrum, voiceQuotes: voiceQuotes, reasonInsight: reasonInsight,
             hiddenTraits: hiddenTraits,
             acceptedCount: accepted.count, tradedCount: traded.count)
+    }
+}
+
+// MARK: - 本地完成标记（各 kind 是否已完成一局；云端回读/结算共用）
+
+enum CardGameLocalRecord {
+    private static func doneKey(_ kind: CardGameKind) -> String {
+        "kaleido_cardgame_done_\(kind.rawValue)"
+    }
+
+    static func isDone(_ kind: CardGameKind) -> Bool {
+        UserDefaults.standard.bool(forKey: doneKey(kind))
+    }
+
+    static func markDone(_ kind: CardGameKind) {
+        UserDefaults.standard.set(true, forKey: doneKey(kind))
+    }
+
+    static var doneKinds: Set<CardGameKind> {
+        Set(CardGameKind.allCases.filter(isDone))
     }
 }

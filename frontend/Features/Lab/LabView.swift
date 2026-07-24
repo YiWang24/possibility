@@ -55,9 +55,11 @@ struct LabView: View {
         .screenBackground()
         .sensoryFeedback(.success, trigger: model.pick)
         .overlay { if model.loading { SimLoadingOverlay(name: model.pick ?? "", step: model.loadStep) } }
-        .fullScreenCover(item: $model.result) { ResultView(data: $0) }
+        .fullScreenCover(item: $model.result) { ResultView(data: $0, bottomLine: model.bottomLine) }
         .onAppear { consumePendingQuestion() }
         .onChange(of: router.pendingLabQuestion) { consumePendingQuestion() }
+        // 问题变化（含编辑、对话跳转带入）即按新问题生成动态选择卡；失败静默回退内置卡组
+        .task(id: model.question) { await model.loadChoices(supabase: supabase) }
     }
 
     /// 消费对话「去人生实验室」带来的问题
@@ -163,9 +165,24 @@ struct LabView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "我的选择卡", trailing: "点选或拖进上方转盘")
             gestureHint
+            if model.choicesLoading { choicesLoadingHint }
             if showCustomEditor { customEditor }
             choiceDeck
         }
+        .animation(.easeOut(duration: 0.22), value: model.choicesLoading)
+    }
+
+    /// 动态卡生成中的加载指示（沿用 gestureHint 的胶囊风格；卡堆保持可交互）
+    private var choicesLoadingHint: some View {
+        HStack(spacing: 8) {
+            ProgressView().controlSize(.mini).tint(Theme.blue)
+            Text("正在根据当前问题生成专属选择卡……")
+                .font(.system(size: 10)).foregroundStyle(Theme.sub)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 6)
+        .background(Color(hex: 0x5E96FF, alpha: 0.08), in: Capsule())
+        .overlay(Capsule().strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.22), lineWidth: 1))
+        .transition(.opacity)
     }
 
     /// 原型 .choice-gesture-hint
@@ -207,6 +224,8 @@ struct LabView: View {
         .frame(maxWidth: .infinity)
         .frame(height: total > 7 ? 194 : 178)
         .padding(.top, 6)
+        // 动态卡替换内置卡时平滑重排扇形
+        .animation(.spring(response: 0.5, dampingFraction: 0.72), value: model.choices)
         .onAppear {
             guard !fanned else { return }
             withAnimation(.spring(response: 0.55, dampingFraction: 0.62).delay(0.25)) { fanned = true }
@@ -436,14 +455,19 @@ private struct ChoiceCardBody: View {
     let choice: LabModel.Choice
     let isOn: Bool
 
-    /// 自定义卡右上光斑偏品红（原型 --stamp-glow 交替）
+    /// LLM 卡自带 CSS 颜色 → 卡面点缀色；解析失败回默认视觉
+    private var accent: Color? { Color(css: choice.color) }
+
+    /// 自定义卡右上光斑偏品红（原型 --stamp-glow 交替）；LLM 卡用其 color
     private var stampGlow: Color {
-        choice.isCustom ? Color(hex: 0xE35CC1, alpha: 0.18) : Color(hex: 0x5E96FF, alpha: 0.16)
+        if let accent { return accent.opacity(0.17) }
+        return choice.isCustom ? Color(hex: 0xE35CC1, alpha: 0.18) : Color(hex: 0x5E96FF, alpha: 0.16)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(choice.emoji).font(.system(size: 19))
+                .foregroundStyle(accent ?? Theme.ink)
             Text(choice.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 .lineSpacing(3).padding(.top, 10)
             Text(choice.desc).font(.system(size: 10.5)).foregroundStyle(Theme.sub).lineSpacing(2).padding(.top, 6)
@@ -482,6 +506,44 @@ private struct ChoiceCardBody: View {
         }
         .shadow(color: isOn ? Color(hex: 0x4F7DFF, alpha: 0.5) : .black.opacity(0.5),
                 radius: isOn ? 12 : 6, y: isOn ? 8 : 3)
+    }
+}
+
+// MARK: - LLM CSS 颜色解析（#RGB / #RRGGBB / #RRGGBBAA / rgb() / rgba()）
+
+private extension Color {
+    /// lab-choices 卡片 color 字段 → Color；无法解析返回 nil，卡面走默认视觉
+    init?(css raw: String?) {
+        guard var s = raw?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+              !s.isEmpty else { return nil }
+        if s.hasPrefix("#") {
+            s.removeFirst()
+            if s.count == 3 { s = s.map { "\($0)\($0)" }.joined() }
+            guard s.count == 6 || s.count == 8, let v = UInt64(s, radix: 16) else { return nil }
+            if s.count == 8 {
+                self = Color(red: Double((v >> 24) & 0xFF) / 255,
+                             green: Double((v >> 16) & 0xFF) / 255,
+                             blue: Double((v >> 8) & 0xFF) / 255,
+                             opacity: Double(v & 0xFF) / 255)
+            } else {
+                self = Color(red: Double((v >> 16) & 0xFF) / 255,
+                             green: Double((v >> 8) & 0xFF) / 255,
+                             blue: Double(v & 0xFF) / 255)
+            }
+            return
+        }
+        guard s.hasPrefix("rgb"),
+              let open = s.firstIndex(of: "("),
+              let close = s.lastIndex(of: ")"), open < close else { return nil }
+        let numbers = s[s.index(after: open)..<close]
+            .split(whereSeparator: { !"0123456789.".contains($0) })
+            .compactMap { Double($0) }
+        guard numbers.count >= 3 else { return nil }
+        let alpha = numbers.count >= 4 ? min(max(numbers[3] > 1 ? numbers[3] / 255 : numbers[3], 0), 1) : 1
+        self = Color(red: min(numbers[0], 255) / 255,
+                     green: min(numbers[1], 255) / 255,
+                     blue: min(numbers[2], 255) / 255,
+                     opacity: alpha)
     }
 }
 

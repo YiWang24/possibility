@@ -35,6 +35,7 @@ struct HomeView: View {
         .scrollIndicators(.hidden)
         .screenBackground()
         .onAppear { model.loadPortrait(using: supabase) }
+        .task { await model.loadDiaryOverview(using: supabase) }
         .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0) }
         .fullScreenCover(item: $diaryLaunch) { launch in
             DiaryDetailView(
@@ -147,7 +148,7 @@ private struct DiaryCard: View {
     var onOpenDiary: (String?) -> Void
     @Environment(SupabaseService.self) private var supabase
 
-    /// 对齐原型：7/17–7/22（五~三）+ 今天 7/23
+    /// 兜底周历（对齐原型 7/17–7/22；list-diary 加载失败时展示）
     private static let week: [(String, String, String)] = [
         ("🙂", "五", "2026-07-17"), ("😮‍💨", "六", "2026-07-18"), ("😊", "日", "2026-07-19"),
         ("😐", "一", "2026-07-20"), ("🙂", "二", "2026-07-21"), ("😌", "三", "2026-07-22"),
@@ -194,15 +195,29 @@ private struct DiaryCard: View {
 
     private var weekRow: some View {
         HStack {
-            ForEach(Self.week.indices, id: \.self) { i in
-                Button { onOpenDiary(Self.week[i].2) } label: {
-                    dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
+            // 真实周历（list-diary 聚合最近 7 天）优先；未加载 / 失败走硬编码兜底
+            if let cells = model.weekCells {
+                ForEach(cells) { cell in
+                    Button { onOpenDiary(cell.date) } label: {
+                        dayCell(emoji: cell.emoji, label: cell.label, filled: cell.filled, today: false)
+                    }
+                    .buttonStyle(PressScaleStyle())
+                    Spacer()
                 }
-                .buttonStyle(PressScaleStyle())
-                Spacer()
+            } else {
+                ForEach(Self.week.indices, id: \.self) { i in
+                    Button { onOpenDiary(Self.week[i].2) } label: {
+                        dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
+                    }
+                    .buttonStyle(PressScaleStyle())
+                    Spacer()
+                }
             }
-            Button { onOpenDiary("2026-07-23") } label: {
-                dayCell(emoji: model.analysis != nil ? "🙂" : "", label: "今天", filled: model.analysis != nil, today: true)
+            Button { onOpenDiary(model.diaryTodayDate) } label: {
+                dayCell(emoji: model.analysis != nil ? "🙂" : (model.todayEmoji ?? ""),
+                        label: "今天",
+                        filled: model.analysis != nil || model.todayEmoji != nil,
+                        today: true)
             }
             .buttonStyle(PressScaleStyle())
         }
@@ -257,7 +272,7 @@ private struct DiaryCard: View {
             Divider().overlay(Theme.line)
             Text("这次记录里，我听见了").font(.system(size: 11)).foregroundStyle(Theme.faint)
             FlowChips(items: analysis.emotions.map { .emotion($0) } + analysis.keywords.map { .keyword($0) })
-            Button("查看详情 ›") { onOpenDiary("2026-07-23") }
+            Button("查看详情 ›") { onOpenDiary(model.diaryTodayDate) }
                 .font(.system(size: 11)).foregroundStyle(Theme.blue)
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity, alignment: .trailing)

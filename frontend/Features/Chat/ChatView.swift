@@ -25,6 +25,10 @@ struct ChatView: View {
         .background(Theme.paper.ignoresSafeArea())
         .overlay(ToastHost(message: toast.message))
         .task { await model.start(supabase: supabase) }
+        .task { await model.loadHistory(supabase: supabase) }
+        .sheet(isPresented: $model.showHistory) {
+            ChatHistorySheet(model: model)
+        }
         .sheet(isPresented: $model.showSummary) {
             ChatSummaryView(model: model, onGoLab: goLab, onGoSimilar: goSimilar) {
                 // 完成本次探索：关总结 + 关对话
@@ -38,7 +42,7 @@ struct ChatView: View {
     // MARK: 下一步路径（去实验室 / 看相似经历）
 
     private func goLab() {
-        router.pendingLabQuestion = launch.question
+        router.pendingLabQuestion = model.displayQuestion
         router.tab = .lab
         model.showSummary = false
         dismiss()
@@ -58,10 +62,24 @@ struct ChatView: View {
         HStack(spacing: 13) {
             BackButton { dismiss() }
             VStack(alignment: .leading, spacing: 2) {
-                Text(launch.topic.map { "探索 · \($0.rawValue)" } ?? "探索问题").font(.system(size: 16, weight: .semibold)).tracking(0.8)
+                Text(model.displayTopic.map { "探索 · \($0)" } ?? "探索问题").font(.system(size: 16, weight: .semibold)).tracking(0.8)
                 Text("和你的动态画像一起想清楚").font(.system(size: 11)).foregroundStyle(Theme.faint)
             }
             Spacer()
+            if !model.historyEntries.isEmpty {
+                Button {
+                    inputFocused = false
+                    model.showHistory = true
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath").font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .frame(width: 36, height: 36)
+                        .background(Theme.raised, in: Circle())
+                        .overlay(Circle().strokeBorder(Theme.line, lineWidth: 1))
+                }
+                .buttonStyle(PressScaleStyle())
+                .accessibilityLabel("历史探索")
+            }
         }
         .foregroundStyle(Theme.ink)
         .padding(.horizontal, 22).padding(.top, 12).padding(.bottom, 12)
@@ -86,6 +104,8 @@ struct ChatView: View {
                     if model.showActionChips { actionChips }
                     if model.showNextPanel {
                         ChatNextPanel(showSummaryLink: true,
+                                      matchedTravelers: model.matchedTravelers,
+                                      matchReasons: model.matchReasons,
                                       onGoLab: goLab, onGoSimilar: goSimilar,
                                       shareText: model.shareText,
                                       onOpenSummary: { model.showSummary = true })
@@ -153,12 +173,12 @@ struct ChatView: View {
 
     private var actionChips: some View {
         HStack(spacing: 9) {
-            Button(model.confirmLabel) { inputFocused = false; model.confirmInsight() }
+            Button(model.confirmLabel) { inputFocused = false; model.confirmInsight(supabase: supabase) }
                 .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white)
                 .padding(.horizontal, 16).padding(.vertical, 9)
                 .background(Theme.buttonGradient, in: Capsule())
                 .buttonStyle(PressScaleStyle())
-            Button(model.correctLabel) { model.requestCorrection() }
+            Button(model.correctLabel) { model.requestCorrection(supabase: supabase) }
                 .font(.system(size: 12.5)).foregroundStyle(Theme.sub)
                 .padding(.horizontal, 16).padding(.vertical, 9)
                 .background(Theme.raised, in: Capsule())
@@ -217,6 +237,101 @@ struct ChatView: View {
             topTrailingRadius: 20,
             style: .continuous
         )
+    }
+}
+
+// MARK: - 历史探索列表（listConversations → loadMessages 恢复续聊）
+
+private struct ChatHistorySheet: View {
+    let model: ChatModel
+
+    @Environment(SupabaseService.self) private var supabase
+    @State private var restoringId: UUID?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(model.historyEntries) { convo in
+                        Button {
+                            guard restoringId == nil else { return }
+                            restoringId = convo.id
+                            Task {
+                                await model.restore(convo, supabase: supabase)
+                                restoringId = nil
+                            }
+                        } label: {
+                            row(convo)
+                        }
+                        .buttonStyle(PressScaleStyle())
+                    }
+                }
+                .padding(.horizontal, 20).padding(.top, 6).padding(.bottom, 20)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .background(Theme.paper.ignoresSafeArea())
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private var header: some View {
+        HStack(spacing: 13) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("历史探索").font(.system(size: 16, weight: .semibold)).tracking(0.8)
+                Text("选一段继续想下去").font(.system(size: 11)).foregroundStyle(Theme.faint)
+            }
+            Spacer()
+        }
+        .foregroundStyle(Theme.ink)
+        .padding(.horizontal, 22).padding(.top, 20).padding(.bottom, 12)
+    }
+
+    private func row(_ convo: RemoteConversation) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                TagPill(text: convo.topic)
+                if convo.crossroads?.ready == true {
+                    Text("岔路口已成形").font(.system(size: 9)).tracking(1)
+                        .foregroundStyle(Color(hex: 0x3ED9A4))
+                }
+                Spacer()
+                if restoringId == convo.id {
+                    ProgressView().controlSize(.mini).tint(Theme.faint)
+                } else if let date = Self.formatCreatedAt(convo.createdAt) {
+                    Text(date).font(.system(size: 10)).foregroundStyle(Theme.faint)
+                }
+            }
+            Text(convo.crossroads?.summary ?? "还在澄清中的对话")
+                .font(.system(size: 13.5, weight: .semibold)).lineSpacing(4)
+                .foregroundStyle(Theme.ink)
+                .multilineTextAlignment(.leading)
+                .lineLimit(2)
+                .padding(.top, 9)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(15)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .strokeBorder(Theme.line, lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    /// "2026-07-25T03:21:11.123456+00:00" / "2026-07-25 03:21:11" → "7月25日 03:21"；解析失败返回 nil（不显示）
+    private static func formatCreatedAt(_ iso: String?) -> String? {
+        guard let iso else { return nil }
+        let normalized = iso.replacingOccurrences(of: " ", with: "T")
+        guard normalized.count >= 16 else { return nil }
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.timeZone = TimeZone(identifier: "UTC")
+        parser.dateFormat = "yyyy-MM-dd'T'HH:mm"
+        guard let date = parser.date(from: String(normalized.prefix(16))) else { return nil }
+        let out = DateFormatter()
+        out.locale = Locale(identifier: "zh_CN")
+        out.dateFormat = "M月d日 HH:mm"
+        return out.string(from: date)
     }
 }
 

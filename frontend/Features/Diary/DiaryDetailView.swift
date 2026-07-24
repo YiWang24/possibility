@@ -54,7 +54,11 @@ struct DiaryDetailView: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .overlay(ToastHost(message: toast.message))
-        .task { await model.loadRemote(using: supabase) }
+        .task {
+            async let remote: Void = model.loadRemote(using: supabase)
+            async let summaries: Void = model.loadSummaries(using: supabase)
+            _ = await (remote, summaries)
+        }
     }
 
     private let topID = "diary-top"

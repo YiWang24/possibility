@@ -20,6 +20,10 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>录制语音日记需要使用麦克风。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>将语音日记转写为文字需要使用语音识别。</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

@@ -1,5 +1,7 @@
+import AVFoundation
 import Foundation
 import Observation
+import Speech
 
 // MARK: - 首页「认识自己」视图模型
 //
@@ -48,6 +50,7 @@ final class HomeModel {
         isRecording = true
         elapsed = 0
         analysis = nil
+        startTranscriptionIfAvailable()
         timerTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
@@ -61,6 +64,7 @@ final class HomeModel {
         isRecording = false
         timerTask?.cancel()
         timerTask = nil
+        stopTranscription()
     }
 
     /// 完成录音 → 分析情绪与关键词（analyze-diary 真实 LLM，12s 超时才走兜底）
@@ -68,7 +72,10 @@ final class HomeModel {
         finishRecording()
         analyzing = true
         defer { analyzing = false }
-        let transcript = sampleTranscript
+        // 端上转写有内容 → 优先真实转写；稍等最终识别结果落地，太短视为无效回退样例
+        if sttStarted { try? await Task.sleep(for: .milliseconds(600)) }
+        let localText = transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let transcript = localText.count >= 4 ? localText : sampleTranscript
         let remote = await withTaskGroup(of: DiaryAnalysis?.self) { group -> DiaryAnalysis? in
             group.addTask { try? await supabase.analyzeDiary(transcript: transcript) }
             group.addTask { try? await Task.sleep(for: .seconds(12)); return nil }
@@ -85,6 +92,90 @@ final class HomeModel {
         keywords: ["转型", "设计", "产品", "身份认同"],
         dimUpdates: nil
     )
+
+    // MARK: 端上语音转写（iOS Speech · zh-CN）
+    //
+    // 真实优先：录音时若权限与识别器可用则实时转写，analyzeDiary 用真实文本；
+    // 任一环节不可用（Info.plist 未配置权限文案 / 用户拒绝 / 识别失败 / 文本过短）
+    // 均静默回退 sampleTranscript，不打断主流程。
+
+    private var audioEngine: AVAudioEngine?
+    private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var recognitionTask: SFSpeechRecognitionTask?
+    /// 本次录音是否成功启动过转写（决定 analyzeDiary 是否等待最终识别结果）
+    private var sttStarted = false
+    private var transcribedText = ""
+
+    /// Info.plist 缺少权限文案时触发系统权限弹窗会直接崩溃 —— 先探测再请求。
+    /// 权限键位于 App/ 目录（越界不改），由波次 3 统一补 NSSpeechRecognitionUsageDescription
+    /// 与 NSMicrophoneUsageDescription；补齐前此处恒为 false，安全走兜底。
+    private var speechPermissionKeysPresent: Bool {
+        Bundle.main.object(forInfoDictionaryKey: "NSSpeechRecognitionUsageDescription") != nil
+            && Bundle.main.object(forInfoDictionaryKey: "NSMicrophoneUsageDescription") != nil
+    }
+
+    private func startTranscriptionIfAvailable() {
+        transcribedText = ""
+        sttStarted = false
+        guard speechPermissionKeysPresent,
+              let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "zh-CN")) else { return }
+        Task { [weak self] in
+            let speechOK = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+                switch SFSpeechRecognizer.authorizationStatus() {
+                case .authorized:
+                    cont.resume(returning: true)
+                case .notDetermined:
+                    SFSpeechRecognizer.requestAuthorization { cont.resume(returning: $0 == .authorized) }
+                default:
+                    cont.resume(returning: false)
+                }
+            }
+            guard speechOK else { return }
+            let micOK = await AVAudioApplication.requestRecordPermission()
+            guard let self, micOK, self.isRecording, recognizer.isAvailable else { return }
+            self.beginAudioTranscription(with: recognizer)
+        }
+    }
+
+    private func beginAudioTranscription(with recognizer: SFSpeechRecognizer) {
+        let session = AVAudioSession.sharedInstance()
+        guard (try? session.setCategory(.playAndRecord, mode: .measurement, options: .duckOthers)) != nil,
+              (try? session.setActive(true, options: .notifyOthersOnDeactivation)) != nil else { return }
+        let engine = AVAudioEngine()
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        let input = engine.inputNode
+        let format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0 else { return }
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
+            request.append(buffer)
+        }
+        engine.prepare()
+        guard (try? engine.start()) != nil else {
+            input.removeTap(onBus: 0)
+            return
+        }
+        audioEngine = engine
+        recognitionRequest = request
+        sttStarted = true
+        recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, _ in
+            guard let result else { return }
+            let text = result.bestTranscription.formattedString
+            Task { @MainActor [weak self] in self?.transcribedText = text }
+        }
+    }
+
+    private func stopTranscription() {
+        guard audioEngine != nil else { return }
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine?.stop()
+        recognitionRequest?.endAudio()
+        recognitionTask?.finish()
+        audioEngine = nil
+        recognitionRequest = nil
+        recognitionTask = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
 
     // MARK: 动态画像（空白态 · 随探索生长）
     //
@@ -123,6 +214,7 @@ final class HomeModel {
         loadLifeSignature()
 
         guard let supabase else { return }
+        refreshPersona(using: supabase)
         Task { [weak self] in
             guard let remote = try? await supabase.fetchRemoteProfile() else { return }
             guard let self else { return }
@@ -148,7 +240,11 @@ final class HomeModel {
         filledDims[key.rawValue] = text
         store.set(text, forKey: Self.storePrefix + key.rawValue)
         if let supabase {
-            Task { try? await supabase.saveDimensionRemote(key: key, tags: picked) }
+            Task { [weak self] in
+                // 先落库再重新生成云端形象（/persona 读服务端画像，需等新维度可见）
+                try? await supabase.saveDimensionRemote(key: key, tags: picked)
+                self?.refreshPersona(using: supabase)
+            }
         }
     }
 
@@ -196,14 +292,163 @@ final class HomeModel {
         lifeSignatureCards = Array(cards.prefix(3))
     }
 
-    /// 抽象数字形象模型：随已填维度 / 底牌变化自动重建（@Observable 联动）
+    // MARK: 云端数字形象（/persona 真实生成 · 本地 PersonaModel.build 兜底）
+
+    /// 最近一次云端生成的形象参数；nil = 未生成 / 失败（走本地兜底）
+    private(set) var remotePersona: PersonaJob.Persona?
+    private var personaTask: Task<Void, Never>?
+    /// 上次成功触发生成时的画像快照（去重：画像没变不重复调 LLM）
+    private var lastPersonaSnapshot: String?
+
+    /// 云端形象的一句话说明（展示在形象 caption 位）
+    var personaSummary: String? { remotePersona?.summary }
+
+    /// 画像维度变化后重新生成云端形象；失败或超时 15s 静默保持本地兜底。
+    /// 画像快照未变化且已有云端形象时跳过（避免每次 onAppear 重复打 LLM）。
+    func refreshPersona(using supabase: SupabaseService) {
+        let snapshot = (["personality"] + DimensionKey.allCases.map(\.rawValue))
+            .compactMap { filledDims[$0] }
+            .joined(separator: "|") + "#" + lifeSignature.joined(separator: "|")
+        guard snapshot != lastPersonaSnapshot || remotePersona == nil else { return }
+        lastPersonaSnapshot = snapshot
+        personaTask?.cancel()
+        personaTask = Task { [weak self] in
+            let job = await withTaskGroup(of: PersonaJob?.self) { group -> PersonaJob? in
+                group.addTask { try? await supabase.personaGenerate() }
+                group.addTask { try? await Task.sleep(for: .seconds(15)); return nil }
+                let first = await group.next() ?? nil
+                group.cancelAll()
+                return first
+            }
+            guard let self, !Task.isCancelled,
+                  let job, job.status != "failed",
+                  let persona = job.persona else { return }
+            self.remotePersona = persona
+        }
+    }
+
+    /// 后端 shape（中文形态名或英文 key）→ 本地绘制形态；未知形态回退本地计算
+    private static func personaForm(named shape: String) -> PersonaModel.Form? {
+        let lower = shape.lowercased()
+        if lower.contains("crystal") || shape.contains("晶") { return .crystal }
+        if lower.contains("bloom") || shape.contains("花") { return .bloom }
+        if lower.contains("wing") || shape.contains("翼") { return .wing }
+        if lower.contains("orbit") || shape.contains("星") || shape.contains("轨") { return .orbit }
+        return nil
+    }
+
+    /// 抽象数字形象模型：优先用云端 persona（shape/hue/lobes/seed）驱动绘制，
+    /// 未生成 / 失败时随已填维度、底牌本地重建（@Observable 联动）
     var personaModel: PersonaModel {
         let values = (["personality"] + DimensionKey.allCases.map(\.rawValue))
             .compactMap { filledDims[$0] }
-        return PersonaModel.build(values: values, signature: lifeSignature)
+        let local = PersonaModel.build(values: values, signature: lifeSignature)
+        guard let remote = remotePersona else { return local }
+        return PersonaModel(
+            seed: UInt32(clamping: max(0, remote.seed)),
+            filled: values.count,
+            signature: lifeSignature,
+            form: Self.personaForm(named: remote.shape) ?? local.form,
+            hue: Double(remote.hue),
+            lobes: Double(min(max(remote.lobes, 3), 9)),
+            shapeName: remote.shape
+        )
+    }
+
+    // MARK: 周历 / 探索天数（list-diary 真实聚合 · 失败保持硬编码兜底）
+
+    struct WeekDayCell: Identifiable {
+        /// "2026-07-19"
+        let date: String
+        /// 窄格式周几："五" / "六"
+        let label: String
+        /// 空串 = 当天无记录（空态圆点）
+        let emoji: String
+        let filled: Bool
+        var id: String { date }
+    }
+
+    /// 今天之前 6 天的真实周历；nil = 尚未加载 / 加载失败（HomeView 用硬编码兜底）
+    private(set) var weekCells: [WeekDayCell]?
+    /// 今天已有云端日记时的主情绪 emoji
+    private(set) var todayEmoji: String?
+    /// 已探索天数：最早一条日记距今 +1；无日记 = 第 1 天；未加载/失败保持 demo 值
+    private(set) var exploredDays = 47
+
+    /// 今日日期串：周历真实化后用真实日期打开详情；兜底时保持 demo 的 7/23
+    var diaryTodayDate: String {
+        weekCells == nil ? "2026-07-23" : Self.dayFormatter.string(from: Date())
+    }
+
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+
+    /// 拉取云端日记 → 聚合最近 7 天周历 + 推算探索天数（冷启动调用，失败静默）
+    func loadDiaryOverview(using supabase: SupabaseService) async {
+        guard let rows = try? await supabase.listDiary(limit: 200) else { return }
+        let isoFrac = ISO8601DateFormatter()
+        isoFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let iso = ISO8601DateFormatter()
+
+        // 天 → 当天最新一条的情绪列表（list-diary 按时间倒序，首见即最新）
+        var emotionsByDay: [String: [String]] = [:]
+        var earliest: Date?
+        for row in rows {
+            guard let created = isoFrac.date(from: row.createdAt) ?? iso.date(from: row.createdAt) else { continue }
+            if earliest.map({ created < $0 }) ?? true { earliest = created }
+            let key = Self.dayFormatter.string(from: created)
+            if emotionsByDay[key] == nil { emotionsByDay[key] = row.emotions ?? [] }
+        }
+
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        if let earliest {
+            let days = cal.dateComponents([.day], from: cal.startOfDay(for: earliest), to: today).day ?? 0
+            exploredDays = max(1, days + 1)
+        } else {
+            exploredDays = 1
+        }
+
+        let weekFmt = DateFormatter()
+        weekFmt.locale = Locale(identifier: "zh_CN")
+        weekFmt.dateFormat = "EEEEE"
+        var cells: [WeekDayCell] = []
+        for offset in stride(from: 6, through: 1, by: -1) {
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let key = Self.dayFormatter.string(from: day)
+            let emotions = emotionsByDay[key]
+            cells.append(WeekDayCell(
+                date: key,
+                label: weekFmt.string(from: day),
+                emoji: emotions.map { Self.emotionEmoji($0.first) } ?? "",
+                filled: emotions != nil
+            ))
+        }
+        weekCells = cells
+        todayEmoji = emotionsByDay[Self.dayFormatter.string(from: today)].map { Self.emotionEmoji($0.first) }
+    }
+
+    /// 情绪词 → emoji 小映射表；未知情绪给中性符号
+    static func emotionEmoji(_ emotion: String?) -> String {
+        guard let emotion, !emotion.isEmpty else { return "😐" }
+        let table: [(String, String)] = [
+            ("焦虑", "😮‍💨"), ("担", "😮‍💨"), ("疲", "😮‍💨"), ("紧张", "😮‍💨"), ("压力", "😮‍💨"),
+            ("平静", "😌"), ("踏实", "😌"), ("安心", "😌"), ("放松", "😌"), ("专注", "😌"), ("释然", "😌"),
+            ("开心", "😊"), ("喜悦", "😊"), ("快乐", "😊"), ("成就", "😊"), ("兴奋", "😊"),
+            ("被支持", "😊"), ("被看见", "😊"), ("感激", "😊"), ("温暖", "😊"),
+            ("纠结", "😕"), ("犹豫", "😕"), ("迷茫", "😕"), ("受挫", "😕"), ("委屈", "😕"), ("怀疑", "😕"),
+            ("难过", "😢"), ("低落", "😢"), ("失落", "😢"), ("孤独", "😢"), ("伤心", "😢"),
+            ("生气", "😠"), ("愤怒", "😠"), ("烦", "😠"),
+            ("好奇", "🙂"), ("期待", "🙂"), ("轻松", "🙂"), ("希望", "🙂"), ("动力", "🙂"),
+        ]
+        for (word, emoji) in table where emotion.contains(word) { return emoji }
+        return "😐"
     }
 
     // MARK: demo 人物
     let userName = "屿岸"
-    let exploredDays = 47
 }

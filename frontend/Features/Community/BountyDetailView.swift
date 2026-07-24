@@ -8,14 +8,40 @@ struct BountyDetailView: View {
     let bounty: Bounty
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(SupabaseService.self) private var supabase
     @Environment(ToastCenter.self) private var toast
 
     @State private var showCardModal = false
     @State private var message = ""
     @State private var sent = false
+    /// get_bounty 拉到的真实详情（成功后优先展示，失败保持 nil 走 DemoData 兜底）
+    @State private var remote: BountyDetailResponse?
+    @State private var sending = false
 
     private static let sentKey = "kaleido_bounty_sent_v1"
     private var detail: DemoData.BountyDetail { DemoData.bountyDetail(bounty.id) }
+
+    // MARK: 真实优先的展示字段
+
+    private var displayTags: [String] {
+        if let tags = remote?.bounty.tags, !tags.isEmpty { return tags }
+        return detail.tags
+    }
+    private var displayDetail: String {
+        if let text = remote?.bounty.detail, !text.isEmpty { return text }
+        return detail.detail
+    }
+    private var displayQuestion: String { remote?.bounty.question ?? bounty.question }
+    private var responseCountText: String {
+        if let remote { return "\(remote.responses.count) 人回应" }
+        return bounty.responses
+    }
+    private var statusText: String {
+        if let remote {
+            return remote.bounty.status == "closed" ? "已结束" : "征集中"
+        }
+        return detail.goal
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,9 +49,9 @@ struct BountyDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     FlowLayout(spacing: 7) {
-                        ForEach(detail.tags, id: \.self) { TagPill(text: $0) }
+                        ForEach(displayTags, id: \.self) { TagPill(text: $0) }
                     }
-                    Text(bounty.question)
+                    Text(displayQuestion)
                         .font(.system(size: 21, weight: .bold)).lineSpacing(6).foregroundStyle(Theme.ink)
                     publisher
                     prize
@@ -48,12 +74,29 @@ struct BountyDetailView: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .onAppear { sent = Self.sentIds.contains(bounty.id) }
+        .task { await loadRemote() }
         .sheet(isPresented: $showCardModal) {
             cardModal
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: 0x10131C))
         }
+    }
+
+    /// 真实优先：get_bounty 失败时静默保持 DemoData 兜底
+    private func loadRemote() async {
+        remote = try? await supabase.getBounty(bountyId: bounty.id)
+    }
+
+    /// 匿名展示：用户 id 截短为「旅人 #xxxx」
+    private func anonymousName(_ userId: UUID) -> String {
+        "旅人 #\(userId.uuidString.prefix(4).uppercased())"
+    }
+
+    /// 回应时间（created_at 取日期部分）
+    private func replyMeta(_ createdAt: String?) -> String {
+        let day = (createdAt ?? "").prefix(10)
+        return day.isEmpty ? "亲历者" : String(day)
     }
 
     private static var sentIds: Set<Int> {
@@ -73,7 +116,7 @@ struct BountyDetailView: View {
             .accessibilityLabel("返回")
             VStack(alignment: .leading, spacing: 2) {
                 Text("悬赏详情").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
-                Text("\(detail.goal) · \(bounty.responses)").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
+                Text("\(statusText) · \(responseCountText)").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
             }
             Spacer()
         }
@@ -82,25 +125,38 @@ struct BountyDetailView: View {
     }
 
     private var publisher: some View {
-        HStack(spacing: 11) {
-            TravelerAvatar(initial: String(detail.asker.prefix(1)), hue: bounty.id % 5, size: 40)
+        let name = remote == nil ? detail.asker : "匿名旅人"
+        let meta: String = {
+            if let remote {
+                let day = (remote.bounty.createdAt ?? "").prefix(10)
+                return day.isEmpty ? "已发布" : "\(day) 发布"
+            }
+            return "\(detail.city) · \(detail.time)发布"
+        }()
+        return HStack(spacing: 11) {
+            TravelerAvatar(initial: String(name.prefix(1)), hue: bounty.id % 5, size: 40)
             VStack(alignment: .leading, spacing: 2) {
-                Text(detail.asker).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                Text("\(detail.city) · \(detail.time)发布").font(.system(size: 11)).foregroundStyle(Theme.faint)
+                Text(name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                Text(meta).font(.system(size: 11)).foregroundStyle(Theme.faint)
             }
             Spacer()
         }
     }
 
-    // 杏色悬赏卡（原型 .bounty-prize）
+    // 杏色悬赏卡（原型 .bounty-prize；真实数据展示 reward 文案，兜底展示 ¥金额）
     private var prize: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("本帖悬赏").font(.system(size: 10.5)).foregroundStyle(Color(hex: 0x2B1A08, alpha: 0.75))
-                Text("¥\(detail.amount)").font(.system(size: 24, weight: .heavy)).foregroundStyle(Color(hex: 0x2B1A08))
+                if let remote {
+                    Text(remote.bounty.reward)
+                        .font(.system(size: 17, weight: .heavy)).foregroundStyle(Color(hex: 0x2B1A08))
+                } else {
+                    Text("¥\(detail.amount)").font(.system(size: 24, weight: .heavy)).foregroundStyle(Color(hex: 0x2B1A08))
+                }
             }
             Spacer()
-            Text(detail.goal).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Color(hex: 0x2B1A08, alpha: 0.8))
+            Text(statusText).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Color(hex: 0x2B1A08, alpha: 0.8))
         }
         .padding(.horizontal, 17).padding(.vertical, 15)
         .background(
@@ -114,7 +170,7 @@ struct BountyDetailView: View {
     private var copyBlock: some View {
         VStack(alignment: .leading, spacing: 9) {
             Text("TA 想了解的具体情况").font(.system(size: 13.5, weight: .bold)).foregroundStyle(Theme.ink)
-            Text(detail.detail).font(.system(size: 12.5)).lineSpacing(6).foregroundStyle(Theme.sub)
+            Text(displayDetail).font(.system(size: 12.5)).lineSpacing(6).foregroundStyle(Theme.sub)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -126,24 +182,46 @@ struct BountyDetailView: View {
             HStack {
                 Text("亲历者回应").font(.system(size: 13.5, weight: .bold)).foregroundStyle(Theme.ink)
                 Spacer()
-                Text(bounty.responses).font(.system(size: 11)).foregroundStyle(Theme.faint)
+                Text(responseCountText).font(.system(size: 11)).foregroundStyle(Theme.faint)
             }
-            ForEach(Array(detail.replies.enumerated()), id: \.offset) { i, reply in
-                HStack(alignment: .top, spacing: 11) {
-                    TravelerAvatar(initial: String(reply.name.prefix(1)), hue: (bounty.id + i + 2) % 5, size: 34)
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack(spacing: 7) {
-                            Text(reply.name).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
-                            Text(reply.role).font(.system(size: 10)).foregroundStyle(Theme.blue)
-                        }
-                        Text(reply.text).font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
+            if let remote {
+                if remote.responses.isEmpty {
+                    Text("还没有旅人回应，成为第一个分享经历的人吧。")
+                        .font(.system(size: 12)).foregroundStyle(Theme.faint)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(13)
+                        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                } else {
+                    ForEach(Array(remote.responses.enumerated()), id: \.element.id) { i, reply in
+                        replyRow(name: anonymousName(reply.userId),
+                                 role: replyMeta(reply.createdAt),
+                                 text: reply.message,
+                                 hue: (bounty.id + i + 2) % 5)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(13)
-                .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                ForEach(Array(detail.replies.enumerated()), id: \.offset) { i, reply in
+                    replyRow(name: reply.name, role: reply.role, text: reply.text,
+                             hue: (bounty.id + i + 2) % 5)
+                }
             }
         }
+    }
+
+    private func replyRow(name: String, role: String, text: String, hue: Int) -> some View {
+        HStack(alignment: .top, spacing: 11) {
+            TravelerAvatar(initial: String(name.prefix(1)), hue: hue, size: 34)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 7) {
+                    Text(name).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                    Text(role).font(.system(size: 10)).foregroundStyle(Theme.blue)
+                }
+                Text(text).font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(13)
+        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private var actionBar: some View {
@@ -198,28 +276,47 @@ struct BountyDetailView: View {
                 Text("发送后，对方将看到你的公开画像和这段补充说明；你的联系方式不会直接公开。")
                     .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint)
 
-                Button("确认发送名片") { confirmSend() }
+                Button(sending ? "发送中…" : "确认发送名片") { confirmSend() }
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity).padding(.vertical, 14)
-                    .background(Theme.buttonGradient, in: Capsule())
+                    .background(sending ? AnyShapeStyle(Theme.raised) : AnyShapeStyle(Theme.buttonGradient), in: Capsule())
                     .buttonStyle(PressScaleStyle())
+                    .disabled(sending)
             }
             .padding(.horizontal, 22).padding(.top, 24).padding(.bottom, 26)
         }
     }
 
+    /// 真实回应：respond_bounty（同一用户同一悬赏 upsert，重复发送即更新）。
+    /// 成功→保留原 UserDefaults 已发送标记 + 刷新回应列表；失败→轻提示不阻断，可重试。
     private func confirmSend() {
-        var ids = Self.sentIds
-        ids.insert(bounty.id)
-        Self.sentIds = ids
-        sent = true
-        showCardModal = false
-        toast.show("名片已发送给发帖人")
+        guard !sending else { return }
+        let profile = MyProfileStore().profile
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        let payload = trimmed.isEmpty ? "我是\(profile.name)：\(profile.bio)" : trimmed
+        sending = true
+        Task {
+            defer { sending = false }
+            do {
+                try await supabase.respondBounty(bountyId: bounty.id, message: String(payload.prefix(500)))
+                var ids = Self.sentIds
+                ids.insert(bounty.id)
+                Self.sentIds = ids
+                sent = true
+                showCardModal = false
+                toast.show("名片已发送给发帖人")
+                await loadRemote()
+            } catch {
+                showCardModal = false
+                toast.show("发送失败，请稍后重试")
+            }
+        }
     }
 }
 
 #Preview {
     BountyDetailView(bounty: DemoData.bounties[0])
+        .environment(SupabaseService())
         .environment(ToastCenter())
         .preferredColorScheme(.dark)
 }

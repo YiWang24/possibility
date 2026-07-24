@@ -10,6 +10,9 @@ struct CardGameHubView: View {
     @Environment(ToastCenter.self) private var toast
     @Environment(SupabaseService.self) private var supabase
     @State private var activeGame: CardGameKind?
+    /// 已完成的卡牌局（本地标记 ∪ 云端回读），驱动“已完成”角标
+    @State private var completedKinds: Set<CardGameKind> = []
+    @State private var didSyncRemote = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,10 +33,57 @@ struct CardGameHubView: View {
             .scrollIndicators(.hidden)
         }
         .background(Theme.paper.ignoresSafeArea())
-        .fullScreenCover(item: $activeGame) { kind in
+        .task { await syncRemoteGames() }
+        .fullScreenCover(item: $activeGame, onDismiss: {
+            // 结算后刷新本地完成标记
+            completedKinds = CardGameLocalRecord.doneKinds
+        }) { kind in
             CardGameView(kind: kind, home: home)
                 .environment(toast)
                 .environment(supabase)
+        }
+    }
+
+    // MARK: 云端回读（真实优先 + 静默兜底）
+
+    /// 本地无记录时从 get-profile.card_games 恢复完成状态与最终卡组并写回本地缓存；
+    /// 本地已有记录以本地为准（不覆盖）。失败静默，不影响页面。
+    @MainActor
+    private func syncRemoteGames() async {
+        completedKinds = CardGameLocalRecord.doneKinds
+        guard !didSyncRemote else { return }
+        didSyncRemote = true
+        // 本地各 kind 均已完成时无需回读
+        guard completedKinds.count < CardGameKind.allCases.count else { return }
+        guard let remote = try? await supabase.fetchRemoteProfile() else { return }
+        for game in remote.cardGames {
+            guard let kind = CardGameKind(rawValue: game.kind),
+                  !game.finalCards.isEmpty,
+                  !CardGameLocalRecord.isDone(kind) else { continue }
+            restoreLocalCache(kind: kind, cards: game.finalCards)
+            CardGameLocalRecord.markDone(kind)
+            completedKinds.insert(kind)
+        }
+    }
+
+    /// 远端最终卡组 → 本地展示模型：life 写人生底牌签名，其余写画像维度关键词
+    @MainActor
+    private func restoreLocalCache(kind: CardGameKind, cards: [CardGameCardPayload]) {
+        switch kind {
+        case .life:
+            guard home.lifeSignatureCards.isEmpty else { return }
+            let signature = cards.prefix(3).map {
+                HomeModel.LifeSignatureCard(glyph: $0.glyph ?? "✦", name: $0.name)
+            }
+            if let data = try? JSONEncoder().encode(Array(signature)) {
+                UserDefaults.standard.set(data, forKey: HomeModel.lifeSignatureKey)
+            }
+            home.loadLifeSignature()
+        default:
+            guard let key = kind.targetDimension,
+                  home.selectedKeywords(for: key).isEmpty else { return }
+            // 不传 supabase：仅回填本地，不反向覆盖云端
+            home.saveDimension(key, keywords: cards.map(\.name), using: nil)
         }
     }
 
@@ -99,6 +149,9 @@ struct CardGameHubView: View {
                             .font(.system(size: 11)).foregroundStyle(Theme.sub)
                     }
                     Spacer()
+                    if completedKinds.contains(.life) {
+                        doneBadge
+                    }
                     Text("›").font(.system(size: 16)).foregroundStyle(Theme.faint)
                 }
                 HStack(spacing: 8) {
@@ -120,6 +173,16 @@ struct CardGameHubView: View {
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color(hex: 0x8F7BFF, alpha: 0.32), lineWidth: 1))
         }
         .buttonStyle(PressScaleStyle())
+    }
+
+    /// “已完成”角标（本地或云端存在完成局）
+    private var doneBadge: some View {
+        Text("已完成")
+            .font(.system(size: 9.5, weight: .semibold))
+            .foregroundStyle(Color(hex: 0x8EE7C8))
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(Color(hex: 0x3ED9A4, alpha: 0.12), in: Capsule())
+            .overlay(Capsule().strokeBorder(Color(hex: 0x3ED9A4, alpha: 0.35), lineWidth: 1))
     }
 
     private func rule(_ no: String, _ label: String) -> some View {
@@ -156,6 +219,9 @@ struct CardGameHubView: View {
                     Text(cfg.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
                     Text(sub).font(.system(size: 11)).foregroundStyle(Theme.sub)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                if completedKinds.contains(kind) {
+                    doneBadge
                 }
                 Text("›").font(.system(size: 15)).foregroundStyle(Theme.faint)
             }
