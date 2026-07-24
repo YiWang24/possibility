@@ -681,13 +681,11 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   border:1px solid rgba(255,176,103,.18);overflow:hidden
 }
 .carry-section.reveal{display:block;animation:carryReveal .52s cubic-bezier(.2,.9,.3,1) both}
-@keyframes carryReveal{from{opacity:0;max-height:0;transform:translateY(-10px);padding-top:0;padding-bottom:0}to{opacity:1;max-height:220px;transform:none}}
-.carry-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
-.carry-head .ey{font-size:8px;letter-spacing:.14em;color:#E7B77F}
-.carry-head h3{font-size:12.5px;margin-top:3px}
+@keyframes carryReveal{from{opacity:0;max-height:0;transform:translateY(-10px);padding-top:0;padding-bottom:0}to{opacity:1;max-height:180px;transform:none}}
+.carry-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.carry-head h3{font-size:12.5px}
 .carry-head span{font-size:9.5px;color:var(--faint);white-space:nowrap}
 .carry-head span b{color:#FFD4A2;font-size:12px}
-.carry-copy{font-size:9px;color:var(--sub);line-height:1.45;margin-top:5px}
 .carry-deck{
   display:flex;gap:7px;overflow-x:auto;margin:8px -12px 0;padding:2px 12px 5px;
   scrollbar-width:none;scroll-snap-type:x mandatory;overscroll-behavior-x:contain
@@ -708,9 +706,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   content:"已带上";position:absolute;right:7px;top:7px;padding:3px 6px;border-radius:99px;
   font-size:7.5px;color:#211308;background:#FFD09B
 }
-.carry-lock{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:8.5px;color:var(--faint)}
-.carry-lock i{width:5px;height:5px;border-radius:50%;background:#5A6172}
-.carry-lock.ready{color:#88DDBF}.carry-lock.ready i{background:var(--teal);box-shadow:0 0 9px rgba(62,217,164,.7)}
 @media (prefers-reduced-motion:reduce){
   .choice{transition:none}
 }
@@ -1874,10 +1869,9 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 
     <div class="carry-section" id="carrySection">
       <div class="carry-head">
-        <div><div class="ey">底线卡 · 可选</div><h3>什么要一起带走？</h3></div>
+        <h3>什么要一起带走？</h3>
         <span><b id="carryCount">0</b>/3</span>
       </div>
-      <p class="carry-copy">拖进仪表盘，最多 3 张。也可跳过。</p>
       <div class="carry-deck" id="carryDeck">
         <button class="carry-card" data-carry="income"><span class="glyph">▣</span><b>稳定收入</b><small>对话线索</small></button>
         <button class="carry-card" data-carry="health"><span class="glyph">＋</span><b>身体不透支</b><small>日记线索</small></button>
@@ -1886,7 +1880,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
         <button class="carry-card" data-carry="creation"><span class="glyph">◇</span><b>创造实感</b><small>动态画像</small></button>
         <button class="carry-card" data-carry="exit"><span class="glyph">↩</span><b>保留退路</b><small>处境扫描</small></button>
       </div>
-      <div class="carry-lock" id="carryLock"><i></i><span>左滑查看更多 · 上拖到仪表盘</span></div>
     </div>
 
     <button class="btn-ink btn-cta lab-go" id="simBtn" disabled onclick="runSim()">开始推演</button>
@@ -3525,11 +3518,6 @@ function toggleCarryCard(btn){
   }
   btn.classList.toggle('on',carrySelected.has(id));
   $('#carryCount').textContent=carrySelected.size;
-  const lock=$('#carryLock');
-  lock.classList.toggle('ready',carrySelected.size>0);
-  lock.querySelector('span').textContent=carrySelected.size
-    ?`已带入 ${carrySelected.size} 张 · 点击可取消`
-    :'左滑查看更多 · 上拖到仪表盘';
   renderCarryTray();
   syncLabReady();
 }
