@@ -11,11 +11,13 @@ import Observation
 final class HomeModel {
 
     // MARK: 探索发问
-    var question: String = ExploreTopic.career.sampleQuestion
-    var topic: ExploreTopic = .career {
+    //
+    // 对齐原型无话题模式：默认不选话题（no-topic），选中话题且输入为空时才填样例；
+    // 再点选中的话题可取消。
+    var question: String = ""
+    var topic: ExploreTopic? = nil {
         didSet {
-            // 切换话题时，若输入框仍是上个话题的样例问题，则替换为新话题样例
-            if question == oldValue.sampleQuestion || question.isEmpty {
+            if let topic, trimmedQuestion.isEmpty {
                 question = topic.sampleQuestion
             }
         }
@@ -23,7 +25,6 @@ final class HomeModel {
 
     var trimmedQuestion: String { question.trimmingCharacters(in: .whitespacesAndNewlines) }
     var canSend: Bool { !trimmedQuestion.isEmpty }
-    var questionCount: Int { question.count }
 
     // MARK: 语音日记
     var isRecording = false
@@ -154,6 +155,13 @@ final class HomeModel {
 
     /// 人生底牌签名（人生卡牌完成后 3 张公开底牌；暂未接入 → 空）
     var lifeSignature: [String] { [] }
+
+    /// 抽象数字形象模型：随已填维度 / 底牌变化自动重建（@Observable 联动）
+    var personaModel: PersonaModel {
+        let values = (["personality"] + DimensionKey.allCases.map(\.rawValue))
+            .compactMap { filledDims[$0] }
+        return PersonaModel.build(values: values, signature: lifeSignature)
+    }
 
     // MARK: demo 人物
     let userName = "屿岸"

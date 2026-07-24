@@ -23,11 +23,12 @@ enum AppTab: Hashable {
 }
 
 struct RootView: View {
-    @State private var tab: AppTab = .home
+    @State private var router = AppRouter()
     @State private var toast = ToastCenter()
 
     var body: some View {
-        TabView(selection: $tab) {
+        @Bindable var router = router
+        return TabView(selection: $router.tab) {
             HomeView()
                 .tabItem { Label("认识自己", systemImage: "person.crop.circle") }
                 .tag(AppTab.home)
@@ -43,6 +44,7 @@ struct RootView: View {
         .tint(Theme.blue)
         .background(Theme.stage.ignoresSafeArea())
         .environment(toast)
+        .environment(router)
         .overlay(ToastHost(message: toast.message))
     }
 }

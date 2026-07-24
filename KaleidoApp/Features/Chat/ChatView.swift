@@ -6,6 +6,8 @@ struct ChatView: View {
     let launch: ChatLaunch
 
     @Environment(SupabaseService.self) private var supabase
+    @Environment(ToastCenter.self) private var toast
+    @Environment(AppRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
     @State private var model: ChatModel
 
@@ -21,7 +23,33 @@ struct ChatView: View {
             inputBar
         }
         .background(Theme.paper.ignoresSafeArea())
+        .overlay(ToastHost(message: toast.message))
         .task { await model.start(supabase: supabase) }
+        .sheet(isPresented: $model.showSummary) {
+            ChatSummaryView(model: model, onGoLab: goLab, onGoSimilar: goSimilar) {
+                // 完成本次探索：关总结 + 关对话
+                model.showSummary = false
+                dismiss()
+                toast.show("本次探索已保存")
+            }
+        }
+    }
+
+    // MARK: 下一步路径（去实验室 / 看相似经历）
+
+    private func goLab() {
+        router.pendingLabQuestion = launch.question
+        router.tab = .lab
+        model.showSummary = false
+        dismiss()
+        toast.show("问题已带入人生实验室")
+    }
+
+    private func goSimilar() {
+        router.tab = .community
+        model.showSummary = false
+        dismiss()
+        toast.show("正在寻找走过这段路的人")
     }
 
     // MARK: 顶栏
@@ -30,7 +58,7 @@ struct ChatView: View {
         HStack(spacing: 13) {
             BackButton { dismiss() }
             VStack(alignment: .leading, spacing: 2) {
-                Text("探索 · \(launch.topic.rawValue)").font(.system(size: 16, weight: .semibold)).tracking(0.8)
+                Text(launch.topic.map { "探索 · \($0.rawValue)" } ?? "探索问题").font(.system(size: 16, weight: .semibold)).tracking(0.8)
                 Text("和你的动态画像一起想清楚").font(.system(size: 11)).foregroundStyle(Theme.faint)
             }
             Spacer()
@@ -52,17 +80,22 @@ struct ChatView: View {
                     if model.isStreaming, model.messages.last?.text.isEmpty == true {
                         thinking
                     }
-                    if model.loadingMatch { thinking }
-                    if model.showCrossroadsCTA { crossroadsCTA }
-                    if model.matchReady { matchSection }
+                    if model.showActionChips { actionChips }
+                    if model.showNextPanel {
+                        ChatNextPanel(showSummaryLink: true,
+                                      onGoLab: goLab, onGoSimilar: goSimilar,
+                                      shareText: model.shareText,
+                                      onOpenSummary: { model.showSummary = true })
+                            .padding(.top, 14)
+                    }
                     Color.clear.frame(height: 8).id(bottomID)
                 }
                 .padding(.horizontal, 20).padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
             .onChange(of: model.messages.last?.text) { scrollToBottom(proxy) }
-            .onChange(of: model.matchReady) { scrollToBottom(proxy) }
-            .onChange(of: model.crossroadsReady) { scrollToBottom(proxy) }
+            .onChange(of: model.showActionChips) { scrollToBottom(proxy) }
+            .onChange(of: model.showNextPanel) { scrollToBottom(proxy) }
         }
     }
 
@@ -112,51 +145,23 @@ struct ChatView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: 岔路口 CTA
+    // MARK: 验证反馈 chips（原型 .chat-actions）
 
-    private var crossroadsCTA: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let summary = model.crossroadsSummary {
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.triangle.branch").font(.system(size: 12))
-                    Text("岔路口 · \(summary)").font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundStyle(Color(hex: 0x9DBCFF))
-                .padding(.horizontal, 12).padding(.vertical, 7)
-                .background(Color(hex: 0x5E96FF, alpha: 0.12), in: Capsule())
-            }
-            PrimaryButton(title: "看看走过这条路的人") {
-                Task { await model.showMatch(supabase: supabase) }
-            }
-            HStack(spacing: 8) {
-                ForEach(model.followups, id: \.self) { q in
-                    Button(q) { model.send(q, supabase: supabase) }
-                        .font(.system(size: 12)).foregroundStyle(Theme.sub)
-                        .padding(.horizontal, 13).padding(.vertical, 7)
-                        .background(Theme.raised, in: Capsule())
-                        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
-                        .buttonStyle(PressScaleStyle())
-                }
-            }
-            .padding(.top, 2)
+    private var actionChips: some View {
+        HStack(spacing: 9) {
+            Button(model.confirmLabel) { model.confirmInsight() }
+                .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white)
+                .padding(.horizontal, 16).padding(.vertical, 9)
+                .background(Theme.buttonGradient, in: Capsule())
+                .buttonStyle(PressScaleStyle())
+            Button(model.correctLabel) { model.requestCorrection() }
+                .font(.system(size: 12.5)).foregroundStyle(Theme.sub)
+                .padding(.horizontal, 16).padding(.vertical, 9)
+                .background(Theme.raised, in: Capsule())
+                .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
+                .buttonStyle(PressScaleStyle())
         }
-        .padding(.top, 18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .transition(.opacity)
-    }
-
-    // MARK: match 结果
-
-    private var matchSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SectionHeader(title: "走过这条路的 3 个人", trailing: "左右滑动 ›")
-            TravelerSimRow(travelers: model.matches, reasons: model.matchReasons)
-                .padding(.horizontal, -20)
-            Text("结局各不相同——有人顺利，有人反复。点开看看他们怎么面对同一个岔路口。")
-                .font(.system(size: 11.5)).foregroundStyle(Theme.faint).lineSpacing(3)
-                .padding(.top, 2)
-        }
-        .padding(.top, 20)
+        .padding(.top, 14)
         .transition(.opacity)
     }
 

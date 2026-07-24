@@ -8,13 +8,14 @@ struct HomeView: View {
     @Environment(ToastCenter.self) private var toast
     @State private var model = HomeModel()
     @State private var chatLaunch: ChatLaunch?
+    @State private var diaryLaunch: DiaryLaunch?
     @State private var activeDimension: DimensionKey?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 greet
-                DiaryCard(model: model)
+                DiaryCard(model: model, onOpenDiary: { diaryLaunch = DiaryLaunch(date: $0) })
                     .padding(.top, 18)
                 HomeAskCard(model: model, onSend: send)
                     .padding(.top, 22)
@@ -29,6 +30,15 @@ struct HomeView: View {
         .screenBackground()
         .onAppear { model.loadPortrait() }
         .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0) }
+        .fullScreenCover(item: $diaryLaunch) { launch in
+            DiaryDetailView(
+                launch: launch,
+                hasRecordedToday: model.analysis != nil,
+                onStartRecording: {
+                    if !model.isRecording { model.toggleRecording() }
+                }
+            )
+        }
         .sheet(item: $activeDimension) { key in
             DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key)) { keywords in
                 model.saveDimension(key, keywords: keywords)
@@ -108,16 +118,30 @@ private struct RecorderElapsedLabel: View {
 
 private struct DiaryCard: View {
     @Bindable var model: HomeModel
+    var onOpenDiary: (String?) -> Void
     @Environment(SupabaseService.self) private var supabase
 
-    private static let week: [(String, String)] = [
-        ("😌", "四"), ("🙂", "五"), ("😮‍💨", "六"), ("😊", "日"), ("😐", "一"), ("🙂", "二"),
+    /// 对齐原型：7/17–7/22（五~三）+ 今天 7/23
+    private static let week: [(String, String, String)] = [
+        ("🙂", "五", "2026-07-17"), ("😮‍💨", "六", "2026-07-18"), ("😊", "日", "2026-07-19"),
+        ("😐", "一", "2026-07-20"), ("🙂", "二", "2026-07-21"), ("😌", "三", "2026-07-22"),
     ]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("我的语音日记").font(.system(size: 14.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                Button { onOpenDiary(nil) } label: {
+                    HStack(spacing: 7) {
+                        Text("我的语音日记").font(.system(size: 14.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                        Text("›").font(.system(size: 14))
+                            .foregroundStyle(.white.opacity(0.8))
+                            .frame(width: 18, height: 18)
+                            .background(Color.white.opacity(0.06), in: Circle())
+                            .overlay(Circle().strokeBorder(.white.opacity(0.18), lineWidth: 1))
+                    }
+                }
+                .buttonStyle(PressScaleStyle())
+                .accessibilityLabel("查看全部语音日记详情")
                 Spacer()
                 Button(model.isRecording ? "■ 停止记录" : "◉ 记录今日") {
                     if model.isRecording {
@@ -145,10 +169,16 @@ private struct DiaryCard: View {
     private var weekRow: some View {
         HStack {
             ForEach(Self.week.indices, id: \.self) { i in
-                dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
+                Button { onOpenDiary(Self.week[i].2) } label: {
+                    dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
+                }
+                .buttonStyle(PressScaleStyle())
                 Spacer()
             }
-            dayCell(emoji: model.analysis != nil ? "🙂" : "", label: "今天", filled: model.analysis != nil, today: true)
+            Button { onOpenDiary("2026-07-23") } label: {
+                dayCell(emoji: model.analysis != nil ? "🙂" : "", label: "今天", filled: model.analysis != nil, today: true)
+            }
+            .buttonStyle(PressScaleStyle())
         }
     }
 
@@ -201,6 +231,10 @@ private struct DiaryCard: View {
             Divider().overlay(Theme.line)
             Text("这次记录里，我听见了").font(.system(size: 11)).foregroundStyle(Theme.faint)
             FlowChips(items: analysis.emotions.map { .emotion($0) } + analysis.keywords.map { .keyword($0) })
+            Button("查看详情 ›") { onOpenDiary("2026-07-23") }
+                .font(.system(size: 11)).foregroundStyle(Theme.blue)
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(.top, 3)
         .transition(.opacity)
