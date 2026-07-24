@@ -269,10 +269,18 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   padding:4px 10px;border-radius:999px;pointer-events:none;
 }
 .askcat b{font-weight:600}
+.askcat.hidden{display:none}
+.ask-clear{
+  all:unset;position:absolute;right:13px;top:11px;z-index:3;width:24px;height:24px;border-radius:50%;
+  display:none;align-items:center;justify-content:center;cursor:pointer;color:#AEB7CC;
+  background:rgba(255,255,255,.08);font-size:18px;line-height:1;transition:background .18s,color .18s;
+}
+.ask-clear.show{display:flex}.ask-clear:hover{background:rgba(255,255,255,.14);color:#fff}
 .askbox textarea{
   width:100%;height:58px;resize:none;border:none;background:transparent;
   font-family:var(--sans);font-size:15px;line-height:1.8;color:var(--ink);text-indent:68px;
 }
+.askbox.no-topic textarea{text-indent:0;padding-right:27px}
 .askbox textarea::placeholder{color:var(--faint);font-size:13.5px}
 .askbox textarea:focus{outline:none}
 .askfoot{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
@@ -365,6 +373,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 #scr-home .askbox{margin-top:17px;padding:12px 13px}
 #scr-home .askcat{left:12px;top:10px}
 #scr-home .askbox textarea{height:72px;font-size:14px;line-height:1.7;text-indent:66px}
+#scr-home .askbox.no-topic textarea{text-indent:0}
 #scr-home .askfoot{margin-top:4px}
 #scr-home .askfoot .cnt{font-size:10px}
 #scr-home .send{padding:8px 20px;font-size:12.5px}
@@ -452,6 +461,16 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .stag{font-size:10px;color:#9DBCFF;background:rgba(94,150,255,.13);padding:3px 8px;border-radius:999px}
 .chatcta{margin:16px 0 0;opacity:0;animation:msgin .4s ease forwards}
 .swipe-hint{font-size:10.5px;color:var(--faint);margin:6px 4px 0;letter-spacing:.1em}
+.chat-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 4px 0;opacity:0;animation:msgin .4s ease forwards}
+.chat-actions button{font-family:var(--sans)}
+.chat-summary-hero{margin:8px 0 18px;padding:22px;border-radius:24px;background:linear-gradient(145deg,rgba(64,101,203,.24),rgba(113,73,170,.12));border:1px solid rgba(111,165,255,.25)}
+.chat-summary-hero .eyebrow,.chat-summary-card .eyebrow{font-size:10px;letter-spacing:.18em;color:#91B1FF}
+.chat-summary-hero h3{font-size:22px;line-height:1.45;margin-top:10px}
+.chat-summary-hero p{font-size:12px;color:var(--sub);line-height:1.75;margin-top:9px}
+.chat-summary-card{margin-top:12px;padding:18px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card)}
+.chat-summary-card h4{font-size:15px;margin-top:8px}.chat-summary-card p{font-size:13px;color:#C6CDDE;line-height:1.85;margin-top:8px}
+.chat-summary-card.tension{border-color:rgba(169,125,255,.25)}.chat-summary-card.next{border-color:rgba(62,217,164,.25)}
+.summary-bottom{padding:10px 20px 34px;background:linear-gradient(transparent,var(--paper) 24%)}.summary-bottom .btn-ink{width:100%;text-align:center;box-sizing:border-box}
 
 /* ============ 02 人生实验室 ============ */
 .labq{margin-top:18px;padding:18px 20px}
@@ -579,6 +598,39 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   content:"✓";position:absolute;z-index:8;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
   background:var(--btn-g);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;
 }
+.carry-section{
+  margin-top:8px;padding:15px 14px 13px;border-radius:20px;
+  background:linear-gradient(145deg,rgba(255,176,103,.07),rgba(94,150,255,.055));
+  border:1px solid rgba(255,176,103,.18)
+}
+.carry-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.carry-head .ey{font-size:8.5px;letter-spacing:.16em;color:#E7B77F}
+.carry-head h3{font-size:13px;margin-top:4px}
+.carry-head span{font-size:9.5px;color:var(--faint);white-space:nowrap}
+.carry-head span b{color:#FFD4A2;font-size:12px}
+.carry-copy{font-size:9.5px;color:var(--sub);line-height:1.55;margin-top:6px}
+.carry-deck{
+  display:flex;gap:8px;overflow-x:auto;margin:11px -14px 0;padding:2px 14px 7px;
+  scrollbar-width:none;scroll-snap-type:x proximity
+}
+.carry-deck::-webkit-scrollbar{display:none}
+.carry-card{
+  all:unset;cursor:pointer;box-sizing:border-box;position:relative;flex:0 0 112px;min-height:92px;
+  padding:12px 11px;border-radius:15px;scroll-snap-align:start;
+  background:#151922;border:1px dashed rgba(255,255,255,.16);
+  transition:transform .16s,border-color .2s,background .2s
+}
+.carry-card:active{transform:scale(.97)}
+.carry-card .glyph{font-size:16px}.carry-card b{display:block;font-size:11.5px;line-height:1.4;margin-top:7px}
+.carry-card small{display:block;font-size:8.5px;color:var(--faint);margin-top:5px}
+.carry-card.on{border-style:solid;border-color:rgba(255,190,119,.72);background:linear-gradient(145deg,rgba(255,176,103,.17),rgba(94,150,255,.08)),#151922}
+.carry-card.on::after{
+  content:"必须带";position:absolute;right:7px;top:7px;padding:3px 6px;border-radius:99px;
+  font-size:7.5px;color:#211308;background:#FFD09B
+}
+.carry-lock{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:9px;color:var(--faint)}
+.carry-lock i{width:5px;height:5px;border-radius:50%;background:#5A6172}
+.carry-lock.ready{color:#88DDBF}.carry-lock.ready i{background:var(--teal);box-shadow:0 0 9px rgba(62,217,164,.7)}
 @media (prefers-reduced-motion:reduce){
   .choice{transition:none}
 }
@@ -628,6 +680,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 #scr-lab .choices:hover .choice:nth-child(2),#scr-lab .choices.fanned .choice:nth-child(2),#scr-lab .choices:focus-within .choice:nth-child(2){transform:translate(calc(-50% - 38px),-3px) rotate(-5deg)}
 #scr-lab .choices:hover .choice:nth-child(3),#scr-lab .choices.fanned .choice:nth-child(3),#scr-lab .choices:focus-within .choice:nth-child(3){transform:translate(calc(-50% + 38px),-3px) rotate(5deg)}
 #scr-lab .choices:hover .choice:nth-child(4),#scr-lab .choices.fanned .choice:nth-child(4),#scr-lab .choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 112px),11px) rotate(16deg)}
+#scr-lab .carry-section{margin-top:5px}
 #scr-lab .lab-go{margin-top:12px;padding:12px 0;font-size:13px}
 #scr-lab .lab-note{margin-top:6px!important;font-size:9.5px!important;line-height:1.5!important;white-space:nowrap}
 @media (max-height:760px) and (max-width:460px){
@@ -645,6 +698,8 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   #scr-lab .choice p{font-size:9px}
   #scr-lab .choices:hover .choice:nth-child(1),#scr-lab .choices.fanned .choice:nth-child(1),#scr-lab .choices:focus-within .choice:nth-child(1){transform:translate(calc(-50% - 107px),9px) rotate(-15deg)}
   #scr-lab .choices:hover .choice:nth-child(4),#scr-lab .choices.fanned .choice:nth-child(4),#scr-lab .choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 107px),9px) rotate(15deg)}
+  #scr-lab .carry-section{padding:12px}
+  #scr-lab .carry-card{flex-basis:104px;min-height:84px}
   #scr-lab .lab-note{display:none}
 }
 
@@ -686,6 +741,25 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .rs-list li::before{content:"";position:absolute;left:0;top:12px;width:4px;height:4px;border-radius:50%;background:var(--faint)}
 .rs-key{margin-top:12px;padding:15px 18px;border-radius:16px;background:linear-gradient(135deg,rgba(94,150,255,.12),rgba(215,244,100,.08));border:1px dashed rgba(111,165,255,.45);font-size:12.5px;line-height:1.8;color:var(--sub)}
 .rs-key b{color:var(--ink)}
+.floor-test{margin-top:14px;padding:17px;border-radius:21px;background:#11151D;border:1px solid rgba(255,122,77,.24)}
+.floor-test .overline{font-size:8.5px;letter-spacing:.17em;color:#FF9B77}
+.floor-test h4{font-size:15px;line-height:1.45;margin-top:7px}
+.floor-test>p{font-size:10.5px;color:var(--sub);line-height:1.65;margin-top:6px}
+.floor-items{display:grid;gap:8px;margin-top:13px}
+.floor-item{padding:12px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid var(--line)}
+.floor-item-head{display:flex;align-items:center;gap:8px}.floor-item-head i{font-style:normal;font-size:15px}
+.floor-item-head b{font-size:11.5px}.floor-item p{font-size:9.5px;color:var(--sub);line-height:1.55;margin-top:6px}
+.floor-actions{display:flex;gap:7px;margin-top:9px}
+.floor-actions button{all:unset;cursor:pointer;flex:1;text-align:center;padding:7px 5px;border-radius:9px;font-size:9px;color:#AEB7CB;background:rgba(255,255,255,.045);border:1px solid var(--line)}
+.floor-actions button.accept.on{color:#092018;background:#83DDBE;border-color:#83DDBE}
+.floor-actions button.reject.on{color:#FFF0E9;background:#A94831;border-color:#D46A4D}
+.floor-verdict{display:none;margin-top:12px;padding:13px 14px;border-radius:15px}
+.floor-verdict.show{display:block;animation:msgin .3s ease}
+.floor-verdict.go{background:rgba(62,217,164,.09);border:1px solid rgba(62,217,164,.25)}
+.floor-verdict.stop{background:rgba(255,122,77,.09);border:1px solid rgba(255,122,77,.25)}
+.floor-verdict .cap{font-size:8.5px;letter-spacing:.13em}.floor-verdict.go .cap{color:#7FE0BF}.floor-verdict.stop .cap{color:#FF9B77}
+.floor-verdict b{display:block;font-size:12.5px;line-height:1.55;margin-top:5px}
+.floor-verdict p{font-size:9.5px;color:var(--sub);line-height:1.55;margin-top:5px}
 
 /* ============ 03 万花筒社区 ============ */
 .comm-tabs{display:flex;gap:20px;margin-top:16px;align-items:baseline}
@@ -1526,16 +1600,17 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       <div class="glow3"></div>
       <div class="tag">今天想探索什么</div>
       <h2>说出那个<br><em>在心里盘旋</em>的问题</h2>
-      <div class="askbox">
-        <div class="askcat">✦ <b id="askCatTag">职业</b></div>
-        <textarea id="askText" maxlength="200" placeholder="比如：我是否要从交互设计师转为产品经理？">我是否要从交互设计师转为产品经理？</textarea>
+      <div class="askbox no-topic" id="askBox">
+        <div class="askcat hidden" id="askCat">✦ <b id="askCatTag"></b></div>
+        <button class="ask-clear" id="askClear" type="button" aria-label="清空输入" onclick="clearAskText()">×</button>
+        <textarea id="askText" maxlength="200" placeholder="写下任何正在心里盘旋的问题…"></textarea>
         <div class="askfoot">
           <span class="cnt">灵感来自你 3 天前的日记</span>
           <button class="send" onclick="startChat()">发送</button>
         </div>
       </div>
       <div class="chips" id="topicChips">
-        <button class="chip soft on" data-topic="职业">职业</button>
+        <button class="chip soft" data-topic="职业">职业</button>
         <button class="chip soft" data-topic="家庭">家庭</button>
         <button class="chip soft" data-topic="升学">升学</button>
         <button class="chip soft" data-topic="情感">情感</button>
@@ -1684,6 +1759,18 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       <input id="chatInput" type="text" placeholder="想到什么，直接问…">
       <button class="c-send" onclick="sendChat()">发送</button>
     </div>
+  </section>
+
+  <!-- ============ 探索总结 push ============ -->
+  <section class="push" id="chatSummaryPage">
+    <div class="top">
+      <button class="backbtn" onclick="closePush('chatSummaryPage')" aria-label="返回对话">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div><h2>本次探索总结</h2><div class="sub2">不是定论，是此刻更清楚的你</div></div>
+    </div>
+    <div class="scroll" id="chatSummaryBody"></div>
+    <div class="summary-bottom"><button class="btn-ink" onclick="finishChatSummary()">完成本次探索</button></div>
   </section>
 
   <!-- ============ 悬赏详情 push ============ -->
@@ -2481,15 +2568,36 @@ function finishRec(){
 }
 
 /* ================= 探索话题标签 → 输入框 ================= */
-let currentTopic = '职业';
+let currentTopic = '';
+const askText = $('#askText');
+function updateAskInputState(){
+  const hasText = !!askText.value.trim();
+  $('#askClear').classList.toggle('show', hasText);
+}
+function clearAskText(){
+  askText.value = '';
+  updateAskInputState();
+  askText.focus();
+}
+askText.addEventListener('input', updateAskInputState);
 document.querySelectorAll('#topicChips .chip').forEach(c=>{
   c.addEventListener('click',()=>{
+    const isActive = c.classList.contains('on');
     document.querySelectorAll('#topicChips .chip').forEach(x=>x.classList.remove('on'));
-    c.classList.add('on');
-    currentTopic = c.dataset.topic;
-    $('#askCatTag').textContent = currentTopic;
-    $('#askText').value = TOPIC_SAMPLES[currentTopic];
-    $('#askText').focus();
+    if(isActive){
+      currentTopic = '';
+      $('#askCat').classList.add('hidden');
+      $('#askBox').classList.add('no-topic');
+    }else{
+      c.classList.add('on');
+      currentTopic = c.dataset.topic;
+      $('#askCatTag').textContent = currentTopic;
+      $('#askCat').classList.remove('hidden');
+      $('#askBox').classList.remove('no-topic');
+      if(!askText.value.trim()) askText.value = TOPIC_SAMPLES[currentTopic];
+    }
+    updateAskInputState();
+    askText.focus();
   });
 });
 
@@ -2503,87 +2611,97 @@ function simCardHTML(u){
     <div class="stags">${u.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div></div>
   </div>`;
 }
-let chatStarted = false;
+const CHAT_PROMPTS = {
+  '职业':['如果暂时不考虑“正确答案”，你更怕继续留下会错过什么，还是转身以后会失去什么？','最近哪一个真实瞬间，让这个问题突然变得不能再搁置？'],
+  '家庭':['这件事里，你最希望家人真正理解你的哪一部分？','如果不需要照顾任何人的期待，你自己的答案会有什么不同？'],
+  '升学':['你真正想靠这个选择得到的，是能力、机会、身份感，还是一种确定感？','假设两条路都不会失败，你会自然走向哪一条？'],
+  '情感':['这段关系里，你最舍不得失去的是什么，最不能继续忍受的又是什么？','你希望对方改变，还是希望自己终于有勇气做一个决定？'],
+  '默认':['这件事里，你最想得到什么，又最担心失去什么？','最近哪一个真实瞬间，让它开始反复出现在你心里？']
+};
+const chatState={started:false,topic:'',question:'',turn:0,answers:[],stage:'idle',correction:false};
+function appendChat(who,html){
+  const s=$('#chatScroll');
+  s.appendChild(el(`<div class="msg ${who}"><div class="bubble">${html}</div></div>`));
+  scrollBottom();
+}
+function assistantAfter(html,delay=700){
+  const s=$('#chatScroll'),think=el(`<div class="aithink"><span class="miniorb"></span>正在理解你刚才的话……</div>`);
+  s.appendChild(think); scrollBottom();
+  setTimeout(()=>{ think.remove(); appendChat('ai',html); },delay);
+}
 function startChat(){
   const q = $('#askText').value.trim();
   if(!q){ toast('先写下你的问题吧'); return; }
-  $('#chatTitle').textContent = '探索 · ' + currentTopic;
+  $('#chatTitle').textContent = currentTopic ? '探索 · '+currentTopic : '探索问题';
   $('#chatPage').classList.add('open');
-  if(chatStarted) return;
-  chatStarted = true;
   const s = $('#chatScroll');
-  s.appendChild(el(`<div class="msg me"><div class="bubble">${q}</div></div>`));
-  const think = el(`<div class="aithink"><span class="miniorb"></span>正在看你的个人动态画像……</div>`);
-  setTimeout(()=>{ s.appendChild(think); scrollBottom(); }, 500);
-  setTimeout(()=>{
-    think.remove();
-    s.appendChild(el(`<div class="msg ai"><div class="bubble">我看到两条还没有完全对上的线索：你过去在有自主权的事情上投入度很高，但最近谈到改变时，最先出现的都是<b>收入、已有积累和家庭期待</b>。<br><br>我暂时不想把它写成“你害怕改变”。这次迟疑更接近哪一种？</div></div>`));
-    const chips = el(`<div class="chatchips" id="reasonChips">
-      <button class="chip">我还想，只是承担不起失败</button>
-      <button class="chip">我确实没那么想要了</button>
-      <button class="chip">环境一直在消耗我</button>
-      <button class="chip">都不准确，我想自己说</button>
-      <button class="gochip" id="reasonDone">用这条校正理解 →</button>
-    </div>`);
-    s.appendChild(chips); scrollBottom();
-    chips.querySelectorAll('.chip').forEach(c=>{
-      c.addEventListener('click',()=>c.classList.toggle('on'));
-    });
-    chips.querySelector('#reasonDone').addEventListener('click', reasonsDone);
-  }, 1900);
+  s.innerHTML='';
+  Object.assign(chatState,{started:true,topic:currentTopic,question:q,turn:0,answers:[],stage:'clarify',correction:false});
+  appendChat('me',escapeHTML(q));
+  const prompts=CHAT_PROMPTS[currentTopic]||CHAT_PROMPTS['默认'];
+  assistantAfter(`我先不急着给建议。想确认一件更关键的事：<br><br><b>${prompts[0]}</b>`,900);
 }
-let reasonsAnswered = false;
-function reasonsDone(){
-  if(reasonsAnswered) return;
-  const sel = [...document.querySelectorAll('#reasonChips .chip.on')].map(c=>c.textContent);
-  if(!sel.length){ toast('至少选一个原因'); return; }
-  reasonsAnswered = true;
-  const s = $('#chatScroll');
-  s.appendChild(el(`<div class="msg me"><div class="bubble" style="font-size:13.5px">${sel.join('、')}</div></div>`));
-  scrollBottom();
+function renderInsight(){
+  const a=chatState.answers;
+  assistantAfter(`我先试着说一个<b>暂时的理解</b>：你卡住的可能不只是“该选哪一个”，而是既想保护「${escapeHTML(a[0]||'真正重视的东西')}」，又不想忽略「${escapeHTML(a[1]||'现实里已经出现的信号')}」。<br><br>所以你需要的也许不是别人替你判断，而是把<b>真实意愿</b>和<b>害怕付出的代价</b>拆开来看。这个理解接近你吗？`,800);
   setTimeout(()=>{
-    const primary=sel[0];
-    const isConstraint=primary.includes('承担不起')||primary.includes('环境');
-    s.appendChild(el(`<div class="msg ai"><div class="bubble">收到。我会先把这句话当作<b>你对当下的解释</b>，而不是新的性格标签。${isConstraint?'这意味着我们需要把“改变意愿”和“现实承受力”分开记录。':'它也可能说明你的目标真的在变化，而不只是被压力挡住。'}</div></div>`));
-    s.appendChild(el(`<div class="attribution-card">
-      <div class="cap">AI 的暂时理解 · 等待后续证据</div>
-      <p>你并非普遍缺少行动意愿；当前迟疑可能由个人感受与生活条件共同构成。</p>
-      <div class="split">
-        <div><b>关于你</b><span>${primary.includes('没那么想要')?'目标吸引力正在变化':'仍有探索和改变意愿'}</span></div>
-        <div><b>关于处境</b><span>${isConstraint?'失败成本与近期消耗需要单独看':'还需要继续确认现实影响'}</span></div>
-      </div>
-    </div>`));
-    s.appendChild(el(`<div class="profile-delta"><div class="cap">动态数字人 · 本轮已校正</div><del>风险偏好低，害怕职业改变</del><b>${isConstraint?'愿意改变，但当前的现实缓冲与精力不足':'对原目标的意愿正在变化，暂不解释为缺乏上进心'}</b></div>`));
-    $('#worldObservationTitle').textContent=isConstraint?'你愿意改变，但目前承担改变的空间有限':'你对原目标的意愿可能正在变化';
-    $('#worldObservationText').textContent=isConstraint?'这次迟疑暂时不归因于胆量或风险偏好。收入、已有积累与近期消耗需要被分别确认。':'目标变化不等于缺乏上进心。数字人会等待更多日记与对话证据再更新稳定倾向。';
-    $('#portraitUpdateText').textContent='刚刚校正 1 条理解 · 仍在观察';
-    scrollBottom();
-  }, 1500);
+    const actions=el(`<div class="chat-actions"><button class="gochip" onclick="confirmChatInsight()">嗯，比较接近</button><button class="chip" onclick="requestChatCorrection()">还不太对</button></div>`);
+    $('#chatScroll').appendChild(actions);scrollBottom();
+  },850);
+  chatState.stage='review';
 }
-/* 对话输入框 */
-const AI_REPLIES = [
-  '我先不把它归结为性格。它是一直如此，还是<b>最近才变得明显</b>？时间差会改变我的理解。',
-  '这听起来可能同时包含两部分：一部分是你的真实偏好，另一部分是你现在不得不承担的条件。<b>哪一部分更重</b>？',
-  '我会把这句话保留为“你的原话”，暂时不改写成结论。之后如果日记或对话出现相反证据，我会请你一起校正。',
-];
-let aiReplyIdx = 0;
+function confirmChatInsight(){
+  document.querySelectorAll('#chatScroll .chat-actions').forEach(x=>x.remove());
+  appendChat('me','嗯，这个理解比较接近我。');
+  assistantAfter('好，那我不再继续替你解释。我们把刚才已经说清楚的、仍在拉扯的，以及下一步可以验证的事情整理出来。');
+  setTimeout(()=>{
+    const actions=el(`<div class="chat-actions"><button class="gochip" onclick="openChatSummary()">生成本次探索总结 →</button></div>`);
+    $('#chatScroll').appendChild(actions);scrollBottom();
+  },760);
+  chatState.stage='ready';
+}
+function requestChatCorrection(){
+  document.querySelectorAll('#chatScroll .chat-actions').forEach(x=>x.remove());
+  appendChat('me','还不太对。');
+  chatState.stage='correction';chatState.correction=true;
+  assistantAfter('谢谢你纠正我。<b>最不准确的是哪一部分？</b>你可以直接改写成你自己的话，我会以你的表达为准。');
+}
 function sendChat(){
   const v = $('#chatInput').value.trim();
-  if(!v) return;
-  if(!chatStarted){ chatStarted = true; }
-  const s = $('#chatScroll');
-  s.appendChild(el(`<div class="msg me"><div class="bubble" style="font-size:13.5px">${v}</div></div>`));
+  if(!v||!chatState.started) return;
+  appendChat('me',escapeHTML(v));
   $('#chatInput').value = '';
-  scrollBottom();
-  const think = el(`<div class="aithink"><span class="miniorb"></span>正在思考……</div>`);
-  setTimeout(()=>{ s.appendChild(think); scrollBottom(); }, 400);
-  setTimeout(()=>{
-    think.remove();
-    s.appendChild(el(`<div class="msg ai"><div class="bubble">${AI_REPLIES[aiReplyIdx++ % AI_REPLIES.length]}</div></div>`));
-    scrollBottom();
-  }, 1700);
+  chatState.answers.push(v);
+  if(chatState.stage==='clarify'&&chatState.turn===0){
+    chatState.turn=1;
+    const prompts=CHAT_PROMPTS[chatState.topic]||CHAT_PROMPTS['默认'];
+    assistantAfter(`我听见了。再确认最后一层：<br><br><b>${prompts[1]}</b>`);
+  }else if(chatState.stage==='clarify'){
+    chatState.turn=2;renderInsight();
+  }else if(chatState.stage==='correction'){
+    assistantAfter(`明白了。更准确的说法应该是：<b>${escapeHTML(v)}</b><br><br>我会保留你的原话，不再把它改写成一个性格结论。`);
+    setTimeout(()=>{
+      const actions=el(`<div class="chat-actions"><button class="gochip" onclick="confirmChatInsight()">这次准确了</button><button class="chip" onclick="requestChatCorrection()">我再补充一点</button></div>`);
+      $('#chatScroll').appendChild(actions);scrollBottom();
+    },760);
+  }
 }
 $('#chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendChat(); });
+
+function openChatSummary(){
+  const a=chatState.answers, topic=chatState.topic||'此刻的选择';
+  $('#chatSummaryBody').innerHTML=`
+    <div class="chat-summary-hero"><div class="eyebrow">${escapeHTML(topic)} · EXPLORATION NOTE</div><h3>${escapeHTML(chatState.question)}</h3><p>这份总结来自刚才的对话，只记录你此刻认可的理解，不替你下结论。</p></div>
+    <div class="chat-summary-card"><div class="eyebrow">你真正想解决的</div><h4>不是选出标准答案，而是确认什么值得你承担代价</h4><p>你的犹豫并不等于没有方向。它提醒你：愿望与代价需要被分开看见。</p></div>
+    <div class="chat-summary-card tension"><div class="eyebrow">此刻的两股拉力</div><h4>想靠近的，和想保护的</h4><p>一边是「${escapeHTML(a[0]||'你真正想靠近的生活')}」；另一边是「${escapeHTML(a[1]||'你暂时还不能轻易放下的部分')}」。两边都是真的，不必把其中一边解释成软弱。</p></div>
+    <div class="chat-summary-card"><div class="eyebrow">已经比较清楚的</div><h4>你的原话比标签更重要</h4><p>${escapeHTML(a[a.length-1]||'你愿意先理解自己的真实需要，再做决定。')}</p></div>
+    <div class="chat-summary-card next"><div class="eyebrow">下一步的小验证</div><h4>先收集一个真实证据</h4><p>未来 7 天，做一次成本很低、可以撤回的小尝试。记录行动前后的期待、精力和抗拒，再判断你是“不想要”，还是“暂时承担不起”。</p></div>`;
+  $('#chatSummaryPage').classList.add('open');
+}
+function finishChatSummary(){
+  closePush('chatSummaryPage');closePush('chatPage');
+  toast('本次探索已保存');
+}
 
 /* ================= 横滑卡片行：鼠标拖动滚动 ================= */
 document.addEventListener('pointerdown', e=>{
