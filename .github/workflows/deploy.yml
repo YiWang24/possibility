@@ -29,10 +29,12 @@ jobs:
           version: latest
 
       - name: 关联生产项目
-        run: supabase link --workdir backend --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+        working-directory: backend
 
       - name: 推送数据库迁移
-        run: supabase db push --workdir backend
+        run: supabase db push
+        working-directory: backend
 
       - name: 同步 Edge Function 密钥
         env:
@@ -54,4 +56,5 @@ jobs:
           rm -f backend/.env.ci
 
       - name: 部署 Edge Functions
-        run: supabase functions deploy --workdir backend --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+        working-directory: backend

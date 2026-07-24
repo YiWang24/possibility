@@ -154,3 +154,179 @@ export function validateDiaryInput(value: unknown): { transcript: string } {
     transcript: string(body.transcript, "transcript", LIMITS.transcript)!,
   };
 }
+
+export type SaveDimensionInput = {
+  dimension: string;
+  tags: string[];
+  source?: string;
+};
+
+export function validateSaveDimensionInput(value: unknown): SaveDimensionInput {
+  const body = object(value);
+  const dimension = string(body.dimension, "dimension", 50)!;
+  const validDimensions = [
+    "skill",
+    "like",
+    "love",
+    "family",
+    "social",
+    "personality",
+  ];
+  if (!validDimensions.includes(dimension)) {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      `dimension 必须是 ${validDimensions.join("/")} 之一。`,
+    );
+  }
+  const tags = body.tags;
+  if (!Array.isArray(tags) || tags.length === 0 || tags.length > 20) {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "tags 必须是 1-20 项的数组。",
+    );
+  }
+  const validatedTags = tags.map((t, i) => string(t, `tags[${i}]`, 50)!);
+  const source = string(body.source, "source", 30, false) ?? "manual";
+  return { dimension, tags: validatedTags, source };
+}
+
+export type SaveCardGameInput = {
+  kind: string;
+  final_cards: Array<{ id: string; name: string; glyph?: string; group?: string }>;
+  rounds: number;
+  accepted: unknown[];
+  traded: unknown[];
+};
+
+export function validateSaveCardGameInput(value: unknown): SaveCardGameInput {
+  const body = object(value);
+  const kind = string(body.kind, "kind", 20)!;
+  const validKinds = ["life", "marriage", "family", "social"];
+  if (!validKinds.includes(kind)) {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      `kind 必须是 ${validKinds.join("/")} 之一。`,
+    );
+  }
+  const finalCards = body.final_cards;
+  if (!Array.isArray(finalCards) || finalCards.length < 1 || finalCards.length > 9) {
+    throw new HttpError(400, "INVALID_INPUT", "final_cards 必须是 1-9 项的数组。");
+  }
+  const validatedCards = finalCards.map((card, i) => {
+    const c = object(card, `final_cards[${i}]`);
+    return {
+      id: string(c.id, `final_cards[${i}].id`, 50)!,
+      name: string(c.name, `final_cards[${i}].name`, 50)!,
+      glyph: string(c.glyph, `final_cards[${i}].glyph`, 10, false),
+      group: string(c.group, `final_cards[${i}].group`, 50, false),
+    };
+  });
+  const rounds = body.rounds;
+  if (!Number.isInteger(rounds) || (rounds as number) < 0 || (rounds as number) > 100) {
+    throw new HttpError(400, "INVALID_INPUT", "rounds 必须是 0-100 的整数。");
+  }
+  const accepted = Array.isArray(body.accepted) ? body.accepted : [];
+  const traded = Array.isArray(body.traded) ? body.traded : [];
+  return { kind, final_cards: validatedCards, rounds: rounds as number, accepted, traded };
+}
+
+export type SimulateInputV2 = {
+  question: string;
+  choice: string;
+  years: number;
+  carry_cards?: string[];
+};
+
+export function validateSimulateInputV2(value: unknown): SimulateInputV2 {
+  const body = object(value);
+  const years = body.years;
+  if (
+    !Number.isInteger(years) || (years as number) < 1 || (years as number) > 10
+  ) {
+    throw new HttpError(400, "INVALID_INPUT", "years 必须是 1 到 10 的整数。");
+  }
+  const carryCards = optionalStringArray(
+    body.carry_cards,
+    "carry_cards",
+    6,
+    50,
+  );
+  return {
+    question: string(body.question, "question", LIMITS.question)!,
+    choice: string(body.choice, "choice", LIMITS.choice)!,
+    years: years as number,
+    carry_cards: carryCards,
+  };
+}
+
+export type ListInput = {
+  limit: number;
+  offset: number;
+};
+
+export function validateListInput(value: unknown): ListInput {
+  const body = object(value);
+  let limit = body.limit ?? 20;
+  let offset = body.offset ?? 0;
+  if (!Number.isInteger(limit) || (limit as number) < 1) limit = 20;
+  if ((limit as number) > 50) limit = 50;
+  if (!Number.isInteger(offset) || (offset as number) < 0) offset = 0;
+  return { limit: limit as number, offset: offset as number };
+}
+
+export type BountyInput = {
+  question: string;
+  tags: string[];
+  detail: string;
+  reward: string;
+};
+
+export function validateBountyInput(value: unknown): BountyInput {
+  const body = object(value);
+  const tags = body.tags;
+  if (!Array.isArray(tags) || tags.length > 5) {
+    throw new HttpError(400, "INVALID_INPUT", "tags 最多 5 项。");
+  }
+  const validatedTags = (tags as unknown[]).map((t, i) =>
+    string(t, `tags[${i}]`, 30)!
+  );
+  return {
+    question: string(body.question, "question", 200)!,
+    tags: validatedTags,
+    detail: string(body.detail, "detail", 2000)!,
+    reward: string(body.reward, "reward", 50)!,
+  };
+}
+
+export type BountyResponseInput = {
+  bounty_id: number;
+  message: string;
+};
+
+export function validateBountyResponseInput(value: unknown): BountyResponseInput {
+  const body = object(value);
+  const bountyId = body.bounty_id;
+  if (!Number.isInteger(bountyId) || (bountyId as number) < 1) {
+    throw new HttpError(400, "INVALID_INPUT", "bounty_id 必须是正整数。");
+  }
+  return {
+    bounty_id: bountyId as number,
+    message: string(body.message, "message", 500)!,
+  };
+}
+
+export type KaleidoscopeInput = {
+  mode: "similar" | "different";
+};
+
+export function validateKaleidoscopeInput(value: unknown): KaleidoscopeInput {
+  const body = object(value);
+  const mode = string(body.mode, "mode", 20)!;
+  if (mode !== "similar" && mode !== "different") {
+    throw new HttpError(400, "INVALID_INPUT", "mode 必须是 similar 或 different。");
+  }
+  return { mode: mode as "similar" | "different" };
+}

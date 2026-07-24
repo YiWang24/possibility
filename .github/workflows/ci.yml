@@ -29,10 +29,12 @@ jobs:
           version: latest
 
       - name: 启动本地数据库
-        run: supabase db start --workdir backend
+        run: supabase db start
+        working-directory: backend
 
       - name: 应用全部 migration + seed
-        run: supabase db reset --workdir backend
+        run: supabase db reset
+        working-directory: backend
 
       - name: RLS / 数据隔离测试
         run: |

@@ -131,12 +131,15 @@ async function applyProfileUpdate(
 export async function insertSimulation(
   db: SupabaseClient,
   userId: string,
-  input: { question: string; choice: string; years: number },
+  input: { question: string; choice: string; years: number; carry_cards?: string[] },
   result: SimulationOutput,
 ): Promise<void> {
   const { error } = await db.from("simulations").insert({
     user_id: userId,
-    ...input,
+    question: input.question,
+    choice: input.choice,
+    years: input.years,
+    carry_cards: input.carry_cards ?? [],
     scenarios: result.scenarios,
   });
   if (error) dbFailure("insert simulation", error);

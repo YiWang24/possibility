@@ -31,7 +31,7 @@ npm run db:test
 ```bash
 cp backend/functions/.env.example backend/.env.local
 # 在 backend/.env.local 中填写 ANTHROPIC_API_KEY
-npx supabase functions serve --workdir backend --env-file backend/.env.local
+cd backend && npx supabase functions serve --env-file .env.local
 ```
 
 Edge Runtime 会自动注入 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`。Claude
@@ -52,13 +52,14 @@ Content-Type: application/json
 线上优先流程（不需要启动本地 Supabase）：
 
 ```bash
-npx supabase link --workdir backend --project-ref <project-ref>
-npx supabase db push --workdir backend
-npx supabase secrets set --workdir backend --env-file backend/.env.local
-npx supabase functions deploy --workdir backend chat
-npx supabase functions deploy --workdir backend match
-npx supabase functions deploy --workdir backend simulate
-npx supabase functions deploy --workdir backend analyze-diary
+cd backend
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+npx supabase secrets set --env-file .env.local
+npx supabase functions deploy chat
+npx supabase functions deploy match
+npx supabase functions deploy simulate
+npx supabase functions deploy analyze-diary
 ```
 
 不要把 `backend/.env.local` 或真实密钥提交到仓库。
