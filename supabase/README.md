@@ -1,63 +1,64 @@
-# 万花筒 KALEIDO · 后端（Supabase）
+# 万花筒后端
 
-Postgres + 匿名 Auth + Storage + Edge Functions(Deno/TS) + Claude。
-架构见根目录 `技术设计文档.md` 与 `后端开发架构.md`。
+后端由 Supabase Postgres/Auth/Storage 和 4 个 Deno Edge Functions 组成：
 
-## 目录
-```
-supabase/
-├─ config.toml                 # 项目/函数配置（verify_jwt、匿名登录）
-├─ migrations/                 # 0001 schema · 0002 rls · 0003 storage
-├─ seed.sql                    # 由 scripts/gen_seed.mjs 从原型 HTML 生成
-└─ functions/
-   ├─ _shared/                 # anthropic · auth · validate · cors · errors · prompts · schemas · llm
-   ├─ chat/                    # 流式对话 + 岔路口信号
-   ├─ match/                   # 3 位旅人 + 匹配理由（结构化）
-   ├─ simulate/                # 3 种未来（结构化）
-   └─ analyze-diary/           # 情绪/关键词（Haiku）
-scripts/
-├─ gen_seed.mjs                # 原型 HTML → seed.sql（node）
-├─ verify_db.sh                # 一次性 Postgres 容器验证 migrations+seed（无需 Supabase CLI）
-└─ _verify_shims.sql           # 纯 PG 验证用的 auth/storage stub
-```
+- `chat`：流式对话，保存消息，并行抽取画像与岔路口信号。
+- `match`：从数据库中的旅人资料生成 3 条不重复、结局有差异的匹配。
+- `simulate`：生成一般、乐观、警示三种未来情景并落库。
+- `analyze-diary`：提取情绪、关键词、画像更新并落库。
 
-## 前置
-- Supabase CLI · Docker（本地栈）· Deno（Edge 运行时，CLI 自带）
-- Anthropic API Key
+## 本地检查
 
-## 本地开发
 ```bash
-supabase start                              # 起本地 Postgres/Studio/Functions
-supabase db reset                           # 应用 migrations/*.sql + seed.sql
-supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-cp supabase/functions/.env.example supabase/functions/.env   # 填本地 Key
-supabase functions serve chat               # 本地调试流式（逐个 serve）
+npm install
+npm test
+npm run seed:generate
 ```
 
-## 生成 / 更新种子
+`npm test` 会执行格式检查、lint、四个函数的严格类型检查和公共契约单元测试。
+
+完整数据库验证需要 Docker 能拉取 Supabase 镜像：
+
 ```bash
-node scripts/gen_seed.mjs                    # 重生成 supabase/seed.sql
+npm run db:start
+npm run db:test
 ```
 
-## 无 Supabase CLI 时验证数据层（本仓已用它验过）
+`db:test` 会重建本地数据库、应用全部 migration/seed，并验证公开内容权限、用户数据隔离、消息归属和 Storage 用户目录隔离。`seed:generate` 会从最新原型重建旅人、详情、服务和悬赏数据。
+
+## 本地函数
+
 ```bash
-bash scripts/verify_db.sh                    # Docker 起 postgres:16，应用 shims+migrations+seed，打印行数与 RLS 策略
+cp supabase/functions/.env.example supabase/.env.local
+# 在 supabase/.env.local 中填写 ANTHROPIC_API_KEY
+npx supabase functions serve --env-file supabase/.env.local
 ```
-> ⚠️ `scripts/_verify_shims.sql` 只是纯 PG 验证用的最小 auth/storage stub；真实 Supabase 栈自带这些 schema，勿在生产使用。
+
+Edge Runtime 会自动注入 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`。Claude
+兼容网关通过 `ANTHROPIC_BASE_URL` 配置。模型可用
+`ANTHROPIC_CHAT_MODEL`、`ANTHROPIC_STRUCTURED_MODEL` 和
+`ANTHROPIC_DIARY_MODEL` 覆盖。
+
+所有业务函数都要求：
+
+```http
+Authorization: Bearer <supabase-user-jwt>
+apikey: <supabase-anon-key>
+Content-Type: application/json
+```
 
 ## 部署
+
+线上优先流程（不需要启动本地 Supabase）：
+
 ```bash
-supabase db push                             # 线上应用 migrations
-supabase functions deploy chat match simulate analyze-diary
-supabase secrets set ANTHROPIC_API_KEY=sk-ant-...   # 线上密钥
+npx supabase link --project-ref <project-ref>
+npx supabase db push
+npx supabase secrets set --env-file supabase/.env.local
+npx supabase functions deploy chat
+npx supabase functions deploy match
+npx supabase functions deploy simulate
+npx supabase functions deploy analyze-diary
 ```
 
-## 契约速查
-| Function | 入参 | 出参 |
-|---|---|---|
-| `POST /chat` | `{topic, message, conversation_id?, history?}` | SSE：`event: token/meta/done`（done 含 `conversation_id` 与岔路口 `signals`） |
-| `POST /match` | `{user_state}` | `{matches:[{traveler_id,reason,not_applicable}]}` |
-| `POST /simulate` | `{question, choice, years(1-10)}` | `{id, scenarios:{general,optimistic,cautionary}}` |
-| `POST /analyze-diary` | `{transcript, audio_path?}` | `{id, emotions[], keywords[], dim_updates[]}` |
-
-所有函数 `verify_jwt=true`；`chat` 流式需客户端用 `URLSession.bytes` 直连（见技术设计文档 §8.3）。
+不要把 `supabase/.env.local` 或真实密钥提交到仓库。

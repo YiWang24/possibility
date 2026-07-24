@@ -1,0 +1,28 @@
+{
+  "name": "adx",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "backend:fmt": "deno fmt --config supabase/functions/deno.json supabase/functions",
+    "backend:check": "deno fmt --check --config supabase/functions/deno.json supabase/functions && deno lint --config supabase/functions/deno.json supabase/functions && deno check --config supabase/functions/deno.json supabase/functions/chat/index.ts supabase/functions/match/index.ts supabase/functions/simulate/index.ts supabase/functions/analyze-diary/index.ts && deno test --config supabase/functions/deno.json supabase/functions/tests",
+    "seed:generate": "node scripts/gen_seed.mjs",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:test": "supabase db reset && PGPASSWORD=postgres psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 54322 -U postgres -d postgres -f supabase/tests/rls_test.sql",
+    "test": "npm run backend:check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YiWang24/adx.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/YiWang24/adx/issues"
+  },
+  "homepage": "https://github.com/YiWang24/adx#readme",
+  "devDependencies": {
+    "supabase": "^2.109.1"
+  }
+}

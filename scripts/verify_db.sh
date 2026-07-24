@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 本地/CI 验证：在一次性 Postgres 16 容器上应用 shims + migrations + seed。
+# 本地/CI 验证：在一次性 Postgres 17 容器上应用 shims + migrations + seed。
 # 无需 Supabase CLI。用法：bash scripts/verify_db.sh
 set -euo pipefail
 
@@ -7,7 +7,7 @@ NAME=kaleido_verify_pg
 PORT=${VERIFY_PG_PORT:-55432}
 
 docker rm -f "$NAME" >/dev/null 2>&1 || true
-docker run -d --name "$NAME" -e POSTGRES_PASSWORD=pw -p "${PORT}:5432" postgres:16 >/dev/null
+docker run -d --name "$NAME" -e POSTGRES_PASSWORD=pw -p "${PORT}:5432" postgres:17 >/dev/null
 trap 'docker rm -f "$NAME" >/dev/null 2>&1 || true' EXIT
 
 echo "waiting for postgres..."
@@ -20,10 +20,14 @@ export PGPASSWORD=pw
 PSQL=(psql -h localhost -p "${PORT}" -U postgres -v ON_ERROR_STOP=1 -q)
 
 "${PSQL[@]}" -f scripts/_verify_shims.sql
-"${PSQL[@]}" -f supabase/migrations/0001_schema.sql
-"${PSQL[@]}" -f supabase/migrations/0002_rls.sql
-"${PSQL[@]}" -f supabase/migrations/0003_storage.sql
+for migration in supabase/migrations/*.sql; do
+  "${PSQL[@]}" -f "$migration"
+done
 "${PSQL[@]}" -f supabase/seed.sql
+"${PSQL[@]}" -c "alter table storage.objects enable row level security;
+  grant usage on schema storage to authenticated;
+  grant select, insert, update, delete on storage.objects to authenticated;"
+"${PSQL[@]}" -f supabase/tests/rls_test.sql
 
 echo "=== row counts ==="
 "${PSQL[@]}" -c "select 'travelers' as t, count(*) from travelers
