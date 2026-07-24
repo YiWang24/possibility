@@ -2800,7 +2800,7 @@ function syncLabReady(){
     btn.textContent='带着 3 张底牌开始推演';
   }else{
     btn.setAttribute('disabled','');
-    btn.textContent=labPick?'还要装入 3 张底牌':'开始推演';
+    btn.textContent=labPick?`还要装入 ${CARRY_LIMIT-carrySelected.size} 张底牌`:'开始推演';
   }
 }
 function toggleCarryCard(btn){
