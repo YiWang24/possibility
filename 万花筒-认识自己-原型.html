@@ -1139,7 +1139,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .prof-tags{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
 .prof-tags span{font-size:11px;color:#C6D7FF;background:rgba(94,150,255,.11);border:1px solid rgba(94,150,255,.2);padding:6px 10px;border-radius:999px}
 .prof-tabs{
-  position:sticky;top:0;z-index:8;display:grid;grid-template-columns:repeat(5,1fr);
+  position:sticky;top:0;z-index:8;display:grid;grid-template-columns:repeat(4,1fr);
   background:rgba(10,12,18,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
 }
 .prof-tab{
@@ -1179,6 +1179,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .story-full{margin-top:18px;padding:18px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
 .story-full h4{font-size:13.5px;color:#B9CCFF}.story-full p{font-size:13px;line-height:1.9;color:var(--sub);margin-top:9px}
 .prof-timeline{margin-top:4px}
+.prof-timeline+.prof-quote{margin-top:8px}
 .pt-item{position:relative;padding-left:30px}
 .pt-item:not(:last-child)::before{content:"";position:absolute;left:8px;top:22px;bottom:-5px;width:1px;background:linear-gradient(var(--violet-soft),rgba(143,123,255,.08))}
 .pt-dot{position:absolute;left:1px;top:15px;width:15px;height:15px;border-radius:50%;background:var(--aurora-deep);border:3px solid #0B0E17;box-shadow:0 0 0 1px rgba(143,123,255,.5)}
@@ -1261,17 +1262,16 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .prof-edit-btn:active{transform:scale(.97)}
 .my-prof-tabs{top:-1px}
 .my-prof-panel{padding-bottom:24px}
-.public-persona-stage{
-  position:relative;height:172px;border-radius:22px;overflow:hidden;
-  background:radial-gradient(220px 160px at 50% 45%,rgba(89,104,217,.3),transparent 70%),#10131D;
-  border:1px solid rgba(111,165,255,.2);
-}
-.public-persona-stage img{width:100%;height:100%;object-fit:cover;opacity:.88;filter:saturate(1.08)}
-.public-persona-stage::after{content:"PUBLIC DIGITAL SELF";position:absolute;left:14px;bottom:12px;font-size:8px;letter-spacing:.2em;color:#C9D8FF}
-.persona-public-note{font-size:10.5px;color:var(--faint);line-height:1.65;margin:10px 2px 0}
-.persona-public-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.persona-public-item{min-height:72px;padding:12px;border-radius:15px;background:var(--card);border:1px solid var(--line)}
-.persona-public-item i{font-style:normal;font-size:8px;letter-spacing:.12em;color:#91B1FF}.persona-public-item b{display:block;font-size:11.5px;line-height:1.5;margin-top:6px}.persona-public-item.wide{grid-column:1/-1}
+.public-profile-portrait{margin:0;padding-bottom:16px;background:#10131D;border-color:rgba(111,165,255,.18)}
+.public-profile-portrait .public-persona-stage{height:198px}
+.public-profile-portrait .public-persona-stage::after{inset:10px;bottom:10px}
+.public-profile-portrait .portrait-life-signature{display:block}
+.public-profile-portrait .pbar{max-width:none}
+.public-profile-portrait .dims{margin-top:14px}
+.public-profile-portrait .dim{cursor:default}
+.public-profile-portrait .dim:active{transform:none}
+.public-profile-portrait .dim .ar{font-size:9px;color:#7F91B7}
+.persona-public-note{font-size:10.5px;color:var(--faint);line-height:1.65;margin:12px 2px 0;text-align:left}
 .persona-empty{padding:28px 16px;text-align:center;border:1px dashed var(--line);border-radius:18px;color:var(--faint);font-size:11px;line-height:1.7}
 #myEditPage{z-index:76;background:#0A0C12}
 .edit-profile-scroll{padding:12px 20px 110px!important}
@@ -3043,8 +3043,8 @@ function refreshDynamicPersona(){
     dynamicPersonaFrame=requestAnimationFrame(animateDynamicPersona);
   }
 }
-function drawDynamicPersona(time=0){
-  const canvas=$('#dynamicPersonaCanvas'),model=dynamicPersonaModel;
+function drawDynamicPersona(time=0,canvasOverride=null,modelOverride=null){
+  const canvas=canvasOverride||$('#dynamicPersonaCanvas'),model=modelOverride||dynamicPersonaModel;
   if(!canvas||!model)return;
   const width=Math.max(280,canvas.clientWidth||340);
   const height=Math.max(180,canvas.clientHeight||216);
@@ -4992,7 +4992,7 @@ const DEFAULT_MY_PROFILE={
     {age:'27 岁',t:'开始探索 AI 产品',d:'用小项目验证转型意愿，也记录每次选择背后的现实约束。'}
   ],
   dims:[],
-  visibility:{personality:true,skill:true,like:true,love:false,family:false,life:false},
+  visibility:{personality:true,skill:true,like:true,love:false,family:false,social:false,life:false},
   services:[
     {id:'consult',enabled:true,type:'1 对 1 交流',title:'转型路径交流',price:'29',desc:'围绕当前选择、能力迁移与行动计划进行一次真实经验交流。'},
     {id:'materials',enabled:false,type:'资料工具包',title:'探索复盘模板',price:'9.9',desc:'整理我在探索过程中使用的问题清单、复盘表和小实验模板。'},
@@ -5036,28 +5036,117 @@ function safeProfileAvatar(src){
   return /^(assets\/community-avatars\/|data:image\/)/.test(String(src||''))?src:MY_AVATARS[0];
 }
 function myPersonaSource(){
-  const life=[...document.querySelectorAll('#lifeSignatureCards span')].map(x=>x.textContent.trim()).filter(Boolean).join(' · ');
+  const lifeCards=[...document.querySelectorAll('#lifeSignatureCards .card-mini')].map(card=>({
+    glyph:card.querySelector('i')?.textContent.trim()||'◇',
+    name:card.querySelector('span')?.textContent.trim()||''
+  })).filter(card=>card.name);
   return [
-    {key:'personality',label:'人格底色',value:$('#personalityBaseText')?.textContent.trim()||'尚未填写'},
-    {key:'skill',label:'我擅长',value:$('#dimSkill')?.textContent.trim()||'尚未填写'},
-    {key:'like',label:'我喜欢',value:$('#dimLike')?.textContent.trim()||'尚未填写'},
-    {key:'love',label:'情感关系',value:$('#dimLove')?.textContent.trim()||'尚未填写'},
-    {key:'family',label:'家庭关系',value:$('#dimFamily')?.textContent.trim()||'尚未填写'},
-    {key:'life',label:'人生底牌',value:life||'尚未生成'}
+    {key:'personality',label:'人格底色',value:$('#personalityBaseText')?.textContent.trim()||'尚未填写',glyph:'◎',color:'rgba(89,104,217,.16)'},
+    {key:'skill',label:'我擅长',value:$('#dimSkill')?.textContent.trim()||'尚未填写',glyph:'✦',color:'rgba(94,150,255,.15)'},
+    {key:'like',label:'我喜欢',value:$('#dimLike')?.textContent.trim()||'尚未填写',glyph:'♡',color:'rgba(227,92,193,.15)'},
+    {key:'love',label:'我在恋爱关系中在意',value:$('#dimLove')?.textContent.trim()||'尚未填写',glyph:'✿',color:'rgba(255,122,77,.16)'},
+    {key:'family',label:'我在家庭关系中在意',value:$('#dimFamily')?.textContent.trim()||'尚未填写',glyph:'⌂',color:'rgba(62,217,164,.14)'},
+    {key:'social',label:'我在人际交往中在意',value:$('#dimSocial')?.textContent.trim()||'尚未填写',glyph:'◎',color:'rgba(94,150,255,.15)'},
+    {key:'life',label:'我的人生底牌',value:lifeCards.map(card=>card.name).join(' · ')||'尚未生成',glyph:'◇',color:'rgba(143,123,255,.16)',cards:lifeCards}
   ];
 }
+function hasPersonaResult(item){
+  return Boolean(item?.value)&&!/(尚未|待探索|未填写|未生成)/.test(item.value);
+}
+function personaPresentation(item){
+  const label=String(item?.label||'画像维度');
+  if(item?.glyph)return item;
+  if(/擅长|能力/.test(label))return {...item,glyph:'✦',color:'rgba(94,150,255,.15)'};
+  if(/喜欢|兴趣/.test(label))return {...item,glyph:'♡',color:'rgba(227,92,193,.15)'};
+  if(/恋爱|情感|关系/.test(label))return {...item,glyph:'✿',color:'rgba(255,122,77,.16)'};
+  if(/家庭/.test(label))return {...item,glyph:'⌂',color:'rgba(62,217,164,.14)'};
+  return {...item,glyph:'◎',color:'rgba(89,104,217,.16)'};
+}
 function profilePersonaItems(u){
-  if(u.id==='me')return myPersonaSource().filter(item=>myProfile.visibility[item.key]);
+  if(u.id==='me')return myPersonaSource().filter(item=>myProfile.visibility[item.key]&&hasPersonaResult(item));
   const dims=Array.isArray(u.dims)?u.dims:[];
   const count=Math.min(dims.length,2+(Math.abs(Number(u.id)||0)%3));
-  return dims.slice(0,count).map((item,i)=>({key:`d${i}`,label:item[0],value:item[1]}));
+  return dims.slice(0,count).map((item,i)=>personaPresentation({key:`d${i}`,label:item[0],value:item[1]}));
+}
+function publicPersonaModel(u,items){
+  const text=items.map(item=>`${item.label}:${item.value}`).join('|')||`${u.name}·公开画像`;
+  const seed=dynamicPersonaHash(text);
+  const content=items.map(item=>item.value).join(' ');
+  const signals={
+    crystal:(content.match(/结构|有序|计划|理性|思考|分析|原则|边界|才华|智商/g)||[]).length,
+    bloom:(content.match(/共情|陪伴|关系|家庭|亲情|朋友|人际|真诚|尊重|回应|交流|支持|爱|善良|信任/g)||[]).length,
+    wing:(content.match(/视觉|手绘|创造|审美|表达|自由|好奇|喜欢/g)||[]).length,
+    orbit:(content.match(/独处|探索|学习|尝试|成长|行动|勇气|坚强/g)||[]).length
+  };
+  const forms={
+    crystal:{form:'crystal',shape:'折光晶灵',hue:216,lobes:6},
+    bloom:{form:'bloom',shape:'共生花灵',hue:286,lobes:7},
+    wing:{form:'wing',shape:'流光翼影',hue:190,lobes:4},
+    orbit:{form:'orbit',shape:'星轨旅者',hue:248,lobes:5}
+  };
+  const topScore=Math.max(...Object.values(signals));
+  const candidates=Object.keys(signals).filter(key=>signals[key]===topScore);
+  const selected=forms[candidates[seed%candidates.length]||'orbit'];
+  const lifeItem=items.find(item=>item.key==='life');
+  return {...selected,seed,filled:items.length,signature:lifeItem?.cards?.map(card=>card.name)||[],signals};
 }
 function publicPersonaHTML(u,isMine=false){
   const items=profilePersonaItems(u);
+  const model=publicPersonaModel(u,items);
+  const lifeItem=items.find(item=>item.key==='life');
+  const dimensions=items.filter(item=>item.key!=='life').map(personaPresentation);
+  const total=u.id==='me'?7:Math.max(items.length,1);
+  const progress=Math.round(items.length/total*100);
   return `
-    <div class="public-persona-stage"><img src="assets/digital-human-yuan-v2.png" alt="${escapeHTML(u.name)}公开的数字人画像"></div>
-    <p class="persona-public-note">${isMine?'这里展示你选择公开的画像内容，可在“编辑资料”中调整。':'只展示对方主动公开的部分，未公开的画像不会出现在主页。'}</p>
-    ${items.length?`<div class="persona-public-grid">${items.map((item,i)=>`<div class="persona-public-item${i===items.length-1&&items.length%2?' wide':''}"><i>${escapeHTML(item.label)}</i><b>${escapeHTML(item.value)}</b></div>`).join('')}</div>`:'<div class="persona-empty">目前没有公开任何画像维度</div>'}`;
+    <div class="card portrait public-profile-portrait">
+      <div class="digital-human-stage public-persona-stage">
+        <canvas class="public-dynamic-persona-canvas" role="img" aria-label="${escapeHTML(u.name)}根据公开画像结果生成的数字形象"></canvas>
+        <span class="digital-human-live">PUBLIC PROFILE FORM</span>
+        <div class="digital-human-caption"><b>${escapeHTML(u.name)} · ${escapeHTML(model.shape)}</b><span>由下方公开画像结果生成</span></div>
+      </div>
+      ${lifeItem&&lifeItem.cards?.length?`
+        <div class="portrait-life-signature show">
+          <div class="signature-head"><b>我的人生底牌</b><span>已参与数字形象生成</span></div>
+          <div class="cards">${lifeItem.cards.map(card=>`<div class="card-mini"><i>${escapeHTML(card.glyph)}</i><span>${escapeHTML(card.name)}</span></div>`).join('')}</div>
+        </div>`:''}
+      ${items.length?`
+        <div class="pbar"><div class="tr"><i style="width:${progress}%"></i></div><span>${items.length} 项公开</span></div>
+        <div class="dims public-persona-dims">
+          ${dimensions.map(item=>`<div class="dim">
+            <span class="ic" style="background:${item.color}">${escapeHTML(item.glyph)}</span>
+            <span class="tx"><b>${escapeHTML(item.label)}</b><p>${escapeHTML(item.value)}</p></span>
+            <span class="ar">已公开</span>
+          </div>`).join('')}
+        </div>
+        <p class="persona-public-note">${isMine?'展示内容来自“认识自己”中已经得出的结果，可在“编辑资料”中调整公开范围。':'这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。'}</p>`
+        :'<div class="persona-empty" style="margin-top:14px">目前没有已完成且公开的画像结果</div>'}
+    </div>`;
+}
+function drawPublicPersona(u,rootSelector){
+  const root=document.querySelector(rootSelector);
+  const canvas=root?.querySelector('.public-dynamic-persona-canvas');
+  if(!canvas)return;
+  const items=profilePersonaItems(u);
+  drawDynamicPersona(performance.now(),canvas,publicPersonaModel(u,items));
+}
+function profileTimelineHTML(u,isMine=false){
+  const title=isMine?'我的人生关键轨迹':'人生关键轨迹';
+  const note=isMine?`${u.traj.length} 个节点`:'点击节点展开详情';
+  return `
+    <div class="prof-section-title"><h3>${title}</h3><span>${note}</span></div>
+    <div class="prof-timeline">
+      ${u.traj.map((t,i)=>`
+        <div class="pt-item">
+          <span class="pt-dot"></span>
+          <button class="pt-card${i===0?' open':''}" onclick="toggleProfileMilestone(this)" aria-expanded="${i===0}">
+            <span class="pt-head">
+              <span><span class="pt-age">${escapeHTML(t.age)}</span><h4>${escapeHTML(t.t)}</h4></span>
+              <span class="pt-arrow">›</span>
+            </span>
+            <span class="pt-detail">${escapeHTML(t.d)}</span>
+          </button>
+        </div>`).join('')}
+    </div>`;
 }
 const ADVICE_TITLES = {
   decision:['转型前，先做一次低成本验证','先判断这条路是否真的适合你'],
@@ -5224,14 +5313,14 @@ function renderProfile(){
     </div>
 
     <div class="prof-tabs" role="tablist" aria-label="用户主页内容">
-      <button class="prof-tab${activeProfileTab==='story'?' on':''}" role="tab" aria-selected="${activeProfileTab==='story'}" onclick="switchProfileTab('story',this)">她的故事</button>
-      <button class="prof-tab${activeProfileTab==='timeline'?' on':''}" role="tab" aria-selected="${activeProfileTab==='timeline'}" onclick="switchProfileTab('timeline',this)">时间线</button>
+      <button class="prof-tab${activeProfileTab==='story'?' on':''}" role="tab" aria-selected="${activeProfileTab==='story'}" onclick="switchProfileTab('story',this)">TA 的故事</button>
       <button class="prof-tab${activeProfileTab==='advice'?' on':''}" role="tab" aria-selected="${activeProfileTab==='advice'}" onclick="switchProfileTab('advice',this)">经验与建议</button>
       <button class="prof-tab${activeProfileTab==='service'?' on':''}" role="tab" aria-selected="${activeProfileTab==='service'}" onclick="switchProfileTab('service',this)">可提供服务</button>
       <button class="prof-tab${activeProfileTab==='persona'?' on':''}" role="tab" aria-selected="${activeProfileTab==='persona'}" onclick="switchProfileTab('persona',this)">数字人画像</button>
     </div>
 
     <section class="prof-panel${activeProfileTab==='story'?' on':''}" id="prof-story" role="tabpanel">
+      ${profileTimelineHTML(u)}
       <div class="prof-quote">${u.quote}</div>
       <div class="story-copy">
         <h3>我的转型故事</h3>
@@ -5246,24 +5335,6 @@ function renderProfile(){
         <h4>完整故事 · 最难的一关</h4>
         <p>${m.full}</p>
       </div>
-    </section>
-
-    <section class="prof-panel${activeProfileTab==='timeline'?' on':''}" id="prof-timeline" role="tabpanel">
-      <div class="prof-section-title"><h3>人生关键轨迹</h3><span>点击节点展开详情</span></div>
-      <div class="prof-timeline">
-        ${u.traj.map((t,i)=>`
-          <div class="pt-item">
-            <span class="pt-dot"></span>
-            <button class="pt-card${i===0?' open':''}" onclick="toggleProfileMilestone(this)" aria-expanded="${i===0}">
-              <span class="pt-head">
-                <span><span class="pt-age">${t.age}</span><h4>${t.t}</h4></span>
-                <span class="pt-arrow">›</span>
-              </span>
-              <span class="pt-detail">${t.d}</span>
-            </button>
-          </div>`).join('')}
-      </div>
-      <div class="story-full"><h4>轨迹说明</h4><p>以上节点由本人补充，并结合公开履历完成基础验证。经历只代表个人路径，不构成标准答案。</p></div>
     </section>
 
     <section class="prof-panel${activeProfileTab==='advice'?' on':''}" id="prof-advice" role="tabpanel">
@@ -5302,12 +5373,15 @@ function renderProfile(){
       ${publicPersonaHTML(u)}
     </section>`;
 
+  drawPublicPersona(u,'#prof-persona');
+
   const unlockBtn = $('#unlockProfileBtn');
   unlockBtn.disabled = unlocked;
   unlockBtn.innerHTML = unlocked ? '完整经验已解锁 <strong>✓</strong>' : '解锁完整经验 <strong>¥9.9</strong>';
 }
 
 function renderMyProfile(){
+  if(myProfileTab==='timeline')myProfileTab='story';
   const u=myProfile,m=profileMetaFor(u),services=(u.services||[]).filter(s=>s.enabled),h=HUES[u.hue]||HUES[DEFAULT_MY_PROFILE.hue]||HUES[0];
   $('#myProfileRoot').innerHTML=`
     <div class="prof-hero">
@@ -5325,12 +5399,12 @@ function renderMyProfile(){
     </div>
     <div class="prof-tabs my-prof-tabs" role="tablist" aria-label="我的主页内容">
       <button class="prof-tab${myProfileTab==='story'?' on':''}" onclick="switchMyProfileTab('story',this)">我的故事</button>
-      <button class="prof-tab${myProfileTab==='timeline'?' on':''}" onclick="switchMyProfileTab('timeline',this)">时间线</button>
       <button class="prof-tab${myProfileTab==='advice'?' on':''}" onclick="switchMyProfileTab('advice',this)">经验与建议</button>
       <button class="prof-tab${myProfileTab==='service'?' on':''}" onclick="switchMyProfileTab('service',this)">提供服务</button>
       <button class="prof-tab${myProfileTab==='persona'?' on':''}" onclick="switchMyProfileTab('persona',this)">数字人画像</button>
     </div>
     <section class="prof-panel my-prof-panel${myProfileTab==='story'?' on':''}" id="myprof-story">
+      ${profileTimelineHTML(u,true)}
       <div class="prof-quote">${escapeHTML(u.quote)}</div>
       <div class="story-copy"><h3>我的转型故事</h3><p>${escapeHTML(m.intro)}</p></div>
       <div class="story-facts">
@@ -5339,14 +5413,6 @@ function renderMyProfile(){
         <div class="story-fact"><b>${escapeHTML(m.consulted)}</b><span>已帮助人数</span></div>
       </div>
       <div class="story-full"><h4>完整故事 · 最难的一关</h4><p>${escapeHTML(m.full)}</p></div>
-    </section>
-    <section class="prof-panel my-prof-panel${myProfileTab==='timeline'?' on':''}" id="myprof-timeline">
-      <div class="prof-section-title"><h3>我的人生关键轨迹</h3><span>${u.traj.length} 个节点</span></div>
-      <div class="prof-timeline">${u.traj.map((t,i)=>`
-        <div class="pt-item"><span class="pt-dot"></span><button class="pt-card${i===0?' open':''}" onclick="toggleProfileMilestone(this)">
-          <span class="pt-head"><span><span class="pt-age">${escapeHTML(t.age)}</span><h4>${escapeHTML(t.t)}</h4></span><span class="pt-arrow">›</span></span>
-          <span class="pt-detail">${escapeHTML(t.d)}</span>
-        </button></div>`).join('')}</div>
     </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='advice'?' on':''}" id="myprof-advice">
       <div class="prof-section-title"><h3>我愿意分享的经验</h3><span>全部公开</span></div>
@@ -5360,12 +5426,14 @@ function renderMyProfile(){
       <div class="prof-section-title"><h3>我的公开数字人画像</h3><span>${profilePersonaItems(u).length} 项公开</span></div>
       ${publicPersonaHTML(u,true)}
     </section>`;
+  drawPublicPersona(u,'#myprof-persona');
 }
 function switchMyProfileTab(tab,btn){
   myProfileTab=tab;
   document.querySelectorAll('#myProfileRoot .prof-tab').forEach(x=>x.classList.toggle('on',x===btn));
   document.querySelectorAll('#myProfileRoot .prof-panel').forEach(x=>x.classList.remove('on'));
   $('#myprof-'+tab).classList.add('on');
+  if(tab==='persona')drawPublicPersona(myProfile,'#myprof-persona');
 }
 function openMyProfileEditor(){
   myEditDraft=cloneData(myProfile);
@@ -5505,6 +5573,7 @@ function switchProfileTab(tab, btn){
   });
   document.querySelectorAll('#profilePage .prof-panel').forEach(p=>p.classList.remove('on'));
   $('#prof-'+tab).classList.add('on');
+  if(tab==='persona'&&activeProfileUser)drawPublicPersona(activeProfileUser,'#prof-persona');
 }
 
 function toggleProfileMilestone(btn){
