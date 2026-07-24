@@ -1155,6 +1155,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .prof-section-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
 .prof-section-title h3{font-size:15px;font-weight:600}
 .prof-section-title span{font-size:10.5px;color:var(--faint)}
+.prof-section-actions{display:flex;align-items:center;gap:9px}
 .prof-section-edit{
   all:unset;cursor:pointer;padding:6px 10px;border-radius:999px;font-size:9.5px;color:#BFD2FF;
   background:rgba(94,150,255,.1);border:1px solid rgba(111,165,255,.24);
@@ -1255,19 +1256,52 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .prof-success{text-align:center;padding:20px 0 4px}.prof-success .icon{width:62px;height:62px;margin:0 auto;border-radius:50%;background:rgba(62,217,164,.14);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:28px}
 .prof-success h3{font-size:18px;margin-top:16px}.prof-success p{font-size:12px;line-height:1.8;color:var(--sub);margin-top:8px}
 
-/* ============ 我的主页与数字人公开画像 ============ */
-#scr-me{padding:56px 0 104px;background:#090B12}
-.me-page-head{padding:12px 20px 14px;border-bottom:1px solid var(--line);background:rgba(9,11,18,.92)}
-.me-page-head .ey{font-size:9px;letter-spacing:.22em;color:#91B1FF}.me-page-head h1{font-size:20px;margin-top:4px}
-.me-profile-root .prof-hero{padding-top:24px}
+/* ============ 我的主页与动态画像 ============ */
+#scr-me{padding:58px 0 104px;background:#090B12}
+.me-profile-root .prof-hero{padding:20px 20px 18px}
+.me-profile-root .prof-row{gap:13px;padding-right:44px}
+.me-profile-root .prof-av{width:66px;height:66px}
+.me-profile-root .prof-name-line h2{font-size:20px}
+.me-profile-root .prof-loc{font-size:11px;margin-top:4px}
+.me-profile-root .prof-transition{margin-top:15px;font-size:14px}
+.me-profile-root .prof-years{margin-top:5px;font-size:11.5px}
+.me-profile-root .prof-tags{gap:6px;margin-top:13px}
+.me-profile-root .prof-tags span{padding:5px 9px;font-size:10px}
 .prof-edit-btn{
-  all:unset;cursor:pointer;position:absolute;right:18px;bottom:17px;z-index:4;
-  padding:8px 12px;border-radius:999px;background:rgba(94,150,255,.13);
-  border:1px solid rgba(111,165,255,.34);color:#CFE0FF;font-size:10.5px;font-weight:600;
+  all:unset;cursor:pointer;box-sizing:border-box;position:absolute;right:18px;top:20px;z-index:4;
+  width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(13,17,28,.7);border:1px solid rgba(151,177,236,.3);
+  color:#D9E5FF;font-size:18px;line-height:1;box-shadow:0 9px 22px -12px rgba(94,150,255,.8);
+  transition:transform .16s,background .2s,border-color .2s;
 }
-.prof-edit-btn:active{transform:scale(.97)}
-.my-prof-tabs{top:-1px}
-.my-prof-panel{padding-bottom:24px}
+.prof-edit-btn:hover{background:rgba(94,150,255,.17);border-color:rgba(151,177,236,.5)}
+.prof-edit-btn:active{transform:scale(.94)}
+.my-prof-tabs{
+  top:0;padding:7px 12px;gap:5px;background:rgba(9,11,18,.92);
+  border-bottom:1px solid rgba(151,177,236,.1);box-shadow:0 10px 22px -20px rgba(0,0,0,.9);
+}
+.my-prof-tabs .prof-tab{
+  padding:9px 4px;border-radius:11px;font-size:10.5px;color:#788297;
+  transition:color .18s,background .18s,box-shadow .18s;
+}
+.my-prof-tabs .prof-tab::after{display:none}
+.my-prof-tabs .prof-tab.on{
+  color:#F4F7FF;background:linear-gradient(135deg,rgba(70,108,210,.38),rgba(118,83,186,.32));
+  box-shadow:inset 0 0 0 1px rgba(143,168,244,.2),0 7px 16px -13px rgba(94,150,255,.9);
+}
+.my-prof-panel{padding:18px 18px 24px}
+.my-prof-panel .prof-section-title{align-items:center;margin:0 0 11px}
+.my-prof-panel .prof-section-title h3{font-size:15.5px;line-height:1.35}
+.my-prof-panel .prof-section-title span{font-size:9.5px}
+.my-prof-panel .prof-section-edit{padding:6px 9px;font-size:9px}
+.my-prof-panel .prof-quote{padding:18px;border-radius:19px;font-size:14px;line-height:1.78}
+.my-prof-panel .story-copy{margin-top:17px}
+.my-prof-panel .story-copy h3{font-size:15px}
+.my-prof-panel .story-copy p{font-size:12.5px;line-height:1.85;margin-top:8px}
+.my-prof-panel .story-facts{margin-top:15px}
+.my-prof-panel .story-full{margin-top:15px}
+.my-prof-panel .advice-card{margin-top:11px}
+.my-prof-panel .consult-card{padding:18px;border-radius:21px}
 .public-profile-portrait{margin:0;padding-bottom:16px;background:#10131D;border-color:rgba(111,165,255,.18)}
 .public-profile-portrait .public-persona-stage{height:198px}
 .public-profile-portrait .public-persona-stage::after{inset:10px;bottom:10px}
@@ -1292,14 +1326,45 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .edit-field textarea{min-height:76px}.edit-field input:focus,.edit-field textarea:focus{outline:1px solid rgba(111,165,255,.6)}
 .avatar-editor{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 1px 5px}.avatar-editor::-webkit-scrollbar{display:none}
 .avatar-option{all:unset;cursor:pointer;flex:none;width:50px;height:50px;border-radius:50%;overflow:hidden;border:2px solid transparent;opacity:.58}.avatar-option img{width:100%;height:100%;object-fit:cover}.avatar-option.on{opacity:1;border-color:var(--blue)}
-.avatar-upload{all:unset;cursor:pointer;flex:none;width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(111,165,255,.45);color:var(--blue);font-size:18px}
-.timeline-edit-item{position:relative;margin-top:8px;padding:11px;border-radius:15px;background:var(--raised);border:1px solid var(--line)}
+.avatar-upload-panel{display:flex;align-items:center;gap:13px;margin-bottom:14px;padding:12px;border-radius:16px;background:var(--raised);border:1px solid var(--line)}
+.avatar-current{position:relative;flex:none;width:68px;height:68px;border-radius:50%;overflow:hidden;border:2px solid rgba(111,165,255,.55);box-shadow:0 8px 20px -10px rgba(94,150,255,.7)}
+.avatar-current img{width:100%;height:100%;object-fit:cover}
+.avatar-upload-copy{min-width:0;flex:1}.avatar-upload-copy b{display:block;font-size:12px}.avatar-upload-copy p{font-size:9px;color:var(--faint);line-height:1.55;margin-top:4px}
+.avatar-upload-btn{cursor:pointer;display:inline-flex;margin-top:9px;padding:7px 11px;border-radius:999px;color:#D8E5FF;background:rgba(94,150,255,.13);border:1px solid rgba(111,165,255,.3);font-size:10px}
+.avatar-upload-state{display:block;margin-top:6px;font-size:8.5px;color:#7F91B7}
+.timeline-edit-item{margin-top:8px;padding:11px;border-radius:15px;background:var(--raised);border:1px solid var(--line)}
 .timeline-edit-row{display:grid;grid-template-columns:72px 1fr;gap:7px}.timeline-edit-item input,.timeline-edit-item textarea{box-sizing:border-box;width:100%;padding:8px 9px;border-radius:10px;background:#11141D;border:1px solid var(--line);color:var(--ink);font:11px/1.5 var(--sans)}.timeline-edit-item textarea{min-height:54px;margin-top:7px;resize:none}
-.timeline-remove{all:unset;cursor:pointer;position:absolute;right:8px;top:8px;color:#D88989;font-size:12px}
+.timeline-edit-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:26px;margin-bottom:8px}
+.timeline-edit-actions span,.timeline-edit-actions b{font-size:9.5px;color:var(--faint);letter-spacing:.06em}
+.timeline-remove{all:unset;cursor:pointer;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border-radius:9px;color:#F19A9A;background:rgba(216,89,89,.08);border:1px solid rgba(216,89,89,.17);font-size:10px;line-height:1;white-space:nowrap}
+.timeline-remove:active{transform:scale(.96)}
 .edit-add{all:unset;cursor:pointer;display:block;margin:10px auto 0;padding:7px 12px;color:var(--blue);font-size:10.5px}
 .visibility-list{display:grid;gap:8px}.visibility-row{display:flex;align-items:center;justify-content:space-between;padding:10px 11px;border-radius:13px;background:var(--raised);border:1px solid var(--line)}
 .visibility-row div b{display:block;font-size:11.5px}.visibility-row div span{display:block;font-size:8.5px;color:var(--faint);margin-top:3px}
 .visibility-row input{appearance:none;width:36px;height:21px;border-radius:999px;background:#343949;position:relative;cursor:pointer;transition:background .2s}.visibility-row input::after{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;border-radius:50%;background:#fff;transition:transform .2s}.visibility-row input:checked{background:#4E7EF2}.visibility-row input:checked::after{transform:translateX(15px)}
+.my-advice-card{overflow:hidden}
+.my-advice-card .advice-copy{white-space:pre-wrap}
+.my-advice-media{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+.my-advice-media img{display:block;width:100%;height:118px;object-fit:cover;border-radius:13px;border:1px solid var(--line);background:#0E1119}
+.my-advice-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}
+.my-advice-link{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;color:#CFE0FF;background:rgba(94,150,255,.1);border:1px solid rgba(111,165,255,.28);font-size:10.5px;text-decoration:none}
+.my-advice-link::after{content:"↗";font-size:9px;color:#8FB4FF}
+.advice-editor-card{position:relative;margin-top:11px;padding:13px;border-radius:17px;background:var(--raised);border:1px solid var(--line)}
+.advice-editor-card:first-child{margin-top:0}
+.advice-editor-card .edit-field{margin-top:10px}
+.advice-editor-card .edit-field:first-of-type{margin-top:0}
+.advice-editor-media{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-top:11px;padding-bottom:2px}
+.advice-editor-media::-webkit-scrollbar{display:none}
+.advice-image-thumb{position:relative;flex:none;width:76px;height:76px;border-radius:13px;overflow:hidden;border:1px solid var(--line);background:#11141D}
+.advice-image-thumb img{width:100%;height:100%;object-fit:cover}
+.advice-image-remove{all:unset;cursor:pointer;position:absolute;right:5px;top:5px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(8,10,16,.76);font-size:10px}
+.advice-image-add{cursor:pointer;box-sizing:border-box;flex:none;width:76px;height:76px;border-radius:13px;border:1px dashed rgba(111,165,255,.43);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#9DBCFF;font-size:18px}
+.advice-image-add small{font-size:8.5px;color:var(--faint)}
+.advice-link-editor{position:relative;display:grid;grid-template-columns:.72fr 1.28fr;gap:7px;margin-top:8px;padding-right:28px}
+.advice-link-editor input{box-sizing:border-box;width:100%;padding:8px 9px;border-radius:10px;background:#11141D;border:1px solid var(--line);color:var(--ink);font:10.5px/1.5 var(--sans)}
+.advice-link-remove{all:unset;cursor:pointer;position:absolute;right:1px;top:7px;color:#D88989;font-size:14px}
+.advice-editor-empty{padding:22px 12px;text-align:center;border:1px dashed var(--line);border-radius:15px;color:var(--faint);font-size:10.5px;line-height:1.7}
+.advice-edit-help{margin:10px 1px 0;color:var(--faint);font-size:9.5px;line-height:1.65}
 .edit-savebar{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:12px 20px 30px;background:rgba(9,11,18,.94);border-top:1px solid var(--line);backdrop-filter:blur(14px)}
 .edit-savebar button{all:unset;cursor:pointer;box-sizing:border-box;width:100%;padding:14px;text-align:center;border-radius:16px;background:var(--btn-g);color:#fff;font-size:13px;font-weight:600}
 
@@ -2056,7 +2121,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 
   <!-- ============ 04 我的公开主页 ============ -->
   <section class="screen" id="scr-me">
-    <div class="me-page-head"><div class="ey">MY KALEIDO</div><h1>我的主页</h1></div>
     <div class="me-profile-root" id="myProfileRoot"></div>
   </section>
 
@@ -3182,6 +3246,7 @@ function drawDynamicPersona(time=0,canvasOverride=null,modelOverride=null){
 }
 function animateDynamicPersona(time){
   drawDynamicPersona(time);
+  document.querySelectorAll('#myprof-persona .public-dynamic-persona-canvas').forEach(canvas=>drawDynamicPersona(time,canvas,dynamicPersonaModel));
   dynamicPersonaFrame=requestAnimationFrame(animateDynamicPersona);
 }
 window.addEventListener('resize',()=>drawDynamicPersona(performance.now()));
@@ -5016,6 +5081,43 @@ let activeProfileTab = 'story';
 const unlockedProfileIds = new Set();
 const MY_PROFILE_KEY='kaleido_my_public_profile_v1';
 const MY_AVATARS=Array.from({length:6},(_,i)=>`assets/community-avatars/avatar-${String(i+1).padStart(2,'0')}.png`);
+const MY_ADVICE_LABELS={
+  decision:'转型前，先做一次低成本验证',
+  ability:'把旧能力翻译成新岗位的优势',
+  interview:'让面试官看见真实的行动证据'
+};
+let myAdviceIdSeed=0;
+function createMyAdviceId(){
+  myAdviceIdSeed+=1;
+  return `advice-${Date.now().toString(36)}-${myAdviceIdSeed}`;
+}
+function adviceModulesFromLegacy(advice={}){
+  return Object.entries(advice).map(([kind,tips],index)=>({
+    id:`legacy-${kind}-${index}`,
+    title:MY_ADVICE_LABELS[kind]||'我的经验与建议',
+    content:(Array.isArray(tips)?tips:[]).join('\n'),
+    images:[],
+    links:[]
+  }));
+}
+function normalizeMyAdviceModules(modules,legacyAdvice={}){
+  const source=Array.isArray(modules)?modules:adviceModulesFromLegacy(legacyAdvice);
+  return source.map((module,index)=>({
+    id:String(module?.id||`advice-${index}`),
+    title:String(module?.title||'未命名经验'),
+    content:String(module?.content||''),
+    images:(Array.isArray(module?.images)?module.images:[]).slice(0,4).map((image,imageIndex)=>({
+      id:String(image?.id||`image-${index}-${imageIndex}`),
+      src:/^data:image\//.test(String(image?.src||''))?String(image.src):'',
+      name:String(image?.name||'经验配图')
+    })).filter(image=>image.src),
+    links:(Array.isArray(module?.links)?module.links:[]).slice(0,6).map((link,linkIndex)=>({
+      id:String(link?.id||`link-${index}-${linkIndex}`),
+      label:String(link?.label||'相关链接'),
+      url:String(link?.url||'')
+    }))
+  }));
+}
 const DEFAULT_MY_PROFILE={
   id:'me',name:'屿岸',ini:'屿',hue:4,avatar:MY_AVATARS[0],
   quote:'我还没有抵达答案，但已经开始认真记录自己如何选择。',
@@ -5026,6 +5128,11 @@ const DEFAULT_MY_PROFILE={
   ],
   dims:[],
   visibility:{personality:true,skill:true,like:true,love:false,family:false,social:false,life:false},
+  adviceModules:[
+    {id:'default-decision',title:'转型前，先做一次低成本验证',content:'先做一个可以撤回的小实验，再决定是否改变。\n把真实意愿和现实承受力分开记录。\n重要决定前，至少听三种不同经历。',images:[],links:[]},
+    {id:'default-ability',title:'把旧能力翻译成新岗位的优势',content:'把设计经验转译成产品判断证据。\n优先补真实项目，而不是继续囤课。\n记录每次取舍背后的依据。',images:[],links:[]},
+    {id:'default-interview',title:'让面试官看见真实的行动证据',content:'不把转型故事讲成一条完美直线。\n用真实行动解释为什么改变。\n坦白仍在补齐的能力。',images:[],links:[]}
+  ],
   services:[
     {id:'consult',enabled:true,type:'1 对 1 交流',title:'转型路径交流',price:'29',desc:'围绕当前选择、能力迁移与行动计划进行一次真实经验交流。'},
     {id:'materials',enabled:false,type:'资料工具包',title:'探索复盘模板',price:'9.9',desc:'整理我在探索过程中使用的问题清单、复盘表和小实验模板。'},
@@ -5060,11 +5167,12 @@ function loadMyProfile(){
       }
     },
     visibility:{...DEFAULT_MY_PROFILE.visibility,...(saved.visibility||{})},
+    adviceModules:normalizeMyAdviceModules(saved.adviceModules,savedMeta.advice),
     services:Array.isArray(saved.services)?saved.services:cloneData(DEFAULT_MY_PROFILE.services),
     traj:Array.isArray(saved.traj)&&saved.traj.length?saved.traj:cloneData(DEFAULT_MY_PROFILE.traj)
   };
 }
-let myProfile=loadMyProfile(),myProfileTab='story',myEditDraft=null,myEditMode='basic';
+let myProfile=loadMyProfile(),myProfileTab='persona',myEditDraft=null,myEditMode='basic';
 function safeProfileAvatar(src){
   return /^(assets\/community-avatars\/|data:image\/)/.test(String(src||''))?src:MY_AVATARS[0];
 }
@@ -5096,7 +5204,10 @@ function personaPresentation(item){
   return {...item,glyph:'◎',color:'rgba(89,104,217,.16)'};
 }
 function profilePersonaItems(u){
-  if(u.id==='me')return myPersonaSource().filter(item=>myProfile.visibility[item.key]&&hasPersonaResult(item));
+  if(u===myProfile||u?.id==='me'){
+    const visibility={...DEFAULT_MY_PROFILE.visibility,...(u.visibility||{})};
+    return myPersonaSource().filter(item=>visibility[item.key]);
+  }
   const dims=Array.isArray(u.dims)?u.dims:[];
   const count=Math.min(dims.length,2+(Math.abs(Number(u.id)||0)%3));
   return dims.slice(0,count).map((item,i)=>personaPresentation({key:`d${i}`,label:item[0],value:item[1]}));
@@ -5126,15 +5237,15 @@ function publicPersonaModel(u,items){
 function publicPersonaHTML(u,isMine=false){
   const items=profilePersonaItems(u);
   const lifeItem=items.find(item=>item.key==='life');
-  const dimensions=items.filter(item=>item.key!=='life').map(personaPresentation);
-  const total=u.id==='me'?7:Math.max(items.length,1);
+  const dimensions=items.filter(item=>item.key!=='life'||!item.cards?.length).map(personaPresentation);
+  const total=(u===myProfile||u?.id==='me')?7:Math.max(items.length,1);
   const progress=Math.round(items.length/total*100);
   return `
     <div class="card portrait public-profile-portrait">
       <div class="digital-human-stage public-persona-stage">
-        <canvas class="public-dynamic-persona-canvas" role="img" aria-label="${escapeHTML(u.name)}根据公开画像结果生成的数字形象"></canvas>
-        <span class="digital-human-live">PUBLIC PROFILE FORM</span>
-        <div class="digital-human-caption"><b>${escapeHTML(u.name)}</b><span>动态数字形象 · 由下方公开画像结果生成</span></div>
+        <canvas class="public-dynamic-persona-canvas" role="img" aria-label="${escapeHTML(u.name)}根据画像结果生成的动态画像"></canvas>
+        <span class="digital-human-live">${isMine?'SYNCED LIVE FORM':'PUBLIC PROFILE FORM'}</span>
+        <div class="digital-human-caption"><b>${escapeHTML(u.name)}${isMine?' · 动态画像':''}</b><span>${isMine?'与“认识自己”页面实时同步':'动态数字形象 · 由下方公开画像结果生成'}</span></div>
       </div>
       ${lifeItem&&lifeItem.cards?.length?`
         <div class="portrait-life-signature show">
@@ -5147,17 +5258,23 @@ function publicPersonaHTML(u,isMine=false){
           ${dimensions.map(item=>`<div class="dim">
             <span class="ic" style="background:${item.color}">${escapeHTML(item.glyph)}</span>
             <span class="tx"><b>${escapeHTML(item.label)}</b><p>${escapeHTML(item.value)}</p></span>
-            <span class="ar">已公开</span>
+            <span class="ar">${hasPersonaResult(item)?'已公开':'待完善'}</span>
           </div>`).join('')}
         </div>
-        <p class="persona-public-note">${isMine?'展示内容来自“认识自己”中已经得出的结果，可在“编辑资料”中调整公开范围。':'这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。'}</p>`
-        :'<div class="persona-empty" style="margin-top:14px">目前没有已完成且公开的画像结果</div>'}
+        <p class="persona-public-note">${isMine?'动态画像与“认识自己”保持一致；下方展示你在“设置展示”中开启的画像内容。':'这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。'}</p>`
+        :'<div class="persona-empty" style="margin-top:14px">目前没有开启公开展示的画像内容</div>'}
     </div>`;
 }
 function drawPublicPersona(u,rootSelector){
   const root=document.querySelector(rootSelector);
   const canvas=root?.querySelector('.public-dynamic-persona-canvas');
   if(!canvas)return;
+  if(u===myProfile||u?.id==='me'){
+    refreshDynamicPersona();
+    drawDynamicPersona(performance.now(),canvas,dynamicPersonaModel);
+    canvas.setAttribute('aria-label',`与认识自己页面同步的动态画像：${dynamicPersonaModel?.shape||'持续生长'}`);
+    return;
+  }
   const items=profilePersonaItems(u);
   drawDynamicPersona(performance.now(),canvas,publicPersonaModel(u,items));
 }
@@ -5185,6 +5302,29 @@ const ADVICE_TITLES = {
   ability:['把旧能力翻译成新岗位的优势','迁移能力比从零开始更重要'],
   interview:['让面试官看见真实的行动证据','少讲决心，多讲你已经做过什么']
 };
+function safeAdviceURL(value){
+  let raw=String(value||'').trim();
+  if(!raw)return '';
+  if(!/^https?:\/\//i.test(raw))raw=`https://${raw}`;
+  try{
+    const url=new URL(raw);
+    return /^https?:$/.test(url.protocol)?url.href:'';
+  }catch(e){return ''}
+}
+function myAdviceModulesHTML(u){
+  const modules=normalizeMyAdviceModules(u.adviceModules,u.meta?.advice);
+  if(!modules.length)return '<div class="persona-empty">还没有公开经验模块，点击“编辑建议”添加第一条内容</div>';
+  return modules.map((module,index)=>{
+    const links=module.links.map(link=>({...link,safeURL:safeAdviceURL(link.url)})).filter(link=>link.safeURL);
+    return `<article class="advice-card my-advice-card">
+      <div class="num">经验 ${String(index+1).padStart(2,'0')}</div>
+      <h4>${escapeHTML(module.title||'未命名经验')}</h4>
+      ${module.content?`<p class="advice-copy">${escapeHTML(module.content)}</p>`:''}
+      ${module.images.length?`<div class="my-advice-media">${module.images.map(image=>`<img src="${image.src}" alt="${escapeHTML(image.name||module.title)}">`).join('')}</div>`:''}
+      ${links.length?`<div class="my-advice-links">${links.map(link=>`<a class="my-advice-link" href="${escapeHTML(link.safeURL)}" target="_blank" rel="noopener noreferrer">${escapeHTML(link.label||'查看相关链接')}</a>`).join('')}</div>`:''}
+    </article>`;
+  }).join('');
+}
 const PROFILE_SERVICE_THEMES = [
   {
     test:/AI 产品|产品经理/,focus:'AI 产品转型',
@@ -5414,6 +5554,7 @@ function renderProfile(){
 
 function renderMyProfile(){
   if(myProfileTab==='timeline')myProfileTab='story';
+  refreshDynamicPersona();
   const u=myProfile,m=profileMetaFor(u),services=(u.services||[]).filter(s=>s.enabled),h=HUES[u.hue]||HUES[DEFAULT_MY_PROFILE.hue]||HUES[0];
   $('#myProfileRoot').innerHTML=`
     <div class="prof-hero">
@@ -5427,14 +5568,18 @@ function renderMyProfile(){
       <div class="prof-transition">${escapeHTML(m.from)}<i>→</i>${escapeHTML(m.to)}</div>
       <div class="prof-years">${escapeHTML(m.years)} · ${escapeHTML(m.result)}</div>
       <div class="prof-tags">${u.tags.map(t=>`<span>${escapeHTML(t)}</span>`).join('')}</div>
-      <button class="prof-edit-btn" onclick="openMyProfileEditor('basic')">编辑资料</button>
+      <button class="prof-edit-btn" onclick="openMyProfileEditor('basic')" aria-label="编辑个人资料" title="编辑个人资料"><span aria-hidden="true">✎</span></button>
     </div>
     <div class="prof-tabs my-prof-tabs" role="tablist" aria-label="我的主页内容">
-      <button class="prof-tab${myProfileTab==='story'?' on':''}" onclick="switchMyProfileTab('story',this)">我的故事</button>
-      <button class="prof-tab${myProfileTab==='advice'?' on':''}" onclick="switchMyProfileTab('advice',this)">经验与建议</button>
-      <button class="prof-tab${myProfileTab==='service'?' on':''}" onclick="switchMyProfileTab('service',this)">提供服务</button>
-      <button class="prof-tab${myProfileTab==='persona'?' on':''}" onclick="switchMyProfileTab('persona',this)">数字人画像</button>
+      <button class="prof-tab${myProfileTab==='persona'?' on':''}" role="tab" aria-selected="${myProfileTab==='persona'}" onclick="switchMyProfileTab('persona',this)">动态画像</button>
+      <button class="prof-tab${myProfileTab==='story'?' on':''}" role="tab" aria-selected="${myProfileTab==='story'}" onclick="switchMyProfileTab('story',this)">我的故事</button>
+      <button class="prof-tab${myProfileTab==='advice'?' on':''}" role="tab" aria-selected="${myProfileTab==='advice'}" onclick="switchMyProfileTab('advice',this)">经验与建议</button>
+      <button class="prof-tab${myProfileTab==='service'?' on':''}" role="tab" aria-selected="${myProfileTab==='service'}" onclick="switchMyProfileTab('service',this)">提供服务</button>
     </div>
+    <section class="prof-panel my-prof-panel${myProfileTab==='persona'?' on':''}" id="myprof-persona">
+      <div class="prof-section-title"><h3>我的动态画像</h3><div class="prof-section-actions"><span>已展示 ${profilePersonaItems(u).length} 项</span><button class="prof-section-edit" onclick="openMyProfileEditor('persona')">设置展示</button></div></div>
+      ${publicPersonaHTML(u,true)}
+    </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='story'?' on':''}" id="myprof-story">
       ${profileTimelineHTML(u,true)}
       <div class="prof-quote">${escapeHTML(u.quote)}</div>
@@ -5448,21 +5593,21 @@ function renderMyProfile(){
     </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='advice'?' on':''}" id="myprof-advice">
       <div class="prof-section-title"><h3>我愿意分享的经验</h3><button class="prof-section-edit" onclick="openMyProfileEditor('advice')">编辑建议</button></div>
-      ${Object.entries(m.advice).map(([kind,tips])=>`<div class="advice-card"><div class="num">${escapeHTML(ADVICE_TITLES[kind]?.[1]||'亲历经验')}</div><h4>${escapeHTML(ADVICE_TITLES[kind]?.[0]||'我的建议')}</h4><div class="advice-steps">${tips.map((tip,i)=>`<div class="advice-step"><i>${i+1}</i><span>${escapeHTML(tip)}</span></div>`).join('')}</div></div>`).join('')}
+      ${myAdviceModulesHTML(u)}
     </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='service'?' on':''}" id="myprof-service">
       <div class="prof-section-title"><h3>我可以提供的服务</h3><button class="prof-section-edit" onclick="openMyProfileEditor('service')">编辑服务</button></div>
       ${services.length?services.map((s,i)=>`<div class="consult-card ${i===1?'materials':i===2?'companion':''}"><div class="consult-price"><div><div class="ey">${escapeHTML(s.type)}</div><h3>${escapeHTML(s.title)}</h3></div><strong>¥${escapeHTML(s.price)}</strong></div><p class="consult-desc">${escapeHTML(s.desc)}</p></div>`).join(''):'<div class="persona-empty">暂未公开服务，可以在这里编辑并开启</div>'}
-    </section>
-    <section class="prof-panel my-prof-panel${myProfileTab==='persona'?' on':''}" id="myprof-persona">
-      <div class="prof-section-title"><h3>我的公开数字人画像</h3><button class="prof-section-edit" onclick="openMyProfileEditor('persona')">设置展示</button></div>
-      ${publicPersonaHTML(u,true)}
     </section>`;
   drawPublicPersona(u,'#myprof-persona');
 }
 function switchMyProfileTab(tab,btn){
   myProfileTab=tab;
-  document.querySelectorAll('#myProfileRoot .prof-tab').forEach(x=>x.classList.toggle('on',x===btn));
+  document.querySelectorAll('#myProfileRoot .prof-tab').forEach(x=>{
+    const on=x===btn;
+    x.classList.toggle('on',on);
+    x.setAttribute('aria-selected',String(on));
+  });
   document.querySelectorAll('#myProfileRoot .prof-panel').forEach(x=>x.classList.remove('on'));
   $('#myprof-'+tab).classList.add('on');
   if(tab==='persona')drawPublicPersona(myProfile,'#myprof-persona');
@@ -5478,9 +5623,9 @@ function renderMyProfileEditor(){
   const editMeta={
     basic:['编辑基础资料','只修改主页名片上的公开信息','保存基础资料'],
     story:['编辑我的故事','修改故事内容和人生时间线','保存故事'],
-    advice:['编辑经验与建议','把亲历经验整理给后来的人','保存建议'],
+    advice:['编辑经验与建议','自由组合标题、内容、图片与链接','保存建议'],
     service:['编辑提供服务','设置服务内容、价格和公开状态','保存服务'],
-    persona:['设置画像展示','选择主页允许公开的画像结果','保存展示设置']
+    persona:['设置动态画像','选择主页允许公开的画像内容','保存展示设置']
   }[myEditMode]||['编辑基础资料','只修改主页名片上的公开信息','保存基础资料'];
   $('#myEditTitle').textContent=editMeta[0];
   $('#myEditSubtitle').textContent=editMeta[1];
@@ -5490,10 +5635,19 @@ function renderMyProfileEditor(){
   if(myEditMode==='basic'){
     content=`
       <div class="edit-section">
-        <div class="edit-section-title"><b>头像</b><span>选择或上传</span></div>
+        <div class="edit-section-title"><b>头像</b><span>支持本地图片</span></div>
+        <div class="avatar-upload-panel">
+          <div class="avatar-current"><img id="avatarUploadPreview" src="${safeProfileAvatar(d.avatar)}" alt="当前头像预览"></div>
+          <div class="avatar-upload-copy">
+            <b>上传自己的头像</b>
+            <p>支持 JPG、PNG、WEBP，系统会自动居中裁剪并压缩。</p>
+            <label class="avatar-upload-btn">选择本地图片<input type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="uploadMyAvatar(this)"></label>
+            <span class="avatar-upload-state" id="avatarUploadState">${/^data:image\//.test(d.avatar)?'已选择本地上传图片':'当前使用推荐头像'}</span>
+          </div>
+        </div>
+        <div class="edit-section-title"><b>推荐头像</b><span>点击即可切换</span></div>
         <div class="avatar-editor">
           ${MY_AVATARS.map(src=>`<button class="avatar-option${d.avatar===src?' on':''}" onclick="selectMyAvatar('${src}',this)"><img src="${src}" alt="头像选项"></button>`).join('')}
-          <label class="avatar-upload">＋<input type="file" accept="image/*" hidden onchange="uploadMyAvatar(this)"></label>
         </div>
       </div>
       <div class="edit-section">
@@ -5525,51 +5679,69 @@ function renderMyProfileEditor(){
   }else if(myEditMode==='advice'){
     content=`
       <div class="edit-section">
-        <div class="edit-section-title"><b>经验与建议</b><span>每行一条建议</span></div>
-        ${Object.entries(meta.advice).map(([kind,tips])=>`
-          <label class="edit-field" style="margin-top:10px"><span>${escapeHTML(ADVICE_TITLES[kind]?.[0]||'我的建议')}</span>
-            <textarea maxlength="360" oninput="updateMyAdvice('${kind}',this.value)">${escapeHTML(tips.join('\n'))}</textarea>
-          </label>`).join('')}
+        <div class="edit-section-title"><b>经验与建议模块</b><span>标题、正文、图片与链接</span></div>
+        <div id="myAdviceEditor"></div>
+        <button class="edit-add" onclick="addMyAdviceModule()">＋ 新增经验模块</button>
+        <p class="advice-edit-help">每个模块都可以独立增删；图片会保存在当前设备，链接保存后可直接访问。</p>
       </div>`;
   }else if(myEditMode==='service'){
     content=`
       <div class="edit-section">
-        <div class="edit-section-title"><b>提供服务</b><span>开启后展示在主页</span></div>
-        ${(d.services||[]).map((service,i)=>`
-          <div class="timeline-edit-item">
-            <label class="visibility-row" style="margin-bottom:9px"><div><b>${escapeHTML(service.type)}</b><span>${service.enabled?'公开中':'未公开'}</span></div>
-              <input type="checkbox" ${service.enabled?'checked':''} onchange="updateMyService(${i},'enabled',this.checked)">
-            </label>
-            <div class="edit-grid">
-              <label class="edit-field wide"><span>服务名称</span><input value="${escapeHTML(service.title)}" maxlength="24" oninput="updateMyService(${i},'title',this.value)"></label>
-              <label class="edit-field"><span>价格</span><input value="${escapeHTML(service.price)}" maxlength="8" inputmode="decimal" oninput="updateMyService(${i},'price',this.value)"></label>
-              <label class="edit-field wide"><span>服务说明</span><textarea maxlength="160" oninput="updateMyService(${i},'desc',this.value)">${escapeHTML(service.desc)}</textarea></label>
-            </div>
-          </div>`).join('')}
+        <div class="edit-section-title"><b>提供服务</b><span>可新增、自定义和删除</span></div>
+        <div id="myServiceEditor"></div>
+        <button class="edit-add" onclick="addMyService()">＋ 新增服务</button>
       </div>`;
   }else if(myEditMode==='persona'){
     content=`
       <div class="edit-section">
-        <div class="edit-section-title"><b>数字人画像展示</b><span>仅公开你勾选的结果</span></div>
+        <div class="edit-section-title"><b>动态画像展示</b><span>勾选后即在主页展示</span></div>
         <div class="visibility-list">${myPersonaSource().map(item=>`
           <label class="visibility-row"><div><b>${escapeHTML(item.label)}</b><span>${escapeHTML(item.value)}</span></div>
-            <input type="checkbox" data-visibility="${item.key}" ${d.visibility[item.key]?'checked':''}>
+            <input type="checkbox" data-visibility="${item.key}" ${d.visibility[item.key]?'checked':''} onchange="updateMyVisibility('${item.key}',this.checked)">
           </label>`).join('')}</div>
+        <p class="persona-public-note" id="myVisibilitySummary"></p>
       </div>`;
   }
   $('#myEditBody').innerHTML=content;
   if(myEditMode==='story')renderMyTimelineEditor();
+  if(myEditMode==='advice')renderMyAdviceEditor();
+  if(myEditMode==='service')renderMyServiceEditor();
+  if(myEditMode==='persona')updateMyVisibilitySummary();
 }
 function selectMyAvatar(src,btn){
   myEditDraft.avatar=src;
   document.querySelectorAll('#myEditBody .avatar-option').forEach(x=>x.classList.toggle('on',x===btn));
+  const preview=$('#avatarUploadPreview'),state=$('#avatarUploadState');
+  if(preview)preview.src=src;
+  if(state)state.textContent='当前使用推荐头像';
 }
 function uploadMyAvatar(input){
-  const file=input.files&&input.files[0];
+  const file=input.files?.[0];
   if(!file)return;
-  if(file.size>2*1024*1024){toast('头像请控制在 2MB 以内');return}
+  if(!/^image\/(png|jpeg|webp)$/.test(file.type)){toast('请选择 JPG、PNG 或 WEBP 图片');return}
+  if(file.size>8*1024*1024){toast('头像原图请控制在 8MB 以内');return}
   const reader=new FileReader();
-  reader.onload=()=>{myEditDraft.avatar=String(reader.result);renderMyProfileEditor();toast('头像已载入，保存后生效')};
+  reader.onload=()=>{
+    const image=new Image();
+    image.onload=()=>{
+      const sourceSize=Math.min(image.naturalWidth,image.naturalHeight);
+      const sourceX=Math.max(0,(image.naturalWidth-sourceSize)/2);
+      const sourceY=Math.max(0,(image.naturalHeight-sourceSize)/2);
+      const canvas=document.createElement('canvas');
+      canvas.width=512;canvas.height=512;
+      const context=canvas.getContext('2d');
+      if(!context){toast('头像处理失败，请重试');return}
+      context.drawImage(image,sourceX,sourceY,sourceSize,sourceSize,0,0,512,512);
+      myEditDraft.avatar=canvas.toDataURL('image/jpeg',.84);
+      const preview=$('#avatarUploadPreview'),state=$('#avatarUploadState');
+      if(preview)preview.src=myEditDraft.avatar;
+      if(state)state.textContent=`已选择：${file.name} · 保存后生效`;
+      document.querySelectorAll('#myEditBody .avatar-option').forEach(x=>x.classList.remove('on'));
+      toast('本地头像已载入，保存后生效');
+    };
+    image.onerror=()=>toast('这张图片暂时无法读取');
+    image.src=String(reader.result);
+  };
   reader.readAsDataURL(file);
 }
 function renderMyTimelineEditor(){
@@ -5577,7 +5749,7 @@ function renderMyTimelineEditor(){
   if(!root)return;
   root.innerHTML=myEditDraft.traj.map((t,i)=>`
     <div class="timeline-edit-item">
-      <button class="timeline-remove" onclick="removeMyTimelineItem(${i})">删除</button>
+      <div class="timeline-edit-actions"><span>人生节点 ${String(i+1).padStart(2,'0')}</span><button class="timeline-remove" onclick="removeMyTimelineItem(${i})">删除节点</button></div>
       <div class="timeline-edit-row">
         <input value="${escapeHTML(t.age)}" maxlength="12" oninput="updateMyTimelineItem(${i},'age',this.value)" aria-label="时间或年龄">
         <input value="${escapeHTML(t.t)}" maxlength="30" oninput="updateMyTimelineItem(${i},'t',this.value)" aria-label="节点标题">
@@ -5591,8 +5763,142 @@ function removeMyTimelineItem(index){
   if(myEditDraft.traj.length===1){toast('至少保留一个时间线节点');return}
   myEditDraft.traj.splice(index,1);renderMyTimelineEditor();
 }
-function updateMyAdvice(kind,value){
-  myEditDraft.meta.advice[kind]=value.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,5);
+function renderMyAdviceEditor(){
+  const root=$('#myAdviceEditor');
+  if(!root)return;
+  const modules=normalizeMyAdviceModules(myEditDraft.adviceModules,myEditDraft.meta?.advice);
+  myEditDraft.adviceModules=modules;
+  root.innerHTML=modules.length?modules.map((module,index)=>`
+    <div class="advice-editor-card">
+      <div class="timeline-edit-actions"><span>经验模块 ${String(index+1).padStart(2,'0')}</span><button class="timeline-remove" onclick="removeMyAdviceModule(${index})" aria-label="删除这个经验模块">删除模块</button></div>
+      <label class="edit-field"><span>模块标题</span><input value="${escapeHTML(module.title)}" maxlength="40" placeholder="例如：转型前先做一次低成本验证" oninput="updateMyAdviceModule(${index},'title',this.value)"></label>
+      <label class="edit-field"><span>详细内容</span><textarea maxlength="1200" placeholder="写下经验、方法、步骤或提醒" oninput="updateMyAdviceModule(${index},'content',this.value)">${escapeHTML(module.content)}</textarea></label>
+      <div class="advice-editor-media">
+        ${module.images.map((image,imageIndex)=>`<div class="advice-image-thumb"><img src="${image.src}" alt="${escapeHTML(image.name)}"><button class="advice-image-remove" onclick="removeMyAdviceImage(${index},${imageIndex})" aria-label="删除图片">✕</button></div>`).join('')}
+        ${module.images.length<4?`<label class="advice-image-add">＋<small>上传图片</small><input type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="uploadMyAdviceImage(${index},this)"></label>`:''}
+      </div>
+      <div class="advice-link-list">
+        ${module.links.map((link,linkIndex)=>`
+          <div class="advice-link-editor">
+            <input value="${escapeHTML(link.label)}" maxlength="24" placeholder="链接名称" oninput="updateMyAdviceLink(${index},${linkIndex},'label',this.value)" aria-label="链接名称">
+            <input value="${escapeHTML(link.url)}" maxlength="240" placeholder="https://..." oninput="updateMyAdviceLink(${index},${linkIndex},'url',this.value)" aria-label="链接地址">
+            <button class="advice-link-remove" onclick="removeMyAdviceLink(${index},${linkIndex})" aria-label="删除链接">×</button>
+          </div>`).join('')}
+      </div>
+      ${module.links.length<6?`<button class="edit-add" onclick="addMyAdviceLink(${index})">＋ 添加链接</button>`:''}
+    </div>`).join(''):'<div class="advice-editor-empty">还没有经验模块。你可以从一段亲历、一个方法或一份资料开始。</div>';
+}
+function updateMyAdviceModule(index,key,value){
+  if(myEditDraft.adviceModules?.[index])myEditDraft.adviceModules[index][key]=value;
+}
+function addMyAdviceModule(){
+  if(!Array.isArray(myEditDraft.adviceModules))myEditDraft.adviceModules=[];
+  myEditDraft.adviceModules.push({id:createMyAdviceId(),title:'新的经验主题',content:'',images:[],links:[]});
+  renderMyAdviceEditor();
+  const cards=document.querySelectorAll('#myAdviceEditor .advice-editor-card');
+  const target=cards[cards.length-1]?.querySelector('input');
+  if(target)target.focus();
+}
+function removeMyAdviceModule(index){
+  if(!myEditDraft.adviceModules?.[index])return;
+  myEditDraft.adviceModules.splice(index,1);
+  renderMyAdviceEditor();
+}
+function addMyAdviceLink(index){
+  const module=myEditDraft.adviceModules?.[index];
+  if(!module||module.links.length>=6)return;
+  module.links.push({id:createMyAdviceId(),label:'相关资料',url:''});
+  renderMyAdviceEditor();
+}
+function updateMyAdviceLink(moduleIndex,linkIndex,key,value){
+  const link=myEditDraft.adviceModules?.[moduleIndex]?.links?.[linkIndex];
+  if(link)link[key]=value;
+}
+function removeMyAdviceLink(moduleIndex,linkIndex){
+  const links=myEditDraft.adviceModules?.[moduleIndex]?.links;
+  if(!links?.[linkIndex])return;
+  links.splice(linkIndex,1);
+  renderMyAdviceEditor();
+}
+function removeMyAdviceImage(moduleIndex,imageIndex){
+  const images=myEditDraft.adviceModules?.[moduleIndex]?.images;
+  if(!images?.[imageIndex])return;
+  images.splice(imageIndex,1);
+  renderMyAdviceEditor();
+}
+function uploadMyAdviceImage(moduleIndex,input){
+  const module=myEditDraft.adviceModules?.[moduleIndex];
+  const file=input.files?.[0];
+  if(!module||!file)return;
+  if(module.images.length>=4){toast('每个模块最多上传 4 张图片');return}
+  if(file.size>6*1024*1024){toast('单张图片请控制在 6MB 以内');return}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const image=new Image();
+    image.onload=()=>{
+      const scale=Math.min(1,960/image.width,720/image.height);
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(image.width*scale));
+      canvas.height=Math.max(1,Math.round(image.height*scale));
+      const context=canvas.getContext('2d');
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      module.images.push({id:createMyAdviceId(),src:canvas.toDataURL('image/jpeg',.8),name:file.name||'经验配图'});
+      renderMyAdviceEditor();
+      toast('图片已添加，保存后公开展示');
+    };
+    image.onerror=()=>toast('这张图片暂时无法读取');
+    image.src=String(reader.result);
+  };
+  reader.readAsDataURL(file);
+}
+function updateMyVisibility(key,checked){
+  if(myEditDraft?.visibility)myEditDraft.visibility[key]=checked;
+  updateMyVisibilitySummary();
+}
+function updateMyVisibilitySummary(){
+  const summary=$('#myVisibilitySummary');
+  if(!summary||!myEditDraft)return;
+  const selected=myPersonaSource().filter(item=>myEditDraft.visibility?.[item.key]);
+  const completed=selected.filter(hasPersonaResult);
+  summary.textContent=`已选择 ${selected.length} 项，其中 ${completed.length} 项已有结果；保存后全部展示，待完善内容会标注状态。动态画像始终与“认识自己”保持同步。`;
+}
+function renderMyServiceEditor(){
+  const root=$('#myServiceEditor');
+  if(!root)return;
+  const services=Array.isArray(myEditDraft.services)?myEditDraft.services:[];
+  root.innerHTML=services.length?services.map((service,index)=>`
+    <div class="timeline-edit-item">
+      <div class="timeline-edit-actions"><span>服务 ${String(index+1).padStart(2,'0')}</span><button class="timeline-remove" onclick="removeMyService(${index})">删除服务</button></div>
+      <label class="visibility-row" style="margin-bottom:9px"><div><b>${escapeHTML(service.title||'未命名服务')}</b><span>${service.enabled?'公开中':'未公开'}</span></div>
+        <input type="checkbox" ${service.enabled?'checked':''} onchange="updateMyService(${index},'enabled',this.checked)">
+      </label>
+      <div class="edit-grid">
+        <label class="edit-field"><span>服务类型</span><input value="${escapeHTML(service.type||'')}" maxlength="16" placeholder="如：1 对 1 咨询" oninput="updateMyService(${index},'type',this.value)"></label>
+        <label class="edit-field"><span>价格（元）</span><input value="${escapeHTML(service.price||'')}" maxlength="8" inputmode="decimal" placeholder="29" oninput="updateMyService(${index},'price',this.value)"></label>
+        <label class="edit-field wide"><span>服务名称</span><input value="${escapeHTML(service.title||'')}" maxlength="32" placeholder="给服务起一个清晰的名称" oninput="updateMyService(${index},'title',this.value)"></label>
+        <label class="edit-field wide"><span>服务说明</span><textarea maxlength="260" placeholder="说明适合谁、包含什么和交付方式" oninput="updateMyService(${index},'desc',this.value)">${escapeHTML(service.desc||'')}</textarea></label>
+      </div>
+    </div>`).join(''):'<div class="advice-editor-empty">还没有服务。新增后可自定义类型、名称、价格与服务说明。</div>';
+}
+function addMyService(){
+  if(!Array.isArray(myEditDraft.services))myEditDraft.services=[];
+  myEditDraft.services.push({
+    id:`custom-service-${Date.now().toString(36)}-${myEditDraft.services.length+1}`,
+    enabled:false,
+    type:'自定义服务',
+    title:'新的服务',
+    price:'29',
+    desc:'写下这项服务适合谁、包含什么，以及你会如何提供帮助。'
+  });
+  renderMyServiceEditor();
+  const cards=document.querySelectorAll('#myServiceEditor .timeline-edit-item');
+  const target=cards[cards.length-1]?.querySelector('input[placeholder="给服务起一个清晰的名称"]');
+  if(target)target.focus();
+}
+function removeMyService(index){
+  if(!myEditDraft.services?.[index])return;
+  myEditDraft.services.splice(index,1);
+  renderMyServiceEditor();
 }
 function updateMyService(index,key,value){
   if(myEditDraft.services&&myEditDraft.services[index])myEditDraft.services[index][key]=value;
@@ -5617,12 +5923,18 @@ function saveMyProfile(){
   }else if(myEditMode==='persona'){
     document.querySelectorAll('#myEditBody [data-visibility]').forEach(input=>{myEditDraft.visibility[input.dataset.visibility]=input.checked});
   }
-  myProfile=cloneData(myEditDraft);
-  safeStoreSet(MY_PROFILE_KEY,myProfile);
+  const nextProfile=cloneData(myEditDraft);
+  if(!safeStoreSet(MY_PROFILE_KEY,nextProfile)){
+    toast('保存失败，请减少图片数量或更换较小的图片');
+    return;
+  }
+  myProfile=nextProfile;
+  if(myEditMode==='persona')myProfileTab='persona';
   renderMyProfile();
   closePush('myEditPage');
-  const savedLabel={basic:'基础资料',story:'我的故事',advice:'经验与建议',service:'提供服务',persona:'画像展示设置'}[myEditMode]||'主页';
-  toast(`${savedLabel}已更新`);
+  const savedLabel={basic:'基础资料',story:'我的故事',advice:'经验与建议',service:'提供服务',persona:'动态画像展示设置'}[myEditMode]||'主页';
+  const personaCount=myEditMode==='persona'?profilePersonaItems(myProfile).length:0;
+  toast(myEditMode==='persona'?`${savedLabel}已更新 · 当前公开 ${personaCount} 项`:`${savedLabel}已更新`);
 }
 
 function switchProfileTab(tab, btn){
@@ -5929,7 +6241,7 @@ function safeStoreGet(key){
   try{return JSON.parse(localStorage.getItem(key)||'null')}catch(e){return null}
 }
 function safeStoreSet(key,value){
-  try{localStorage.setItem(key,JSON.stringify(value))}catch(e){}
+  try{localStorage.setItem(key,JSON.stringify(value));return true}catch(e){return false}
 }
 function updateProfileCompletion(){
   const fill=$('#pfill'),text=$('#ppct');
