@@ -196,8 +196,13 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .diary .top{display:flex;justify-content:space-between;align-items:center}
 .diary .top h3{font-size:14.5px;font-weight:600}
 .diary .top button{all:unset;cursor:pointer;font-size:12.5px;color:var(--blue);font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(94,150,255,.12)}
+.diary-actions{display:flex;align-items:center;gap:6px}
+.diary .top .diary-title-link{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:3px 3px 3px 0;border-radius:9px;color:var(--ink)}
+.diary .top .diary-title-link:hover .diary-detail-icon{color:#fff;border-color:rgba(111,165,255,.5);background:rgba(94,150,255,.16)}
+.diary-detail-icon{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#9DBCFF;border:1px solid rgba(111,165,255,.25);background:rgba(94,150,255,.08);font-size:14px;line-height:1;transition:color .2s,border-color .2s,background .2s}
 .dweek{display:flex;justify-content:space-between;margin-top:14px}
-.dday{text-align:center;width:36px}
+.dday{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;width:36px;border-radius:11px;padding:2px 0;transition:background .18s,transform .18s}
+.dday:hover{background:rgba(255,255,255,.045)}.dday:active{transform:scale(.94)}
 .dday i{
   display:block;width:30px;height:30px;margin:0 auto;border-radius:50%;
   background:var(--raised);font-style:normal;font-size:15px;line-height:30px;
@@ -217,8 +222,56 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .diary-res.show{display:block}
 .diary-res .lb2{font-size:11px;color:var(--faint);margin-bottom:8px}
 .diary-res .row2{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.diary-result-link{all:unset;cursor:pointer;margin-left:auto;font-size:11px;color:var(--blue);padding:4px 2px}
 .emo-pill{font-size:11.5px;color:#0B0F18;background:var(--lime);padding:4px 11px;border-radius:999px;font-weight:600}
 .kw{font-size:11.5px;color:#9DBCFF;background:rgba(94,150,255,.13);border:1px solid rgba(94,150,255,.3);padding:4px 11px;border-radius:999px}
+
+/* 语音日记详情 */
+.diary-page .top{padding-bottom:14px}
+.diary-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:4px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid var(--line);position:sticky;top:0;z-index:4;backdrop-filter:blur(12px)}
+.diary-tab{all:unset;cursor:pointer;text-align:center;padding:9px 4px;border-radius:10px;font-size:11.5px;color:var(--faint);transition:background .2s,color .2s}
+.diary-tab.on{color:#fff;background:linear-gradient(135deg,rgba(62,119,242,.82),rgba(102,76,206,.82));box-shadow:0 5px 13px -7px rgba(94,150,255,.9)}
+.diary-view-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-top:20px}
+.diary-view-head .ey{font-size:9px;letter-spacing:.22em;color:#99B8FF}.diary-view-head h2{font-size:22px;line-height:1.35;margin-top:5px}
+.diary-view-head p{font-size:10.5px;color:var(--faint);margin-top:4px}
+.diary-summary-refresh{all:unset;cursor:pointer;flex:none;padding:8px 11px;border-radius:999px;font-size:10.5px;color:#BBD0FF;background:rgba(94,150,255,.1);border:1px solid rgba(94,150,255,.2)}
+.diary-summary-refresh:disabled{opacity:.55}
+.diary-date-rail{display:flex;gap:8px;overflow-x:auto;margin:16px -20px 0;padding:2px 20px 10px;scrollbar-width:none;scroll-snap-type:x proximity}
+.diary-date-rail::-webkit-scrollbar{display:none}
+.diary-date-chip{all:unset;cursor:pointer;box-sizing:border-box;flex:none;width:62px;padding:10px 6px;border-radius:17px;text-align:center;background:var(--card);border:1px solid var(--line);scroll-snap-align:center;transition:border-color .2s,background .2s,transform .2s}
+.diary-date-chip:active{transform:scale(.96)}
+.diary-date-chip span{display:block;font-size:9.5px;color:var(--faint)}.diary-date-chip i{display:block;font-style:normal;font-size:19px;margin:6px 0 4px}.diary-date-chip b{font-size:10px;font-weight:500;color:var(--sub)}
+.diary-date-chip.on{background:linear-gradient(145deg,rgba(48,82,164,.75),rgba(82,55,135,.78));border-color:rgba(157,188,255,.55);box-shadow:0 8px 20px -12px rgba(94,150,255,.8)}
+.diary-date-chip.on span,.diary-date-chip.on b{color:#EEF3FF}
+.diary-day-hero{margin-top:10px;padding:19px;border-radius:23px;position:relative;overflow:hidden;background:
+  radial-gradient(220px 150px at 100% 0,rgba(111,165,255,.22),transparent 65%),
+  linear-gradient(145deg,#171D31,#11141F 72%);border:1px solid rgba(125,158,232,.24)}
+.diary-day-hero .date{font-size:10px;color:#9DBCFF;letter-spacing:.12em}.diary-day-hero h3{font-size:18px;line-height:1.5;margin-top:7px}.diary-day-hero .mood{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--sub);margin-top:8px}.diary-day-hero .mood i{font-style:normal;font-size:20px}
+.diary-audio{display:flex;align-items:center;gap:11px;margin-top:17px;padding:11px 12px;border-radius:15px;background:rgba(5,8,18,.48);border:1px solid rgba(255,255,255,.07)}
+.diary-play{all:unset;cursor:pointer;flex:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--btn-g);font-size:11px;color:#fff}
+.diary-wave-static{height:28px;flex:1;display:flex;align-items:center;gap:2px}.diary-wave-static i{flex:1;border-radius:2px;background:linear-gradient(#7CABFF,#8F7BFF);opacity:.66}
+.diary-audio span{font-size:9.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.diary-keyword-block,.diary-transcript,.diary-summary-card{margin-top:14px;padding:17px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.diary-block-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.diary-block-head b{font-size:13.5px}.diary-block-head span{font-size:9.5px;color:var(--faint)}
+.diary-keywords{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.diary-keywords span{font-size:11px;padding:6px 10px;border-radius:999px;color:#BFD2FF;background:rgba(94,150,255,.1);border:1px solid rgba(94,150,255,.2)}
+.diary-transcript p{font-size:12.5px;line-height:1.95;color:#C8CEDA;margin-top:11px}.diary-transcript p+p{margin-top:9px}
+.diary-archive{margin-top:18px}.diary-archive-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px}.diary-archive-head h3{font-size:15px}.diary-archive-head span{font-size:9.5px;color:var(--faint)}
+.diary-archive-list{display:flex;flex-direction:column;gap:8px}
+.diary-archive-item{all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:grid;grid-template-columns:42px minmax(0,1fr) 16px;align-items:center;gap:11px;padding:13px 12px;border-radius:17px;background:var(--card);border:1px solid var(--line);transition:background .2s,border-color .2s,transform .16s}
+.diary-archive-item:active{transform:scale(.985)}.diary-archive-item.on{background:rgba(94,150,255,.08);border-color:rgba(111,165,255,.32)}
+.diary-archive-date{text-align:center}.diary-archive-date b{display:block;font-size:15px}.diary-archive-date span{display:block;font-size:8.5px;color:var(--faint);margin-top:2px}
+.diary-archive-copy{min-width:0}.diary-archive-copy b{display:block;font-size:11.5px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.diary-archive-copy p{font-size:9.5px;color:var(--faint);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.diary-archive-arrow{color:#70809E;font-size:16px}
+.diary-empty{margin-top:20px;padding:38px 22px;border-radius:23px;text-align:center;background:var(--card);border:1px dashed rgba(111,165,255,.28)}.diary-empty i{font-style:normal;font-size:32px}.diary-empty h3{font-size:16px;margin-top:12px}.diary-empty p{font-size:11.5px;line-height:1.75;color:var(--sub);margin-top:7px}.diary-empty button{all:unset;cursor:pointer;margin-top:18px;padding:11px 20px;border-radius:999px;background:var(--btn-g);font-size:12px;font-weight:600}
+.diary-summary-hero{margin-top:15px;padding:21px;border-radius:24px;position:relative;overflow:hidden;background:
+  radial-gradient(260px 180px at 100% 0,rgba(227,92,193,.24),transparent 65%),
+  radial-gradient(220px 150px at 0 100%,rgba(94,150,255,.22),transparent 68%),
+  linear-gradient(145deg,#1A1830,#111522);border:1px solid rgba(154,139,234,.3)}
+.diary-summary-hero .cap{font-size:9.5px;letter-spacing:.2em;color:#C4B9FF}.diary-summary-hero h3{font-size:20px;line-height:1.5;margin-top:8px}.diary-summary-hero p{font-size:11.5px;line-height:1.8;color:#BCC4D4;margin-top:9px}
+.diary-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:14px}.diary-stat{padding:12px 7px;border-radius:15px;text-align:center;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06)}.diary-stat b{display:block;font-size:17px}.diary-stat span{display:block;font-size:9px;color:var(--faint);margin-top:4px}
+.diary-emotion-chart{height:104px;display:flex;align-items:flex-end;gap:8px;margin-top:15px;padding:0 3px}.diary-emotion-col{flex:1;text-align:center}.diary-emotion-col i{display:block;width:100%;min-height:10px;border-radius:7px 7px 3px 3px;background:linear-gradient(#8F7BFF,#3E77F2);opacity:.75}.diary-emotion-col b{display:block;font-size:8.5px;color:var(--faint);font-weight:400;margin-top:6px}
+.diary-insight-list{display:flex;flex-direction:column;gap:10px;margin-top:13px}.diary-insight{padding:14px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}.diary-insight .cap{font-size:9px;color:#9DBCFF;letter-spacing:.1em}.diary-insight b{display:block;font-size:13px;line-height:1.55;margin-top:5px}.diary-insight p{font-size:11px;line-height:1.75;color:var(--sub);margin-top:5px}
+.diary-year-line{margin-top:14px;padding-left:17px;border-left:1px solid rgba(143,123,255,.35)}.diary-year-node{position:relative;padding:2px 0 16px 8px}.diary-year-node::before{content:"";position:absolute;left:-22px;top:6px;width:8px;height:8px;border-radius:50%;background:#8F7BFF;box-shadow:0 0 10px rgba(143,123,255,.6)}.diary-year-node:last-child{padding-bottom:2px}.diary-year-node span{font-size:9.5px;color:#9DBCFF}.diary-year-node b{display:block;font-size:12.5px;margin-top:3px}.diary-year-node p{font-size:10.5px;line-height:1.7;color:var(--sub);margin-top:4px}
 
 .ask{
   position:relative;margin-top:22px;border-radius:28px;overflow:hidden;
@@ -297,28 +350,40 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .portrait{margin-top:12px;padding:0 20px 18px;text-align:center;position:relative;overflow:hidden}
 .digital-human-stage{
   position:relative;height:216px;margin:0 -20px 0;overflow:hidden;
-  background:#0A1020;
+  background:
+    radial-gradient(190px 150px at 50% 48%,rgba(83,115,255,.22),transparent 70%),
+    radial-gradient(150px 120px at 30% 80%,rgba(227,92,193,.12),transparent 72%),
+    linear-gradient(145deg,#080C1A,#10162B 58%,#080B16);
 }
 .digital-human-stage::before{
-  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
   background:
-    linear-gradient(180deg,rgba(5,8,18,.03) 32%,rgba(7,10,20,.18) 58%,rgba(7,9,18,.95) 100%),
-    radial-gradient(180px 120px at 50% 48%,transparent 42%,rgba(8,10,20,.25) 100%);
+    linear-gradient(180deg,rgba(5,8,18,0) 38%,rgba(7,10,20,.07) 62%,rgba(7,9,18,.88) 100%),
+    radial-gradient(180px 120px at 50% 45%,transparent 48%,rgba(8,10,20,.16) 100%);
 }
 .digital-human-stage::after{
-  content:"";position:absolute;inset:10px;z-index:1;border-radius:16px;pointer-events:none;
+  content:"";position:absolute;inset:10px;z-index:2;border-radius:16px;pointer-events:none;
   border:1px solid rgba(172,201,255,.12);box-shadow:inset 0 0 30px rgba(94,150,255,.08);
 }
-.digital-human-stage img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 42%}
+.digital-human-stage canvas{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block}
 .digital-human-live{
-  position:absolute;left:15px;top:14px;z-index:2;display:flex;align-items:center;gap:6px;
+  position:absolute;left:15px;top:14px;z-index:3;display:flex;align-items:center;gap:6px;
   padding:5px 9px;border-radius:999px;background:rgba(7,11,24,.54);border:1px solid rgba(198,218,255,.18);
   color:#DCE8FF;font-size:8.5px;letter-spacing:.18em;backdrop-filter:blur(9px);
 }
 .digital-human-live::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px rgba(62,217,164,.9)}
-.digital-human-caption{position:absolute;left:18px;right:18px;bottom:14px;z-index:2;text-align:left}
+.digital-human-caption{position:absolute;left:18px;right:18px;bottom:14px;z-index:3;text-align:left}
 .digital-human-caption b{display:block;font-size:15px;font-weight:600;text-shadow:0 2px 12px rgba(0,0,0,.7)}
 .digital-human-caption span{display:block;margin-top:4px;font-size:10px;color:rgba(223,232,250,.74);letter-spacing:.12em}
+.portrait-life-signature{display:none;margin-top:14px;padding:13px 14px;border-radius:16px;text-align:left;background:linear-gradient(145deg,rgba(94,150,255,.085),rgba(143,123,255,.055));border:1px solid rgba(143,161,255,.17)}
+.portrait-life-signature.show{display:block;animation:signatureIn .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes signatureIn{from{opacity:0;transform:translateY(9px) scale(.97)}to{opacity:1;transform:none}}
+.portrait-life-signature .signature-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.portrait-life-signature .signature-head b{font-size:11.5px}.portrait-life-signature .signature-head span{font-size:8.5px;color:#8290AD}
+.portrait-life-signature .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px}
+.portrait-life-signature .card-mini{min-width:0;padding:8px 6px;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:5px;background:rgba(10,15,31,.56);border:1px solid rgba(185,204,255,.15)}
+.portrait-life-signature .card-mini i{flex:none;font-style:normal;font-size:13px;color:#D6DEFF;text-shadow:0 0 10px rgba(143,123,255,.72)}
+.portrait-life-signature .card-mini span{min-width:0;font-size:9px;line-height:1.2;color:#DFE7F7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.digital-human-stage.has-life-cards::after{border-color:rgba(174,174,255,.22);box-shadow:inset 0 0 34px rgba(111,120,255,.13)}
 .pbar{margin:16px auto 0;max-width:250px;display:flex;align-items:center;gap:10px}
 .pbar .tr{flex:1;height:5px;border-radius:3px;background:var(--raised);overflow:hidden}
 .pbar .tr i{display:block;height:100%;width:0;border-radius:3px;background:var(--aurora);transition:width .6s ease}
@@ -454,6 +519,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .simcard:active{transform:scale(.97)}
 .simcard .hd{height:52px;position:relative}
 .simcard .av{position:absolute;left:14px;bottom:-14px;width:36px;height:36px;border-radius:50%;border:2.5px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff}
+.simcard .av,.ucard .av,.kal-rescard .av{overflow:hidden}.simcard .av img,.ucard .av img,.kal-rescard .av img{width:100%;height:100%;display:block;object-fit:cover}
 .simcard .bd{padding:20px 14px 14px}
 .simcard .nm{font-size:13px;font-weight:600}
 .simcard .qt{font-size:11px;color:var(--sub);line-height:1.6;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -1018,7 +1084,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 }
 .prof-row{display:flex;align-items:center;gap:16px;position:relative;z-index:1}
 .prof-av{
-  position:relative;width:74px;height:74px;border-radius:26px;flex:none;
+  position:relative;width:74px;height:74px;border-radius:50%;flex:none;
   display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;color:#fff;
   border:1px solid rgba(255,255,255,.18);box-shadow:0 14px 30px -12px rgba(0,0,0,.85);overflow:hidden;
 }
@@ -1214,6 +1280,54 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .life-section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
 .life-section-head .ey{font-size:9.5px;letter-spacing:.24em;color:#B9AEFF}.life-section-head h2{font-size:20px;margin-top:4px}
 .life-section-head span{font-size:11px;color:var(--sub)}.life-section-head span b{color:#fff;font-size:17px}
+.life-body.life-select-mode{padding:14px 18px 126px}
+.life-select-summary{
+  position:relative;padding:17px 17px 15px;border-radius:20px;overflow:hidden;
+  background:
+    radial-gradient(220px 130px at 100% 0,rgba(111,165,255,.2),transparent 68%),
+    linear-gradient(145deg,rgba(31,37,63,.9),rgba(18,21,32,.94));
+  border:1px solid rgba(137,164,238,.24);
+}
+.life-select-summary .row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+.life-select-summary .ey{font-size:9px;letter-spacing:.24em;color:#B9AEFF}.life-select-summary h2{font-size:20px;margin-top:5px}
+.life-select-count{flex:none;text-align:right;color:var(--sub);font-size:10px}.life-select-count b{font-size:22px;color:#fff}.life-select-count small{font-size:11px;color:#8892AA}
+.life-select-meter{height:4px;margin-top:14px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.07)}
+.life-select-meter i{display:block;height:100%;border-radius:6px;background:var(--aurora);transition:width .28s ease}
+.life-select-guide{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 2px 0;font-size:9.5px;line-height:1.6;color:var(--faint)}
+.life-select-guide i{font-style:normal;white-space:nowrap;color:#9DBCFF;letter-spacing:.08em;animation:verticalCue 1.6s ease-in-out infinite}
+@keyframes verticalCue{0%,100%{transform:translateY(0);opacity:.62}50%{transform:translateY(4px);opacity:1}}
+.vertical-select-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.vertical-pick-card{
+  all:unset;cursor:pointer;box-sizing:border-box;width:100%;min-width:0;height:176px;padding:13px;
+  display:flex;flex-direction:column;align-items:stretch;position:relative;overflow:hidden;
+  border-radius:20px;color:var(--ink);background:
+    radial-gradient(160px 110px at 0 0,rgba(119,145,211,.13),transparent 72%),
+    linear-gradient(145deg,#1A1F2E,#12151E 72%);
+  border:1px solid rgba(255,255,255,.095);box-shadow:0 9px 22px -18px #000;
+  transition:transform .16s,border-color .2s,background .2s,box-shadow .2s;
+  animation:verticalCardIn .36s both;animation-delay:calc(var(--i) * 22ms);scroll-margin-top:10px;
+}
+@keyframes verticalCardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.vertical-pick-card:active{transform:scale(.985)}
+.vertical-card-symbol{display:flex;flex-direction:column;align-items:flex-start;padding:1px 0}
+.vertical-card-symbol small{font-size:7.5px;letter-spacing:.12em;color:rgba(255,255,255,.34);white-space:nowrap}
+.vertical-card-symbol .glyph{margin-top:30px;font-size:29px;line-height:1;color:rgba(234,239,250,.88)}
+.vertical-card-copy{min-width:0;margin-top:auto}.vertical-card-copy b{display:block;font-size:14px;line-height:1.35}
+.vertical-card-copy em{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:999px;font-style:normal;font-size:9px;color:#9EABC7;background:rgba(255,255,255,.045)}
+.vertical-card-copy p{display:none}
+.vertical-card-state{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;align-items:center;color:#6F7990;font-size:8.5px;white-space:nowrap}
+.vertical-card-state i{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;border:1px solid rgba(255,255,255,.14);font-size:11px}
+.vertical-card-state span{display:none}
+.vertical-pick-card.on{
+  background:
+    radial-gradient(190px 130px at 0 0,rgba(119,164,255,.28),transparent 72%),
+    linear-gradient(145deg,rgba(47,84,166,.92),rgba(96,58,139,.9));
+  border-color:rgba(189,205,255,.68);box-shadow:0 12px 28px -15px rgba(94,150,255,.75);
+}
+.vertical-pick-card.on .vertical-card-state{color:#E5EBFF}.vertical-pick-card.on .vertical-card-state i{background:#fff;border-color:#fff;color:#354C98}
+.vertical-pick-card.on .vertical-card-copy em{color:#DFE6FF;background:rgba(255,255,255,.1)}
+.life-select-end{display:flex;align-items:center;justify-content:center;gap:8px;padding:20px 0 6px;color:#596278;font-size:9.5px;letter-spacing:.08em}
+.life-select-end::before,.life-select-end::after{content:"";width:32px;height:1px;background:rgba(255,255,255,.08)}
 .linear-select-viewport{margin:2px -20px 0;overflow-x:auto;padding:12px 20px 28px;scrollbar-width:none;touch-action:pan-x;cursor:grab}
 .linear-select-viewport:active{cursor:grabbing}.linear-select-viewport::-webkit-scrollbar{display:none}
 .linear-select-track{display:flex;align-items:center;width:max-content;padding-right:38px}
@@ -1228,6 +1342,11 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   animation:cardDeal .42s both;animation-delay:calc(var(--i) * 22ms);
 }
 .linear-select-track:hover .linear-pick-card,.linear-select-track.expanded .linear-pick-card{margin-right:8px}
+.trade-card-viewport{position:relative;scroll-snap-type:x proximity}
+.trade-card-viewport .linear-select-track{padding-right:24px}
+.trade-card-viewport .linear-pick-card{flex-basis:94px;height:136px;margin-right:8px!important;padding:11px 9px;scroll-snap-align:start}
+.trade-card-viewport .linear-pick-card .glyph{font-size:24px}
+.trade-card-viewport .linear-pick-card b{font-size:10.5px}
 .linear-pick-card:hover,.linear-pick-card:focus-visible{transform:translateY(-9px) scale(1.02);z-index:30!important}
 .linear-pick-card.on{background:linear-gradient(145deg,rgba(55,103,213,.92),rgba(118,73,169,.94));border-color:rgba(189,205,255,.72);box-shadow:0 0 0 1px rgba(157,188,255,.2),0 10px 26px -8px rgba(94,150,255,.72);animation:cardSelectPulse .3s ease}
 .linear-pick-card.trade-pick{background:linear-gradient(145deg,rgba(132,54,52,.96),rgba(103,46,71,.95));border-color:rgba(255,166,137,.78);box-shadow:0 0 0 1px rgba(255,155,120,.16),0 10px 26px -8px rgba(255,122,77,.62);animation:cardSelectPulse .3s ease}
@@ -1275,6 +1394,16 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .stamp-arc:hover .stamp-card:nth-child(5),.stamp-arc.spread .stamp-card:nth-child(5){transform:translate(146px,28px) rotate(25deg)}
 .stamp-arc.spread .stamp-card:hover{border-color:rgba(255,176,103,.75);background:linear-gradient(150deg,#3A2631,#1B1A25)}
 .draw-hint{text-align:center;font-size:10px;color:var(--faint);letter-spacing:.08em}
+.fate-pressure{margin:17px auto 0;max-width:296px;padding:11px 13px;border-radius:15px;background:rgba(255,255,255,.035);border:1px solid var(--line);text-align:left}
+.fate-pressure .head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:9.5px;color:var(--faint);letter-spacing:.08em}
+.fate-pressure .head b{font-size:10px;color:#B9D4FF;font-weight:600;letter-spacing:.04em}
+.fate-pressure .track{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+.fate-pressure .track i{height:3px;border-radius:999px;background:rgba(255,255,255,.09);transition:background .25s,box-shadow .25s}
+.fate-pressure .track i.on{background:#6FA5FF;box-shadow:0 0 10px rgba(94,150,255,.45)}
+.fate-pressure p{font-size:9.5px;line-height:1.55;color:var(--sub);margin-top:8px}
+.fate-pressure.severity-2 .head b{color:#C8BEFF}.fate-pressure.severity-2 .track i.on{background:#8F7BFF;box-shadow:0 0 10px rgba(143,123,255,.5)}
+.fate-pressure.severity-3 .head b{color:#FFC08E}.fate-pressure.severity-3 .track i.on{background:#FF9B63;box-shadow:0 0 10px rgba(255,155,99,.5)}
+.fate-pressure.severity-4 .head b{color:#FF9A9A}.fate-pressure.severity-4 .track i.on{background:#FF646F;box-shadow:0 0 12px rgba(255,100,111,.58)}
 
 .setback-view{text-align:center;padding-top:3px}.age-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;color:#C8BEFF;background:rgba(143,123,255,.11);border:1px solid rgba(143,123,255,.26);font-size:10px}
 .setback-card{margin:17px auto 0;max-width:296px;min-height:204px;padding:21px;border-radius:23px;position:relative;overflow:hidden;text-align:left;background:
@@ -1289,6 +1418,9 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .decision-btn:disabled{opacity:.32;cursor:default}
 .impact-badge{display:inline-flex;margin-top:11px;padding:5px 9px;border-radius:999px;font-size:9.5px;letter-spacing:.05em;color:#F7C1AE;background:rgba(255,122,77,.09);border:1px solid rgba(255,122,77,.2)}
 .impact-badge.light{color:#B9D4FF;background:rgba(94,150,255,.08);border-color:rgba(94,150,255,.18)}
+.impact-badge.severity-2{color:#D0C7FF;background:rgba(143,123,255,.1);border-color:rgba(143,123,255,.24)}
+.impact-badge.severity-3{color:#FFD0A9;background:rgba(255,155,99,.1);border-color:rgba(255,155,99,.25)}
+.impact-badge.severity-4{color:#FFB0B4;background:rgba(255,100,111,.11);border-color:rgba(255,100,111,.28)}
 .trade-tip{font-size:10.5px;line-height:1.65;color:#FFBEA7;margin-bottom:13px;padding:10px 12px;border-radius:13px;background:rgba(255,122,77,.09);border:1px solid rgba(255,122,77,.2)}
 .choice-reasons{margin-top:16px;text-align:left}.reason-field+.reason-field{margin-top:12px}
 .reason-field label{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:#D9DEEA}.reason-field label span{font-size:9px;color:var(--faint)}
@@ -1325,9 +1457,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .evidence-note{font-size:9px;line-height:1.6;color:var(--faint);margin-top:11px;text-align:left}
 .private-note{display:flex;gap:9px;align-items:flex-start;margin-top:13px;padding:10px 12px;border-radius:13px;text-align:left;background:rgba(62,217,164,.07);border:1px solid rgba(62,217,164,.18);font-size:10px;line-height:1.6;color:#9ACDBB}
 .private-note i{font-style:normal;color:var(--teal)}
-.life-signature{display:none;margin-top:12px;padding:14px;border-radius:18px;text-align:left;background:linear-gradient(145deg,rgba(94,150,255,.1),rgba(227,92,193,.055));border:1px solid rgba(143,161,255,.19)}.life-signature.show{display:block}
-.life-signature .head{display:flex;justify-content:space-between;align-items:center}.life-signature .head b{font-size:11.5px}.life-signature .head span{font-size:9px;color:var(--faint)}
-.life-signature .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.life-signature .card-mini{padding:10px 6px;border-radius:12px;text-align:center;background:#171B27;border:1px solid rgba(255,255,255,.08)}.life-signature .card-mini i{display:block;font-style:normal;font-size:17px;color:#C8D3FF}.life-signature .card-mini span{display:block;font-size:9.5px;margin-top:5px;color:#C9CFDD}
 .relationship-game{background-image:radial-gradient(410px 300px at 110% 0,rgba(240,106,205,.17),transparent 68%),radial-gradient(340px 280px at -15% 100%,rgba(255,122,77,.11),transparent 68%)}
 .relationship-game .linear-pick-card.on{background:linear-gradient(145deg,rgba(184,69,128,.94),rgba(104,66,147,.95));border-color:rgba(255,183,220,.72);box-shadow:0 0 0 1px rgba(255,168,216,.18),0 12px 28px -8px rgba(227,92,193,.68)}
 .relationship-game .linear-pick-card small{color:#7D2656}
@@ -1338,7 +1467,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .relation-choice .glyph{display:block;font-size:32px;color:#FFD0E8}.relation-choice .keep{display:block;margin-top:55px;font-size:8.5px;letter-spacing:.16em;color:#C77FA9}.relation-choice b{display:block;margin-top:7px;font-size:16px}.relation-choice p{font-size:9.5px;line-height:1.55;color:var(--faint);margin-top:7px}
 .relation-round-copy{text-align:center}.relation-round-copy .ey{font-size:9px;letter-spacing:.2em;color:#E890C0}.relation-round-copy h2{font-size:21px;line-height:1.45;margin-top:8px}.relation-round-copy p{font-size:10.5px;line-height:1.65;color:var(--sub);margin-top:7px}
 .relation-result{padding-top:8px;text-align:center}.relation-result .heart{width:76px;height:76px;margin:0 auto;border-radius:26px;display:grid;place-items:center;font-size:30px;color:#FFE3F1;background:linear-gradient(145deg,#B94A82,#6E4D9F);box-shadow:0 18px 38px -16px rgba(227,92,193,.75)}.relation-result h2{font-size:23px;margin-top:16px}.relation-result>p{font-size:11px;line-height:1.75;color:var(--sub);margin-top:8px}.relation-final-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.relation-final-card{padding:14px 7px;border-radius:16px;background:#171923;border:1px solid rgba(240,150,206,.18)}.relation-final-card i{display:block;font-style:normal;font-size:22px;color:#FFD0E8}.relation-final-card b{display:block;font-size:10.5px;margin-top:7px}
-
 /* ============ 我擅长 浮层 ============ */
 .backdrop{position:absolute;inset:0;z-index:58;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .3s}
 .backdrop.open{opacity:1;visibility:visible}
@@ -1572,17 +1700,21 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 
     <div class="card diary">
       <div class="top">
-        <h3>我的语音日记</h3>
-        <button id="recBtn" onclick="toggleRec()">◉ 记录今日</button>
+        <button type="button" class="diary-title-link" onclick="event.stopPropagation();openVoiceDiary()" aria-label="查看全部语音日记详情">
+          <h3>我的语音日记</h3><span class="diary-detail-icon" aria-hidden="true">›</span>
+        </button>
+        <div class="diary-actions">
+          <button id="recBtn" onclick="toggleRec()">◉ 记录今日</button>
+        </div>
       </div>
       <div class="dweek">
-        <div class="dday f"><i>😌</i><span>四</span></div>
-        <div class="dday f"><i>🙂</i><span>五</span></div>
-        <div class="dday f"><i>😮‍💨</i><span>六</span></div>
-        <div class="dday f"><i>😊</i><span>日</span></div>
-        <div class="dday f"><i>😐</i><span>一</span></div>
-        <div class="dday f"><i>🙂</i><span>二</span></div>
-        <div class="dday t" id="todayDot"><i></i><span>今天</span></div>
+        <button class="dday f" onclick="openVoiceDiary('2026-07-17')"><i>🙂</i><span>五</span></button>
+        <button class="dday f" onclick="openVoiceDiary('2026-07-18')"><i>😮‍💨</i><span>六</span></button>
+        <button class="dday f" onclick="openVoiceDiary('2026-07-19')"><i>😊</i><span>日</span></button>
+        <button class="dday f" onclick="openVoiceDiary('2026-07-20')"><i>😐</i><span>一</span></button>
+        <button class="dday f" onclick="openVoiceDiary('2026-07-21')"><i>🙂</i><span>二</span></button>
+        <button class="dday f" onclick="openVoiceDiary('2026-07-22')"><i>😌</i><span>三</span></button>
+        <button class="dday t" id="todayDot" onclick="openVoiceDiary('2026-07-23')"><i></i><span>今天</span></button>
       </div>
       <div class="recorder" id="recorder">
         <div class="wave">
@@ -1617,12 +1749,26 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       </div>
     </div>
 
+    <button class="life-entry" id="lifeEntry" onclick="openLifeGame()">
+      <span class="mini-deck"><i></i><i></i></span>
+      <span class="copy">
+        <span class="cap">画像深潜 · 5–8 分钟</span>
+        <b id="lifeEntryTitle">人生卡牌：你最后会留下什么？</b>
+        <p id="lifeEntryDesc">经历多轮人生取舍，直到自然留下三张底牌</p>
+      </span>
+      <span class="go">›</span>
+    </button>
+
     <div class="sec-t"><h3>我的动态画像</h3><button class="lnk" onclick="openProfileStudio()">探索更多画像 ›</button></div>
     <div class="card portrait">
       <div class="digital-human-stage">
-        <img src="assets/digital-human-yuan-v2.png" alt="由蓝紫色空间像素和光粒构成的屿岸动态数字人画像" loading="eager" draggable="false">
-        <span class="digital-human-live">LIVE DIGITAL SELF</span>
-        <div class="digital-human-caption"><b>屿岸 · 动态数字人</b><span>探索者 LV.3 · 随每次探索持续生长</span></div>
+        <canvas id="dynamicPersonaCanvas" role="img" aria-label="根据屿岸当前画像维度实时生成的抽象数字形象"></canvas>
+        <span class="digital-human-live">LIVE PROFILE FORM</span>
+        <div class="digital-human-caption"><b>屿岸 · 动态数字形象</b><span id="dynamicPersonaMeta">由当前画像维度生成 · 持续生长</span></div>
+      </div>
+      <div class="portrait-life-signature" id="lifeSignature" aria-label="参与动态画像生成的三张人生底牌">
+        <div class="signature-head"><b>我的人生底牌</b><span>已参与数字形象生成</span></div>
+        <div class="cards" id="lifeSignatureCards"></div>
       </div>
       <div class="pbar"><div class="tr"><i id="pfill"></i></div><span id="ppct">0%</span></div>
       <div class="dims">
@@ -1651,19 +1797,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
           <span class="tx"><b>我在家庭关系中在意</b><p class="empty" id="dimFamily">尚未填写</p></span>
           <span class="ar">›</span>
         </button>
-      </div>
-      <button class="life-entry" id="lifeEntry" onclick="openLifeGame()">
-        <span class="mini-deck"><i></i><i></i></span>
-        <span class="copy">
-          <span class="cap">画像深潜 · 5–8 分钟</span>
-          <b id="lifeEntryTitle">人生卡牌：你最后会留下什么？</b>
-          <p id="lifeEntryDesc">经历五段人生取舍，生成你的私密深层画像</p>
-        </span>
-        <span class="go">›</span>
-      </button>
-      <div class="life-signature" id="lifeSignature">
-        <div class="head"><b>我的人生底牌</b><span>来自人生卡牌</span></div>
-        <div class="cards" id="lifeSignatureCards"></div>
       </div>
     </div>
   </section>
@@ -1788,6 +1921,27 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     </div>
     <div class="scroll" id="chatSummaryBody"></div>
     <div class="summary-bottom"><button class="btn-ink" onclick="finishChatSummary()">完成本次探索</button></div>
+  </section>
+
+  <!-- ============ 语音日记详情 push ============ -->
+  <section class="push diary-page" id="diaryPage">
+    <div class="top">
+      <button class="backbtn" onclick="returnFromVoiceDiary()" aria-label="返回认识自己首页">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div>
+        <h2>语音日记</h2>
+        <div class="sub2">听见每天的自己，也看见长期变化</div>
+      </div>
+    </div>
+    <div class="scroll" id="diaryScroll">
+      <div class="diary-tabs" id="diaryTabs">
+        <button class="diary-tab on" data-view="day" onclick="switchDiaryView('day')">每日记录</button>
+        <button class="diary-tab" data-view="month" onclick="switchDiaryView('month')">月度总结</button>
+        <button class="diary-tab" data-view="year" onclick="switchDiaryView('year')">年度总结</button>
+      </div>
+      <div id="diaryDetailBody"></div>
+    </div>
   </section>
 
   <!-- ============ 悬赏详情 push ============ -->
@@ -2486,12 +2640,20 @@ const LIFE_ROUNDS=[
   {age:'21–40 岁',name:'扎根承担',cards:[...LIFE_STAGES[2].cards,...LIFE_STAGES[3].cards]},
   {age:'人生后半程',name:'回望余生',cards:[...LIFE_STAGES[4].cards]}
 ];
-const MAJOR_LIFE_SETBACKS=new Set([
-  '家庭经济破产','被拐卖','家人病重','犯罪入狱','至亲离世','遭遇校园霸凌',
-  '十年没有工作','遭遇车祸','进入糟糕的婚姻','无家可归','疾病缠身','身无分文',
-  '妻离子散','自杀未遂','遭遇家暴','患阿尔茨海默病','成为植物人','长期住院',
-  '白发人送黑发人','晚年拾荒'
-]);
+const LIFE_SEVERITY_META=[
+  null,
+  {name:'普通波动',copy:'命运先从日常的不确定开始试探。'},
+  {name:'持续加压',copy:'你选择接住上一轮，新的处境变得更棘手。'},
+  {name:'重大冲击',copy:'连续接受正在把人生推向更难回避的转折。'},
+  {name:'极限抉择',copy:'命运已经加码到极限，接下来仍由你决定接受或交换。'}
+];
+function lifeEventSeverity(card){
+  const title=card?.[0]||'';
+  if(/被拐卖|犯罪入狱|自杀未遂|遭遇家暴|阿尔茨海默|植物人|白发人送黑发人/.test(title)) return 4;
+  if(/破产|病重|至亲离世|先天身体缺陷|车祸|无家可归|疾病缠身|身无分文|妻离子散|长期住院|晚年拾荒/.test(title)) return 3;
+  if(/爱宠离世|被同学欺负|校园霸凌|恋人背叛|十年没有工作|地下室|糟糕的婚姻|网暴|家产被骗|职场霸凌|孤身一人|子女不管/.test(title)) return 2;
+  return 1;
+}
 
 /* ================= 工具 ================= */
 const $ = s => document.querySelector(s);
@@ -2507,6 +2669,206 @@ function el(html){ const d=document.createElement('div'); d.innerHTML=html.trim(
 function escapeHTML(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
+
+/* ================= 画像驱动的抽象数字形象 ================= */
+let dynamicPersonaModel=null;
+let dynamicPersonaFrame=0;
+function dynamicPersonaHash(text){
+  let hash=2166136261;
+  for(let i=0;i<text.length;i++){
+    hash^=text.charCodeAt(i);
+    hash=Math.imul(hash,16777619);
+  }
+  return hash>>>0;
+}
+function dynamicPersonaRandom(seed){
+  return ()=>{
+    seed|=0;seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function currentPersonaSnapshot(){
+  const selectors=['#personalityBaseText','#dimSkill','#dimLike','#dimLove','#dimFamily'];
+  const values=selectors.map(selector=>$(selector)?.textContent.trim()||'').filter(Boolean);
+  const filled=values.filter(value=>!/(尚未|待探索|未填写)/.test(value));
+  const signature=[...document.querySelectorAll('#lifeSignatureCards span')].map(node=>node.textContent.trim()).filter(Boolean);
+  const text=[...values,...signature].join('|');
+  return {text,values,filled:filled.length,signature};
+}
+function refreshDynamicPersona(){
+  const canvas=$('#dynamicPersonaCanvas');
+  if(!canvas)return;
+  const snapshot=currentPersonaSnapshot();
+  const seed=dynamicPersonaHash(snapshot.text||'屿岸·持续探索');
+  const content=[...snapshot.values,...snapshot.signature].join(' ');
+  const formSignals={
+    crystal:(content.match(/结构|有序|计划|理性|思考|分析|原则|边界|才华|智商/g)||[]).length,
+    bloom:(content.match(/共情|陪伴|关系|家庭|亲情|朋友|爱|善良|信任/g)||[]).length,
+    wing:(content.match(/视觉|手绘|创造|审美|表达|自由|好奇|喜欢/g)||[]).length,
+    orbit:(content.match(/独处|探索|学习|尝试|成长|行动|勇气|坚强/g)||[]).length
+  };
+  const formDefs={
+    crystal:{name:'折光晶灵',hue:216,lobes:6},
+    bloom:{name:'共生花灵',hue:286,lobes:7},
+    wing:{name:'流光翼影',hue:190,lobes:4},
+    orbit:{name:'星轨旅者',hue:248,lobes:5}
+  };
+  const topScore=Math.max(...Object.values(formSignals));
+  const candidates=Object.keys(formSignals).filter(key=>formSignals[key]===topScore);
+  const form=candidates[seed%candidates.length]||'orbit';
+  const formDef=formDefs[form];
+  dynamicPersonaModel={
+    seed,
+    filled:snapshot.filled,
+    signature:snapshot.signature,
+    signals:formSignals,
+    form,
+    hue:formDef.hue+(seed%23)-11,
+    lobes:formDef.lobes,
+    shape:formDef.name
+  };
+  const count=snapshot.filled+snapshot.signature.length;
+  const meta=$('#dynamicPersonaMeta');
+  if(meta)meta.textContent=`${dynamicPersonaModel.shape} · 根据下方 ${Math.max(1,count)} 组画像内容生成`;
+  canvas.setAttribute('aria-label',`根据当前画像内容生成的抽象数字形象：${dynamicPersonaModel.shape}`);
+  drawDynamicPersona(performance.now());
+  if(!dynamicPersonaFrame&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    dynamicPersonaFrame=requestAnimationFrame(animateDynamicPersona);
+  }
+}
+function drawDynamicPersona(time=0){
+  const canvas=$('#dynamicPersonaCanvas'),model=dynamicPersonaModel;
+  if(!canvas||!model)return;
+  const width=Math.max(280,canvas.clientWidth||340);
+  const height=Math.max(180,canvas.clientHeight||216);
+  const ratio=Math.min(window.devicePixelRatio||1,2);
+  if(canvas.width!==Math.round(width*ratio)||canvas.height!==Math.round(height*ratio)){
+    canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);
+  }
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.clearRect(0,0,width,height);
+  const rand=dynamicPersonaRandom(model.seed);
+  const cx=width*.5,cy=height*.48;
+  const breathe=1+Math.sin(time*.00105)*.035;
+  ctx.globalCompositeOperation='lighter';
+
+  for(let i=0;i<72;i++){
+    const x=rand()*width,y=rand()*height,size=.35+rand()*1.25;
+    const drift=Math.sin(time*.00035+i)*2.5;
+    ctx.fillStyle=`hsla(${model.hue+(rand()-.5)*75},90%,72%,${.1+rand()*.34})`;
+    ctx.fillRect(x+drift,y,size,size);
+  }
+
+  const aura=ctx.createRadialGradient(cx,cy,2,cx,cy,88);
+  aura.addColorStop(0,`hsla(${model.hue+28},100%,76%,.42)`);
+  aura.addColorStop(.42,`hsla(${model.hue},95%,57%,.16)`);
+  aura.addColorStop(1,`hsla(${model.hue-22},90%,42%,0)`);
+  ctx.fillStyle=aura;ctx.beginPath();ctx.ellipse(cx,cy,92*breathe,70*breathe,0,0,Math.PI*2);ctx.fill();
+
+  const formGradient=ctx.createRadialGradient(cx-18,cy-24,2,cx,cy,76);
+  formGradient.addColorStop(0,'rgba(247,250,255,.9)');
+  formGradient.addColorStop(.16,`hsla(${model.hue+34},100%,80%,.72)`);
+  formGradient.addColorStop(.55,`hsla(${model.hue},95%,60%,.28)`);
+  formGradient.addColorStop(1,`hsla(${model.hue-24},90%,42%,.04)`);
+  ctx.fillStyle=formGradient;
+  ctx.strokeStyle=`hsla(${model.hue+24},100%,84%,.66)`;
+  ctx.lineWidth=1.15;
+
+  if(model.form==='crystal'){
+    ctx.beginPath();
+    for(let i=0;i<16;i++){
+      const angle=-Math.PI/2+i*Math.PI/8;
+      const radius=(i%2?46:68)*(1+(i%4===0 ? .15 : 0))*breathe;
+      const x=cx+Math.cos(angle)*radius,y=cy+Math.sin(angle)*radius*.86;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,cy-43);ctx.lineTo(cx+34,cy);ctx.lineTo(cx,cy+48);ctx.lineTo(cx-34,cy);ctx.closePath();
+    ctx.strokeStyle=`hsla(${model.hue+54},100%,90%,.48)`;ctx.stroke();
+  }else if(model.form==='bloom'){
+    for(let i=0;i<7;i++){
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(i*Math.PI*2/7+time*.000035);
+      ctx.beginPath();ctx.moveTo(0,-7);ctx.bezierCurveTo(20,-21,27,-53,0,-67*breathe);ctx.bezierCurveTo(-27,-53,-20,-21,0,-7);ctx.closePath();
+      ctx.fillStyle=`hsla(${model.hue+i*9},100%,${70+i%2*8}%,.25)`;ctx.fill();ctx.stroke();ctx.restore();
+    }
+  }else if(model.form==='wing'){
+    [-1,1].forEach(side=>{
+      ctx.save();ctx.translate(cx,cy);ctx.scale(side,1);
+      ctx.beginPath();ctx.moveTo(5,-28);ctx.bezierCurveTo(24,-66,72,-66,68,-20);ctx.bezierCurveTo(62,8,35,10,12,22);ctx.bezierCurveTo(37,18,54,38,42,58);ctx.bezierCurveTo(20,48,9,23,5,-28);ctx.closePath();
+      ctx.fillStyle=formGradient;ctx.fill();ctx.stroke();ctx.restore();
+    });
+    ctx.beginPath();ctx.ellipse(cx,cy,10,48*breathe,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  }else{
+    ctx.beginPath();ctx.arc(cx,cy,38*breathe,0,Math.PI*2);ctx.fill();ctx.stroke();
+    for(let i=0;i<3;i++){
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(i*.72+time*.00006);
+      ctx.beginPath();ctx.ellipse(0,0,58+i*10,23+i*7,0,0,Math.PI*2);
+      ctx.strokeStyle=`hsla(${model.hue+18+i*18},100%,82%,${.38-i*.07})`;ctx.stroke();ctx.restore();
+    }
+  }
+
+  const orbitCount=2+Math.min(4,model.filled);
+  for(let orbit=0;orbit<orbitCount;orbit++){
+    ctx.beginPath();
+    ctx.ellipse(cx,cy,56+orbit*13,31+orbit*8,(model.seed%9)*.07+orbit*.38,0,Math.PI*2);
+    ctx.strokeStyle=`hsla(${model.hue+orbit*18},90%,70%,${.08+orbit*.018})`;
+    ctx.lineWidth=.7;
+    ctx.stroke();
+  }
+
+  const particleCount=190+model.filled*28+model.signature.length*18;
+  for(let i=0;i<particleCount;i++){
+    const angle=(i/particleCount)*Math.PI*2;
+    const layer=.32+rand()*.78;
+    const edge=48*(1+.25*Math.sin(model.lobes*angle+(model.seed%17)*.11+time*.00022))*breathe;
+    const radius=edge*layer+(rand()-.5)*9;
+    const x=cx+Math.cos(angle)*radius*(1.02+.12*Math.sin(time*.0003));
+    const y=cy+Math.sin(angle)*radius*.78+(rand()-.5)*5;
+    const size=.65+rand()*2.15*(.55+layer*.65);
+    const hue=model.hue+Math.sin(angle*2)*35+(rand()-.5)*18;
+    ctx.fillStyle=`hsla(${hue},95%,${64+rand()*22}%,${.24+layer*.62})`;
+    if(i%4===0)ctx.fillRect(x-size/2,y-size/2,size,size);
+    else{ctx.beginPath();ctx.arc(x,y,size*.42,0,Math.PI*2);ctx.fill();}
+  }
+
+  const core=ctx.createRadialGradient(cx,cy,1,cx,cy,42);
+  core.addColorStop(0,`hsla(${model.hue+32},100%,88%,.82)`);
+  core.addColorStop(.26,`hsla(${model.hue},95%,66%,.3)`);
+  core.addColorStop(1,`hsla(${model.hue-18},90%,42%,0)`);
+  ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,42*breathe,0,Math.PI*2);ctx.fill();
+
+  const nodes=Math.max(3,model.filled+model.signature.length);
+  for(let i=0;i<nodes;i++){
+    const angle=(i/nodes)*Math.PI*2+time*.00016*(i%2?1:-1)+(model.seed%13);
+    const radius=70+(i%3)*14;
+    const x=cx+Math.cos(angle)*radius,y=cy+Math.sin(angle)*radius*.55;
+    ctx.fillStyle=`hsla(${model.hue+i*17},100%,78%,.88)`;
+    ctx.fillRect(x-1.8,y-1.8,3.6,3.6);
+  }
+  if(model.signature.length){
+    model.signature.slice(0,3).forEach((_,i)=>{
+      const angle=-Math.PI*.9+i*Math.PI*.9+Math.sin(time*.00045+i)*.08;
+      const radius=64+i%2*18;
+      const x=cx+Math.cos(angle)*radius,y=cy+Math.sin(angle)*radius*.58;
+      const glow=ctx.createRadialGradient(x,y,0,x,y,12);
+      glow.addColorStop(0,`hsla(${model.hue+42+i*24},100%,88%,.95)`);
+      glow.addColorStop(.28,`hsla(${model.hue+i*24},95%,67%,.48)`);
+      glow.addColorStop(1,`hsla(${model.hue+i*24},95%,55%,0)`);
+      ctx.fillStyle=glow;ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle=`hsla(${model.hue+20+i*24},100%,82%,.34)`;
+      ctx.lineWidth=.7;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x,y);ctx.stroke();
+    });
+  }
+  ctx.globalCompositeOperation='source-over';
+}
+function animateDynamicPersona(time){
+  drawDynamicPersona(time);
+  dynamicPersonaFrame=requestAnimationFrame(animateDynamicPersona);
+}
+window.addEventListener('resize',()=>drawDynamicPersona(performance.now()));
 
 /* ================= Tab ================= */
 function go(tab){
@@ -2557,6 +2919,325 @@ function saveContextScan(){
 }
 
 /* ================= 语音日记：情绪 + 事件关键词 ================= */
+const DIARY_ENTRIES=[
+  {
+    date:'2026-07-01',label:'7月1日 · 周三',emoji:'😶',emotion:'忙碌，感觉自己只是在完成任务',duration:'1:28',
+    title:'这个月刚开始，我却已经有点疲惫',
+    keywords:['工作重复','精力不足','七月愿望'],
+    transcript:['今天连续开了四个会，事情都完成了，但说不上有什么成就感。我希望这个月不只是把待办清空，也能认真看看自己为什么越来越想换一个位置。']
+  },
+  {
+    date:'2026-07-02',label:'7月2日 · 周四',emoji:'😐',emotion:'克制，心里有很多比较',duration:'1:54',
+    title:'看见同龄人转岗成功，第一反应还是怀疑自己',
+    keywords:['同龄人比较','转岗案例','自我怀疑'],
+    transcript:['刷到以前同事转去做产品的消息，我替她高兴，也忍不住比较。后来提醒自己，我看到的是结果，不是她中间两年的准备。与其继续比较，不如找机会问问她真实经历。']
+  },
+  {
+    date:'2026-07-03',label:'7月3日 · 周五',emoji:'🙂',emotion:'好奇，重新出现一点动力',duration:'2:12',
+    title:'第一次认真拆解 AI 产品经理到底在做什么',
+    keywords:['岗位研究','AI产品','能力差距'],
+    transcript:['今天把三个 AI 产品经理的招聘描述放在一起看，发现不是我以为的只写需求。模型边界、数据反馈和业务判断都很重要。我缺的东西很多，但用户理解和原型沟通并不是从零开始。']
+  },
+  {
+    date:'2026-07-05',label:'7月5日 · 周日',emoji:'😮‍💨',emotion:'焦虑，又怕自己学得太慢',duration:'2:36',
+    title:'买了新课程，却没有因此更安心',
+    keywords:['课程焦虑','学习计划','害怕落后'],
+    transcript:['晚上又买了一门课，付款的时候觉得自己在前进，打开目录以后反而更焦虑。课程很多，时间却没有变多。我需要先明确想验证什么，再决定学哪一部分。']
+  },
+  {
+    date:'2026-07-06',label:'7月6日 · 周一',emoji:'😌',emotion:'专注，事情开始变具体',duration:'1:45',
+    title:'把课程目录删到只剩当前需要的四节',
+    keywords:['学习减法','明确目标','可执行'],
+    transcript:['今天没有追求学完整门课，只看了和需求判断、指标设计有关的四节。完成以后第一次觉得学习不是囤积，而是在为一个真实问题服务。']
+  },
+  {
+    date:'2026-07-08',label:'7月8日 · 周三',emoji:'🙂',emotion:'受到启发，也更现实',duration:'2:18',
+    title:'访谈了一位从设计转产品的前同事',
+    keywords:['从业者访谈','内部转岗','真实困难'],
+    transcript:['她说最难的不是不会写 PRD，而是从为体验负责变成同时为业务结果和协作推进负责。她建议我先在现在的项目里多承担一次目标定义，而不是急着换 title。']
+  },
+  {
+    date:'2026-07-09',label:'7月9日 · 周四',emoji:'😕',emotion:'受挫，担心自己没有机会',duration:'1:39',
+    title:'主动提出参与产品讨论，却没有得到回应',
+    keywords:['主动争取','暂时受挫','机会焦虑'],
+    transcript:['我给项目负责人发了消息，希望旁听下一次产品讨论，暂时没有回复。很容易把沉默理解成拒绝，但也可能只是对方在忙。明天我会补一句更具体的参与理由。']
+  },
+  {
+    date:'2026-07-10',label:'7月10日 · 周五',emoji:'😊',emotion:'被看见，行动有了回音',duration:'1:58',
+    title:'负责人同意我参加下周的需求评审',
+    keywords:['需求评审','跨角色参与','小机会'],
+    transcript:['今天收到回复，可以参加需求评审，还让我提前看看用户反馈。机会比想象中小，但也更真实。我想观察产品经理如何决定不做什么，而不只是记录他们做了什么。']
+  },
+  {
+    date:'2026-07-12',label:'7月12日 · 周日',emoji:'😌',emotion:'安静，开始整理自己的判断',duration:'2:27',
+    title:'复盘后发现，我真正喜欢的是定义问题',
+    keywords:['项目复盘','定义问题','职业线索'],
+    transcript:['整理过去三个项目时发现，最让我投入的时刻不是把界面磨得更漂亮，而是大家还没说清问题时，我通过访谈和结构梳理让方向变清楚。这可能是我想靠近产品工作的原因。']
+  },
+  {
+    date:'2026-07-13',label:'7月13日 · 周一',emoji:'😐',emotion:'理性，但仍担心现实成本',duration:'1:51',
+    title:'算了一遍如果转岗降薪，我能承受多久',
+    keywords:['现金流','降薪预期','风险边界'],
+    transcript:['我把房租、保险和每月固定支出都列了出来。如果降薪百分之二十，生活不会立刻失控，但需要减少旅行和冲动消费。数字没有替我做决定，却让“风险”不再是一团模糊的恐惧。']
+  },
+  {
+    date:'2026-07-15',label:'7月15日 · 周三',emoji:'🙂',emotion:'踏实，开始接受循序渐进',duration:'2:05',
+    title:'不再要求自己用一次跳槽证明转型决心',
+    keywords:['内部机会','渐进转型','停止证明'],
+    transcript:['以前总觉得真正想转型就应该辞职、全力投入。现在更愿意先争取内部项目，看看自己是否喜欢长期承担产品结果。渐进并不代表不勇敢，它可能更适合现在的我。']
+  },
+  {
+    date:'2026-07-16',label:'7月16日 · 周四',emoji:'😌',emotion:'平静，知道明天可以做什么',duration:'1:43',
+    title:'给自己定下一个六周验证周期',
+    keywords:['六周实验','行动节奏','复盘节点'],
+    transcript:['接下来六周，我会完成两次从业者访谈、参与一次 AI 共创，并把现在的项目补上产品判断。六周后再回来看，而不是每天都重新问一次要不要转岗。']
+  },
+  {
+    date:'2026-07-17',label:'7月17日 · 周五',emoji:'🙂',emotion:'轻松，也有一点期待',duration:'1:36',
+    title:'终于把一直拖着的作品集重新打开了',
+    keywords:['作品集重启','小步开始','周末计划'],
+    transcript:[
+      '今天下班后本来很累，但还是把作品集文件打开了。没有逼自己全部改完，只是重新整理了两个项目的顺序，意外地没有想象中那么难。',
+      '我发现真正卡住我的不是能力，而是总想一次做到最好。这个周末先把第一个项目讲清楚，也许就够了。'
+    ]
+  },
+  {
+    date:'2026-07-18',label:'7月18日 · 周六',emoji:'😮‍💨',emotion:'疲惫，需要慢下来',duration:'2:08',
+    title:'身体在提醒我，最近把自己逼得太紧',
+    keywords:['睡眠不足','停止内耗','允许休息'],
+    transcript:[
+      '昨晚又两点才睡，早上起来头很沉。我一直说想转岗，却把每个空闲时刻都安排成学习，好像只要停下来就会落后。',
+      '下午没有继续看课程，去公园走了一圈。休息以后反而更能分清楚：我需要的是稳定地行动，不是持续惩罚自己。'
+    ]
+  },
+  {
+    date:'2026-07-19',label:'7月19日 · 周日',emoji:'😊',emotion:'被支持，心里很亮',duration:'1:52',
+    title:'和朋友聊完，第一次觉得转岗不是孤军奋战',
+    keywords:['朋友支持','转岗可能性','真实反馈'],
+    transcript:[
+      '今天和阿梨吃饭，她听我讲完想做 AI 产品的原因，没有直接劝我辞职，也没有说我想太多。她只是问：如果半年后还没尝试，我会不会后悔。',
+      '这句话让我轻松了一点。我不需要今天就证明选择正确，只需要为自己争取一次真实尝试的机会。'
+    ]
+  },
+  {
+    date:'2026-07-20',label:'7月20日 · 周一',emoji:'😐',emotion:'平静，但有些迟疑',duration:'2:21',
+    title:'工作照常推进，心里却一直在问下一步',
+    keywords:['项目复盘','成长停滞','职业方向'],
+    transcript:[
+      '今天评审很顺利，大家也认可我的方案。但散会之后并没有特别开心，反而更确定自己已经熟悉这套工作方式。',
+      '我不是讨厌设计，只是不想未来几年都只优化同一种问题。产品工作是否真的适合我，还需要更多证据。'
+    ]
+  },
+  {
+    date:'2026-07-21',label:'7月21日 · 周二',emoji:'🙂',emotion:'踏实，重新找回掌控感',duration:'1:47',
+    title:'把转岗拆成了三个可以验证的小实验',
+    keywords:['行动清单','AI产品','低风险试错'],
+    transcript:[
+      '我列了三个小实验：跟一个产品经理做访谈、把现在的设计项目补一页产品判断、周末参加一次 AI 产品共创。',
+      '这样想以后，转岗不再是辞职或者留下的二选一。我可以先收集证据，再决定要不要真正换赛道。'
+    ]
+  },
+  {
+    date:'2026-07-22',label:'7月22日 · 周三',emoji:'😌',emotion:'平静中带一点犹豫',duration:'2:34',
+    title:'导师没有替我做决定，但让我看见真正担心的事',
+    keywords:['转岗的决定','导师沟通40分钟','最近睡得晚'],
+    transcript:[
+      '今天和导师聊了四十分钟。我说担心转产品以后积累归零，也担心留在设计岗位会越来越没有新鲜感。导师没有告诉我该选哪边，只问我更想解决什么类型的问题。',
+      '我发现自己真正想要的不是一个更体面的职位，而是更靠近判断、策略和推动事情发生的位置。今晚还是有点犹豫，但已经知道下一步要验证什么了。'
+    ]
+  }
+];
+let diaryView='day';
+let diarySelectedDate='2026-07-22';
+
+function getDiaryEntry(date){
+  return DIARY_ENTRIES.find(entry=>entry.date===date);
+}
+function openVoiceDiary(date){
+  if(date) diarySelectedDate=date;
+  else if(recorded) diarySelectedDate='2026-07-23';
+  else diarySelectedDate=DIARY_ENTRIES[DIARY_ENTRIES.length-1]?.date||'2026-07-23';
+  diaryView='day';
+  $('#diaryPage').classList.add('open');
+  renderDiaryView();
+}
+function switchDiaryView(view){
+  diaryView=view;
+  renderDiaryView();
+}
+function renderDiaryView(){
+  document.querySelectorAll('#diaryTabs .diary-tab').forEach(button=>{
+    const on=button.dataset.view===diaryView;
+    button.classList.toggle('on',on);
+    button.setAttribute('aria-selected',String(on));
+  });
+  if(diaryView==='day') renderDiaryDay();
+  else renderDiarySummary(diaryView);
+  $('#diaryScroll').scrollTop=0;
+}
+function selectDiaryDate(date){
+  diarySelectedDate=date;
+  renderDiaryDay();
+  $('#diaryScroll').scrollTo({top:0,behavior:'smooth'});
+}
+function diaryWaveHTML(seed){
+  return Array.from({length:24},(_,i)=>`<i style="height:${18+((i*17+seed*11)%72)}%"></i>`).join('');
+}
+function renderDiaryDay(){
+  const entry=getDiaryEntry(diarySelectedDate);
+  const activeIndex=Math.max(0,DIARY_ENTRIES.findIndex(item=>item.date===diarySelectedDate));
+  const railDates=DIARY_ENTRIES.map(diary=>({
+    date:diary.date,
+    day:String(Number(diary.date.slice(-2))),
+    week:diary.label.split('·')[1]?.trim()||'记录'
+  }));
+  if(!railDates.some(item=>item.date==='2026-07-23')){
+    railDates.push({date:'2026-07-23',day:'23',week:'今天'});
+  }
+  railDates.sort((a,b)=>a.date.localeCompare(b.date));
+  const rail=railDates.map(item=>{
+    const diary=getDiaryEntry(item.date);
+    return `<button class="diary-date-chip${item.date===diarySelectedDate?' on':''}" onclick="selectDiaryDate('${item.date}')" aria-label="查看${item.week}${item.day}日的日记">
+      <span>${item.week}</span><i>${diary?.emoji||'·'}</i><b>7/${item.day}</b>
+    </button>`;
+  }).join('');
+  const archive=[...DIARY_ENTRIES].sort((a,b)=>b.date.localeCompare(a.date)).map(diary=>`
+    <button class="diary-archive-item${diary.date===diarySelectedDate?' on':''}" onclick="selectDiaryDate('${diary.date}')">
+      <span class="diary-archive-date"><b>${Number(diary.date.slice(-2))}</b><span>7月</span></span>
+      <span class="diary-archive-copy"><b>${escapeHTML(diary.title)}</b><p>${diary.emoji} ${escapeHTML(diary.keywords.map(keyword=>'#'+keyword).join(' · '))}</p></span>
+      <span class="diary-archive-arrow">›</span>
+    </button>`).join('');
+  let content;
+  if(entry){
+    content=`
+      <article class="diary-day-hero">
+        <div class="date">${entry.label} · VOICE NOTE</div>
+        <h3>${escapeHTML(entry.title)}</h3>
+        <div class="mood"><i>${entry.emoji}</i><span>${escapeHTML(entry.emotion)}</span></div>
+        <div class="diary-audio">
+          <button class="diary-play" onclick="toggleDiaryAudio(this)" aria-label="播放这篇语音日记">▶</button>
+          <div class="diary-wave-static">${diaryWaveHTML(activeIndex+1)}</div>
+          <span>${entry.duration}</span>
+        </div>
+      </article>
+      <section class="diary-keyword-block">
+        <div class="diary-block-head"><b>每日关键词</b><span>由语音内容自动提取</span></div>
+        <div class="diary-keywords">${entry.keywords.map(keyword=>`<span># ${escapeHTML(keyword)}</span>`).join('')}</div>
+      </section>
+      <section class="diary-transcript">
+        <div class="diary-block-head"><b>详细语音内容</b><span>${entry.duration} · 已转写</span></div>
+        ${entry.transcript.map(paragraph=>`<p>${escapeHTML(paragraph)}</p>`).join('')}
+      </section>`;
+  }else{
+    content=`
+      <div class="diary-empty">
+        <i>◌</i><h3>今天还没有留下声音</h3>
+        <p>不需要组织好语言，从此刻最真实的感受开始就好。</p>
+        <button onclick="startDiaryFromDetail()">记录今天</button>
+      </div>`;
+  }
+  $('#diaryDetailBody').innerHTML=`
+    <div class="diary-view-head">
+      <div><div class="ey">ALL VOICE NOTES</div><h2>全部日记</h2><p>2026年7月 · 已记录 ${DIARY_ENTRIES.length} 天</p></div>
+    </div>
+    <div class="diary-date-rail">${rail}</div>
+    ${content}
+    <section class="diary-archive">
+      <div class="diary-archive-head"><h3>全部日期记录</h3><span>${DIARY_ENTRIES.length} 篇 · 按时间倒序</span></div>
+      <div class="diary-archive-list">${archive}</div>
+    </section>`;
+  requestAnimationFrame(()=>{
+    const selected=$('#diaryDetailBody .diary-date-chip.on');
+    const dateRail=$('#diaryDetailBody .diary-date-rail');
+    if(selected&&dateRail) dateRail.scrollLeft=Math.max(0,selected.offsetLeft-dateRail.clientWidth/2+selected.clientWidth/2);
+  });
+}
+function toggleDiaryAudio(button){
+  const playing=button.classList.toggle('playing');
+  button.textContent=playing?'Ⅱ':'▶';
+  button.setAttribute('aria-label',playing?'暂停这篇语音日记':'播放这篇语音日记');
+  toast(playing?'正在播放这篇语音日记':'语音已暂停');
+}
+function startDiaryFromDetail(){
+  closePush('diaryPage');
+  toggleRec();
+}
+function returnFromVoiceDiary(){
+  go('home');
+  $('#scr-home').scrollTo({top:0,behavior:'smooth'});
+}
+function renderDiarySummary(period){
+  const isMonth=period==='month';
+  const monthEntryCount=DIARY_ENTRIES.length;
+  const monthHTML=`
+    <div class="diary-summary-hero">
+      <div class="cap">JULY IN VOICE · 2026年7月</div>
+      <h3>这个月，你从“必须马上决定”<br>走向了“先用行动收集答案”</h3>
+      <p>焦虑没有完全消失，但它不再只是反复盘旋，而是逐渐被拆成访谈、共创和项目复盘等可以验证的下一步。</p>
+      <div class="diary-stat-grid">
+        <div class="diary-stat"><b>${monthEntryCount}</b><span>记录天数</span></div>
+        <div class="diary-stat"><b>46m</b><span>语音时长</span></div>
+        <div class="diary-stat"><b>52</b><span>提取关键词</span></div>
+      </div>
+    </div>
+    <section class="diary-summary-card">
+      <div class="diary-block-head"><b>本月情绪流动</b><span>前紧后松</span></div>
+      <div class="diary-emotion-chart">
+        ${[['1–6日',58],['7–12日',42],['13–18日',51],['19–23日',76]].map(item=>`<div class="diary-emotion-col"><i style="height:${item[1]}%"></i><b>${item[0]}</b></div>`).join('')}
+      </div>
+    </section>
+    <section class="diary-summary-card">
+      <div class="diary-block-head"><b>反复出现的主题</b><span>跨 ${monthEntryCount} 篇日记</span></div>
+      <div class="diary-keywords"><span># 转岗选择 · 9次</span><span># 睡眠与精力 · 6次</span><span># 被支持 · 5次</span><span># 低风险尝试 · 4次</span></div>
+      <div class="diary-insight-list">
+        <div class="diary-insight"><div class="cap">最明显的变化</div><b>从寻找标准答案，到设计自己的验证过程</b><p>月初你频繁问“哪条路更正确”，月末开始谈论访谈、共创和可回退的小实验。</p></div>
+        <div class="diary-insight"><div class="cap">值得照顾的信号</div><b>睡眠不足常出现在职业焦虑最强的几天</b><p>当你试图一次解决所有问题时，休息会最先被牺牲。稳定节奏可能比追加学习时间更重要。</p></div>
+      </div>
+    </section>`;
+  const yearHTML=`
+    <div class="diary-summary-hero">
+      <div class="cap">YOUR 2026 · 年度声音</div>
+      <h3>这一年，你在练习把人生<br>从“证明自己”还给“选择自己”</h3>
+      <p>工作的熟练带来认可，也带来停滞感。你开始允许自己不立刻跳走，而是先靠近真正感兴趣的问题。</p>
+      <div class="diary-stat-grid">
+        <div class="diary-stat"><b>143</b><span>记录天数</span></div>
+        <div class="diary-stat"><b>6.8h</b><span>语音时长</span></div>
+        <div class="diary-stat"><b>428</b><span>提取关键词</span></div>
+      </div>
+    </div>
+    <section class="diary-summary-card">
+      <div class="diary-block-head"><b>年度关键词</b><span>按出现与情绪权重排序</span></div>
+      <div class="diary-keywords"><span># 职业转向</span><span># 自我认可</span><span># 真实尝试</span><span># 关系支持</span><span># 生活节奏</span><span># 不再硬撑</span></div>
+    </section>
+    <section class="diary-summary-card">
+      <div class="diary-block-head"><b>这一年的四个章节</b><span>持续生成中</span></div>
+      <div class="diary-year-line">
+        <div class="diary-year-node"><span>1–3月 · 察觉</span><b>“我做得很好，为什么还是不满足？”</b><p>对成长停滞的感受第一次被反复说出来。</p></div>
+        <div class="diary-year-node"><span>4–5月 · 拉扯</span><b>在稳定与新可能之间反复比较</b><p>你很想改变，又担心积累清零，语音中的自我质疑达到高点。</p></div>
+        <div class="diary-year-node"><span>6月 · 求证</span><b>开始向真实的人和项目靠近</b><p>导师、朋友和行业访谈成为新的信息来源。</p></div>
+        <div class="diary-year-node"><span>7月至今 · 行动</span><b>把“大决定”拆成可回退的小实验</b><p>焦虑仍在，但行动感和掌控感明显回升。</p></div>
+      </div>
+    </section>
+    <section class="diary-summary-card">
+      <div class="diary-block-head"><b>写给年底的你</b><span>AI 年度回望</span></div>
+      <div class="diary-insight-list"><div class="diary-insight"><b>不必因为仍在犹豫，就否定已经发生的改变</b><p>年初的你只敢想象另一条路；现在的你已经在用访谈、作品和共创靠近它。答案不只出现在某个决定里，也出现在你逐渐形成的行动方式里。</p></div></div>
+    </section>`;
+  $('#diaryDetailBody').innerHTML=`
+    <div class="diary-view-head">
+      <div><div class="ey">${isMonth?'MONTHLY REVIEW':'YEARLY REVIEW'}</div><h2>${isMonth?'2026年7月':'2026年度'}</h2><p>${isMonth?`${monthEntryCount}篇日记已纳入总结`:'143篇日记已纳入总结'}</p></div>
+      <button class="diary-summary-refresh" onclick="refreshDiarySummary('${period}',this)">更新总结</button>
+    </div>
+    ${isMonth?monthHTML:yearHTML}`;
+}
+function refreshDiarySummary(period,button){
+  button.disabled=true;
+  button.textContent='总结中…';
+  setTimeout(()=>{
+    renderDiarySummary(period);
+    toast(period==='month'?'月度总结已根据最新日记更新':'年度总结已根据最新日记更新');
+  },850);
+}
+
 let recTimer, recSec=0, recorded=false;
 function toggleRec(){
   if(recorded){ toast('今天已经记录过啦，明天见'); return; }
@@ -2578,6 +3259,15 @@ function finishRec(){
   const today = $('#todayDot');
   today.classList.add('f');
   today.querySelector('i').textContent = '😌';
+  DIARY_ENTRIES.push({
+    date:'2026-07-23',label:'7月23日 · 周四',emoji:'😌',emotion:'平静中带一点犹豫',duration:$('#recTime').textContent==='0:00'?'0:42':$('#recTime').textContent,
+    title:'我开始相信，不需要今天就把整条路想清楚',
+    keywords:['转岗的决定','导师沟通40分钟','最近睡得晚'],
+    transcript:[
+      '今天又想了很久要不要从交互设计转到 AI 产品。下午和导师聊了四十分钟，他没有替我做决定，而是让我先区分：我是真的喜欢产品工作，还是只是厌倦现在的重复。',
+      '我准备先做一次真实的产品共创，再找两位转岗的人聊聊。最近还是睡得有点晚，但至少今天没有逼自己马上给出答案。'
+    ]
+  });
   const res = $('#diaryResult');
   res.innerHTML = `
     <div class="lb2">AI 从这段语音里听到了 —— 已归档到 7月23日</div>
@@ -2586,6 +3276,7 @@ function finishRec(){
       <span class="kw"># 转岗的决定</span>
       <span class="kw"># 和导师聊了 40 分钟</span>
       <span class="kw"># 最近睡得晚</span>
+      <button class="diary-result-link" onclick="openVoiceDiary('2026-07-23')">查看详情 ›</button>
     </div>`;
   res.classList.add('show');
   toast('情绪与关键词已存入语音日记 ✦');
@@ -2630,7 +3321,7 @@ function scrollBottom(){ const s=$('#chatScroll'); s.scrollTop = s.scrollHeight;
 function simCardHTML(u){
   const h = HUES[u.hue];
   return `<div class="simcard" onclick="openProfile(${u.id})">
-    <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${u.ini}</div></div>
+    <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${userAvatarMarkup(u)}</div></div>
     <div class="bd"><div class="nm">${u.name}</div><div class="qt">${u.quote}</div>
     <div class="stags">${u.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div></div>
   </div>`;
@@ -3069,7 +3760,7 @@ function rsTab(i, btn){
 function ucardHTML(u){
   const h = HUES[u.hue];
   return `<div class="ucard" onclick="openProfile(${u.id})">
-    <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${u.ini}</div></div>
+    <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${userAvatarMarkup(u)}</div></div>
     <div class="bd">
       <div class="nm">${u.name}</div>
       <div class="qt">${u.quote}</div>
@@ -3092,6 +3783,12 @@ const WATCH_DX=160,WATCH_DY=184,WATCH_COLS=9,WATCH_ROWS=7;
 const WATCH_NAME_HEADS=['云间','南岸','北辰','晚晴','松野','青屿','白露','橙湾','星河','木槿','晴川','远帆','林深','小满','月桥','山止','海盐','春序','微光','野渡','风眠','竹影','晨雾','栖迟'];
 const WATCH_NAME_TAILS=['拾光','行舟','折页','听风','慢跑','看海','造梦','写信','观星','种树','漫游','读城','寻路','开花','向晚','未央','煮茶','登山','停云','问路','放映','织网','点灯','候鸟'];
 const WATCH_AVATARS=Array.from({length:16},(_,i)=>`assets/community-avatars/avatar-${String(i+1).padStart(2,'0')}.png`);
+USERS.forEach((user,index)=>{
+  if(!user.avatar) user.avatar=WATCH_AVATARS[index%WATCH_AVATARS.length];
+});
+function userAvatarMarkup(user){
+  return user.avatar?`<img src="${user.avatar}" alt="${user.name}的头像" draggable="false">`:escapeHTML(user.ini);
+}
 const watchUserCache=new Map(),watchProfileUsers=new Map();
 let watchUserSequence=1000;
 let watchCommunity = null;
@@ -3497,7 +4194,7 @@ function spinKal(){
     $('#kalSub').textContent = '看看 TA 的人生轨迹';
     const h = HUES[kalUser.hue];
     $('#kalCard').innerHTML = `
-      <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${kalUser.ini}</div></div>
+      <div class="hd" style="background:${h.g}"><div class="av" style="background:${h.a}">${userAvatarMarkup(kalUser)}</div></div>
       <div class="bd">
         <div class="nm">${kalUser.name}</div>
         <div class="qt">「${kalUser.quote}」</div>
@@ -4280,6 +4977,7 @@ function saveHollandToProfile(){
   safeStoreSet('kaleido_holland_profile_v1',{code:result.displayCode||result.code,tags:top.map(k=>HOLLAND_META[k].label),source:'formal_assessment',visible:false});
   $('#assessmentResultPage').classList.remove('open');
   $('#profileStudio').classList.remove('open');
+  refreshDynamicPersona();
   toast('已写入兴趣画像 · 原始答案默认私密');
 }
 function closeAssessmentResult(){
@@ -4550,6 +5248,7 @@ function saveDemoAssessmentToProfile(kind){
   updateProfileCompletion();
   $('#assessmentResultPage').classList.remove('open');
   $('#profileStudio').classList.remove('open');
+  refreshDynamicPersona();
   toast('结果已写入画像 · 原始答案默认私密');
 }
 
@@ -4574,6 +5273,7 @@ function selectMBTI(type,btn){
   $('#personalityEntry').classList.remove('todo');
   $('#personalityBaseText').classList.remove('empty');
   updateProfileCompletion();
+  refreshDynamicPersona();
   toast(`已添加 MBTI：${type}`);
 }
 
@@ -4585,10 +5285,11 @@ const lifeState = {
   accepted:[],
   traded:[],
   round:0,
+  pressure:1,
+  acceptStreak:0,
+  seenEvents:new Set(),
   current:null,
   tradePick:new Set(),
-  finalPick:new Set(),
-  finalDropped:[],
   reasonDraft:{cannotAccept:'',abandon:''},
   selectScroll:0,
   tradeScroll:0,
@@ -4662,10 +5363,11 @@ function resetLifeGame(){
   lifeState.accepted=[];
   lifeState.traded=[];
   lifeState.round=0;
+  lifeState.pressure=1;
+  lifeState.acceptStreak=0;
+  lifeState.seenEvents.clear();
   lifeState.current=null;
   lifeState.tradePick.clear();
-  lifeState.finalPick.clear();
-  lifeState.finalDropped=[];
   lifeState.reasonDraft={cannotAccept:'',abandon:''};
   lifeState.selectScroll=0;
   lifeState.tradeScroll=0;
@@ -4678,13 +5380,13 @@ function renderLifePhase(){
     draw:renderLifeDraw,
     decision:renderLifeDecision,
     trade:renderLifeTrade,
-    finalPick:renderLifeFinalPick,
     result:renderLifeResult
   };
   (renders[lifeState.phase]||renderLifeIntro)();
 }
 function renderLifeIntro(){
   lifeState.phase='intro';
+  $('#lifeBody').classList.remove('life-select-mode');
   lifeSetTop('人生卡牌','一次关于取舍的模拟',0,'准备开始');
   $('#lifeBody').innerHTML = `
     <div class="life-intro">
@@ -4693,11 +5395,11 @@ function renderLifeIntro(){
       </div>
       <div class="ey">LIFE CARDS</div>
       <h2>当人生不断要求交换<br>你最后会留下什么？</h2>
-      <p>从 18 张人生底牌中选出 10 张，走过三轮人生事件。你可以接受它，或根据事件轻重典当一至两张底牌，最后留下三张。</p>
+      <p>从 18 张人生底牌中选出 9 张，持续经历命运事件。接受会保留底牌，但下一轮事件会加重；拒绝则固定交换 2 张，直到自然只剩 3 张。</p>
       <div class="life-rules">
-        <div class="life-rule"><i>01</i><div><b>选择 10 张人生底牌</b><p>它们是你希望带着走完一生的能力、关系与信念。</p></div></div>
-        <div class="life-rule"><i>02</i><div><b>经历三轮人生事件</b><p>成长之初、扎根承担与回望余生，各抽取一张未知。</p></div></div>
-        <div class="life-rule"><i>03</i><div><b>轻重不同，代价不同</b><p>轻度事件典当一张，重大事件典当两张；最终留下三张展示底牌。</p></div></div>
+        <div class="life-rule"><i>01</i><div><b>选择 9 张人生底牌</b><p>它们是你希望带着走完一生的能力、关系与信念。</p></div></div>
+        <div class="life-rule"><i>02</i><div><b>接受后，命运继续加码</b><p>连续接受会让下一轮事件从普通、加压一路升级到极限抉择。</p></div></div>
+        <div class="life-rule"><i>03</i><div><b>拒绝一次，固定交换两张</b><p>每次拒绝都放下两张；不额外补选，直到手中自然只剩三张。</p></div></div>
       </div>
       <div class="content-warning">内容提示：游戏包含疾病、家庭冲突、暴力与死亡等敏感情境。<br>它不是心理诊断，结果默认仅自己可见。</div>
     </div>`;
@@ -4710,88 +5412,138 @@ function startLifeCards(){
   lifeState.accepted=[];
   lifeState.traded=[];
   lifeState.round=0;
+  lifeState.pressure=1;
+  lifeState.acceptStreak=0;
+  lifeState.seenEvents.clear();
   lifeState.current=null;
   lifeState.tradePick.clear();
-  lifeState.finalPick.clear();
-  lifeState.finalDropped=[];
   lifeState.reasonDraft={cannotAccept:'',abandon:''};
   lifeState.selectScroll=0;
   lifeState.tradeScroll=0;
   renderLifeSelect();
 }
 function baseCardHTML(card, i, mode){
-  const chosen = mode==='select' ? lifeState.selected.has(card.id) : mode==='final' ? lifeState.finalPick.has(card.id) : lifeState.tradePick.has(card.id);
+  const chosen = mode==='select' ? lifeState.selected.has(card.id) : lifeState.tradePick.has(card.id);
   const cls = mode==='trade' ? (chosen?' trade-pick':'') : (chosen?' on':'');
-  const action = mode==='select' ? `toggleLifeBase('${card.id}')` : mode==='final' ? `toggleLifeFinal('${card.id}')` : `toggleTradeBase('${card.id}')`;
+  const action = mode==='select' ? `toggleLifeBase('${card.id}')` : `toggleTradeBase('${card.id}')`;
   return `<button class="linear-pick-card${cls}" data-card-id="${card.id}" style="--i:${i};z-index:${i+1}" onclick="${action}">
     <span class="card-no">LIFE · ${String(i+1).padStart(2,'0')}</span>
     <span class="glyph">${card.glyph}</span><span><b>${card.name}</b><em>${card.group}</em></span><small>${mode==='trade'?'×':'✓'}</small>
   </button>`;
 }
+function lifeSelectCardHTML(card,i){
+  const chosen=lifeState.selected.has(card.id);
+  return `<button class="vertical-pick-card${chosen?' on':''}" data-card-id="${card.id}" style="--i:${i}" onclick="toggleLifeBase('${card.id}')" aria-pressed="${chosen}">
+    <span class="vertical-card-symbol"><small>LIFE · ${String(i+1).padStart(2,'0')}</small><span class="glyph">${card.glyph}</span></span>
+    <span class="vertical-card-copy"><b>${card.name}</b><em>${card.group}</em><p>点击选择为这一局的人生底牌</p></span>
+    <span class="vertical-card-state"><i>${chosen?'✓':'+'}</i><span>${chosen?'已选择':'选择'}</span></span>
+  </button>`;
+}
 function renderLifeSelect(){
   lifeState.phase='select';
   const n=lifeState.selected.size;
-  lifeSetTop('选择人生底牌','选出最想带着出发的 10 张',8,'准备底牌');
+  $('#lifeBody').classList.add('life-select-mode');
+  lifeSetTop('选择人生底牌',`向下滑动浏览全部 ${LIFE_BASE_CARDS.length} 张`,Math.max(4,n*2),`已选 ${n}/9`);
   $('#lifeBody').innerHTML = `
-    <div class="life-section-head">
-      <div><div class="ey">YOUR FOUNDATION</div><h2>你想带着什么出发？</h2></div>
-      <span>已选 <b id="lifeSelectedCount">${n}</b>/10</span>
+    <div class="life-select-summary">
+      <div class="row">
+        <div><div class="ey">YOUR FOUNDATION</div><h2>你想带着什么出发？</h2></div>
+        <div class="life-select-count">已选<br><b id="lifeSelectedCount">${n}</b><small>/9</small></div>
+      </div>
+      <div class="life-select-meter"><i id="lifeSelectionMeter" style="width:${n/9*100}%"></i></div>
     </div>
-    <div class="linear-select-viewport" data-swipe>
-      <div class="linear-select-track expanded">${LIFE_BASE_CARDS.map((c,i)=>baseCardHTML(c,i,'select')).join('')}</div>
+    <div class="life-select-guide">
+      <span>没有标准答案，此刻的选择只代表这一局人生</span>
+      <i>向下滑动 ↓</i>
     </div>
-    <div class="swipe-copy"><span>没有标准答案，此刻的选择只代表这一局人生</span><i>左右滑动 ↔</i></div>`;
-  lifeSetFoot(`<button class="btn-ink" id="lifeSelectContinue" ${n===10?'':'disabled'} onclick="confirmLifeBases()">带着这 10 张牌出发</button>`);
+    <div class="vertical-select-list" aria-label="人生底牌列表">
+      ${LIFE_BASE_CARDS.map(lifeSelectCardHTML).join('')}
+    </div>
+    <div class="life-select-end">已展示全部 ${LIFE_BASE_CARDS.length} 张底牌</div>`;
+  lifeSetFoot(`<button class="btn-ink" id="lifeSelectContinue" ${n===9?'':'disabled'} onclick="confirmLifeBases()">${n===9?'带着这 9 张牌出发':`还需选择 ${9-n} 张`}</button>`);
   requestAnimationFrame(()=>{
-    enableLifeSwipe();
-    const viewport=$('#lifeBody .linear-select-viewport');
-    if(viewport) viewport.scrollLeft=lifeState.selectScroll;
+    $('#lifeBody').scrollTop=lifeState.selectScroll;
   });
 }
 function toggleLifeBase(id){
-  const viewport=$('#lifeBody .linear-select-viewport');
-  if(viewport) lifeState.selectScroll=viewport.scrollLeft;
+  lifeState.selectScroll=$('#lifeBody').scrollTop;
   if(lifeState.selected.has(id)) lifeState.selected.delete(id);
-  else if(lifeState.selected.size<10) lifeState.selected.add(id);
-  else { toast('这一生只能带走 10 张底牌'); return; }
-  const card=document.querySelector(`#lifeBody .linear-pick-card[data-card-id="${id}"]`);
-  if(card) card.classList.toggle('on',lifeState.selected.has(id));
+  else if(lifeState.selected.size<9) lifeState.selected.add(id);
+  else { toast('这一生只能带走 9 张底牌'); return; }
+  const chosen=lifeState.selected.has(id);
+  const card=document.querySelector(`#lifeBody .vertical-pick-card[data-card-id="${id}"]`);
+  if(card){
+    card.classList.toggle('on',chosen);
+    card.setAttribute('aria-pressed',String(chosen));
+    const icon=card.querySelector('.vertical-card-state i');
+    const label=card.querySelector('.vertical-card-state span');
+    if(icon) icon.textContent=chosen?'✓':'+';
+    if(label) label.textContent=chosen?'已选择':'选择';
+  }
   const count=$('#lifeSelectedCount');
   if(count) count.textContent=lifeState.selected.size;
+  const meter=$('#lifeSelectionMeter');
+  if(meter) meter.style.width=(lifeState.selected.size/9*100)+'%';
+  $('#lifeProgressText').textContent=`已选 ${lifeState.selected.size}/9`;
+  $('#lifeProgressBar').style.width=Math.max(4,lifeState.selected.size*2)+'%';
   const next=$('#lifeSelectContinue');
-  if(next) next.disabled=lifeState.selected.size!==10;
+  if(next){
+    next.disabled=lifeState.selected.size!==9;
+    next.textContent=lifeState.selected.size===9?'带着这 9 张牌出发':`还需选择 ${9-lifeState.selected.size} 张`;
+  }
 }
 function confirmLifeBases(){
-  if(lifeState.selected.size!==10) return;
+  if(lifeState.selected.size!==9) return;
+  $('#lifeBody').classList.remove('life-select-mode');
   lifeState.held=[...lifeState.selected];
   lifeState.round=0;
+  lifeState.pressure=1;
+  lifeState.acceptStreak=0;
+  lifeState.seenEvents.clear();
   lifeState.phase='draw';
   renderLifeDraw();
 }
+function lifeCurrentStage(){
+  return LIFE_ROUNDS[Math.min(lifeState.traded.length,LIFE_ROUNDS.length-1)];
+}
+function lifeGameProgress(extra=0){
+  const released=(9-lifeState.held.length)/6;
+  return Math.min(96,16+released*72+Math.min(lifeState.round,8)*1.5+extra);
+}
 function stageOptions(){
-  const cards=[...LIFE_ROUNDS[lifeState.round].cards];
-  for(let i=cards.length-1;i>0;i--){
-    const j=(lifeState.round*3+i*7)%cards.length;
-    [cards[i],cards[j]]=[cards[j],cards[i]];
-  }
-  return cards.slice(0,5);
+  const target=lifeState.pressure;
+  return lifeCurrentStage().cards
+    .map((card,index)=>({
+      card,
+      index,
+      severity:lifeEventSeverity(card),
+      seen:lifeState.seenEvents.has(card[0])?1:0,
+      order:(index*7+lifeState.round*11)%23
+    }))
+    .sort((a,b)=>Math.abs(a.severity-target)-Math.abs(b.severity-target)||a.seen-b.seen||a.order-b.order)
+    .slice(0,5)
+    .map(item=>item.card);
 }
 function renderLifeDraw(){
   lifeState.phase='draw';
   lifeState.current=null;
   lifeState.tradePick.clear();
-  lifeState.finalPick.clear();
-  lifeState.finalDropped=[];
   lifeState.reasonDraft={cannotAccept:'',abandon:''};
-  const stage=LIFE_ROUNDS[lifeState.round];
-  const pct=18+lifeState.round*23;
-  lifeSetTop(stage.age,`${stage.name} · 持有 ${lifeState.held.length} 张底牌`,pct,`第 ${lifeState.round+1}/3 轮`);
+  const stage=lifeCurrentStage();
+  const severity=LIFE_SEVERITY_META[lifeState.pressure];
+  const pct=lifeGameProgress();
+  lifeSetTop(stage.age,`${stage.name} · 持有 ${lifeState.held.length} 张底牌`,pct,`第 ${lifeState.round+1} 轮`);
   const options=stageOptions();
   $('#lifeBody').innerHTML = `
     <div class="stage-copy">
       <div class="ey">STAGE ${String(lifeState.round+1).padStart(2,'0')} · ${stage.age}</div>
       <h2>${stage.name}</h2>
-      <p>命运放下了五张牌。凭直觉，抽一张。</p>
+      <p>${lifeState.acceptStreak?`你已连续接受 ${lifeState.acceptStreak} 次，命运正在加码。`:'命运放下了五张牌。凭直觉，抽一张。'}</p>
+    </div>
+    <div class="fate-pressure severity-${lifeState.pressure}">
+      <div class="head"><span>命运压力</span><b>${severity.name}</b></div>
+      <div class="track">${[1,2,3,4].map(level=>`<i class="${level<=lifeState.pressure?'on':''}"></i>`).join('')}</div>
+      <p>${severity.copy}</p>
     </div>
     <div class="stamp-scroll" data-swipe>
       <div class="stamp-arc spread" aria-label="抽取一张挫折牌">
@@ -4806,16 +5558,19 @@ function renderLifeDraw(){
 function drawLifeSetback(i){
   const options=JSON.parse($('#lifeBody').dataset.options||'[]');
   lifeState.current=options[i];
+  if(lifeState.current) lifeState.seenEvents.add(lifeState.current[0]);
   renderLifeDecision();
 }
 function renderLifeDecision(){
   lifeState.phase='decision';
-  const stage=LIFE_ROUNDS[lifeState.round];
+  const stage=lifeCurrentStage();
   const c=lifeState.current;
   const cost=lifeSetbackCost(c);
   const canTrade=lifeState.held.length-cost>=3;
-  const pct=26+lifeState.round*23;
-  lifeSetTop(stage.age,`持有 ${lifeState.held.length} 张底牌`,pct,`第 ${lifeState.round+1}/3 轮`);
+  const eventSeverity=lifeState.pressure;
+  const severity=LIFE_SEVERITY_META[eventSeverity];
+  const pct=lifeGameProgress(5);
+  lifeSetTop(stage.age,`持有 ${lifeState.held.length} 张底牌`,pct,`第 ${lifeState.round+1} 轮`);
   $('#lifeBody').innerHTML = `
     <div class="setback-view">
       <div class="age-badge">第 ${lifeState.round+1} 段人生 · ${stage.name}</div>
@@ -4823,8 +5578,8 @@ function renderLifeDecision(){
         <div class="serial">SETBACK · ${String(lifeState.round+1).padStart(2,'0')}</div>
         <h2>${c[0]}</h2><p>${c[1]}</p><span class="mark">◒</span>
       </div>
-      <div class="impact-badge ${cost===1?'light':''}">${cost===1?'轻度冲击':'重大冲击'} · 交换代价 ${cost} 张</div>
-      <p class="decision-copy">接受它，你将保留所有底牌；<br>拒绝它，需要典当当前持有的 ${cost} 张底牌。最终三张不能再典当。</p>
+      <div class="impact-badge severity-${eventSeverity}">${severity.name} · 拒绝需交换 ${cost} 张</div>
+      <p class="decision-copy">接受它，会保留所有底牌，但下一轮命运会继续加码；<br>拒绝它，则放下 ${cost} 张底牌。直到手中自然只剩三张。</p>
       <div class="decision-actions">
         <button class="decision-btn" onclick="acceptSetback()">接受它</button>
         <button class="decision-btn reject" onclick="chooseTrade()" ${canTrade?'':'disabled'}>${canTrade?'我不接受':'只剩最终底牌'}</button>
@@ -4833,11 +5588,13 @@ function renderLifeDecision(){
   lifeSetFoot('');
 }
 function acceptSetback(){
-  lifeState.accepted.push({stage:lifeState.round,card:lifeState.current});
+  lifeState.accepted.push({stage:lifeState.traded.length,round:lifeState.round,card:lifeState.current,severity:lifeState.pressure});
+  lifeState.acceptStreak++;
+  lifeState.pressure=Math.min(4,lifeState.pressure+1);
   finishLifeRound();
 }
-function lifeSetbackCost(card){
-  return MAJOR_LIFE_SETBACKS.has(card?.[0])?2:1;
+function lifeSetbackCost(){
+  return 2;
 }
 function chooseTrade(){
   const cost=lifeSetbackCost(lifeState.current);
@@ -4853,17 +5610,17 @@ function renderLifeTrade(){
   const picked=lifeState.tradePick.size;
   const cost=lifeSetbackCost(lifeState.current);
   const heldCards=lifeState.held.map(id=>LIFE_BASE_CARDS.find(c=>c.id===id));
-  lifeSetTop('典当底牌',`选择 ${cost} 张牌作为代价`,30+lifeState.round*23,`已选 ${picked}/${cost}`);
+  lifeSetTop('典当底牌',`选择 ${cost} 张牌作为代价`,lifeGameProgress(7),`已选 ${picked}/${cost}`);
   $('#lifeBody').innerHTML = `
     <div class="life-section-head">
       <div><div class="ey">THE PRICE</div><h2>你愿意用什么交换？</h2></div>
       <span>已选 <b id="tradeSelectedCount">${picked}</b>/${cost}</span>
     </div>
     <div class="trade-tip">为了让“${lifeState.current[0]}”不发生，请从仍持有的 ${lifeState.held.length} 张底牌中典当 ${cost} 张。最后三张会被保留。</div>
-    <div class="linear-select-viewport" data-swipe>
+    <div class="linear-select-viewport trade-card-viewport" data-swipe>
       <div class="linear-select-track expanded">${heldCards.map((c,i)=>baseCardHTML(c,i,'trade')).join('')}</div>
     </div>
-    <div class="swipe-copy"><span>被典当的底牌将离开这一局人生</span><i>左右滑动 ↔</i></div>
+    <div class="swipe-copy"><span>右侧露出半张牌，继续滑动查看更多</span><i>左右滑动 ↔</i></div>
     <div class="choice-reasons">
       <div class="reason-field">
         <label>为什么你不能接受这件事？<span>写下第一反应</span></label>
@@ -4903,7 +5660,8 @@ function confirmTrade(){
   if(lifeState.tradePick.size!==cost) return;
   const ids=[...lifeState.tradePick];
   lifeState.traded.push({
-    stage:lifeState.round,
+    stage:lifeState.traded.length,
+    round:lifeState.round,
     setback:lifeState.current,
     ids,
     reasons:{
@@ -4912,57 +5670,20 @@ function confirmTrade(){
     }
   });
   lifeState.held=lifeState.held.filter(id=>!lifeState.tradePick.has(id));
+  lifeState.acceptStreak=0;
+  lifeState.pressure=Math.max(1,lifeState.pressure-1);
   lifeState.tradePick.clear();
   finishLifeRound();
 }
 function finishLifeRound(){
   lifeState.round++;
-  if(lifeState.round>=LIFE_ROUNDS.length){
-    if(lifeState.held.length>3){
-      lifeState.phase='finalPick';
-      renderLifeFinalPick();
-    }else{
-      lifeState.phase='result';
-      renderLifeResult();
-    }
+  if(lifeState.held.length===3){
+    lifeState.phase='result';
+    renderLifeResult();
   }else{
     lifeState.phase='draw';
     renderLifeDraw();
   }
-}
-function renderLifeFinalPick(){
-  lifeState.phase='finalPick';
-  const heldCards=lifeState.held.map(id=>LIFE_BASE_CARDS.find(c=>c.id===id));
-  const picked=lifeState.finalPick.size;
-  lifeSetTop('最后的底牌','选出将展示在个人主页上的三张',90,`已选 ${picked}/3`);
-  $('#lifeBody').innerHTML=`
-    <div class="life-section-head">
-      <div><div class="ey">FINAL THREE</div><h2>如果只能留下三张？</h2></div>
-      <span>已选 <b id="finalSelectedCount">${picked}</b>/3</span>
-    </div>
-    <p class="trade-tip">三轮人生已经结束。请从仍持有的 ${heldCards.length} 张牌里，留下最能代表此刻你的三张。它们会展示在个人主页。</p>
-    <div class="linear-select-viewport" data-swipe>
-      <div class="linear-select-track expanded">${heldCards.map((c,i)=>baseCardHTML(c,i,'final')).join('')}</div>
-    </div>
-    <div class="swipe-copy"><span>这三张是本次人生的最终签名</span><i>左右滑动 ↔</i></div>`;
-  lifeSetFoot(`<button class="btn-ink" id="finalPickConfirm" ${picked===3?'':'disabled'} onclick="confirmLifeFinalPick()">留下这三张牌</button>`);
-  requestAnimationFrame(()=>enableLifeSwipe());
-}
-function toggleLifeFinal(id){
-  if(lifeState.finalPick.has(id))lifeState.finalPick.delete(id);
-  else if(lifeState.finalPick.size<3)lifeState.finalPick.add(id);
-  else{toast('最终只能留下三张牌');return}
-  const card=document.querySelector(`#lifeBody .linear-pick-card[data-card-id="${id}"]`);
-  if(card)card.classList.toggle('on',lifeState.finalPick.has(id));
-  $('#finalSelectedCount').textContent=lifeState.finalPick.size;
-  $('#finalPickConfirm').disabled=lifeState.finalPick.size!==3;
-}
-function confirmLifeFinalPick(){
-  if(lifeState.finalPick.size!==3)return;
-  lifeState.finalDropped=lifeState.held.filter(id=>!lifeState.finalPick.has(id));
-  lifeState.held=[...lifeState.finalPick];
-  lifeState.phase='result';
-  renderLifeResult();
 }
 function lifeAnalysis(){
   const initial=[...lifeState.selected].map(id=>LIFE_BASE_CARDS.find(c=>c.id===id));
@@ -5013,7 +5734,7 @@ function lifeAnalysis(){
     }
   }
   const clamp=n=>Math.max(4,Math.min(96,Math.round(n)));
-  const acceptanceScore=clamp((lifeState.accepted.length/LIFE_ROUNDS.length)*100);
+  const acceptanceScore=clamp((lifeState.accepted.length/Math.max(lifeState.round,1))*100);
   const relationScore=clamp((((initialCounts['关系']||0)/6)*.45+((heldCounts['关系']||0)/Math.max(held.length,1))*.55)*100);
   const initialPrinciple=initialCounts['价值原则']||0;
   const principleScore=clamp(initialPrinciple
@@ -5104,7 +5825,7 @@ function renderLifeResult(){
         <p>${escapeHTML(a.reasonInsight)}</p>
       </div>`:''}
       <div class="result-panel">
-        <h3>将展示在个人主页的三张底牌</h3>
+        <h3>将融入动态画像的三张底牌</h3>
         <div class="result-tags">${a.held.length?a.held.map(c=>`<span>${c.name}</span>`).join(''):'<span>没有留下底牌</span>'}</div>
       </div>
       <div class="spectrum-card">
@@ -5115,7 +5836,7 @@ function renderLifeResult(){
       <div class="insight-card blind"><div class="label">POSSIBLE BLIND SPOT · 可能的盲点</div><p>${escapeHTML(a.blindspot)}</p></div>
       <div class="reflection-q"><div class="label">留给真实生活的一个问题</div><p>${escapeHTML(a.reflection)}</p></div>
       <div class="evidence-note">本次推断基于：接受 ${lifeState.accepted.length} 次挫折、主动交换 ${lifeState.traded.length} 次、最终保留 ${a.held.length} 张底牌。它是一面自我探索的镜子，不是心理诊断。</div>
-      <div class="private-note"><i>◉</i><span>三张人生底牌会展示在个人主页；其余 ${a.hiddenTraits.length} 条深层推断仍默认私密，只用于帮助数字人理解你。</span></div>
+      <div class="private-note"><i>◉</i><span>三张人生底牌会作为画像信号融入动态数字形象；其余 ${a.hiddenTraits.length} 条深层推断仍默认私密，只用于帮助数字人理解你。</span></div>
     </div>`;
   lifeSetFoot(`<button class="btn-ink" onclick="saveLifeResult()">保存到我的私密画像</button>`);
 }
@@ -5129,14 +5850,16 @@ function saveLifeResult(){
   $('#lifeEntryTitle').textContent=`${a.title} · 已完成`;
   $('#lifeEntryDesc').textContent=`${a.hiddenTraits.length} 条深层画像已私密保存 · 默认不展示`;
   updateProfileCompletion();
+  refreshDynamicPersona();
   closeLifeGame();
-  toast('三张底牌已展示 · 深层分析保持私密');
+  toast('三张底牌已融入动态画像 · 深层分析保持私密');
 }
 function renderLifeSignature(ids){
   const cards=(ids||[]).map(id=>LIFE_BASE_CARDS.find(c=>c.id===id)).filter(Boolean).slice(0,3);
   const panel=$('#lifeSignature'),body=$('#lifeSignatureCards');
   if(!panel||!body)return;
   panel.classList.toggle('show',cards.length===3);
+  panel.closest('.portrait')?.querySelector('.digital-human-stage')?.classList.toggle('has-life-cards',cards.length===3);
   body.innerHTML=cards.map(c=>`<div class="card-mini"><i>${c.glyph}</i><span>${c.name}</span></div>`).join('');
 }
 
@@ -5480,6 +6203,7 @@ function saveDimension(){
     state.saved=false;
   }
   updateProfileCompletion();
+  refreshDynamicPersona();
   closeSheet();
   toast(`${cfg.title}已保存到画像 · 自填关键词已标记来源`);
 }
@@ -5544,6 +6268,7 @@ if(savedRelationshipCards?.tags?.length===3){
   dimensionState.love.saved=true;
 }
 updateProfileCompletion();
+refreshDynamicPersona();
 
 /* 万花筒（参考 bobbyroe/kaleidoscope 的架构）：
    1. 「筒内景」：离屏源画布里几颗宝石持续公转 + 自转（对应原仓库缓冲场景中运动的多面体）
