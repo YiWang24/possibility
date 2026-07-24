@@ -8,7 +8,6 @@ import { SYSTEM_FRONTDOOR, SYSTEM_SIGNAL } from "../_shared/prompts.ts";
 import { CROSSROADS_SCHEMA } from "../_shared/schemas.ts";
 import { structured } from "../_shared/llm.ts";
 
-// deno-lint-ignore no-explicit-any
 type Msg = { role: "user" | "assistant"; content: string };
 
 Deno.serve(async (req) => {
@@ -72,9 +71,13 @@ Deno.serve(async (req) => {
         });
         s.on("text", (t: string) => send("token", { t }));
         const final = await s.finalMessage();
-        // deno-lint-ignore no-explicit-any
-        const reply =
-          final.content.find((b: any) => b.type === "text")?.text ?? "";
+        let reply = "";
+        for (const b of final.content) {
+          if (b.type === "text") {
+            reply = b.text;
+            break;
+          }
+        }
 
         await supabase.from("messages").insert({
           conversation_id: conversationId,
