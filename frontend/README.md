@@ -14,16 +14,18 @@ frontend/
 └─ Features/       Home / Chat / Lab / Community / Profile（各含 View + Model）
 ```
 
-## 配置（首次拉取必做）
+## 配置
 
-前端**不写死任何后端地址或密钥**，运行时从 Info.plist 读取。拉取后需自行配置：
+前端运行时从 Info.plist 读取后端地址/密钥；**缺省已回落到线上 Supabase 项目**（`gxmruqzcyahjlktshpkh`，anon key 受 RLS 约束、可公开），拉取即可直连云端，无需额外配置。
+
+如需连本地 `supabase start`，再自行覆盖：
 
 1. 复制 `Config.xcconfig.example` → `Config.xcconfig`（真实文件已被 `.gitignore` 忽略）。
-2. 填入你的 Supabase 项目 `SUPABASE_URL` 与 `SUPABASE_ANON_KEY`（anon key 受 RLS 约束、可公开）。
+2. 填入本地 `SUPABASE_URL`（如 `http://127.0.0.1:54321`）与对应 `SUPABASE_ANON_KEY`。
 3. Xcode target → Build Settings，将 Configuration 指向该 xcconfig；在 Info.plist 增加键
    `SUPABASE_URL = $(SUPABASE_URL)`、`SUPABASE_ANON_KEY = $(SUPABASE_ANON_KEY)`。
 
-未配置时，`AppConfig` 回落到本地 `http://127.0.0.1:54321`（配合 `supabase start`）。
+未配置 xcconfig 时，`AppConfig` 回落到线上项目 `https://gxmruqzcyahjlktshpkh.supabase.co`。
 
 > `ANTHROPIC_API_KEY` **绝不进 App / 仓库**，只存 Supabase Function Secrets（技术设计文档 §5 / §11.1）。
 
