@@ -20,12 +20,12 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: KaleidoApp
+      - path: frontend
     dependencies:
       - package: Supabase
         product: Supabase
     info:
-      path: KaleidoApp/Info.plist
+      path: frontend/Info.plist
       properties:
         CFBundleDisplayName: 万花筒
         UILaunchScreen: {}
