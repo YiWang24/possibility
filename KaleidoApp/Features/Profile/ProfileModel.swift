@@ -65,15 +65,18 @@ final class ProfileModel {
     }
 
     func load(supabase: SupabaseService) async {
-        loading = true
         let pool = supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
         traveler = pool.first { $0.id == travelerId } ?? DemoData.travelers.first { $0.id == travelerId }
         unlocked = supabase.isUnlocked(travelerId: travelerId)
+        // 先用缓存/兜底数据立即渲染，页面秒开；网络返回后静默刷新（本地无后端时不阻塞）
+        detail = supabase.travelerDetails[travelerId] ?? DemoData.details[travelerId]
+        services = DemoData.services(for: travelerId)
+        loading = false
         async let d = supabase.loadTravelerDetail(id: travelerId)
         async let s = supabase.loadServices(travelerId: travelerId)
-        detail = await d
-        services = await s
-        loading = false
+        if let fresh = await d { detail = fresh }
+        let freshServices = await s
+        if !freshServices.isEmpty { services = freshServices }
     }
 
     /// mock 解锁完整经验（¥9.9）→ 写 unlocks（§10 demo 支付）。

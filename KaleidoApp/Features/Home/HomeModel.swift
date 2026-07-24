@@ -62,16 +62,20 @@ final class HomeModel {
         timerTask = nil
     }
 
-    /// 完成录音 → 分析情绪与关键词（analyze-diary，失败走兜底）
+    /// 完成录音 → 分析情绪与关键词（analyze-diary，2.5s 超时即走兜底，不阻塞 UI）
     func analyzeDiary(using supabase: SupabaseService) async {
         finishRecording()
         analyzing = true
         defer { analyzing = false }
-        if let result = try? await supabase.analyzeDiary(transcript: sampleTranscript) {
-            analysis = result
-        } else {
-            analysis = Self.fallbackAnalysis
+        let transcript = sampleTranscript
+        let remote = await withTaskGroup(of: DiaryAnalysis?.self) { group -> DiaryAnalysis? in
+            group.addTask { try? await supabase.analyzeDiary(transcript: transcript) }
+            group.addTask { try? await Task.sleep(for: .seconds(2.5)); return nil }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
         }
+        analysis = remote ?? Self.fallbackAnalysis
     }
 
     /// 断网兜底的日记分析（对应 §13 现场抖动缓解）
