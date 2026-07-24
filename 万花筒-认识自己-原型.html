@@ -656,7 +656,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .yp.on{background:var(--btn-g);color:#fff;border-color:rgba(111,165,255,.6);font-weight:600;box-shadow:0 6px 16px -6px rgba(79,125,255,.55)}
 .knob-hint{text-align:center;font-size:11px;color:var(--faint);margin-top:12px;letter-spacing:.1em}
 
-.choices{position:relative;height:178px;margin-top:14px;padding-top:2px;overflow:visible}
+.choices{position:relative;z-index:1;isolation:isolate;height:178px;margin-top:14px;padding-top:2px;overflow:visible}
 .choice{
   all:unset;cursor:grab;position:absolute;left:50%;top:0;display:block;box-sizing:border-box;
   width:116px;height:148px;padding:17px 13px;border-radius:18px;
@@ -687,10 +687,10 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   content:"✓";position:absolute;z-index:8;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
   background:var(--btn-g);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;
 }
-.choices .choice.on{z-index:70!important}
-.choices .choice:hover,.choices .choice:focus-visible{z-index:90!important}
-.choices .choice.front-card{z-index:92!important}
-.choices .choice.dragging{z-index:100!important}
+.choices .choice.on{z-index:24!important}
+.choices .choice:hover,.choices .choice:focus-visible{z-index:26!important}
+.choices .choice.front-card{z-index:28!important}
+.choices .choice.dragging{z-index:30!important}
 .choices:hover .choice.front-card,.choices.fanned .choice.front-card,.choices:focus-within .choice.front-card{
   transform:translate(calc(-50% + var(--fan-x,0px)),calc(var(--fan-y,0px) - 9px)) rotate(var(--fan-r,0deg)) scale(1.035)
 }
@@ -742,7 +742,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   .choice{transition:none}
 }
 .drag-ghost{
-  position:absolute;left:0;top:0;z-index:70;pointer-events:none;
+  position:absolute;left:0;top:0;z-index:46;pointer-events:none;
   display:flex;align-items:center;gap:8px;
   padding:12px 18px;border-radius:16px;background:rgba(22,26,38,.94);
   border:1.5px solid rgba(111,165,255,.55);box-shadow:var(--shadow-float),0 0 24px rgba(79,125,255,.35);
@@ -762,6 +762,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .pick.pop{animation:pickpop .45s cubic-bezier(.3,1.5,.4,1)}
 @keyframes pickpop{0%{transform:scale(.7);opacity:.3}100%{transform:scale(1);opacity:1}}
 .lab-go{margin-top:26px}
+#resultPage{z-index:49}
 
 /* 人生实验室 · 单屏紧凑布局 */
 #scr-lab{padding-top:64px;padding-bottom:98px}
@@ -2355,28 +2356,33 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       </div>
 
       <div class="studio-section">
-        <div class="studio-section-head"><b>生活画像</b><span>只推荐你现在最想了解的一项</span></div>
+        <div class="studio-section-head"><b>生活画像</b><span>与数字人下方维度一致</span></div>
         <div class="assessment-grid">
           <div class="assessment-card" id="strengthStudioCard">
-            <span class="mark" style="color:#D4A8D7;background:rgba(168,85,134,.13)">✦</span>
+            <span class="mark" style="color:#BFD2FF;background:rgba(94,150,255,.15)">✦</span>
             <span class="info"><b>我擅长</b><p id="strengthStudioMeta">选择关键词、换一批，也可以自己输入</p></span>
-            <button class="act ready" id="strengthStudioAction" onclick="closePush('profileStudio');openDimensionSheet('skill')">编辑</button>
+            <button class="act ready" id="strengthStudioAction" onclick="closePush('profileStudio');openDimensionSheet('skill')">进入</button>
           </div>
           <div class="assessment-card" id="hollandStudioCard">
-            <span class="mark" style="color:#BFC9FF;background:rgba(89,104,217,.16)">RIA</span>
-            <span class="info"><b>霍兰德兴趣测评</b><p id="hollandStudioMeta">30题官方移动版本 · 约5分钟</p></span>
-            <button class="act ready" id="hollandStudioAction" onclick="openAssessmentIntro('holland')">开始</button>
+            <span class="mark" style="color:#F4BDE0;background:rgba(227,92,193,.15)">♡</span>
+            <span class="info"><b>我喜欢</b><p id="hollandStudioMeta">可用关键词或霍兰德兴趣测评继续探索</p></span>
+            <button class="act ready" id="hollandStudioAction" onclick="closePush('profileStudio');openDimensionSheet('like')">进入</button>
             <span class="resume" id="hollandResume" style="display:none"><i></i></span>
           </div>
           <div class="assessment-card" id="loveStudioCard">
-            <span class="mark" style="color:#FFB69E;background:rgba(255,122,77,.12)">♡</span>
-            <span class="info"><b>关系安全感与靠近方式</b><p id="loveStudioMeta">18题 Demo 构念版 · 约4分钟</p></span>
-            <button class="act ready" id="loveStudioAction" onclick="openAssessmentIntro('love')">开始</button>
+            <span class="mark" style="color:#FFB69E;background:rgba(255,122,77,.16)">✿</span>
+            <span class="info"><b>我在恋爱关系中在意</b><p id="loveStudioMeta">关键词、关系测评与婚姻卡牌</p></span>
+            <button class="act ready" id="loveStudioAction" onclick="closePush('profileStudio');openDimensionSheet('love')">进入</button>
           </div>
           <div class="assessment-card" id="familyStudioCard">
-            <span class="mark" style="color:#8EE7C8;background:rgba(62,217,164,.11)">⌂</span>
-            <span class="info"><b>家庭关系与期待</b><p id="familyStudioMeta">20题 Demo 构念版 · 约5分钟</p></span>
-            <button class="act ready" id="familyStudioAction" onclick="openAssessmentIntro('family')">开始</button>
+            <span class="mark" style="color:#8EE7C8;background:rgba(62,217,164,.14)">⌂</span>
+            <span class="info"><b>我在家庭关系中在意</b><p id="familyStudioMeta">关键词、家庭关系测评与家庭卡牌</p></span>
+            <button class="act ready" id="familyStudioAction" onclick="closePush('profileStudio');openDimensionSheet('family')">进入</button>
+          </div>
+          <div class="assessment-card" id="socialStudioCard">
+            <span class="mark" style="color:#BFD2FF;background:rgba(94,150,255,.15)">◎</span>
+            <span class="info"><b>我在人际交往中在意</b><p id="socialStudioMeta">关键词与人际交往卡牌</p></span>
+            <button class="act ready" id="socialStudioAction" onclick="closePush('profileStudio');openDimensionSheet('social')">进入</button>
           </div>
         </div>
       </div>
@@ -4486,6 +4492,26 @@ function getLoadSteps(){
     ?['读取你的动态画像与对话……',`装入 ${carrySelected.size} 张不愿交换的底线卡……`,'用最坏结果逐张检验……']
     :['读取你的动态画像与对话……','沿着这条选择生成未来情境……','比对相似旅人的真实经历……'];
 }
+function clearLabDragVisuals(){
+  if(cardDrag){
+    cardDrag.done=true;
+    if(cardDrag.raf)cancelAnimationFrame(cardDrag.raf);
+    cardDrag.card?.classList.remove('dragging');
+    cardDrag.ghost?.remove();
+    cardDrag=null;
+  }
+  if(carryDrag){
+    carryDrag.done=true;
+    if(carryDrag.raf)cancelAnimationFrame(carryDrag.raf);
+    carryDrag.card?.classList.remove('dragging');
+    carryDrag.ghost?.remove();
+    carryDrag=null;
+  }
+  choicesDeck.classList.remove('fanned','browsing');
+  document.querySelectorAll('#choices .choice').forEach(card=>card.classList.remove('front-card','dragging'));
+  document.querySelectorAll('.drag-ghost').forEach(ghost=>ghost.remove());
+  dialEl.classList.remove('drop-hot');
+}
 function runSim(){
   /* TODO(API · labSimulationResult):
      默认 Prompt：根据用户的问题、选择卡、时间跨度、底线卡、已授权画像和相关真实经历，
@@ -4497,6 +4523,7 @@ function runSim(){
      API 返回 scenarios、bottomLineAnalysis、recommendedUserIds 后分别写入三个结果面板；
      请求失败或未接入时继续使用当前静态结果与本地相似用户。 */
   if(!labPick){ toast('先拖一张选择卡进实验室'); return; }
+  clearLabDragVisuals();
   const LOAD_STEPS=getLoadSteps();
   $('#loadName').textContent = labPick;
   const load = $('#simload');
@@ -4512,6 +4539,7 @@ function runSim(){
       $('#resultSub').textContent = `${labPick} · ${labYear} 年后`;
       $('#rsPeople').innerHTML = USERS.filter(u=>u.sim).map(simCardHTML).join('');
       renderFloorTest();
+      clearLabDragVisuals();
       $('#resultPage').classList.add('open');
     }
   }, 1100);
@@ -5936,16 +5964,16 @@ function updateStudioState(){
   if(!meta||!action||!resume) return;
   if(hollandState.result){
     meta.textContent=`已完成 · ${hollandState.result.displayCode||hollandState.result.code} 兴趣组合`;
-    action.textContent='查看';
+    action.textContent='查看画像';
     resume.style.display='none';
   }else if(answered){
-    meta.textContent=`已完成 ${answered}/30 · 进度自动保存`;
+    meta.textContent=`霍兰德测评已完成 ${answered}/30 · 进度自动保存`;
     action.textContent='继续';
     resume.style.display='block';
     resume.querySelector('i').style.width=(answered/30*100)+'%';
   }else{
-    meta.textContent='30题官方移动版本 · 约5分钟';
-    action.textContent='开始';
+    meta.textContent='可用关键词或霍兰德兴趣测评继续探索';
+    action.textContent='进入';
     resume.style.display='none';
   }
   const badge=safeStoreGet(MBTI_STORE_KEY);
@@ -5954,6 +5982,29 @@ function updateStudioState(){
     $('#personalityEntry').classList.remove('todo');
   }
   updateDemoStudioState();
+  syncStudioDimensionCards();
+}
+function syncStudioDimensionCards(){
+  const mappings=[
+    ['#dimSkill','#strengthStudioMeta','#strengthStudioAction','选择关键词、换一批，也可以自己输入'],
+    ['#dimLike','#hollandStudioMeta','#hollandStudioAction','可用关键词或霍兰德兴趣测评继续探索'],
+    ['#dimLove','#loveStudioMeta','#loveStudioAction','关键词、关系测评与婚姻卡牌'],
+    ['#dimFamily','#familyStudioMeta','#familyStudioAction','关键词、家庭关系测评与家庭卡牌'],
+    ['#dimSocial','#socialStudioMeta','#socialStudioAction','关键词与人际交往卡牌']
+  ];
+  mappings.forEach(([targetSelector,metaSelector,actionSelector,fallback])=>{
+    const value=$(targetSelector)?.textContent.trim()||'';
+    const hasResult=value&&!/(尚未|待探索|未填写)/.test(value);
+    const meta=$(metaSelector),action=$(actionSelector);
+    if(!meta||!action)return;
+    if(hasResult){
+      meta.textContent=`已形成画像 · ${value}`;
+      action.textContent='编辑';
+    }else if(!meta.textContent.trim()){
+      meta.textContent=fallback;
+      action.textContent='进入';
+    }
+  });
 }
 function openAssessmentIntro(kind){
   if(kind!=='holland'){openDemoAssessment(kind);return}
@@ -6172,10 +6223,14 @@ function updateDemoStudioState(){
       action.textContent='继续';
     }else{
       const minutes=Math.max(3,Math.ceil(cfg.items.length/5));
+      const dimensionFallback={
+        love:'关键词、关系测评与婚姻卡牌',
+        family:'关键词、家庭关系测评与家庭卡牌'
+      };
       meta.textContent=kind==='bigfive'
         ?'120题 · 五维与30个细分面向 · 约15–20分钟'
-        :`${cfg.items.length}题 Demo 构念版 · 约${minutes}分钟`;
-      action.textContent=kind==='bigfive'?'进入测试':'开始';
+        :(dimensionFallback[kind]||`${cfg.items.length}题 Demo 构念版 · 约${minutes}分钟`);
+      action.textContent=kind==='bigfive'?'进入测试':'进入';
     }
   });
 }
