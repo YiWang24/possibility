@@ -1,0 +1,54 @@
+import SwiftUI
+
+@main
+struct KaleidoApp: App {
+    @State private var supabase = SupabaseService()
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environment(supabase)
+                .preferredColorScheme(.dark) // 暗色是贴合内省气质的有意选择
+                .task {
+                    await supabase.bootstrap() // 冷启动匿名登录
+                }
+        }
+    }
+}
+
+// MARK: - 根导航：底部三 Tab（认识自己 / 人生实验室 / 万花筒社区）
+
+enum AppTab: Hashable {
+    case home, lab, community
+}
+
+struct RootView: View {
+    @State private var tab: AppTab = .home
+    @State private var toast = ToastCenter()
+
+    var body: some View {
+        TabView(selection: $tab) {
+            HomeView()
+                .tabItem { Label("认识自己", systemImage: "person.crop.circle") }
+                .tag(AppTab.home)
+
+            LabView()
+                .tabItem { Label("人生实验室", systemImage: "testtube.2") }
+                .tag(AppTab.lab)
+
+            CommunityView()
+                .tabItem { Label("万花筒社区", systemImage: "circle.hexagongrid") }
+                .tag(AppTab.community)
+        }
+        .tint(Theme.blue)
+        .background(Theme.stage.ignoresSafeArea())
+        .environment(toast)
+        .overlay(ToastHost(message: toast.message))
+    }
+}
+
+#Preview {
+    RootView()
+        .environment(SupabaseService())
+        .preferredColorScheme(.dark)
+}
