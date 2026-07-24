@@ -1,6 +1,11 @@
 import { requireUser } from "../_shared/auth.ts";
 import { preflightResponse } from "../_shared/cors.ts";
-import { errorResponse, HttpError, jsonResponse, readJson } from "../_shared/errors.ts";
+import {
+  errorResponse,
+  HttpError,
+  jsonResponse,
+  readJson,
+} from "../_shared/errors.ts";
 import {
   validateSaveCardGameInput,
   validateSaveDimensionInput,
@@ -79,12 +84,24 @@ Deno.serve(async (req) => {
       case "save_public_profile": {
         const data = body as Record<string, unknown>;
         const profileData: Record<string, unknown> = { id: user.id };
-        if (typeof data.name === "string") profileData.name = data.name.slice(0, 50);
-        if (typeof data.quote === "string") profileData.quote = data.quote.slice(0, 200);
-        if (typeof data.bio === "string") profileData.bio = data.bio.slice(0, 200);
-        if (typeof data.avatar_url === "string") profileData.avatar_url = data.avatar_url.slice(0, 500);
-        if (Array.isArray(data.tags)) profileData.tags = (data.tags as string[]).slice(0, 10);
-        if (Array.isArray(data.trajectory)) profileData.trajectory = data.trajectory;
+        if (typeof data.name === "string") {
+          profileData.name = data.name.slice(0, 50);
+        }
+        if (typeof data.quote === "string") {
+          profileData.quote = data.quote.slice(0, 200);
+        }
+        if (typeof data.bio === "string") {
+          profileData.bio = data.bio.slice(0, 200);
+        }
+        if (typeof data.avatar_url === "string") {
+          profileData.avatar_url = data.avatar_url.slice(0, 500);
+        }
+        if (Array.isArray(data.tags)) {
+          profileData.tags = (data.tags as string[]).slice(0, 10);
+        }
+        if (Array.isArray(data.trajectory)) {
+          profileData.trajectory = data.trajectory;
+        }
         if (Array.isArray(data.services)) profileData.services = data.services;
         if (Array.isArray(data.advice)) profileData.advice = data.advice;
         if (typeof data.visibility === "object" && data.visibility !== null) {

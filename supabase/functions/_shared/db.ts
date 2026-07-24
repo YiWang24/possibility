@@ -131,7 +131,12 @@ async function applyProfileUpdate(
 export async function insertSimulation(
   db: SupabaseClient,
   userId: string,
-  input: { question: string; choice: string; years: number; carry_cards?: string[] },
+  input: {
+    question: string;
+    choice: string;
+    years: number;
+    carry_cards?: string[];
+  },
   result: SimulationOutput,
 ): Promise<void> {
   const { error } = await db.from("simulations").insert({

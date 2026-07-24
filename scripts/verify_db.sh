@@ -20,14 +20,14 @@ export PGPASSWORD=pw
 PSQL=(psql -h localhost -p "${PORT}" -U postgres -v ON_ERROR_STOP=1 -q)
 
 "${PSQL[@]}" -f scripts/_verify_shims.sql
-for migration in backend/migrations/*.sql; do
+for migration in supabase/migrations/*.sql; do
   "${PSQL[@]}" -f "$migration"
 done
-"${PSQL[@]}" -f backend/seed.sql
+"${PSQL[@]}" -f supabase/seed.sql
 "${PSQL[@]}" -c "alter table storage.objects enable row level security;
   grant usage on schema storage to authenticated;
   grant select, insert, update, delete on storage.objects to authenticated;"
-"${PSQL[@]}" -f backend/tests/rls_test.sql
+"${PSQL[@]}" -f supabase/tests/rls_test.sql
 
 echo "=== row counts ==="
 "${PSQL[@]}" -c "select 'travelers' as t, count(*) from travelers

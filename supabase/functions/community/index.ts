@@ -15,7 +15,8 @@ import {
   validateListInput,
 } from "../_shared/validate.ts";
 
-const kaleidoscopePrompt = `你是"万花筒"社区匹配器。根据用户画像和请求模式（similar/different），从候选旅人中选出最适合展示给用户的 1 位。
+const kaleidoscopePrompt =
+  `你是"万花筒"社区匹配器。根据用户画像和请求模式（similar/different），从候选旅人中选出最适合展示给用户的 1 位。
 
 模式说明：
 - similar：选择经历、处境或价值观与用户最相近的旅人
@@ -92,7 +93,18 @@ Deno.serve(async (req) => {
             model: runtimeConfig.structuredModel,
             maxTokens: 256,
             system: kaleidoscopePrompt,
-            prompt: `用户画像：${JSON.stringify(profile?.dims ?? {})}\n模式：${input.mode}\n候选旅人：${JSON.stringify(candidates.map((t) => ({ id: t.id, name: t.name, quote: t.quote, tags: t.tags })))}`,
+            prompt: `用户画像：${
+              JSON.stringify(profile?.dims ?? {})
+            }\n模式：${input.mode}\n候选旅人：${
+              JSON.stringify(
+                candidates.map((t) => ({
+                  id: t.id,
+                  name: t.name,
+                  quote: t.quote,
+                  tags: t.tags,
+                })),
+              )
+            }`,
             schema: kaleidoSchema,
           });
           const valid = candidates.find((t) => t.id === result.traveler_id);
@@ -108,7 +120,9 @@ Deno.serve(async (req) => {
             ? candidates.filter((t) => t.is_similar) || candidates
             : candidates.filter((t) => !t.is_similar) || candidates;
           const selected = (pool.length > 0 ? pool : candidates)[
-            Math.floor(Math.random() * (pool.length > 0 ? pool : candidates).length)
+            Math.floor(
+              Math.random() * (pool.length > 0 ? pool : candidates).length,
+            )
           ];
           selectedId = selected.id;
           reason = input.mode === "similar"
@@ -144,9 +158,12 @@ Deno.serve(async (req) => {
         const input = validateListInput(body);
         const { data, error, count } = await db
           .from("bounties")
-          .select("id,question,reward,responses,tags,detail,status,created_at", {
-            count: "exact",
-          })
+          .select(
+            "id,question,reward,responses,tags,detail,status,created_at",
+            {
+              count: "exact",
+            },
+          )
           .order("created_at", { ascending: false })
           .range(input.offset, input.offset + input.limit - 1);
         if (error) {

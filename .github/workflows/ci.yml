@@ -30,15 +30,13 @@ jobs:
 
       - name: 启动本地数据库
         run: supabase db start
-        working-directory: backend
 
       - name: 应用全部 migration + seed
         run: supabase db reset
-        working-directory: backend
 
       - name: RLS / 数据隔离测试
         run: |
           PGPASSWORD=postgres psql \
             -v ON_ERROR_STOP=1 \
             -h 127.0.0.1 -p 54322 -U postgres -d postgres \
-            -f backend/tests/rls_test.sql
+            -f supabase/tests/rls_test.sql

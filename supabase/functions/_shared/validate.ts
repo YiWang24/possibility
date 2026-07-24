@@ -194,7 +194,9 @@ export function validateSaveDimensionInput(value: unknown): SaveDimensionInput {
 
 export type SaveCardGameInput = {
   kind: string;
-  final_cards: Array<{ id: string; name: string; glyph?: string; group?: string }>;
+  final_cards: Array<
+    { id: string; name: string; glyph?: string; group?: string }
+  >;
   rounds: number;
   accepted: unknown[];
   traded: unknown[];
@@ -212,8 +214,14 @@ export function validateSaveCardGameInput(value: unknown): SaveCardGameInput {
     );
   }
   const finalCards = body.final_cards;
-  if (!Array.isArray(finalCards) || finalCards.length < 1 || finalCards.length > 9) {
-    throw new HttpError(400, "INVALID_INPUT", "final_cards 必须是 1-9 项的数组。");
+  if (
+    !Array.isArray(finalCards) || finalCards.length < 1 || finalCards.length > 9
+  ) {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "final_cards 必须是 1-9 项的数组。",
+    );
   }
   const validatedCards = finalCards.map((card, i) => {
     const c = object(card, `final_cards[${i}]`);
@@ -225,12 +233,21 @@ export function validateSaveCardGameInput(value: unknown): SaveCardGameInput {
     };
   });
   const rounds = body.rounds;
-  if (!Number.isInteger(rounds) || (rounds as number) < 0 || (rounds as number) > 100) {
+  if (
+    !Number.isInteger(rounds) || (rounds as number) < 0 ||
+    (rounds as number) > 100
+  ) {
     throw new HttpError(400, "INVALID_INPUT", "rounds 必须是 0-100 的整数。");
   }
   const accepted = Array.isArray(body.accepted) ? body.accepted : [];
   const traded = Array.isArray(body.traded) ? body.traded : [];
-  return { kind, final_cards: validatedCards, rounds: rounds as number, accepted, traded };
+  return {
+    kind,
+    final_cards: validatedCards,
+    rounds: rounds as number,
+    accepted,
+    traded,
+  };
 }
 
 export type SimulateInputV2 = {
@@ -306,7 +323,9 @@ export type BountyResponseInput = {
   message: string;
 };
 
-export function validateBountyResponseInput(value: unknown): BountyResponseInput {
+export function validateBountyResponseInput(
+  value: unknown,
+): BountyResponseInput {
   const body = object(value);
   const bountyId = body.bounty_id;
   if (!Number.isInteger(bountyId) || (bountyId as number) < 1) {
@@ -326,7 +345,11 @@ export function validateKaleidoscopeInput(value: unknown): KaleidoscopeInput {
   const body = object(value);
   const mode = string(body.mode, "mode", 20)!;
   if (mode !== "similar" && mode !== "different") {
-    throw new HttpError(400, "INVALID_INPUT", "mode 必须是 similar 或 different。");
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "mode 必须是 similar 或 different。",
+    );
   }
   return { mode: mode as "similar" | "different" };
 }

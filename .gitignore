@@ -6,9 +6,9 @@
 .env.*.local
 
 # Supabase / 后端
-backend/.branches
-backend/.temp
-backend/functions/.env
+supabase/.branches
+supabase/.temp
+supabase/functions/.env
 node_modules/
 coverage/
 
