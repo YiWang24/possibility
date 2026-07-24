@@ -123,3 +123,37 @@ create trigger trg_profile_dimensions_touch before update on profile_dimensions
 drop trigger if exists trg_public_profiles_touch on public_profiles;
 create trigger trg_public_profiles_touch before update on public_profiles
   for each row execute function public.touch_updated_at();
+
+-- ==================== 权限授予 ====================
+
+-- 新用户表：authenticated 用户可读写自己的数据
+grant select, insert, update, delete on table
+  profile_dimensions,
+  card_game_results,
+  bounty_responses,
+  public_profiles,
+  kaleidoscope_draws
+to authenticated;
+
+-- bounties 已有 anon/authenticated 的 select，但现在 authenticated 需要 insert
+grant insert, update on table bounties to authenticated;
+
+-- bounties RLS：允许登录用户创建和管理自己的悬赏
+drop policy if exists "Users create bounties" on bounties;
+create policy "Users create bounties" on bounties
+  for insert to authenticated with check (auth.uid() = user_id);
+drop policy if exists "Users update own bounties" on bounties;
+create policy "Users update own bounties" on bounties
+  for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- 序列权限
+grant usage, select on sequence
+  profile_dimensions_id_seq,
+  card_game_results_id_seq,
+  bounty_responses_id_seq,
+  kaleidoscope_draws_id_seq,
+  bounties_id_seq
+to authenticated;
+
+-- 公开资料对所有已登录用户可读（RLS 已单独配置 select policy）
+grant select on table public_profiles to anon;
