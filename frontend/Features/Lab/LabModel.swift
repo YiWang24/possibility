@@ -107,7 +107,16 @@ final class LabModel {
         guard requestID == choicesRequestID else { return }
         choicesLoading = false
         // 问题已更换或请求失败/超时：静默兜底，不打扰用户
-        guard q == question, let cards = response?.cards, !cards.isEmpty else { return }
+        guard q == question, let cards = response?.cards, !cards.isEmpty else {
+            // 为新问题发起的加载失败：旧问题的 LLM 专属卡不再适用，
+            // 回到内置卡组、清掉失效选中态，并允许 .task(id:) 重试
+            if q != loadedChoicesQuestion {
+                remoteChoices = nil
+                loadedChoicesQuestion = nil
+                if let picked = pick, !choices.contains(where: { $0.name == picked }) { pick = nil }
+            }
+            return
+        }
 
         var seen = Set(customChoices.map(\.name))
         var mapped: [Choice] = []
@@ -118,7 +127,15 @@ final class LabModel {
             mapped.append(Choice(emoji: card.glyph.isEmpty ? "✦" : card.glyph,
                                  name: name, desc: desc, color: card.color))
         }
-        guard !mapped.isEmpty else { return }
+        // 卡片全部被去重/清洗过滤：等同生成失败，同样回退内置卡组
+        guard !mapped.isEmpty else {
+            if q != loadedChoicesQuestion {
+                remoteChoices = nil
+                loadedChoicesQuestion = nil
+                if let picked = pick, !choices.contains(where: { $0.name == picked }) { pick = nil }
+            }
+            return
+        }
 
         remoteChoices = mapped
         loadedChoicesQuestion = q

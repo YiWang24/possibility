@@ -388,8 +388,10 @@ final class HomeModel {
     }()
 
     /// 拉取云端日记 → 聚合最近 7 天周历 + 推算探索天数（冷启动调用，失败静默）
+    /// 服务端把 limit 钳制到 50，故只取 50 条；总数超窗时另取最早一条修正探索天数。
     func loadDiaryOverview(using supabase: SupabaseService) async {
-        guard let rows = try? await supabase.listDiary(limit: 200) else { return }
+        guard let page = try? await supabase.listDiaryPage(limit: 50, offset: 0) else { return }
+        let rows = page.entries
         let isoFrac = ISO8601DateFormatter()
         isoFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         let iso = ISO8601DateFormatter()
@@ -402,6 +404,14 @@ final class HomeModel {
             if earliest.map({ created < $0 }) ?? true { earliest = created }
             let key = Self.dayFormatter.string(from: created)
             if emotionsByDay[key] == nil { emotionsByDay[key] = row.emotions ?? [] }
+        }
+
+        // 日记总数超出本窗：按倒序末位（offset = total-1）取最早一条，
+        // 探索天数不被 50 条窗口截断低估；失败静默沿用窗口内最早值
+        if page.total > rows.count,
+           let oldest = try? await supabase.listDiaryPage(limit: 1, offset: page.total - 1).entries.first,
+           let created = isoFrac.date(from: oldest.createdAt) ?? iso.date(from: oldest.createdAt) {
+            earliest = created
         }
 
         let cal = Calendar.current
@@ -451,4 +461,36 @@ final class HomeModel {
 
     // MARK: demo 人物
     let userName = "屿岸"
+}
+
+// MARK: - list-diary 分页扩展（探索天数用）
+//
+// SupabaseService.listDiary 只回 entries；探索天数需要服务端 total + offset
+// 取最早一条（服务端把 limit 钳制到 50）。请求方式与 SupabaseService 内部一致。
+extension SupabaseService {
+
+    struct DiaryPage: Decodable {
+        let entries: [RemoteDiaryEntry]
+        let total: Int
+    }
+
+    /// POST /list-diary 带 offset 的分页版；返回 entries + total
+    func listDiaryPage(limit: Int, offset: Int) async throws -> DiaryPage {
+        struct Body: Encodable {
+            let limit: Int
+            let offset: Int
+        }
+        var req = URLRequest(url: AppConfig.functionURL("list-diary"))
+        req.httpMethod = "POST"
+        req.timeoutInterval = 20
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
+        req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.httpBody = try JSONEncoder().encode(Body(limit: limit, offset: offset))
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        return try JSONDecoder().decode(DiaryPage.self, from: data)
+    }
 }

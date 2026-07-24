@@ -168,6 +168,32 @@ values ('转行第一年最难的是什么', '感谢', '0', '11111111-1111-4111-
 insert into public.bounty_responses (bounty_id, user_id, message)
 values (1, '11111111-1111-4111-8111-111111111111', '我有类似经历，可以分享');
 
+-- 回应计数同步触发器（0010）：insert 后 bounties.responses 按实际 count 重算；
+-- 更新已有回应（upsert 命中 UPDATE 路径）不重复计数。
+do $$
+declare
+  v_responses text;
+begin
+  select responses into v_responses from public.bounties where id = 1;
+  if v_responses <> '1 人回应' then
+    raise exception
+      'bounties.responses should sync to "1 人回应" after respond, got %',
+      v_responses;
+  end if;
+
+  update public.bounty_responses set message = '补充：第一年确实有降薪'
+  where bounty_id = 1
+    and user_id = '11111111-1111-4111-8111-111111111111';
+
+  select responses into v_responses from public.bounties where id = 1;
+  if v_responses <> '1 人回应' then
+    raise exception
+      'updating an existing response must not double count, got %',
+      v_responses;
+  end if;
+end
+$$;
+
 -- ==================== 4. updated_at 触发器 ====================
 -- INSERT 不触发 BEFORE UPDATE 触发器，故可用一个旧时间写入基线；
 -- 随后 UPDATE 应被 touch_updated_at 刷新为事务时间（不再等于旧值）。

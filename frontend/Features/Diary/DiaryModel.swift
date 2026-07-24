@@ -56,18 +56,20 @@ final class DiaryModel {
 
     // MARK: 月/年总结（diary-summary 真实聚合，失败回退硬编码 demo）
 
-    /// 当前月 ref："2026-07"
+    /// 当前月 ref："2026-07"（服务端按 UTC 边界聚合，ref 必须用 UTC 计算，避免时区错位）
     static var currentMonthRef: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "zh_CN")
+        f.timeZone = TimeZone(identifier: "UTC")
         f.dateFormat = "yyyy-MM"
         return f.string(from: Date())
     }
 
-    /// 当前年 ref："2026"
+    /// 当前年 ref："2026"（同上，按服务端 UTC 边界取年份）
     static var currentYearRef: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "zh_CN")
+        f.timeZone = TimeZone(identifier: "UTC")
         f.dateFormat = "yyyy"
         return f.string(from: Date())
     }

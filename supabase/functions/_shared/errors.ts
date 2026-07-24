@@ -43,7 +43,10 @@ export function errorResponse(error: unknown): Response {
         429,
       );
     }
-    if (status >= 500) {
+    // 上游（Anthropic）非 429 的 4xx/5xx 统一映射为 502：
+    // 4xx 多为网关配置/凭证问题（400/401/403 等），对客户端同样是「上游不可用」，
+    // 与自身代码缺陷的 500 INTERNAL_ERROR 区分开，便于运维定位。
+    if (Number.isFinite(status) && status >= 400) {
       return jsonResponse(
         {
           error: {

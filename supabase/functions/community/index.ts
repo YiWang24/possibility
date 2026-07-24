@@ -228,6 +228,7 @@ Deno.serve(async (req) => {
           .order("created_at", { ascending: true });
         if (rErr) {
           console.error("get bounty responses failed:", rErr.message);
+          throw new HttpError(500, "DATABASE_ERROR", "读取悬赏回应失败。");
         }
         return jsonResponse({ bounty, responses: responses ?? [] });
       }

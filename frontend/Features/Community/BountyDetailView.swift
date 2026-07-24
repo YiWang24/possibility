@@ -273,7 +273,7 @@ struct BountyDetailView: View {
                     .background(Theme.raised, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
 
-                Text("发送后，对方将看到你的公开画像和这段补充说明；你的联系方式不会直接公开。")
+                Text("发送后，你的回应会和公开画像一起展示在这条悬赏下，所有旅人可见；请不要在补充说明中留下联系方式。")
                     .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint)
 
                 Button(sending ? "发送中…" : "确认发送名片") { confirmSend() }

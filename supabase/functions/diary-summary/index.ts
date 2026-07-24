@@ -2,7 +2,12 @@ import { structuredOutput } from "../_shared/anthropic.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
-import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
+import {
+  errorResponse,
+  HttpError,
+  jsonResponse,
+  readJson,
+} from "../_shared/errors.ts";
 import { diarySummaryPrompt } from "../_shared/prompts.ts";
 import {
   type DiarySummaryOutput,
@@ -68,6 +73,7 @@ Deno.serve(async (req) => {
       .limit(500);
     if (error) {
       console.error("diary summary query failed:", error.message);
+      throw new HttpError(500, "DATABASE_ERROR", "读取日记失败。");
     }
 
     const entries = data ?? [];
