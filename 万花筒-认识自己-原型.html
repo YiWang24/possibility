@@ -313,7 +313,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .digital-human-caption span{display:block;margin-top:4px;font-size:10px;color:rgba(223,232,250,.74);letter-spacing:.12em}
 .pbar{margin:16px auto 0;max-width:250px;display:flex;align-items:center;gap:10px}
 .pbar .tr{flex:1;height:5px;border-radius:3px;background:var(--raised);overflow:hidden}
-.pbar .tr i{display:block;height:100%;width:60%;border-radius:3px;background:var(--aurora);transition:width .6s ease}
+.pbar .tr i{display:block;height:100%;width:0;border-radius:3px;background:var(--aurora);transition:width .6s ease}
 .pbar span{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
 .portrait-update{
   display:flex;align-items:center;justify-content:center;gap:7px;margin:14px auto 0;
@@ -1549,21 +1549,21 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
         <span class="digital-human-live">LIVE DIGITAL SELF</span>
         <div class="digital-human-caption"><b>屿岸 · 动态数字人</b><span>探索者 LV.3 · 随每次探索持续生长</span></div>
       </div>
-      <div class="pbar"><div class="tr"><i id="pfill"></i></div><span id="ppct">60%</span></div>
+      <div class="pbar"><div class="tr"><i id="pfill"></i></div><span id="ppct">0%</span></div>
       <div class="dims">
         <button class="dim todo" id="personalityEntry" onclick="openProfileStudio()">
           <span class="ic" style="background:rgba(89,104,217,.16)">◎</span>
-          <span class="tx"><b>人格底色</b><p id="personalityBaseText">尚未测量 · 从一套完整测评开始认识自己</p></span>
+          <span class="tx"><b>人格底色</b><p class="empty" id="personalityBaseText">尚未填写</p></span>
           <span class="ar">›</span>
         </button>
-        <button class="dim" id="dimBtnSkill" onclick="openDimensionSheet('skill')">
+        <button class="dim todo" id="dimBtnSkill" onclick="openDimensionSheet('skill')">
           <span class="ic" style="background:rgba(94,150,255,.15)">✦</span>
-          <span class="tx"><b>我擅长</b><p id="dimSkill">结构化思考 · 共情 · 视觉表达</p></span>
+          <span class="tx"><b>我擅长</b><p class="empty" id="dimSkill">尚未填写</p></span>
           <span class="ar">›</span>
         </button>
-        <button class="dim" id="dimBtnLike" onclick="openDimensionSheet('like')">
+        <button class="dim todo" id="dimBtnLike" onclick="openDimensionSheet('like')">
           <span class="ic" style="background:rgba(227,92,193,.15)">♡</span>
-          <span class="tx"><b>我喜欢</b><p id="dimLike">把混乱变有序 · 独处的清晨 · 手绘</p></span>
+          <span class="tx"><b>我喜欢</b><p class="empty" id="dimLike">尚未填写</p></span>
           <span class="ar">›</span>
         </button>
         <button class="dim todo" id="dimBtnLove" onclick="openDimensionSheet('love')">
@@ -3846,6 +3846,14 @@ function safeStoreGet(key){
 function safeStoreSet(key,value){
   try{localStorage.setItem(key,JSON.stringify(value))}catch(e){}
 }
+function updateProfileCompletion(){
+  const fill=$('#pfill'),text=$('#ppct');
+  if(!fill||!text)return;
+  const completed=document.querySelectorAll('.dims .dim:not(.todo)').length;
+  const pct=Math.min(100,completed*20);
+  fill.style.width=pct+'%';
+  text.textContent=pct+'%';
+}
 function loadHollandProgress(){
   const saved=safeStoreGet(ASSESSMENT_STORE_KEY);
   if(!saved) return;
@@ -4050,9 +4058,9 @@ function saveHollandToProfile(){
   const result=hollandState.result;if(!result)return;
   const top=result.selected||result.ordered.slice(0,3);
   $('#dimLike').textContent=top.map(k=>HOLLAND_META[k].label).join(' · ');
+  $('#dimLike').classList.remove('empty');
   $('#dimBtnLike').classList.remove('todo');
-  const nextPct=Math.max(parseInt($('#ppct').textContent,10)||60,72);
-  $('#pfill').style.width=nextPct+'%';$('#ppct').textContent=nextPct+'%';
+  updateProfileCompletion();
   safeStoreSet('kaleido_holland_profile_v1',{code:result.displayCode||result.code,tags:top.map(k=>HOLLAND_META[k].label),source:'formal_assessment',visible:false});
   $('#assessmentResultPage').classList.remove('open');
   $('#profileStudio').classList.remove('open');
@@ -4323,9 +4331,7 @@ function saveDemoAssessmentToProfile(kind){
     }
   }
   safeStoreSet(demoProfileKey(kind),{tags,scores:state.result.scores,facets:state.result.facets||null,source:'assessment',visible:false});
-  const filled=document.querySelectorAll('.dims .dim:not(.todo)').length;
-  const pct=Math.min(90,54+filled*6);
-  $('#pfill').style.width=pct+'%';$('#ppct').textContent=pct+'%';
+  updateProfileCompletion();
   $('#assessmentResultPage').classList.remove('open');
   $('#profileStudio').classList.remove('open');
   toast('结果已写入画像 · 原始答案默认私密');
@@ -4350,6 +4356,8 @@ function selectMBTI(type,btn){
     ?`大五：${bigFiveProfile.tags.slice(0,3).join(' · ')} · MBTI：${type}`
     :`MBTI：${type}`;
   $('#personalityEntry').classList.remove('todo');
+  $('#personalityBaseText').classList.remove('empty');
+  updateProfileCompletion();
   toast(`已添加 MBTI：${type}`);
 }
 
@@ -4904,8 +4912,7 @@ function saveLifeResult(){
   renderLifeSignature(signatureIds);
   $('#lifeEntryTitle').textContent=`${a.title} · 已完成`;
   $('#lifeEntryDesc').textContent=`${a.hiddenTraits.length} 条深层画像已私密保存 · 默认不展示`;
-  $('#pfill').style.width='78%';
-  $('#ppct').textContent='78%';
+  updateProfileCompletion();
   closeLifeGame();
   toast('三张底牌已展示 · 深层分析保持私密');
 }
@@ -5094,9 +5101,7 @@ function saveRelationshipResult(){
   tags.forEach(t=>dimensionState.love.selected.add(t));
   dimensionState.love.saved=true;
   safeStoreSet('kaleido_relationship_cards_v1',{ids:cards.map(c=>c.id),tags,choices:relationshipState.choices,createdAt:new Date().toISOString()});
-  const completed=Object.values(dimensionState).filter(s=>s.saved).length;
-  const pct=Math.min(90,60+completed*6);
-  $('#pfill').style.width=pct+'%';$('#ppct').textContent=pct+'%';
+  updateProfileCompletion();
   closeRelationshipGame();
   toast('三张关系底牌已写入画像');
 }
@@ -5110,7 +5115,7 @@ const DIMENSION_CONFIG={
       ['沟通协调','发现问题','文字表达','制定计划','临场应变'],
       ['倾听','审美判断','组织信息','推动事情落地','照顾他人感受']
     ],
-    selected:['结构化表达','共情别人的想法','视觉表达'],
+    selected:[],
     tests:[
       ['优势证据探索','无需先选关键词，用15个情境反推优势信号','约 3 分钟','#273A67']
     ]
@@ -5122,7 +5127,7 @@ const DIMENSION_CONFIG={
       ['做有创造感的事','安静阅读','和朋友一起吃饭','自然与户外','学习新工具'],
       ['照顾小动物','记录生活','逛展看电影','解决一道难题','慢慢做一顿饭']
     ],
-    selected:['把混乱变有序','独处的清晨','手绘'],
+    selected:[],
     tests:[
       ['霍兰德兴趣测评','完整30题 · 生成RIASEC六维兴趣画像','约 5 分钟','#2E3D66']
     ]
@@ -5159,7 +5164,7 @@ Object.entries(DIMENSION_CONFIG).forEach(([key,cfg])=>{
     batch:0,
     selected:new Set(cfg.selected),
     custom:new Set(),
-    saved:key==='skill'||key==='like'
+    saved:false
   };
 });
 let activeDimension='skill';
@@ -5258,16 +5263,30 @@ function saveDimension(){
     $(cfg.button).classList.add('todo');
     state.saved=false;
   }
-  const completed=Object.values(dimensionState).filter(s=>s.saved).length;
-  const pct=60+completed*6;
-  $('#pfill').style.width=`${pct}%`;
-  $('#ppct').textContent=`${pct}%`;
+  updateProfileCompletion();
   closeSheet();
   toast(`${cfg.title}已保存到画像 · 自填关键词已标记来源`);
 }
 function saveSkill(){ activeDimension='skill';saveDimension(); }
 
 /* ================= 初始化 ================= */
+function migrateToBlankProfileDefaults(){
+  const marker='kaleido_blank_profile_defaults_v1';
+  try{
+    if(localStorage.getItem(marker))return;
+    [
+      'kaleido_assessment_holland_v1','kaleido_holland_profile_v1','kaleido_mbti_badge_v1',
+      'kaleido_demo_assessment_bigfive_v2','kaleido_demo_assessment_strength_v1',
+      'kaleido_demo_assessment_love_v1','kaleido_demo_assessment_family_v1',
+      'kaleido_demo_profile_bigfive_v1','kaleido_demo_profile_bigfive_v2',
+      'kaleido_demo_profile_strength_v1','kaleido_demo_profile_love_v1',
+      'kaleido_demo_profile_family_v1','kaleido_life_signature_v1',
+      'kaleido_relationship_cards_v1'
+    ].forEach(key=>localStorage.removeItem(key));
+    localStorage.setItem(marker,'1');
+  }catch(e){}
+}
+migrateToBlankProfileDefaults();
 loadHollandProgress();
 updateStudioState();
 const savedHollandProfile=safeStoreGet('kaleido_holland_profile_v1');
@@ -5308,6 +5327,7 @@ if(savedRelationshipCards?.tags?.length===3){
   savedRelationshipCards.tags.forEach(t=>dimensionState.love.selected.add(t));
   dimensionState.love.saved=true;
 }
+updateProfileCompletion();
 
 /* 万花筒（参考 bobbyroe/kaleidoscope 的架构）：
    1. 「筒内景」：离屏源画布里几颗宝石持续公转 + 自转（对应原仓库缓冲场景中运动的多面体）
