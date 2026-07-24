@@ -114,6 +114,19 @@ create policy "Users manage own draws" on kaleidoscope_draws
 
 -- ==================== 触发器 ====================
 
+-- 幂等补齐 touch_updated_at：远端旧库（早期 0001 用 set_updated_at 命名）没有此函数，
+-- 缺失会导致本迁移整体回滚、后续 functions deploy 被 CI 跳过。
+create or replace function public.touch_updated_at()
+returns trigger language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+revoke all on function public.touch_updated_at() from public, anon, authenticated;
+
 -- profile_dimensions.updated_at
 drop trigger if exists trg_profile_dimensions_touch on profile_dimensions;
 create trigger trg_profile_dimensions_touch before update on profile_dimensions
