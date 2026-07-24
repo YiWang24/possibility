@@ -40,3 +40,26 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+  KaleidoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: KaleidoUITests
+    dependencies:
+      - target: Kaleido
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido.uitests
+        TEST_TARGET_NAME: Kaleido
+schemes:
+  Kaleido:
+    build:
+      targets:
+        Kaleido: all
+        KaleidoUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - KaleidoUITests
