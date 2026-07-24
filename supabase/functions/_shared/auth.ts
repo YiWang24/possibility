@@ -1,21 +1,38 @@
-// 用户态 Supabase client（携带请求 JWT，写库受 RLS 二次约束）
-import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+import {
+  createClient,
+  type SupabaseClient,
+  type User,
+} from "npm:@supabase/supabase-js@2.110.0";
+import { runtimeConfig } from "./config.ts";
+import { HttpError } from "./errors.ts";
 
-// SUPABASE_URL / SUPABASE_ANON_KEY 由 Edge 运行时自动注入
-export function userClient(req: Request): SupabaseClient {
-  const authHeader = req.headers.get("Authorization") ?? "";
-  return createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
+function bearerToken(req: Request): string {
+  const header = req.headers.get("authorization") ?? "";
+  const match = /^Bearer\s+(.+)$/i.exec(header);
+  if (!match?.[1]) {
+    throw new HttpError(401, "UNAUTHORIZED", "缺少有效登录凭证。");
+  }
+  return match[1];
+}
+
+export type AuthContext = {
+  user: User;
+  db: SupabaseClient;
+};
+
+export async function requireUser(req: Request): Promise<AuthContext> {
+  const token = bearerToken(req);
+  const db = createClient(
+    runtimeConfig.supabaseUrl,
+    runtimeConfig.supabaseAnonKey,
     {
-      global: { headers: { Authorization: authHeader } },
+      global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { persistSession: false, autoRefreshToken: false },
     },
   );
-}
-
-export async function requireUser(supabase: SupabaseClient) {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user;
+  const { data, error } = await db.auth.getUser(token);
+  if (error || !data.user) {
+    throw new HttpError(401, "UNAUTHORIZED", "登录凭证无效或已过期。");
+  }
+  return { user: data.user, db };
 }

@@ -1,17 +1,86 @@
-// 统一 JSON 响应 / 错误封装
 import { corsHeaders } from "./cors.ts";
 
-export function json(
-  body: unknown,
-  status = 200,
-  extra: Record<string, string> = {},
-): Response {
-  return new Response(JSON.stringify(body), {
+export class HttpError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = "HttpError";
+  }
+}
+
+export function jsonResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json", ...corsHeaders, ...extra },
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
   });
 }
 
-export function fail(message: string, status = 400): Response {
-  return json({ error: message }, status);
+export function errorResponse(error: unknown): Response {
+  if (error instanceof HttpError) {
+    return jsonResponse(
+      { error: { code: error.code, message: error.message } },
+      error.status,
+    );
+  }
+
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const status = Number((error as { status?: unknown }).status);
+    if (status === 429) {
+      return jsonResponse(
+        {
+          error: {
+            code: "RATE_LIMITED",
+            message: "请求过于频繁，请稍后重试。",
+          },
+        },
+        429,
+      );
+    }
+    if (status >= 500) {
+      return jsonResponse(
+        {
+          error: {
+            code: "MODEL_UPSTREAM_ERROR",
+            message: "AI 服务暂时不可用，请稍后重试。",
+          },
+        },
+        502,
+      );
+    }
+  }
+
+  const requestId = crypto.randomUUID();
+  console.error(`[${requestId}]`, error);
+  return jsonResponse(
+    {
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "服务暂时不可用，请稍后重试。",
+        request_id: requestId,
+      },
+    },
+    500,
+  );
+}
+
+export async function readJson(req: Request): Promise<unknown> {
+  if (req.method !== "POST") {
+    throw new HttpError(405, "METHOD_NOT_ALLOWED", "仅支持 POST 请求。");
+  }
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new HttpError(415, "UNSUPPORTED_MEDIA_TYPE", "请求体必须是 JSON。");
+  }
+  try {
+    return await req.json();
+  } catch {
+    throw new HttpError(400, "INVALID_JSON", "请求体不是有效 JSON。");
+  }
 }

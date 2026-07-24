@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true
+  },
+  "imports": {
+    "@anthropic-ai/sdk": "npm:@anthropic-ai/sdk@0.113.0",
+    "@anthropic-ai/sdk/helpers/json-schema": "npm:@anthropic-ai/sdk@0.113.0/helpers/json-schema",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.110.0"
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-explicit-any", "no-import-prefix"]
+    }
+  }
+}

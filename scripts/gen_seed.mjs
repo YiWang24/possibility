@@ -44,7 +44,36 @@ const nullable = (x, f) => (x === undefined || x === null ? "null" : f(x));
 const USERS = extractLiteral("USERS");
 const META = extractLiteral("PROFILE_META");
 const BOUNTIES = extractLiteral("BOUNTIES");
-const SERVICES = extractLiteral("PROFILE_SERVICES");
+// 最新原型已移除 PROFILE_SERVICES 常量；服务模态框仍使用这三类固定产品。
+const SERVICES = [
+  {
+    id: "consult",
+    type: "1 对 1 咨询",
+    title: "针对你的具体问题深聊",
+    price: 29,
+    unit: "/ 小时",
+    desc: "围绕转型选择、能力差距、作品集或求职准备，结合亲历给出针对性建议。",
+    tags: ["实时文字沟通", "1 小时", "24 小时内可追问"],
+  },
+  {
+    id: "materials",
+    type: "资料工具包",
+    title: "海外学校申请材料包",
+    price: 9.9,
+    unit: "",
+    desc: "包含选校比较表、申请时间线、文书自查清单和材料命名模板，购买后即可查看。",
+    tags: ["4 份模板", "申请清单", "永久查看"],
+  },
+  {
+    id: "companion",
+    type: "阶段陪跑",
+    title: "申请陪跑服务",
+    price: 599,
+    unit: "/ 期",
+    desc: "从目标拆解到材料提交的 4 周陪跑，每周复盘进度并提供关键节点反馈。",
+    tags: ["4 周", "每周复盘", "材料反馈"],
+  },
+];
 
 const out = [];
 out.push("-- seed.sql — 由 scripts/gen_seed.mjs 从原型 HTML 生成，请勿手改");

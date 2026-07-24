@@ -1,14 +1,12 @@
-// CORS（原生 App 不需要，浏览器联调/调试用）
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, apikey, content-type, x-client-info",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+} as const;
 
-export function preflight(req: Request): Response | null {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-  return null;
+export function preflightResponse(req: Request): Response | null {
+  return req.method === "OPTIONS"
+    ? new Response(null, { status: 204, headers: corsHeaders })
+    : null;
 }

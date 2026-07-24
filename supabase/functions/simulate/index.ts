@@ -1,54 +1,31 @@
-// EF-SIMULATE —— 人生实验室推演：3 种未来结局（技术设计文档 §6.3）
-import { preflight } from "../_shared/cors.ts";
-import { json, fail } from "../_shared/errors.ts";
-import { userClient, requireUser } from "../_shared/auth.ts";
-import { str, intIn, LIMITS } from "../_shared/validate.ts";
-import { MODELS } from "../_shared/anthropic.ts";
-import { SYSTEM_SIMULATE } from "../_shared/prompts.ts";
-import { SIMULATE_SCHEMA } from "../_shared/schemas.ts";
-import { structured } from "../_shared/llm.ts";
-
-interface Scene { title: string; points: string[] }
-interface SimResult { scenarios: { general: Scene; optimistic: Scene; cautionary: Scene } }
+import { structuredOutput } from "../_shared/anthropic.ts";
+import { requireUser } from "../_shared/auth.ts";
+import { runtimeConfig } from "../_shared/config.ts";
+import { preflightResponse } from "../_shared/cors.ts";
+import { insertSimulation } from "../_shared/db.ts";
+import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
+import { simulationPrompt } from "../_shared/prompts.ts";
+import { type SimulationOutput, simulationSchema } from "../_shared/schemas.ts";
+import { validateSimulateInput } from "../_shared/validate.ts";
 
 Deno.serve(async (req) => {
-  const pf = preflight(req);
-  if (pf) return pf;
-  if (req.method !== "POST") return fail("method not allowed", 405);
+  const preflight = preflightResponse(req);
+  if (preflight) return preflight;
 
-  const supabase = userClient(req);
-  const user = await requireUser(supabase);
-  if (!user) return fail("unauthorized", 401);
-
-  // deno-lint-ignore no-explicit-any
-  let body: any;
   try {
-    body = await req.json();
-  } catch {
-    return fail("invalid json");
+    const input = validateSimulateInput(await readJson(req));
+    const { user, db } = await requireUser(req);
+    const result = await structuredOutput<SimulationOutput>({
+      model: runtimeConfig.structuredModel,
+      maxTokens: 3_000,
+      system: simulationPrompt,
+      prompt:
+        `问题：${input.question}\n选择：${input.choice}\n推演年限：${input.years} 年`,
+      schema: simulationSchema,
+    });
+    await insertSimulation(db, user.id, input, result);
+    return jsonResponse(result);
+  } catch (error) {
+    return errorResponse(error);
   }
-  const question = str(body.question, LIMITS.question);
-  const choice = str(body.choice, LIMITS.choice);
-  const years = intIn(body.years, 1, 10);
-  if (!question || !choice || years === null) {
-    return fail("question / choice / years(1-10) required");
-  }
-
-  const result = await structured<SimResult>({
-    model: MODELS.simulate,
-    system: SYSTEM_SIMULATE,
-    user: `问题：${question}\n所选路径：${choice}\n推演年限：${years} 年`,
-    schema: SIMULATE_SCHEMA,
-    effort: "medium",
-    max_tokens: 2048,
-  });
-
-  const { data, error } = await supabase
-    .from("simulations")
-    .insert({ user_id: user.id, question, choice, years, scenarios: result.scenarios })
-    .select("id")
-    .single();
-  if (error) return fail("db: " + error.message, 500);
-
-  return json({ id: data.id, scenarios: result.scenarios });
 });

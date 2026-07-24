@@ -1,132 +1,165 @@
-// EF-CHAT —— 前门对话：流式回复 + 落库 + 岔路口/画像信号（技术设计文档 §6.1）
-import { preflight, corsHeaders } from "../_shared/cors.ts";
-import { fail } from "../_shared/errors.ts";
-import { userClient, requireUser } from "../_shared/auth.ts";
-import { str, oneOf, TOPICS, LIMITS } from "../_shared/validate.ts";
-import { anthropic, MODELS } from "../_shared/anthropic.ts";
-import { SYSTEM_FRONTDOOR, SYSTEM_SIGNAL } from "../_shared/prompts.ts";
-import { CROSSROADS_SCHEMA } from "../_shared/schemas.ts";
-import { structured } from "../_shared/llm.ts";
+import { anthropic, structuredOutput } from "../_shared/anthropic.ts";
+import { requireUser } from "../_shared/auth.ts";
+import { runtimeConfig } from "../_shared/config.ts";
+import { preflightResponse } from "../_shared/cors.ts";
+import {
+  applyChatSignal,
+  getOrCreateConversation,
+  insertMessage,
+  loadHistory,
+} from "../_shared/db.ts";
+import { errorResponse, HttpError, readJson } from "../_shared/errors.ts";
+import { chatSignalPrompt, frontDoorPrompt } from "../_shared/prompts.ts";
+import { type ChatSignal, chatSignalSchema } from "../_shared/schemas.ts";
+import { sseEvent, sseResponse } from "../_shared/sse.ts";
+import { validateChatInput } from "../_shared/validate.ts";
 
-type Msg = { role: "user" | "assistant"; content: string };
+function conversationText(
+  messages: Array<{ role: "user" | "assistant"; content: string }>,
+): string {
+  return messages
+    .map(({ role, content }) =>
+      `${role === "user" ? "用户" : "助手"}：${content}`
+    )
+    .join("\n");
+}
+
+const fallbackSignal: ChatSignal = {
+  crossroads: {
+    ready: false,
+    summary: "",
+    match_query: {
+      life_stage: "",
+      constraints: [],
+      tension: "",
+      decision_stage: "",
+      support_need: "",
+    },
+  },
+  profile_updates: [],
+  portrait_delta: 0,
+  high_risk: false,
+};
 
 Deno.serve(async (req) => {
-  const pf = preflight(req);
-  if (pf) return pf;
-  if (req.method !== "POST") return fail("method not allowed", 405);
+  const preflight = preflightResponse(req);
+  if (preflight) return preflight;
 
-  const supabase = userClient(req);
-  const user = await requireUser(supabase);
-  if (!user) return fail("unauthorized", 401);
-
-  // deno-lint-ignore no-explicit-any
-  let body: any;
   try {
-    body = await req.json();
-  } catch {
-    return fail("invalid json");
-  }
+    const input = validateChatInput(await readJson(req));
+    const { user, db } = await requireUser(req);
+    const conversation = await getOrCreateConversation(
+      db,
+      user.id,
+      input.topic,
+      input.conversationId,
+    );
+    if (conversation.status === "closed") {
+      throw new HttpError(
+        409,
+        "CONVERSATION_CLOSED",
+        "该对话已结束，请新建对话。",
+      );
+    }
+    const history = await loadHistory(db, conversation.id);
+    await insertMessage(db, conversation.id, "user", input.message);
 
-  const topic = oneOf(body.topic, TOPICS, "职业");
-  const message = str(body.message, LIMITS.message);
-  if (!message) return fail("message required or too long");
+    const messages: Array<{ role: "user" | "assistant"; content: string }> = [
+      ...history,
+      { role: "user", content: input.message },
+    ];
+    const signalPromise = structuredOutput<ChatSignal>({
+      model: runtimeConfig.diaryModel,
+      maxTokens: 1_024,
+      system: chatSignalPrompt,
+      prompt: conversationText(messages),
+      schema: chatSignalSchema,
+    }).then((signal) => ({ signal, degraded: false })).catch((error) => {
+      console.error("chat signal extraction failed:", error);
+      return { signal: fallbackSignal, degraded: true };
+    });
+    const messageStream = anthropic().messages.stream({
+      model: runtimeConfig.chatModel,
+      max_tokens: 1_024,
+      system: frontDoorPrompt(conversation.topic),
+      messages,
+    });
 
-  let conversationId: string | null =
-    typeof body.conversation_id === "string" ? body.conversation_id : null;
-  const history: Msg[] = Array.isArray(body.history) ? body.history.slice(-20) : [];
-
-  // 确保 conversation 存在（RLS 保证 owner）
-  if (!conversationId) {
-    const { data, error } = await supabase
-      .from("conversations")
-      .insert({ user_id: user.id, topic })
-      .select("id")
-      .single();
-    if (error) return fail("db: " + error.message, 500);
-    conversationId = data.id;
-  }
-  await supabase
-    .from("messages")
-    .insert({ conversation_id: conversationId, role: "user", content: message });
-
-  const messages: Msg[] = [...history, { role: "user", content: message }];
-  const encoder = new TextEncoder();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (event: string, data: unknown) =>
-        controller.enqueue(
-          encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
-        );
-
-      send("meta", { conversation_id: conversationId });
-
-      try {
-        // 省略 thinking → Opus 4.8 低延迟聊天
-        const s = anthropic.messages.stream({
-          model: MODELS.chat,
-          max_tokens: 2048,
-          system: SYSTEM_FRONTDOOR(topic),
-          messages,
-        });
-        s.on("text", (t: string) => send("token", { t }));
-        const final = await s.finalMessage();
-        let reply = "";
-        for (const b of final.content) {
-          if (b.type === "text") {
-            reply = b.text;
-            break;
-          }
-        }
-
-        await supabase.from("messages").insert({
-          conversation_id: conversationId,
-          role: "assistant",
-          content: reply,
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        let assistantText = "";
+        messageStream.on("text", (text) => {
+          assistantText += text;
+          if (!cancelled) controller.enqueue(sseEvent({ t: text }));
         });
 
-        // 岔路口/画像信号（Haiku，结构化）——回复完成后跑，尽力而为
-        // deno-lint-ignore no-explicit-any
-        let signals: any = null;
         try {
-          signals = await structured({
-            model: MODELS.signal,
-            system: SYSTEM_SIGNAL,
-            user: JSON.stringify({
-              topic,
-              dialogue: [...messages, { role: "assistant", content: reply }],
-            }),
-            schema: CROSSROADS_SCHEMA,
-            max_tokens: 512,
-          });
-          if (signals?.crossroads) {
-            await supabase
-              .from("conversations")
-              .update({
-                crossroads: signals.crossroads,
-                status: signals.crossroads.ready ? "crossroads" : "open",
-              })
-              .eq("id", conversationId);
+          await messageStream.finalMessage();
+          if (!assistantText.trim()) {
+            throw new HttpError(
+              502,
+              "MODEL_OUTPUT_EMPTY",
+              "AI 未返回有效内容。",
+            );
           }
-        } catch (_) {
-          // 信号失败不影响主回复
+
+          const signalResult = await signalPromise;
+          let { signal } = signalResult;
+          if (signal.high_risk) {
+            signal = {
+              ...signal,
+              crossroads: {
+                ...signal.crossroads,
+                ready: false,
+              },
+            };
+          }
+          await insertMessage(
+            db,
+            conversation.id,
+            "assistant",
+            assistantText,
+            { signal },
+          );
+          const profile = await applyChatSignal(
+            db,
+            user.id,
+            conversation.id,
+            conversation.status,
+            signal,
+          );
+          if (!cancelled) {
+            controller.enqueue(sseEvent({
+              done: true,
+              conversation_id: conversation.id,
+              crossroads: signal.crossroads,
+              profile,
+              high_risk: signal.high_risk,
+              signal_degraded: signalResult.degraded,
+            }, "done"));
+          }
+        } catch (error) {
+          console.error("chat stream failed:", error);
+          if (!cancelled) {
+            controller.enqueue(sseEvent({
+              error: {
+                code: error instanceof HttpError ? error.code : "STREAM_ERROR",
+                message: "回复中断，请稍后重试。",
+              },
+            }, "error"));
+          }
+        } finally {
+          if (!cancelled) controller.close();
         }
-
-        send("done", { conversation_id: conversationId, signals });
-        controller.close();
-      } catch (e) {
-        send("error", { message: String(e) });
-        controller.close();
-      }
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
+      },
+      cancel() {
+        cancelled = true;
+        messageStream.abort();
+      },
+    });
+    return sseResponse(body);
+  } catch (error) {
+    return errorResponse(error);
+  }
 });

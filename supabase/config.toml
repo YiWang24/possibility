@@ -1,5 +1,5 @@
 # 万花筒 KALEIDO · Supabase 本地/项目配置
-project_id = "kaleido"
+project_id = "adx"
 
 [api]
 enabled = true
@@ -10,7 +10,7 @@ max_rows = 1000
 
 [db]
 port = 54322
-major_version = 16
+major_version = 17
 
 [studio]
 enabled = true
