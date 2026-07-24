@@ -1,0 +1,57 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# 避免并发部署互相覆盖；同一时间只跑一个生产部署。
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: db push + functions deploy
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: 关联生产项目
+        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: 推送数据库迁移
+        run: supabase db push
+
+      - name: 同步 Edge Function 密钥
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_BASE_URL: ${{ vars.ANTHROPIC_BASE_URL }}
+          ANTHROPIC_CHAT_MODEL: ${{ vars.ANTHROPIC_CHAT_MODEL }}
+          ANTHROPIC_STRUCTURED_MODEL: ${{ vars.ANTHROPIC_STRUCTURED_MODEL }}
+          ANTHROPIC_DIARY_MODEL: ${{ vars.ANTHROPIC_DIARY_MODEL }}
+        run: |
+          umask 077
+          {
+            printf 'ANTHROPIC_API_KEY=%s\n' "$ANTHROPIC_API_KEY"
+            printf 'ANTHROPIC_BASE_URL=%s\n' "${ANTHROPIC_BASE_URL:-https://llm-center.modelbest.cn/llm}"
+            printf 'ANTHROPIC_CHAT_MODEL=%s\n' "${ANTHROPIC_CHAT_MODEL:-claude-sonnet-5}"
+            printf 'ANTHROPIC_STRUCTURED_MODEL=%s\n' "${ANTHROPIC_STRUCTURED_MODEL:-claude-sonnet-5}"
+            printf 'ANTHROPIC_DIARY_MODEL=%s\n' "${ANTHROPIC_DIARY_MODEL:-claude-sonnet-5}"
+          } > supabase/.env.ci
+          supabase secrets set --env-file supabase/.env.ci --project-ref "$SUPABASE_PROJECT_ID"
+          rm -f supabase/.env.ci
+
+      - name: 部署 Edge Functions
+        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
