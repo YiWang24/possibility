@@ -22,17 +22,22 @@ const kaleidoscopePrompt =
 - similar：选择经历、处境或价值观与用户最相近的旅人
 - different：选择人生轨迹或选择方向与用户最不同的旅人
 
-只输出一个 JSON 对象：{"traveler_id": <number>, "reason": "<一句话说明为什么匹配>"}`;
+只输出一个 JSON 对象：{"traveler_id": <number>, "reason": "<一句话说明为什么匹配>", "match_score": <0到1之间的小数，表示匹配强度>}`;
 
-type KaleidoResult = { traveler_id: number; reason: string };
+type KaleidoResult = {
+  traveler_id: number;
+  reason: string;
+  match_score: number;
+};
 
 const kaleidoSchema = {
   type: "object",
   properties: {
     traveler_id: { type: "integer" },
     reason: { type: "string", minLength: 1 },
+    match_score: { type: "number", minimum: 0, maximum: 1 },
   },
-  required: ["traveler_id", "reason"],
+  required: ["traveler_id", "reason", "match_score"],
   additionalProperties: false,
 } as const;
 
@@ -67,9 +72,12 @@ Deno.serve(async (req) => {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(5);
-        const recentIds = (recentDraws ?? [])
-          .map((d) => d.traveler_id)
-          .filter(Boolean);
+        const recentIds = [
+          ...new Set([
+            ...(recentDraws ?? []).map((d) => d.traveler_id).filter(Boolean),
+            ...input.recentlyViewedIds,
+          ]),
+        ];
 
         // Get candidate travelers
         const { data: travelers, error: tErr } = await db
@@ -88,6 +96,7 @@ Deno.serve(async (req) => {
         // Try AI matching, fallback to random
         let selectedId: number;
         let reason: string;
+        let matchScore: number;
         try {
           const result = await structuredOutput<KaleidoResult>({
             model: runtimeConfig.structuredModel,
@@ -111,6 +120,7 @@ Deno.serve(async (req) => {
           if (valid) {
             selectedId = result.traveler_id;
             reason = result.reason;
+            matchScore = result.match_score;
           } else {
             throw new Error("Invalid traveler_id from AI");
           }
@@ -128,6 +138,7 @@ Deno.serve(async (req) => {
           reason = input.mode === "similar"
             ? "经历与你有相似之处"
             : "走了一条与你不同的路";
+          matchScore = 0.6;
         }
 
         // Record the draw
@@ -149,6 +160,7 @@ Deno.serve(async (req) => {
             dims: traveler.dims,
           },
           reason,
+          match_score: matchScore,
           mode: input.mode,
         });
       }

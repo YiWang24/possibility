@@ -1,0 +1,198 @@
+// 业务逻辑单元测试：覆盖纯业务算法（persona 兜底、旅人推荐过滤）、
+// 结构化输出 schema 的自洽性，以及 SSE 事件编码契约。
+// 这些逻辑一旦出错会直接破坏 AI 集成的真实业务表现，故独立于校验器单测。
+
+import { fallbackPersona, FORM_DEFS, hashSeed } from "../_shared/persona.ts";
+import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
+import { sseEvent } from "../_shared/sse.ts";
+import {
+  chatSignalSchema,
+  diarySchema,
+  labChoiceSchema,
+  matchSchema,
+  personaSchema,
+  simulationSchema,
+} from "../_shared/schemas.ts";
+
+function assert(
+  condition: unknown,
+  message = "assertion failed",
+): asserts condition {
+  if (!condition) throw new Error(message);
+}
+
+// ==================== Persona 离线兜底 ====================
+
+Deno.test("persona fallback is deterministic for the same input", () => {
+  const a = fallbackPersona("我擅长结构与计划，喜欢分析");
+  const b = fallbackPersona("我擅长结构与计划，喜欢分析");
+  assert(a.seed === b.seed, "seed should be stable");
+  assert(a.shape === b.shape, "shape should be stable");
+  assert(a.hue === b.hue && a.lobes === b.lobes, "hue/lobes should be stable");
+});
+
+Deno.test("persona fallback always returns schema-valid ranges", () => {
+  const samples = [
+    "",
+    "结构 有序 计划 理性 分析",
+    "共情 陪伴 关系 家庭 亲情",
+    "视觉 手绘 创造 审美 表达",
+    "独处 探索 学习 尝试 成长",
+    "完全无关的文本 xyz 123",
+  ];
+  for (const text of samples) {
+    const p = fallbackPersona(text);
+    assert(p.hue >= 0 && p.hue < 360, `hue out of range for "${text}"`);
+    assert(p.lobes >= 3 && p.lobes <= 9, `lobes out of range for "${text}"`);
+    assert(p.seed >= 0 && p.seed <= 99_999, `seed out of range for "${text}"`);
+    assert(p.shape.length > 0, "shape must be non-empty");
+    assert(p.summary.includes(p.shape), "summary should mention the shape");
+  }
+});
+
+Deno.test("persona fallback picks form by dominant keyword signal", () => {
+  const relation = fallbackPersona("共情 陪伴 关系 家庭 亲情 朋友 信任");
+  assert(
+    relation.shape === FORM_DEFS.bloom.name,
+    `relation-heavy text should map to bloom, got ${relation.shape}`,
+  );
+  const structure = fallbackPersona("结构 有序 计划 理性 分析 原则 边界");
+  assert(
+    structure.shape === FORM_DEFS.crystal.name,
+    `structure-heavy text should map to crystal, got ${structure.shape}`,
+  );
+});
+
+Deno.test("persona empty input still yields a valid persona", () => {
+  const p = fallbackPersona("");
+  assert(p.seed === hashSeed("屿岸·持续探索"), "empty input uses default seed");
+  assert(Object.values(FORM_DEFS).some((d) => d.name === p.shape));
+});
+
+// ==================== 旅人推荐过滤 ====================
+
+Deno.test("filterRecommendedTravelerIds dedups, filters and caps", () => {
+  const valid = new Set([1, 2, 3, 4, 5]);
+  const out = filterRecommendedTravelerIds([2, 2, 99, 3, 1, 4], valid);
+  assert(out.length === 3, "should cap at 3");
+  assert(out.join(",") === "2,3,1", `unexpected order/content: ${out}`);
+  assert(!out.includes(99), "should drop ids not in valid set");
+});
+
+Deno.test("filterRecommendedTravelerIds returns empty when nothing matches", () => {
+  const out = filterRecommendedTravelerIds([7, 8, 9], new Set([1, 2]));
+  assert(out.length === 0);
+});
+
+Deno.test("filterRecommendedTravelerIds respects custom maxItems", () => {
+  const out = filterRecommendedTravelerIds([1, 2, 3], new Set([1, 2, 3]), 2);
+  assert(out.length === 2 && out[0] === 1 && out[1] === 2);
+});
+
+// ==================== Schema 自洽性 ====================
+// 结构化输出要求：每个 object 节点必须 additionalProperties:false，
+// 且 required 中的键必须都在 properties 内声明，否则模型输出会被拒绝或漂移。
+
+type JsonSchemaNode = {
+  type?: string;
+  properties?: Record<string, JsonSchemaNode>;
+  required?: string[];
+  additionalProperties?: boolean;
+  items?: JsonSchemaNode;
+};
+
+function assertSchemaConsistent(node: JsonSchemaNode, path: string): void {
+  if (node.type === "object") {
+    assert(
+      node.additionalProperties === false,
+      `${path} object must set additionalProperties:false`,
+    );
+    const props = node.properties ?? {};
+    for (const key of node.required ?? []) {
+      assert(
+        Object.prototype.hasOwnProperty.call(props, key),
+        `${path}.required "${key}" missing from properties`,
+      );
+    }
+    for (const [key, child] of Object.entries(props)) {
+      assertSchemaConsistent(child, `${path}.${key}`);
+    }
+  }
+  if (node.type === "array" && node.items) {
+    assertSchemaConsistent(node.items, `${path}[]`);
+  }
+}
+
+Deno.test("all structured-output schemas are internally consistent", () => {
+  const schemas: Array<[string, JsonSchemaNode]> = [
+    ["matchSchema", matchSchema as unknown as JsonSchemaNode],
+    ["simulationSchema", simulationSchema as unknown as JsonSchemaNode],
+    ["labChoiceSchema", labChoiceSchema as unknown as JsonSchemaNode],
+    ["personaSchema", personaSchema as unknown as JsonSchemaNode],
+    ["diarySchema", diarySchema as unknown as JsonSchemaNode],
+    ["chatSignalSchema", chatSignalSchema as unknown as JsonSchemaNode],
+  ];
+  for (const [name, schema] of schemas) {
+    assertSchemaConsistent(schema, name);
+  }
+});
+
+Deno.test("simulation schema exposes bottom_line + recommendations contract", () => {
+  const props = simulationSchema.properties;
+  assert("scenarios" in props, "scenarios required");
+  assert("bottom_line_analysis" in props, "bottom_line_analysis required");
+  assert(
+    "recommended_traveler_ids" in props,
+    "recommended_traveler_ids required",
+  );
+  const bottom = simulationSchema.properties.bottom_line_analysis;
+  assert(bottom.required.includes("is_acceptable"));
+  assert(bottom.required.includes("risks"));
+  assert(bottom.required.includes("protective_conditions"));
+});
+
+Deno.test("persona schema bounds match fallback output contract", () => {
+  const p = personaSchema.properties;
+  assert(p.hue.minimum === 0 && p.hue.maximum === 360);
+  assert(p.lobes.minimum === 3 && p.lobes.maximum === 9);
+  assert(p.seed.minimum === 0 && p.seed.maximum === 99_999);
+});
+
+// ==================== SSE 事件编码契约 ====================
+
+const decoder = new TextDecoder();
+
+Deno.test("sseEvent encodes named events for the client contract", () => {
+  const text = decoder.decode(sseEvent({ done: true }, "done"));
+  assert(text.startsWith("event: done\n"), "named event needs event line");
+  assert(text.includes('data: {"done":true}'), "payload should be JSON data");
+  assert(text.endsWith("\n\n"), "SSE frame must end with blank line");
+});
+
+Deno.test("sseEvent encodes anonymous token deltas without event line", () => {
+  const text = decoder.decode(sseEvent({ t: "你好" }));
+  assert(!text.startsWith("event:"), "token delta has no event line");
+  assert(text === 'data: {"t":"你好"}\n\n', `unexpected frame: ${text}`);
+});
+
+Deno.test("chat done payload carries alignment fields", () => {
+  // 复刻 chat/index.ts done 事件契约：is_enough 反映岔路口是否清晰，
+  // next_actions 在就绪时给出 match 入口。此处校验编码后的帧结构。
+  const ready = {
+    done: true,
+    is_enough: true,
+    next_actions: [{
+      type: "match",
+      label: "看看走过类似岔路口、结局不同的人",
+    }],
+  };
+  const frame = decoder.decode(sseEvent(ready, "done"));
+  const parsed = JSON.parse(
+    frame.slice(frame.indexOf("{"), frame.indexOf("}\n\n") + 1),
+  );
+  assert(parsed.is_enough === true);
+  assert(
+    Array.isArray(parsed.next_actions) &&
+      parsed.next_actions[0].type === "match",
+  );
+});

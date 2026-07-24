@@ -146,6 +146,7 @@ export async function insertSimulation(
     years: input.years,
     carry_cards: input.carry_cards ?? [],
     scenarios: result.scenarios,
+    bottom_line: result.bottom_line_analysis,
   });
   if (error) dbFailure("insert simulation", error);
 }

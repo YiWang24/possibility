@@ -70,8 +70,70 @@ export const simulationSchema = {
       required: ["general", "optimistic", "cautionary"],
       additionalProperties: false,
     },
+    bottom_line_analysis: {
+      type: "object",
+      properties: {
+        is_acceptable: { type: "boolean" },
+        risks: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string", minLength: 1 },
+        },
+        protective_conditions: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string", minLength: 1 },
+        },
+      },
+      required: ["is_acceptable", "risks", "protective_conditions"],
+      additionalProperties: false,
+    },
+    recommended_traveler_ids: {
+      type: "array",
+      maxItems: 3,
+      items: { type: "integer" },
+    },
   },
-  required: ["scenarios"],
+  required: ["scenarios", "bottom_line_analysis", "recommended_traveler_ids"],
+  additionalProperties: false,
+} as const;
+
+export const labChoiceSchema = {
+  type: "object",
+  properties: {
+    cards: {
+      type: "array",
+      minItems: 2,
+      maxItems: 6,
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "string", minLength: 1 },
+          glyph: { type: "string", minLength: 1 },
+          title: { type: "string", minLength: 1 },
+          description: { type: "string", minLength: 1 },
+          color: { type: "string", minLength: 1 },
+        },
+        required: ["id", "glyph", "title", "description", "color"],
+        additionalProperties: false,
+      },
+    },
+    rationale: { type: "string" },
+  },
+  required: ["cards", "rationale"],
+  additionalProperties: false,
+} as const;
+
+export const personaSchema = {
+  type: "object",
+  properties: {
+    shape: { type: "string", minLength: 1 },
+    hue: { type: "integer", minimum: 0, maximum: 360 },
+    lobes: { type: "integer", minimum: 3, maximum: 9 },
+    seed: { type: "integer", minimum: 0, maximum: 99_999 },
+    summary: { type: "string", minLength: 1 },
+  },
+  required: ["shape", "hue", "lobes", "seed", "summary"],
   additionalProperties: false,
 } as const;
 
@@ -178,6 +240,31 @@ export type SimulationOutput = {
     costs: string[];
     key_condition: string;
   }>;
+  bottom_line_analysis: {
+    is_acceptable: boolean;
+    risks: string[];
+    protective_conditions: string[];
+  };
+  recommended_traveler_ids: number[];
+};
+
+export type LabChoiceOutput = {
+  cards: Array<{
+    id: string;
+    glyph: string;
+    title: string;
+    description: string;
+    color: string;
+  }>;
+  rationale: string;
+};
+
+export type PersonaOutput = {
+  shape: string;
+  hue: number;
+  lobes: number;
+  seed: number;
+  summary: string;
 };
 
 export type DiaryOutput = {

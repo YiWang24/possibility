@@ -6,7 +6,15 @@ import { insertSimulation } from "../_shared/db.ts";
 import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
 import { simulationPrompt } from "../_shared/prompts.ts";
 import { type SimulationOutput, simulationSchema } from "../_shared/schemas.ts";
+import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { validateSimulateInputV2 } from "../_shared/validate.ts";
+
+type TravelerCandidate = {
+  id: number;
+  name: string;
+  quote: string;
+  tags: string[];
+};
 
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
@@ -16,12 +24,23 @@ Deno.serve(async (req) => {
     const input = validateSimulateInputV2(await readJson(req));
     const { user, db } = await requireUser(req);
 
-    // Build prompt with carry_cards context
+    // 候选旅人：用于生成「相似旅人推荐」，模型只能从这些 id 中挑选。
+    const { data: travelerRows } = await db
+      .from("travelers")
+      .select("id,name,quote,tags")
+      .order("id");
+    const candidates = (travelerRows ?? []) as TravelerCandidate[];
+    const validIds = new Set(candidates.map(({ id }) => id));
+
+    // Build prompt with carry_cards + candidate travelers context
     let prompt =
       `问题：${input.question}\n选择：${input.choice}\n推演年限：${input.years} 年`;
     if (input.carry_cards && input.carry_cards.length > 0) {
       prompt += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
     }
+    prompt += `\n\n候选旅人（recommended_traveler_ids 只能取这些 id）：\n${
+      JSON.stringify(candidates)
+    }`;
 
     const result = await structuredOutput<SimulationOutput>({
       model: runtimeConfig.structuredModel,
@@ -30,6 +49,13 @@ Deno.serve(async (req) => {
       prompt,
       schema: simulationSchema,
     });
+
+    // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
+    result.recommended_traveler_ids = filterRecommendedTravelerIds(
+      result.recommended_traveler_ids,
+      validIds,
+    );
+
     await insertSimulation(db, user.id, input, result);
     return jsonResponse(result);
   } catch (error) {
