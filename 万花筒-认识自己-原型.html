@@ -529,6 +529,23 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .swipe-hint{font-size:10.5px;color:var(--faint);margin:6px 4px 0;letter-spacing:.1em}
 .chat-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 4px 0;opacity:0;animation:msgin .4s ease forwards}
 .chat-actions button{font-family:var(--sans)}
+.chat-next-panel{
+  margin:14px 4px 0;padding:14px;border-radius:20px;background:linear-gradient(145deg,rgba(94,150,255,.11),rgba(143,123,255,.055));
+  border:1px solid rgba(111,165,255,.2);opacity:0;animation:msgin .42s ease forwards;
+}
+.chat-next-panel .cap{font-size:9px;letter-spacing:.16em;color:#91B1FF}
+.chat-next-panel h4{font-size:13.5px;margin-top:5px}
+.chat-next-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.chat-path{
+  all:unset;cursor:pointer;box-sizing:border-box;min-height:72px;padding:11px;border-radius:14px;
+  background:rgba(255,255,255,.045);border:1px solid var(--line);transition:transform .18s,border-color .18s,background .18s;
+}
+.chat-path:hover{transform:translateY(-2px);border-color:rgba(111,165,255,.42);background:rgba(94,150,255,.09)}
+.chat-path:active{transform:scale(.98)}
+.chat-path.primary{grid-column:1/-1;min-height:66px;background:linear-gradient(125deg,rgba(62,112,232,.28),rgba(107,85,211,.18));border-color:rgba(111,165,255,.34)}
+.chat-path i{font-style:normal;font-size:15px}.chat-path b{display:block;font-size:11.5px;margin-top:7px}.chat-path small{display:block;font-size:9px;color:var(--faint);line-height:1.45;margin-top:3px}
+.chat-next-summary{all:unset;cursor:pointer;display:block;margin:11px auto 0;font-size:10px;color:#9DBCFF;padding:4px 8px}
+.chat-next-summary:hover{color:#fff}
 .chat-summary-hero{margin:8px 0 18px;padding:22px;border-radius:24px;background:linear-gradient(145deg,rgba(64,101,203,.24),rgba(113,73,170,.12));border:1px solid rgba(111,165,255,.25)}
 .chat-summary-hero .eyebrow,.chat-summary-card .eyebrow{font-size:10px;letter-spacing:.18em;color:#91B1FF}
 .chat-summary-hero h3{font-size:22px;line-height:1.45;margin-top:10px}
@@ -3374,14 +3391,26 @@ function renderInsight(){
   },850);
   chatState.stage='review';
 }
+function chatNextActionsHTML(showSummary=true){
+  return `<div class="chat-next-panel">
+    <div class="cap">信息已经足够 · 选择下一步</div>
+    <h4>把刚才的理解带去哪里？</h4>
+    <div class="chat-next-grid">
+      <button class="chat-path primary" onclick="openLabFromChat()"><i>◉</i><b>去人生实验室</b><small>带着当前问题，推演几种可能</small></button>
+      <button class="chat-path" onclick="openSimilarFromChat()"><i>⌁</i><b>看相似经历</b><small>去社区找走过这段路的人</small></button>
+      <button class="chat-path" onclick="shareChatExploration()"><i>↗</i><b>分享这次探索</b><small>发给一个你信任的人</small></button>
+    </div>
+    ${showSummary?'<button class="chat-next-summary" onclick="openChatSummary()">先查看完整总结 →</button>':''}
+  </div>`;
+}
 function confirmChatInsight(){
   document.querySelectorAll('#chatScroll .chat-actions').forEach(x=>x.remove());
   appendChat('me','嗯，这个理解比较接近我。');
-  assistantAfter('好，那我不再继续替你解释。我们把刚才已经说清楚的、仍在拉扯的，以及下一步可以验证的事情整理出来。');
+  const a=chatState.answers;
+  assistantAfter(`现在的信息已经够了。我的判断是：你并不是没有答案，而是<b>想靠近「${escapeHTML(a[0]||'真正想要的生活')}」的同时，也在保护「${escapeHTML(a[1]||'暂时不能失去的东西')}」</b>。<br><br>真正需要验证的，不是哪条路绝对正确，而是哪一种代价是你愿意承担、也有能力承担的。`);
   setTimeout(()=>{
-    const actions=el(`<div class="chat-actions"><button class="gochip" onclick="openChatSummary()">生成本次探索总结 →</button></div>`);
-    $('#chatScroll').appendChild(actions);scrollBottom();
-  },760);
+    $('#chatScroll').appendChild(el(chatNextActionsHTML()));scrollBottom();
+  },820);
   chatState.stage='ready';
 }
 function requestChatCorrection(){
@@ -3419,8 +3448,52 @@ function openChatSummary(){
     <div class="chat-summary-card"><div class="eyebrow">你真正想解决的</div><h4>不是选出标准答案，而是确认什么值得你承担代价</h4><p>你的犹豫并不等于没有方向。它提醒你：愿望与代价需要被分开看见。</p></div>
     <div class="chat-summary-card tension"><div class="eyebrow">此刻的两股拉力</div><h4>想靠近的，和想保护的</h4><p>一边是「${escapeHTML(a[0]||'你真正想靠近的生活')}」；另一边是「${escapeHTML(a[1]||'你暂时还不能轻易放下的部分')}」。两边都是真的，不必把其中一边解释成软弱。</p></div>
     <div class="chat-summary-card"><div class="eyebrow">已经比较清楚的</div><h4>你的原话比标签更重要</h4><p>${escapeHTML(a[a.length-1]||'你愿意先理解自己的真实需要，再做决定。')}</p></div>
-    <div class="chat-summary-card next"><div class="eyebrow">下一步的小验证</div><h4>先收集一个真实证据</h4><p>未来 7 天，做一次成本很低、可以撤回的小尝试。记录行动前后的期待、精力和抗拒，再判断你是“不想要”，还是“暂时承担不起”。</p></div>`;
+    <div class="chat-summary-card next"><div class="eyebrow">下一步的小验证</div><h4>先收集一个真实证据</h4><p>未来 7 天，做一次成本很低、可以撤回的小尝试。记录行动前后的期待、精力和抗拒，再判断你是“不想要”，还是“暂时承担不起”。</p></div>
+    ${chatNextActionsHTML(false)}`;
   $('#chatSummaryPage').classList.add('open');
+}
+function openLabFromChat(){
+  const q=chatState.question||$('#askText').value.trim();
+  if(q){
+    $('#labQText').textContent=q;
+    $('#rsQText').textContent=q;
+  }
+  go('lab');
+  $('#scr-lab').scrollTop=0;
+  toast('问题已带入人生实验室');
+}
+function openSimilarFromChat(){
+  const topicQuery={职业:'转岗',家庭:'家庭',升学:'升学',情感:'关系'};
+  const query=topicQuery[chatState.topic]||chatState.topic||'选择';
+  go('comm');
+  const tabBtn=document.querySelector('#commTabs button');
+  commTab(0,tabBtn);
+  communitySearch[0]=query;
+  syncCommunitySearch();
+  searchCommunity(query);
+  toast(`正在寻找「${query}」的相似经历`);
+}
+async function shareChatExploration(){
+  const a=chatState.answers;
+  const text=`我刚在万花筒探索了一个问题：${chatState.question}\n\n我现在更清楚的是：我既想靠近${a[0]||'真正想要的生活'}，也在保护${a[1]||'暂时不能失去的东西'}。`;
+  if(navigator.share){
+    try{
+      await navigator.share({title:'我的万花筒探索',text});
+      toast('已打开分享');
+      return;
+    }catch(err){
+      if(err&&err.name==='AbortError')return;
+    }
+  }
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+    else{
+      const ta=document.createElement('textarea');
+      ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);
+      ta.select();document.execCommand('copy');ta.remove();
+    }
+    toast('探索摘要已复制，可以分享了');
+  }catch(_){toast('暂时无法复制，请稍后再试')}
 }
 function finishChatSummary(){
   closePush('chatSummaryPage');closePush('chatPage');
