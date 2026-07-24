@@ -1,8 +1,12 @@
 .DS_Store
 
+# 环境变量文件（含敏感信息，禁止提交）
+.env
+.env.local
+.env.*.local
+
 # Supabase / 后端
 supabase/.branches
 supabase/.temp
 supabase/functions/.env
-.env
 node_modules/
