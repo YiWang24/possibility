@@ -85,11 +85,14 @@ private func hsla(_ h: Double, _ s: Double, _ l: Double, _ a: Double) -> Color {
 
 struct PersonaCanvasView: View {
     let model: PersonaModel
+    /// 外部暂停（如首页被 fullScreenCover 覆盖时停止重绘，省电且不拖累无障碍快照）
+    var paused = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(paused: reduceMotion)) { timeline in
+        // 30fps 足够呈现呼吸 / 公转，明显低于逐帧 120fps 的 CPU 开销
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion || paused)) { timeline in
             // 原型 time 单位为 ms
             let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * 1000
             Canvas { ctx, size in
@@ -298,6 +301,8 @@ struct PersonaCanvasView: View {
 struct PersonaStageView: View {
     let model: PersonaModel
     let userName: String
+    /// 页面被覆盖时暂停画布重绘
+    var paused = false
     /// 3 张人生底牌齐 → 边框高亮（.has-life-cards）
     var hasLifeCards: Bool { model.signature.count >= 3 }
 
@@ -311,7 +316,7 @@ struct PersonaStageView: View {
             RadialGradient(colors: [Color(hex: 0xE35CC1, alpha: 0.12), .clear],
                            center: UnitPoint(x: 0.3, y: 0.8), startRadius: 0, endRadius: 135)
 
-            PersonaCanvasView(model: model)
+            PersonaCanvasView(model: model, paused: paused)
 
             // 底部压暗（caption 可读性）
             LinearGradient(stops: [

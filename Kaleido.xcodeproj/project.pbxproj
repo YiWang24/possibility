@@ -22,6 +22,7 @@
 		31DBA04C18A415B9C765DA72 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D3FB518AA57BD17162B57EB /* AppConfig.swift */; };
 		3288D43E6455032DF89F4297 /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D84C206AB37B19A62B2D0AA3 /* OrbView.swift */; };
 		3B4A2965A4F469FDCACB6E49 /* ProfileModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F693AC915D02F8646EAD01 /* ProfileModel.swift */; };
+		3F44FDF235C18B3A609D72DE /* KaleidoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */; };
 		4C6EDC32FE5839073D2CC464 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 07711DD25563DE5209E0D4D8 /* README.md */; };
 		4DB7CA991986E5B3E653695B /* ChatStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C6B2B78080BAF0FFC349B0 /* ChatStreamClient.swift */; };
 		54EDBABC82F4E94FAF0152F0 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF79D65407D0481759C02B5D /* SupabaseService.swift */; };
@@ -51,6 +52,16 @@
 		FFB0B602F85948BE008E9BA1 /* DimensionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD20D70A16C7B47D0A03423C /* DimensionData.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		C90CA2BB6037B2B5876C5AAA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB1DBA5175DB87FD3B2A845 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5FC792D4DA3FF0AE9D83A9BB;
+			remoteInfo = Kaleido;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		0446F7339046BBB77C114761 /* KaleidoscopeDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeDrawView.swift; sourceTree = "<group>"; };
 		0716ADCBC61AC61042560808 /* ProfilePanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePanels.swift; sourceTree = "<group>"; };
@@ -60,6 +71,8 @@
 		2CDB8ABE3B90724B7548206D /* Config.xcconfig.example */ = {isa = PBXFileReference; path = Config.xcconfig.example; sourceTree = "<group>"; };
 		2E54C3C471DA8D8647A2A94B /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		3660B08FD00D66EF348BA7C4 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
+		3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KaleidoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoUITests.swift; sourceTree = "<group>"; };
 		53339D3727298130F52E1CB8 /* DialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialView.swift; sourceTree = "<group>"; };
 		593AF7C44D4C4186379E377C /* DimensionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionSheet.swift; sourceTree = "<group>"; };
 		5B7CE7BA39BBE663E7184330 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
@@ -156,6 +169,14 @@
 			path = Features;
 			sourceTree = "<group>";
 		};
+		615F0807AABF42DA1FABFC8B /* KaleidoUITests */ = {
+			isa = PBXGroup;
+			children = (
+				4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */,
+			);
+			path = KaleidoUITests;
+			sourceTree = "<group>";
+		};
 		6CF3C93EDFA1AD9851D84075 /* Community */ = {
 			isa = PBXGroup;
 			children = (
@@ -169,6 +190,7 @@
 			isa = PBXGroup;
 			children = (
 				2371F7144065BE4E2A9A835E /* KaleidoApp */,
+				615F0807AABF42DA1FABFC8B /* KaleidoUITests */,
 				DCECF1450C4A0E496A9098A8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -256,6 +278,7 @@
 			isa = PBXGroup;
 			children = (
 				8B45E4BB96242AA23C1F0179 /* Kaleido.app */,
+				3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -293,6 +316,24 @@
 			productReference = 8B45E4BB96242AA23C1F0179 /* Kaleido.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A90A9BA511D1F3CF9964C592 /* KaleidoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 86EDB8A07256569BB89CAC3D /* Build configuration list for PBXNativeTarget "KaleidoUITests" */;
+			buildPhases = (
+				4581EC26F638E43CA875F162 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				71E13B4358269D537EAC33EB /* PBXTargetDependency */,
+			);
+			name = KaleidoUITests;
+			packageProductDependencies = (
+			);
+			productName = KaleidoUITests;
+			productReference = 3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -304,6 +345,10 @@
 				TargetAttributes = {
 					5FC792D4DA3FF0AE9D83A9BB = {
 						DevelopmentTeam = "";
+					};
+					A90A9BA511D1F3CF9964C592 = {
+						DevelopmentTeam = "";
+						TestTargetID = 5FC792D4DA3FF0AE9D83A9BB;
 					};
 				};
 			};
@@ -325,6 +370,7 @@
 			projectRoot = "";
 			targets = (
 				5FC792D4DA3FF0AE9D83A9BB /* Kaleido */,
+				A90A9BA511D1F3CF9964C592 /* KaleidoUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -388,7 +434,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		4581EC26F638E43CA875F162 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F44FDF235C18B3A609D72DE /* KaleidoUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		71E13B4358269D537EAC33EB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5FC792D4DA3FF0AE9D83A9BB /* Kaleido */;
+			targetProxy = C90CA2BB6037B2B5876C5AAA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		02078F14663ADD954B93E74A /* Debug */ = {
@@ -405,6 +467,22 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		62AA8E1D1FD2B717B751DD83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Kaleido;
 			};
 			name = Debug;
 		};
@@ -482,6 +560,22 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		E21EA28C4E86138983A24B94 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Kaleido;
 			};
 			name = Release;
 		};
@@ -569,6 +663,15 @@
 			buildConfigurations = (
 				02078F14663ADD954B93E74A /* Debug */,
 				66505603BC270F75550C720C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		86EDB8A07256569BB89CAC3D /* Build configuration list for PBXNativeTarget "KaleidoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				62AA8E1D1FD2B717B751DD83 /* Debug */,
+				E21EA28C4E86138983A24B94 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

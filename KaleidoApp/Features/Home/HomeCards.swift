@@ -152,6 +152,8 @@ struct BreatheModifier: ViewModifier {
 
 struct PortraitCard: View {
     let model: HomeModel
+    /// 首页被 cover（对话 / 日记）覆盖时暂停数字形象动画
+    var animationPaused = false
     var onTapDim: (HomeModel.PortraitDim) -> Void
     var onTapLifeGame: () -> Void
 
@@ -176,7 +178,7 @@ struct PortraitCard: View {
 
     // 数字形象舞台：画像驱动的 Canvas 抽象形态（原型 .digital-human-stage）
     private var digitalHumanStage: some View {
-        PersonaStageView(model: model.personaModel, userName: model.userName)
+        PersonaStageView(model: model.personaModel, userName: model.userName, paused: animationPaused)
             .padding(.horizontal, -20)   // 贴卡横向出血（原型 margin:0 -20px）
             .padding(.top, -22)
     }

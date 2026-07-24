@@ -89,6 +89,7 @@ struct HomeView: View {
             }
             PortraitCard(
                 model: model,
+                animationPaused: chatLaunch != nil || diaryLaunch != nil,
                 onTapDim: handleDimTap,
                 onTapLifeGame: { toast.show("人生卡牌即将上线") }
             )
