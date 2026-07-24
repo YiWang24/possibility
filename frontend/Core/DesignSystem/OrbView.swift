@@ -1,10 +1,10 @@
 import SwiftUI
 
-// MARK: - 万花筒光球（签名元素）
+// MARK: - 万花筒光球 · 熔岩灯（签名元素）
 //
-// 原型 `.orb`：conic 色环自转 26s + 内层反向自转 18s + 中心高光；
-// `.orb-halo`：外圈呼吸光晕 6s（scale 1↔1.12 / opacity .7↔1）。
-// 用 TimelineView 驱动连续自转（§8.4），reduceMotion 时暂停并静置。
+// 对应原型 `.orb` 熔岩灯版：深蓝"灯瓶"内两团彩色蜡团（蓝紫 / 品红-橙）
+// 以不同周期的利萨如轨迹游走、胀缩，screen 混合发光，相遇时颜色融合；
+// `.orb-halo`：外圈呼吸光晕 6s。reduceMotion 时蜡团静置。
 
 struct OrbView: View {
     var size: CGFloat = 96
@@ -15,14 +15,12 @@ struct OrbView: View {
 
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            let outer = Self.angle(t, period: 26)
-            let inner = -Self.angle(t, period: 18)
+            let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
             let pulse = reduceMotion ? 0.5 : Self.wave(t, period: 6)
 
             ZStack {
                 if showHalo { halo(pulse: pulse) }
-                orbBody(outer: outer, inner: inner)
+                orbBody(t: t)
             }
             .frame(width: size, height: size)
         }
@@ -51,39 +49,44 @@ struct OrbView: View {
             .opacity(0.7 + 0.3 * pulse)
     }
 
-    private func orbBody(outer: Double, inner: Double) -> some View {
+    // 灯瓶 + metaball 熔岩（4 团蜡团，竖向为主的慢漂移）+ 顶部高光
+    private func orbBody(t: Double) -> some View {
         ZStack {
-            // 外层 conic 色环
-            Circle()
-                .fill(AngularGradient(colors: Theme.orbConicColors, center: .center))
-                .rotationEffect(.degrees(outer))
-
-            // 内层反向自转 + 模糊
-            Circle()
-                .fill(AngularGradient(
-                    colors: [
-                        Color(hex: 0xFF7A4D), Color(hex: 0x5E96FF),
-                        Color(hex: 0xE35CC1), Color(hex: 0xFF7A4D),
-                    ],
-                    center: .center,
-                    angle: .degrees(140)
-                ))
-                .padding(size * 0.14)
-                .blur(radius: size * 0.06)
-                .opacity(0.9)
-                .rotationEffect(.degrees(inner))
-
-            // 中心高光
+            // 深蓝灯瓶
             Circle()
                 .fill(
                     RadialGradient(
-                        colors: [.white, Color(hex: 0xE8F0FF, alpha: 0.7), .clear],
-                        center: UnitPoint(x: 0.4, y: 0.35),
+                        colors: [Color(hex: 0x4A55D6), Color(hex: 0x2A2F9E), Color(hex: 0x1B1E5C)],
+                        center: UnitPoint(x: 0.5, y: 0.55),
                         startRadius: 0,
-                        endRadius: size * 0.22
+                        endRadius: size * 0.62
                     )
                 )
-                .padding(size * 0.30)
+
+            LavaLampView(
+                specs: [
+                    LavaBlobSpec(baseX: 0.38, baseY: 0.32, ampX: 0.12, ampY: 0.26, periodX: 9,  periodY: 13, phase: 0.8, radius: 0.24),
+                    LavaBlobSpec(baseX: 0.66, baseY: 0.66, ampX: 0.14, ampY: 0.24, periodX: 11, periodY: 8,  phase: 2.4, radius: 0.21),
+                    LavaBlobSpec(baseX: 0.30, baseY: 0.74, ampX: 0.10, ampY: 0.22, periodX: 7,  periodY: 15, phase: 4.2, radius: 0.16),
+                    LavaBlobSpec(baseX: 0.68, baseY: 0.26, ampX: 0.12, ampY: 0.20, periodX: 13, periodY: 10, phase: 5.5, radius: 0.13),
+                ],
+                color1: Color(hex: 0x6FA5FF),   // 顶：蓝
+                color2: Color(hex: 0xF06ACD),   // 底：品红
+                threshold: 1.0,
+                softness: size * 0.015
+            )
+            .opacity(0.92)
+
+            // 顶部高光（轻薄，避免盖白熔岩）
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color.white.opacity(0.22), .clear],
+                        center: UnitPoint(x: 0.38, y: 0.28),
+                        startRadius: 0,
+                        endRadius: size * 0.36
+                    )
+                )
         }
         .clipShape(Circle())
     }
@@ -96,8 +99,8 @@ struct OrbView: View {
     }
 
     /// 呼吸波（0..1）
-    static func wave(_ t: TimeInterval, period: Double) -> Double {
-        (sin(t / period * 2 * .pi) + 1) / 2
+    static func wave(_ t: TimeInterval, period: Double, phase: Double = 0) -> Double {
+        (sin(t / period * 2 * .pi + phase) + 1) / 2
     }
 }
 

@@ -127,13 +127,13 @@ private struct ScenarioPanel: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(
+        .background {
             ZStack(alignment: .topTrailing) {
                 LinearGradient(colors: bg.map { Color(hex: $0) }, startPoint: .topLeading, endPoint: .bottomTrailing)
                 RadialGradient(colors: [Color(hex: accent, alpha: 0.4), .clear], center: .topTrailing, startRadius: 0, endRadius: 180)
-            },
-            in: RoundedRectangle(cornerRadius: 22, style: .continuous)
-        )
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color(hex: accent, alpha: 0.35), lineWidth: 1))
     }
 

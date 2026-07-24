@@ -6,6 +6,7 @@ import SwiftUI
 struct LabView: View {
     @Environment(SupabaseService.self) private var supabase
     @Environment(ToastCenter.self) private var toast
+    @Environment(AppRouter.self) private var router
     @State private var model = LabModel()
 
     // 拖拽选择卡状态（客户端 UI 状态）
@@ -46,6 +47,15 @@ struct LabView: View {
         .sensoryFeedback(.success, trigger: model.pick)
         .overlay { if model.loading { SimLoadingOverlay(name: model.pick ?? "", step: model.loadStep) } }
         .fullScreenCover(item: $model.result) { ResultView(data: $0) }
+        .onAppear { consumePendingQuestion() }
+        .onChange(of: router.pendingLabQuestion) { consumePendingQuestion() }
+    }
+
+    /// 消费对话「去人生实验室」带来的问题
+    private func consumePendingQuestion() {
+        guard let q = router.pendingLabQuestion else { return }
+        router.pendingLabQuestion = nil
+        model.question = q
     }
 
     // MARK: 问题卡

@@ -1,0 +1,701 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		04CB3F9D65940B74B1BD5A7D /* Config.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = 1615421F2EBD6FB7BBD2F6FA /* Config.xcconfig.example */; };
+		0F47D840BBD162A7D0096402 /* DiaryData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCF33C42D50CA0B202566F68 /* DiaryData.swift */; };
+		1586C0A08F619C35A6CC69DA /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED904D578BC6F497E118B149 /* HomeView.swift */; };
+		165D90C549ED28E1CC2A6D2A /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB5135B12D14A99F97828D77 /* ProfileView.swift */; };
+		1875EF013F373A19CD55B9A8 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E7A8DA3037EA4712D380A6 /* Theme.swift */; };
+		1EB299F9F08505867B5586E0 /* KaleidoscopeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 257658DE86E5228921555ECE /* KaleidoscopeView.swift */; };
+		2932D32D9ED5FB78B8A12452 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 0BA99051D4832035A7F6D35C /* README.md */; };
+		2A50411834CD901AA680E8AE /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C04C9F64AD88B17E0720A7 /* ResultView.swift */; };
+		3155A5282268FE0DDC3766A1 /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A58D233868EB4B50199734 /* DialView.swift */; };
+		3253614124CB9C005DA4992C /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B11123F91ECC0148E27C0C /* Components.swift */; };
+		3446FCF07DA83B17A9A211D0 /* DimensionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4051E73264A90B4C4B2D5DDA /* DimensionSheet.swift */; };
+		3715BE9429EEAC1C7EE43DA6 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58A777A3A79D938FD3365E75 /* SupabaseService.swift */; };
+		38C26CF1A922CB1B8EF8B4C9 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0245C5C147B6A99A774DB95A /* ChatView.swift */; };
+		3BD12193E5ECF5B73B984E73 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 581045AC6CDA10F69CBA3E3F /* WaveformView.swift */; };
+		3F44FDF235C18B3A609D72DE /* KaleidoUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */; };
+		45003F6E27130DB391B10CFE /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0AB2B2F22BFC8356EEA1C0 /* PaywallView.swift */; };
+		4A04F700028BEA207DA08DFA /* DiaryDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74E1E35474FC9A4321EB141 /* DiaryDayView.swift */; };
+		4B69256A6304EABC161DCB6B /* ProfilePanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F34A6CFEEBF0EE57E938A0 /* ProfilePanels.swift */; };
+		56BBB18D9599E8B9B0C481E4 /* DimensionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFEBB633A845F6AB958725E5 /* DimensionData.swift */; };
+		5A92A607409B345E2B4992CB /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B2876A82948A17193DB2913 /* DemoData.swift */; };
+		6637C461D2A83E5B57A583BD /* LabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 113B66A4230015E8C920E261 /* LabView.swift */; };
+		6811B0050C58CB1B58F3D2EE /* PersonaCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 960322ED5440E3E32D470116 /* PersonaCanvasView.swift */; };
+		6A0365B3F9D3F7ECAB298EBA /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7003F1AC82645C3974784BA0 /* OrbView.swift */; };
+		78800ED51CCDBA93C880B5AA /* ChatSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18783627BF74F164C97A1814 /* ChatSummaryView.swift */; };
+		79680F94F306BA3ADFB3E8BF /* UserModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A6D96138E3687E7CA993991 /* UserModels.swift */; };
+		7F1C8FCD6D2D2CF896DC550E /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC8F50BAB49489A0D30A7928 /* FlowLayout.swift */; };
+		800C8517F1A45C05C572A01C /* HomeCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE42C4B3154BBD2DABE04DFE /* HomeCards.swift */; };
+		867E131F86496A405174F113 /* ChatModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A84E7FB180C1316482B52918 /* ChatModel.swift */; };
+		92785CDFB446800FBE5317FE /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = DD739C2EA27B09B77ED3F8E2 /* Supabase */; };
+		9B023B3C9B626C848871EE48 /* ChatStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D6A35F0BF2C4434263B4ECF /* ChatStreamClient.swift */; };
+		9C7E859757F37B4931A6480B /* DiaryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 856ECAC8E033EF5EC70222B6 /* DiaryModel.swift */; };
+		A3B9108597C17A74E52FF955 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E57899E9C2A3625EADB874C8 /* HomeModel.swift */; };
+		B315F4B911A968C505B8B088 /* ProfileModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB288308DC8AAE505308ACF /* ProfileModel.swift */; };
+		BA7A80BE00AFC2DBF1C39419 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80AA2AFC109AEF312F14760 /* CommunityView.swift */; };
+		D3C049A4EE88FA7FB1164129 /* DiarySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE01E184F0A7F61C31C354F5 /* DiarySummaryView.swift */; };
+		D51BE0766C1254BF06CBF7F5 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 5940ADA972551B919A68BDE7 /* Shaders.metal */; };
+		D72A3EC3BE2669528BD21CD6 /* KaleidoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA84C5C4C74419C79D708E92 /* KaleidoApp.swift */; };
+		DC9492F6995A7092BDC3F701 /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FFD255DEE6C4C79EF390D46 /* Navigation.swift */; };
+		E4236AAF73586D089AB1D635 /* LabModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D8626C7C2D31F4D34A9AEE8 /* LabModel.swift */; };
+		E99D1EFC6A8F32F135047F63 /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF99BB80516C06CC485A5974 /* ContentModels.swift */; };
+		F585F464E7C1A4BB6096E574 /* DiaryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94135F73868D8C3DA5EE2B94 /* DiaryDetailView.swift */; };
+		F9543D8EDD9B20F476E8BDE3 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 520BFC3AAE78E050B472EF09 /* AppConfig.swift */; };
+		FA3CD26FECD0F4B253BE9CB5 /* KaleidoscopeDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8466E98BAF485CF8057FDB25 /* KaleidoscopeDrawView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C90CA2BB6037B2B5876C5AAA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB1DBA5175DB87FD3B2A845 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5FC792D4DA3FF0AE9D83A9BB;
+			remoteInfo = Kaleido;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0245C5C147B6A99A774DB95A /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		0BA99051D4832035A7F6D35C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		113B66A4230015E8C920E261 /* LabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabView.swift; sourceTree = "<group>"; };
+		1615421F2EBD6FB7BBD2F6FA /* Config.xcconfig.example */ = {isa = PBXFileReference; path = Config.xcconfig.example; sourceTree = "<group>"; };
+		18783627BF74F164C97A1814 /* ChatSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSummaryView.swift; sourceTree = "<group>"; };
+		257658DE86E5228921555ECE /* KaleidoscopeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeView.swift; sourceTree = "<group>"; };
+		34B11123F91ECC0148E27C0C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KaleidoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4051E73264A90B4C4B2D5DDA /* DimensionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionSheet.swift; sourceTree = "<group>"; };
+		4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoUITests.swift; sourceTree = "<group>"; };
+		4D8626C7C2D31F4D34A9AEE8 /* LabModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabModel.swift; sourceTree = "<group>"; };
+		4FB288308DC8AAE505308ACF /* ProfileModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileModel.swift; sourceTree = "<group>"; };
+		520BFC3AAE78E050B472EF09 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		581045AC6CDA10F69CBA3E3F /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
+		58A777A3A79D938FD3365E75 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		5940ADA972551B919A68BDE7 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		6B2876A82948A17193DB2913 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
+		7003F1AC82645C3974784BA0 /* OrbView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbView.swift; sourceTree = "<group>"; };
+		73C04C9F64AD88B17E0720A7 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
+		74E7A8DA3037EA4712D380A6 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		7A6D96138E3687E7CA993991 /* UserModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserModels.swift; sourceTree = "<group>"; };
+		7D6A35F0BF2C4434263B4ECF /* ChatStreamClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatStreamClient.swift; sourceTree = "<group>"; };
+		8466E98BAF485CF8057FDB25 /* KaleidoscopeDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeDrawView.swift; sourceTree = "<group>"; };
+		856ECAC8E033EF5EC70222B6 /* DiaryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryModel.swift; sourceTree = "<group>"; };
+		8B45E4BB96242AA23C1F0179 /* Kaleido.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Kaleido.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		94135F73868D8C3DA5EE2B94 /* DiaryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryDetailView.swift; sourceTree = "<group>"; };
+		960322ED5440E3E32D470116 /* PersonaCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaCanvasView.swift; sourceTree = "<group>"; };
+		9C0AB2B2F22BFC8356EEA1C0 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		9FFD255DEE6C4C79EF390D46 /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
+		A2F34A6CFEEBF0EE57E938A0 /* ProfilePanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePanels.swift; sourceTree = "<group>"; };
+		A80AA2AFC109AEF312F14760 /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
+		A84E7FB180C1316482B52918 /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
+		AE01E184F0A7F61C31C354F5 /* DiarySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiarySummaryView.swift; sourceTree = "<group>"; };
+		BF99BB80516C06CC485A5974 /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
+		C1A58D233868EB4B50199734 /* DialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialView.swift; sourceTree = "<group>"; };
+		C7382598B7943576F2112BD2 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DA84C5C4C74419C79D708E92 /* KaleidoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoApp.swift; sourceTree = "<group>"; };
+		DCF33C42D50CA0B202566F68 /* DiaryData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryData.swift; sourceTree = "<group>"; };
+		DFEBB633A845F6AB958725E5 /* DimensionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionData.swift; sourceTree = "<group>"; };
+		E57899E9C2A3625EADB874C8 /* HomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeModel.swift; sourceTree = "<group>"; };
+		E74E1E35474FC9A4321EB141 /* DiaryDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryDayView.swift; sourceTree = "<group>"; };
+		EC8F50BAB49489A0D30A7928 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		ED904D578BC6F497E118B149 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		EE42C4B3154BBD2DABE04DFE /* HomeCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCards.swift; sourceTree = "<group>"; };
+		FB5135B12D14A99F97828D77 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9C62F3323C82083DAA22E260 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				92785CDFB446800FBE5317FE /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		04903A551B5031F1E815AFEE /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BF99BB80516C06CC485A5974 /* ContentModels.swift */,
+				6B2876A82948A17193DB2913 /* DemoData.swift */,
+				DFEBB633A845F6AB958725E5 /* DimensionData.swift */,
+				7A6D96138E3687E7CA993991 /* UserModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		15CF8E5BAEA0AEE0437327A4 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				34B11123F91ECC0148E27C0C /* Components.swift */,
+				C1A58D233868EB4B50199734 /* DialView.swift */,
+				EC8F50BAB49489A0D30A7928 /* FlowLayout.swift */,
+				257658DE86E5228921555ECE /* KaleidoscopeView.swift */,
+				7003F1AC82645C3974784BA0 /* OrbView.swift */,
+				5940ADA972551B919A68BDE7 /* Shaders.metal */,
+				74E7A8DA3037EA4712D380A6 /* Theme.swift */,
+				581045AC6CDA10F69CBA3E3F /* WaveformView.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		34AAE8511F28A899CF62D612 /* Diary */ = {
+			isa = PBXGroup;
+			children = (
+				DCF33C42D50CA0B202566F68 /* DiaryData.swift */,
+				E74E1E35474FC9A4321EB141 /* DiaryDayView.swift */,
+				94135F73868D8C3DA5EE2B94 /* DiaryDetailView.swift */,
+				856ECAC8E033EF5EC70222B6 /* DiaryModel.swift */,
+				AE01E184F0A7F61C31C354F5 /* DiarySummaryView.swift */,
+			);
+			path = Diary;
+			sourceTree = "<group>";
+		};
+		3D2D9EE746316CE416B744FF /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				4051E73264A90B4C4B2D5DDA /* DimensionSheet.swift */,
+				EE42C4B3154BBD2DABE04DFE /* HomeCards.swift */,
+				E57899E9C2A3625EADB874C8 /* HomeModel.swift */,
+				ED904D578BC6F497E118B149 /* HomeView.swift */,
+				960322ED5440E3E32D470116 /* PersonaCanvasView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		5B0DE90368AE7E61F845212A /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				89317C3974EC21904713E3D5 /* Chat */,
+				AE999655E109BD946EE4EBCA /* Community */,
+				34AAE8511F28A899CF62D612 /* Diary */,
+				3D2D9EE746316CE416B744FF /* Home */,
+				7BE72FB8A2F5E06D35113857 /* Lab */,
+				DC117E48883B58458DF050C0 /* Profile */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		615F0807AABF42DA1FABFC8B /* KaleidoUITests */ = {
+			isa = PBXGroup;
+			children = (
+				4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */,
+			);
+			path = KaleidoUITests;
+			sourceTree = "<group>";
+		};
+		704BB56852DCA52CE1E77917 = {
+			isa = PBXGroup;
+			children = (
+				EE09631F35E0A29811424EE8 /* frontend */,
+				615F0807AABF42DA1FABFC8B /* KaleidoUITests */,
+				DCECF1450C4A0E496A9098A8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7BE72FB8A2F5E06D35113857 /* Lab */ = {
+			isa = PBXGroup;
+			children = (
+				4D8626C7C2D31F4D34A9AEE8 /* LabModel.swift */,
+				113B66A4230015E8C920E261 /* LabView.swift */,
+				73C04C9F64AD88B17E0720A7 /* ResultView.swift */,
+			);
+			path = Lab;
+			sourceTree = "<group>";
+		};
+		89317C3974EC21904713E3D5 /* Chat */ = {
+			isa = PBXGroup;
+			children = (
+				A84E7FB180C1316482B52918 /* ChatModel.swift */,
+				18783627BF74F164C97A1814 /* ChatSummaryView.swift */,
+				0245C5C147B6A99A774DB95A /* ChatView.swift */,
+			);
+			path = Chat;
+			sourceTree = "<group>";
+		};
+		AE999655E109BD946EE4EBCA /* Community */ = {
+			isa = PBXGroup;
+			children = (
+				A80AA2AFC109AEF312F14760 /* CommunityView.swift */,
+				8466E98BAF485CF8057FDB25 /* KaleidoscopeDrawView.swift */,
+			);
+			path = Community;
+			sourceTree = "<group>";
+		};
+		C488F54B0A74DE5B3A536094 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				15CF8E5BAEA0AEE0437327A4 /* DesignSystem */,
+				04903A551B5031F1E815AFEE /* Models */,
+				D4182BF340D55ECDED6F343E /* Network */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		D4182BF340D55ECDED6F343E /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				7D6A35F0BF2C4434263B4ECF /* ChatStreamClient.swift */,
+				58A777A3A79D938FD3365E75 /* SupabaseService.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		DC117E48883B58458DF050C0 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				9C0AB2B2F22BFC8356EEA1C0 /* PaywallView.swift */,
+				4FB288308DC8AAE505308ACF /* ProfileModel.swift */,
+				A2F34A6CFEEBF0EE57E938A0 /* ProfilePanels.swift */,
+				FB5135B12D14A99F97828D77 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		DCECF1450C4A0E496A9098A8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8B45E4BB96242AA23C1F0179 /* Kaleido.app */,
+				3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DD6C4A06AA309A2D9CFD730D /* App */ = {
+			isa = PBXGroup;
+			children = (
+				520BFC3AAE78E050B472EF09 /* AppConfig.swift */,
+				DA84C5C4C74419C79D708E92 /* KaleidoApp.swift */,
+				9FFD255DEE6C4C79EF390D46 /* Navigation.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		EE09631F35E0A29811424EE8 /* frontend */ = {
+			isa = PBXGroup;
+			children = (
+				1615421F2EBD6FB7BBD2F6FA /* Config.xcconfig.example */,
+				C7382598B7943576F2112BD2 /* Info.plist */,
+				0BA99051D4832035A7F6D35C /* README.md */,
+				DD6C4A06AA309A2D9CFD730D /* App */,
+				C488F54B0A74DE5B3A536094 /* Core */,
+				5B0DE90368AE7E61F845212A /* Features */,
+			);
+			path = frontend;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5FC792D4DA3FF0AE9D83A9BB /* Kaleido */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 850CC8EB03AEDC68C57CC104 /* Build configuration list for PBXNativeTarget "Kaleido" */;
+			buildPhases = (
+				3D59248950A744DFDE949732 /* Sources */,
+				B514DC44615C5336FD194431 /* Resources */,
+				9C62F3323C82083DAA22E260 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Kaleido;
+			packageProductDependencies = (
+				DD739C2EA27B09B77ED3F8E2 /* Supabase */,
+			);
+			productName = Kaleido;
+			productReference = 8B45E4BB96242AA23C1F0179 /* Kaleido.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A90A9BA511D1F3CF9964C592 /* KaleidoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 86EDB8A07256569BB89CAC3D /* Build configuration list for PBXNativeTarget "KaleidoUITests" */;
+			buildPhases = (
+				4581EC26F638E43CA875F162 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				71E13B4358269D537EAC33EB /* PBXTargetDependency */,
+			);
+			name = KaleidoUITests;
+			packageProductDependencies = (
+			);
+			productName = KaleidoUITests;
+			productReference = 3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AAB1DBA5175DB87FD3B2A845 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					5FC792D4DA3FF0AE9D83A9BB = {
+						DevelopmentTeam = "";
+					};
+					A90A9BA511D1F3CF9964C592 = {
+						DevelopmentTeam = "";
+						TestTargetID = 5FC792D4DA3FF0AE9D83A9BB;
+					};
+				};
+			};
+			buildConfigurationList = 5ADA50E3804622A0FD1487BB /* Build configuration list for PBXProject "Kaleido" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 704BB56852DCA52CE1E77917;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				48E82C5E9EFF84B39634A050 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DCECF1450C4A0E496A9098A8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5FC792D4DA3FF0AE9D83A9BB /* Kaleido */,
+				A90A9BA511D1F3CF9964C592 /* KaleidoUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B514DC44615C5336FD194431 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				04CB3F9D65940B74B1BD5A7D /* Config.xcconfig.example in Resources */,
+				2932D32D9ED5FB78B8A12452 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3D59248950A744DFDE949732 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F9543D8EDD9B20F476E8BDE3 /* AppConfig.swift in Sources */,
+				867E131F86496A405174F113 /* ChatModel.swift in Sources */,
+				9B023B3C9B626C848871EE48 /* ChatStreamClient.swift in Sources */,
+				78800ED51CCDBA93C880B5AA /* ChatSummaryView.swift in Sources */,
+				38C26CF1A922CB1B8EF8B4C9 /* ChatView.swift in Sources */,
+				BA7A80BE00AFC2DBF1C39419 /* CommunityView.swift in Sources */,
+				3253614124CB9C005DA4992C /* Components.swift in Sources */,
+				E99D1EFC6A8F32F135047F63 /* ContentModels.swift in Sources */,
+				5A92A607409B345E2B4992CB /* DemoData.swift in Sources */,
+				3155A5282268FE0DDC3766A1 /* DialView.swift in Sources */,
+				0F47D840BBD162A7D0096402 /* DiaryData.swift in Sources */,
+				4A04F700028BEA207DA08DFA /* DiaryDayView.swift in Sources */,
+				F585F464E7C1A4BB6096E574 /* DiaryDetailView.swift in Sources */,
+				9C7E859757F37B4931A6480B /* DiaryModel.swift in Sources */,
+				D3C049A4EE88FA7FB1164129 /* DiarySummaryView.swift in Sources */,
+				56BBB18D9599E8B9B0C481E4 /* DimensionData.swift in Sources */,
+				3446FCF07DA83B17A9A211D0 /* DimensionSheet.swift in Sources */,
+				7F1C8FCD6D2D2CF896DC550E /* FlowLayout.swift in Sources */,
+				800C8517F1A45C05C572A01C /* HomeCards.swift in Sources */,
+				A3B9108597C17A74E52FF955 /* HomeModel.swift in Sources */,
+				1586C0A08F619C35A6CC69DA /* HomeView.swift in Sources */,
+				D72A3EC3BE2669528BD21CD6 /* KaleidoApp.swift in Sources */,
+				FA3CD26FECD0F4B253BE9CB5 /* KaleidoscopeDrawView.swift in Sources */,
+				1EB299F9F08505867B5586E0 /* KaleidoscopeView.swift in Sources */,
+				E4236AAF73586D089AB1D635 /* LabModel.swift in Sources */,
+				6637C461D2A83E5B57A583BD /* LabView.swift in Sources */,
+				DC9492F6995A7092BDC3F701 /* Navigation.swift in Sources */,
+				6A0365B3F9D3F7ECAB298EBA /* OrbView.swift in Sources */,
+				45003F6E27130DB391B10CFE /* PaywallView.swift in Sources */,
+				6811B0050C58CB1B58F3D2EE /* PersonaCanvasView.swift in Sources */,
+				B315F4B911A968C505B8B088 /* ProfileModel.swift in Sources */,
+				4B69256A6304EABC161DCB6B /* ProfilePanels.swift in Sources */,
+				165D90C549ED28E1CC2A6D2A /* ProfileView.swift in Sources */,
+				2A50411834CD901AA680E8AE /* ResultView.swift in Sources */,
+				D51BE0766C1254BF06CBF7F5 /* Shaders.metal in Sources */,
+				3715BE9429EEAC1C7EE43DA6 /* SupabaseService.swift in Sources */,
+				1875EF013F373A19CD55B9A8 /* Theme.swift in Sources */,
+				79680F94F306BA3ADFB3E8BF /* UserModels.swift in Sources */,
+				3BD12193E5ECF5B73B984E73 /* WaveformView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4581EC26F638E43CA875F162 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3F44FDF235C18B3A609D72DE /* KaleidoUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		71E13B4358269D537EAC33EB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5FC792D4DA3FF0AE9D83A9BB /* Kaleido */;
+			targetProxy = C90CA2BB6037B2B5876C5AAA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		02078F14663ADD954B93E74A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = frontend/Info.plist;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		62AA8E1D1FD2B717B751DD83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Kaleido;
+			};
+			name = Debug;
+		};
+		66505603BC270F75550C720C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = frontend/Info.plist;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B86390503563879D553E9377 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Release;
+		};
+		E21EA28C4E86138983A24B94 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Kaleido;
+			};
+			name = Release;
+		};
+		FD3D7DA4822AD451B27FEDBC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_IDENTITY = "";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5ADA50E3804622A0FD1487BB /* Build configuration list for PBXProject "Kaleido" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FD3D7DA4822AD451B27FEDBC /* Debug */,
+				B86390503563879D553E9377 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		850CC8EB03AEDC68C57CC104 /* Build configuration list for PBXNativeTarget "Kaleido" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				02078F14663ADD954B93E74A /* Debug */,
+				66505603BC270F75550C720C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		86EDB8A07256569BB89CAC3D /* Build configuration list for PBXNativeTarget "KaleidoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				62AA8E1D1FD2B717B751DD83 /* Debug */,
+				E21EA28C4E86138983A24B94 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		48E82C5E9EFF84B39634A050 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		DD739C2EA27B09B77ED3F8E2 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 48E82C5E9EFF84B39634A050 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = AAB1DBA5175DB87FD3B2A845 /* Project object */;
+}

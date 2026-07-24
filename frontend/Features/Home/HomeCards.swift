@@ -42,23 +42,25 @@ struct HomeAskCard: View {
 
     private var askBox: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 5) {
-                Text("✦").font(.system(size: 11))
-                Text("\(model.topic.rawValue) 分类下提问").font(.system(size: 11, weight: .semibold))
+            if let topic = model.topic {
+                HStack(spacing: 5) {
+                    Text("✦").font(.system(size: 11))
+                    Text(topic.rawValue).font(.system(size: 11, weight: .semibold))
+                }
+                .foregroundStyle(Color(hex: 0x9DBCFF))
+                .padding(.horizontal, 11).padding(.vertical, 4)
+                .background(Color(hex: 0x5E96FF, alpha: 0.16), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color(hex: 0x5E96FF, alpha: 0.4), lineWidth: 1))
             }
-            .foregroundStyle(Color(hex: 0x9DBCFF))
-            .padding(.horizontal, 11).padding(.vertical, 4)
-            .background(Color(hex: 0x5E96FF, alpha: 0.16), in: Capsule())
-            .overlay(Capsule().strokeBorder(Color(hex: 0x5E96FF, alpha: 0.4), lineWidth: 1))
 
-            TextField("", text: $model.question, prompt: Text("比如：我是否要从交互设计师转为产品经理？").foregroundColor(Theme.faint), axis: .vertical)
+            TextField("", text: $model.question, prompt: Text("写下任何正在心里盘旋的问题…").foregroundColor(Theme.faint), axis: .vertical)
                 .font(.system(size: 15)).lineSpacing(4).foregroundStyle(Theme.ink)
                 .focused($focused)
                 .lineLimit(2...4)
                 .tint(Theme.blue)
+                .padding(.trailing, model.trimmedQuestion.isEmpty ? 0 : 26)
 
             HStack {
-                Text("灵感来自你 3 天前的日记").font(.system(size: 11)).foregroundStyle(Theme.faint)
                 Spacer()
                 Button("发送") { focused = false; onSend() }
                     .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(.white)
@@ -74,12 +76,28 @@ struct HomeAskCard: View {
         .padding(.horizontal, 14).padding(.vertical, 12)
         .background(Color(hex: 0x060810, alpha: 0.45), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1))
+        .overlay(alignment: .topTrailing) {
+            // 清空按钮（原型 .ask-clear）：仅有文本时显示
+            if !model.trimmedQuestion.isEmpty {
+                Button {
+                    model.question = ""
+                    focused = true
+                } label: {
+                    Text("×").font(.system(size: 18)).foregroundStyle(Color(hex: 0xAEB7CC))
+                        .frame(width: 24, height: 24)
+                        .background(Color.white.opacity(0.08), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 11).padding(.trailing, 13)
+                .accessibilityLabel("清空输入")
+            }
+        }
     }
 
     private func softChip(_ t: ExploreTopic) -> some View {
         let on = model.topic == t
         return Button {
-            withAnimation(.easeOut(duration: 0.18)) { model.topic = t }
+            withAnimation(.easeOut(duration: 0.18)) { model.topic = on ? nil : t }
         } label: {
             Text(t.rawValue)
                 .font(.system(size: 12.5))
@@ -95,16 +113,22 @@ struct HomeAskCard: View {
         ZStack(alignment: .topTrailing) {
             LinearGradient(colors: [Color(hex: 0x141A34), Color(hex: 0x1A2350), Color(hex: 0x10132A)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
-            RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.5), .clear],
+            RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.35), .clear],
                            center: .topTrailing, startRadius: 0, endRadius: 200)
-            // 呼吸光球
-            Circle()
-                .fill(RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.6), Color(hex: 0x8F7BFF, alpha: 0.25), .clear],
-                                     center: UnitPoint(x: 0.45, y: 0.45), startRadius: 0, endRadius: 110))
-                .frame(width: 220, height: 220)
-                .blur(radius: 8)
-                .offset(x: 60, y: -70)
-                .modifier(BreatheModifier(enabled: !reduceMotion))
+            // 熔岩灯：metaball 场（蓝顶 → 品红底），blob 竖向慢漂移、相吸融合
+            LavaLampView(
+                specs: [
+                    LavaBlobSpec(baseX: 0.78, baseY: 0.16, ampX: 0.14, ampY: 0.22, periodX: 13, periodY: 17, phase: 1.0, radius: 0.30),
+                    LavaBlobSpec(baseX: 0.18, baseY: 0.80, ampX: 0.16, ampY: 0.30, periodX: 15, periodY: 19, phase: 2.6, radius: 0.26),
+                    LavaBlobSpec(baseX: 0.46, baseY: 0.46, ampX: 0.18, ampY: 0.26, periodX: 11, periodY: 9,  phase: 4.0, radius: 0.18, pulse: 0.35),
+                    LavaBlobSpec(baseX: 0.88, baseY: 0.70, ampX: 0.10, ampY: 0.24, periodX: 8,  periodY: 21, phase: 5.4, radius: 0.15),
+                ],
+                color1: Color(hex: 0x6FA5FF),   // 顶：蓝
+                color2: Color(hex: 0xE35CC1),   // 底：品红
+                threshold: 1.05,
+                softness: 2
+            )
+            .opacity(0.5)
         }
     }
 }
@@ -128,6 +152,8 @@ struct BreatheModifier: ViewModifier {
 
 struct PortraitCard: View {
     let model: HomeModel
+    /// 首页被 cover（对话 / 日记）覆盖时暂停数字形象动画
+    var animationPaused = false
     var onTapDim: (HomeModel.PortraitDim) -> Void
     var onTapLifeGame: () -> Void
 
@@ -150,25 +176,11 @@ struct PortraitCard: View {
         .kaleidoCard()
     }
 
-    // 数字人舞台：签名光球 + LIVE 徽标 + caption
+    // 数字形象舞台：画像驱动的 Canvas 抽象形态（原型 .digital-human-stage）
     private var digitalHumanStage: some View {
-        VStack(spacing: 0) {
-            OrbView(size: 96)
-                .padding(.top, 4)
-                .overlay(alignment: .top) {
-                    Text("LIVE DIGITAL SELF")
-                        .font(.system(size: 8.5, weight: .semibold)).tracking(1.5)
-                        .foregroundStyle(Color(hex: 0x9DBCFF))
-                        .padding(.horizontal, 9).padding(.vertical, 3)
-                        .background(Color(hex: 0x5E96FF, alpha: 0.14), in: Capsule())
-                        .overlay(Capsule().strokeBorder(Color(hex: 0x5E96FF, alpha: 0.3), lineWidth: 1))
-                        .offset(y: -6)
-                }
-            Text("\(model.userName) · 动态数字人")
-                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink).padding(.top, 18)
-            Text("探索者 LV.3 · 随每次探索持续生长")
-                .font(.system(size: 11)).foregroundStyle(Theme.faint).padding(.top, 4)
-        }
+        PersonaStageView(model: model.personaModel, userName: model.userName, paused: animationPaused)
+            .padding(.horizontal, -20)   // 贴卡横向出血（原型 margin:0 -20px）
+            .padding(.top, -22)
     }
 
     private var progressBar: some View {

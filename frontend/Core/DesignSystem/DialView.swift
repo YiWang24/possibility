@@ -2,10 +2,10 @@ import SwiftUI
 
 // MARK: - 时间旋钮（签名交互）
 //
-// 原型 `.dial`：拖拽在顶部 180° 扇区内设定 1–10 年。
-//   yearToAng(y) = -90 + (y-1)*20     // year1=-90°(指左) · year10=+90°(指右) · 0°=正上
-//   拖拽角 = clamp(atan2(dx, -dy), -90, 90)
-// conic ring + glowring 随指针臂旋转；刻度每 4°，主刻度每 20° 带年份数字；
+// 原型 `.dial`：拖拽在 240° 扇区内设定 1–10 年（钟表 8 点 → 4 点的区间）。
+//   yearToAng(y) = -120 + (y-1)*(240/9)   // year1=-120°(8点) · year10=+120°(4点) · 0°=正上
+//   拖拽角 = clamp(atan2(dx, -dy), -120, 120)，正下方死区就近吸附
+// conic ring + glowring 随指针臂旋转；刻度每 4.8°，主刻度带年份数字；
 // drop-hot：拖拽选择卡悬停时高亮（虚线旋转边框）。触感反馈见 §8.4。
 
 struct DialView: View {
@@ -21,11 +21,13 @@ struct DialView: View {
     @State private var liveAngle: Double = 0
 
     private static let yMin = 1, yMax = 10
+    /// 表盘扫角：±120°（钟表 8 点 → 4 点）
+    private static let sweep: Double = 120
     private static func yearToAngle(_ y: Int) -> Double {
-        -90 + Double(y - yMin) * (180.0 / Double(yMax - yMin))
+        -sweep + Double(y - yMin) * (2 * sweep / Double(yMax - yMin))
     }
     private static func angleToYear(_ a: Double) -> Int {
-        let raw = Double(yMin) + (a + 90) * (Double(yMax - yMin) / 180.0)
+        let raw = Double(yMin) + (a + sweep) * (Double(yMax - yMin) / (2 * sweep))
         return min(yMax, max(yMin, Int(raw.rounded())))
     }
 
@@ -162,21 +164,28 @@ struct DialView: View {
             }
     }
 
-    /// 触点 → 顶部扇区角度（0=上，顺时针+），clamp 到 [-90,90]
+    /// 触点 → 表盘角度（0=上，顺时针+），clamp 到 ±120°；正下方死区就近吸附
     private func clampedAngle(at location: CGPoint) -> Double {
         let c = size / 2
         let dx = location.x - c
         let dy = location.y - c
-        let deg = atan2(dx, -dy) * 180 / .pi
-        return min(90, max(-90, deg))
+        let deg = atan2(dx, -dy) * 180 / .pi     // -180..180
+        return min(Self.sweep, max(-Self.sweep, deg))
     }
 }
 
-// MARK: - 刻度环（每 4°，主刻度每 20° 带数字）
+// MARK: - 刻度环（±120° 弧，主刻度带数字）
 
 private struct DialTicks: View {
     let size: CGFloat
     let currentYear: Int
+
+    /// 与 DialView 一致的扫角
+    private static let sweep: Double = 120
+    /// 年份间隔角：240/9 ≈ 26.67°
+    private static let step: Double = 2 * sweep / 9
+    /// 细刻度：每个年份间隔均分 5 段
+    private static let minorStep: Double = step / 5
 
     var body: some View {
         ZStack {
@@ -193,7 +202,7 @@ private struct DialTicks: View {
         .allowsHitTesting(false)
     }
 
-    private func angle(_ y: Int) -> Double { -90 + Double(y - 1) * 20 }
+    private func angle(_ y: Int) -> Double { -Self.sweep + Double(y - 1) * Self.step }
 
     private func labelPoint(year y: Int) -> CGPoint {
         let c = size / 2
@@ -205,8 +214,9 @@ private struct DialTicks: View {
     private func draw(_ ctx: GraphicsContext, _ canvasSize: CGSize) {
         let c = CGPoint(x: canvasSize.width / 2, y: canvasSize.height / 2)
         let rOuter = canvasSize.width / 2 - 8
-        for a in stride(from: -90.0, through: 90.0, by: 4.0) {
-            let major = Int(a + 90) % 20 == 0
+        var idx = 0
+        for a in stride(from: -Self.sweep, through: Self.sweep + 0.01, by: Self.minorStep) {
+            let major = idx % 5 == 0
             let len: CGFloat = major ? 12 : 6
             let rad = a * .pi / 180
             let dir = CGPoint(x: sin(rad), y: -cos(rad))
@@ -215,10 +225,11 @@ private struct DialTicks: View {
             var path = Path()
             path.move(to: p1)
             path.addLine(to: p2)
-            let year = min(10, max(1, Int(((a + 90) / 20).rounded()) + 1))
+            let year = idx / 5 + 1
             let on = major && year == currentYear
             let color = on ? Color.white : Color(hex: 0x9DBCFF, alpha: major ? 0.65 : 0.28)
             ctx.stroke(path, with: .color(color), lineWidth: major ? 2.5 : 1.5)
+            idx += 1
         }
     }
 }

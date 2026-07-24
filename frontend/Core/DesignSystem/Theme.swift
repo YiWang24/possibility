@@ -139,7 +139,9 @@ struct CardBackground: ViewModifier {
     var radius: CGFloat = Theme.Radius.card
     func body(content: Content) -> some View {
         content
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .background(Theme.card)
+            // 内容（如顶部渐变色带）一并裁进圆角，保证四角一致
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(Theme.line, lineWidth: 1)

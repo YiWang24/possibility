@@ -11,11 +11,13 @@ import Observation
 final class HomeModel {
 
     // MARK: 探索发问
-    var question: String = ExploreTopic.career.sampleQuestion
-    var topic: ExploreTopic = .career {
+    //
+    // 对齐原型无话题模式：默认不选话题（no-topic），选中话题且输入为空时才填样例；
+    // 再点选中的话题可取消。
+    var question: String = ""
+    var topic: ExploreTopic? = nil {
         didSet {
-            // 切换话题时，若输入框仍是上个话题的样例问题，则替换为新话题样例
-            if question == oldValue.sampleQuestion || question.isEmpty {
+            if let topic, trimmedQuestion.isEmpty {
                 question = topic.sampleQuestion
             }
         }
@@ -23,7 +25,6 @@ final class HomeModel {
 
     var trimmedQuestion: String { question.trimmingCharacters(in: .whitespacesAndNewlines) }
     var canSend: Bool { !trimmedQuestion.isEmpty }
-    var questionCount: Int { question.count }
 
     // MARK: 语音日记
     var isRecording = false
@@ -62,16 +63,20 @@ final class HomeModel {
         timerTask = nil
     }
 
-    /// 完成录音 → 分析情绪与关键词（analyze-diary，失败走兜底）
+    /// 完成录音 → 分析情绪与关键词（analyze-diary，2.5s 超时即走兜底，不阻塞 UI）
     func analyzeDiary(using supabase: SupabaseService) async {
         finishRecording()
         analyzing = true
         defer { analyzing = false }
-        if let result = try? await supabase.analyzeDiary(transcript: sampleTranscript) {
-            analysis = result
-        } else {
-            analysis = Self.fallbackAnalysis
+        let transcript = sampleTranscript
+        let remote = await withTaskGroup(of: DiaryAnalysis?.self) { group -> DiaryAnalysis? in
+            group.addTask { try? await supabase.analyzeDiary(transcript: transcript) }
+            group.addTask { try? await Task.sleep(for: .seconds(2.5)); return nil }
+            let first = await group.next() ?? nil
+            group.cancelAll()
+            return first
         }
+        analysis = remote ?? Self.fallbackAnalysis
     }
 
     /// 断网兜底的日记分析（对应 §13 现场抖动缓解）
@@ -150,6 +155,13 @@ final class HomeModel {
 
     /// 人生底牌签名（人生卡牌完成后 3 张公开底牌；暂未接入 → 空）
     var lifeSignature: [String] { [] }
+
+    /// 抽象数字形象模型：随已填维度 / 底牌变化自动重建（@Observable 联动）
+    var personaModel: PersonaModel {
+        let values = (["personality"] + DimensionKey.allCases.map(\.rawValue))
+            .compactMap { filledDims[$0] }
+        return PersonaModel.build(values: values, signature: lifeSignature)
+    }
 
     // MARK: demo 人物
     let userName = "屿岸"

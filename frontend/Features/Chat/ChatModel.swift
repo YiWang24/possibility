@@ -3,8 +3,10 @@ import Observation
 
 // MARK: - 探索对话视图模型（付费漏斗主线，技术设计文档 §9.1）
 //
-// 首页发问 → 流式承接迷茫 / 澄清 → 岔路口成形 → match 抽 3 位结局不同旅人。
-// 现场网络 / LLM 抖动时回退「黄金对话」+ 兜底 match（§13）。
+// 首页发问 → 流式承接迷茫 / 澄清 → AI 给出「暂时的理解」→ 验证反馈
+// （嗯，比较接近 / 还不太对，可循环纠正）→ 信息足够 → 下一步面板
+// （去人生实验室 / 看相似经历 / 分享 / 完整总结）。对照原型 chatState 阶段机。
+// 现场网络 / LLM 抖动时回退「黄金对话」（§13）。
 
 @Observable
 @MainActor
@@ -17,32 +19,40 @@ final class ChatModel {
         enum Role { case user, ai }
     }
 
+    /// 对话阶段（对照原型 chatState.stage）
+    enum Stage {
+        case clarify      // 澄清中
+        case review       // AI 给出理解，等待用户验证
+        case correction   // 用户说「还不太对」，等待改写
+        case ready        // 信息足够，展示下一步面板
+    }
+
     let launch: ChatLaunch
     var messages: [Message] = []
     var input = ""
     var isStreaming = false
 
-    /// 岔路口成形 → 解锁「看看走过这条路的人」
-    var crossroadsReady = false
-    var crossroadsSummary: String?
-    private var matchQuery: MatchQuery?
+    var stage: Stage = .clarify
+    /// 验证 chips 是否可见（AI 理解后出现，点击即移除）
+    var showActionChips = false
+    /// 经历过纠正循环 → chips 文案变为「这次准确了 / 我再补充一点」
+    var hadCorrection = false
+    /// 下一步面板（信息已经足够 · 选择下一步）
+    var showNextPanel = false
+    /// 完整总结页
+    var showSummary = false
+    /// 用户在澄清 / 纠正中的原话（结论、总结与分享文案插值）
+    var answers: [String] = []
+
     /// 服务端会话 ID：首轮 done 事件返回，后续追问带回以延续历史
     private var conversationId: UUID?
-
-    /// match 结果
-    var loadingMatch = false
-    var matchReady = false
-    var matches: [Traveler] = []
-    var matchReasons: [Int: String] = [:]
-
-    /// 追问建议
-    let followups = ["如果失败，最坏会怎样？", "我需要先准备什么？", "别人是怎么熬过来的？"]
 
     init(launch: ChatLaunch) {
         self.launch = launch
     }
 
-    var showCrossroadsCTA: Bool { crossroadsReady && !matchReady && !loadingMatch }
+    var confirmLabel: String { hadCorrection ? "这次准确了" : "嗯，比较接近" }
+    var correctLabel: String { hadCorrection ? "我再补充一点" : "还不太对" }
 
     // MARK: 启动：把首页问题作为第一条用户消息并请求 AI
 
@@ -59,7 +69,65 @@ final class ChatModel {
         guard !clean.isEmpty, !isStreaming else { return }
         input = ""
         messages.append(Message(role: .user, text: clean))
-        Task { await runAssistant(userText: clean, supabase: supabase) }
+        answers.append(clean)
+
+        if stage == .correction {
+            // 纠正回合：本地复述用户原话（对照原型 sendChat correction 分支），不走流式
+            Task {
+                await localAssistant("明白了。更准确的说法应该是：**\(clean)**\n\n我会保留你的原话，不再把它改写成一个性格结论。", delay: 0.7)
+                try? await Task.sleep(for: .milliseconds(760))
+                hadCorrection = true
+                stage = .review
+                showActionChips = true
+            }
+        } else {
+            Task { await runAssistant(userText: clean, supabase: supabase) }
+        }
+    }
+
+    // MARK: 验证反馈（chips）
+
+    /// 「嗯，比较接近 / 这次准确了」→ AI 结论 → 下一步面板
+    func confirmInsight() {
+        showActionChips = false
+        messages.append(Message(role: .user, text: "嗯，这个理解比较接近我。"))
+        let a0 = answers.first ?? "真正想要的生活"
+        let a1 = answers.count > 1 ? answers[1] : "暂时不能失去的东西"
+        Task {
+            await localAssistant("现在的信息已经够了。我的判断是：你并不是没有答案，而是**想靠近「\(a0)」的同时，也在保护「\(a1)」**。\n\n真正需要验证的，不是哪条路绝对正确，而是哪一种代价是你愿意承担、也有能力承担的。", delay: 0.7)
+            try? await Task.sleep(for: .milliseconds(820))
+            stage = .ready
+            showNextPanel = true
+        }
+    }
+
+    /// 「还不太对 / 我再补充一点」→ AI 追问最不准确的部分
+    func requestCorrection() {
+        showActionChips = false
+        messages.append(Message(role: .user, text: "还不太对。"))
+        stage = .correction
+        Task {
+            await localAssistant("谢谢你纠正我。**最不准确的是哪一部分？**你可以直接改写成你自己的话，我会以你的表达为准。", delay: 0.7)
+        }
+    }
+
+    // MARK: 分享文案（原型 shareChatExploration 模板）
+
+    var shareText: String {
+        let a0 = answers.first ?? "真正想要的生活"
+        let a1 = answers.count > 1 ? answers[1] : "暂时不能失去的东西"
+        return "我刚在万花筒探索了一个问题：\(launch.question)\n\n我现在更清楚的是：我既想靠近\(a0)，也在保护\(a1)。"
+    }
+
+    // MARK: 本地 AI 消息（带思考延迟，对照原型 assistantAfter）
+
+    private func localAssistant(_ text: String, delay: Double) async {
+        isStreaming = true
+        messages.append(Message(role: .ai, text: ""))
+        let index = messages.count - 1
+        try? await Task.sleep(for: .seconds(delay))
+        messages[index].text = text
+        isStreaming = false
     }
 
     // MARK: 流式请求 + 打字机
@@ -79,85 +147,42 @@ final class ChatModel {
             guard let supabase else { throw URLError(.userAuthenticationRequired) }
             return try await supabase.jwt()
         })
-        let request = ChatRequest(conversationId: conversationId, topic: launch.topic.rawValue,
+        let request = ChatRequest(conversationId: conversationId, topic: launch.topic?.rawValue ?? "综合",
                                   message: userText, history: Array(history))
 
+        var reachedInsight = false
         do {
             for try await event in client.stream(request) {
                 switch event {
                 case .token(let t):
                     messages[aiIndex].text += t
                 case .done(let done):
-                    applyDone(done)
+                    if let id = done.conversationId { conversationId = id }
+                    if let c = done.crossroads, c.ready { reachedInsight = true }
                 }
             }
-            // 若服务端未标注岔路口，但已有足够往返，则本地判定成形
-            if !crossroadsReady, messages.filter({ $0.role == .ai }).count >= 1 {
-                markCrossroadsReady(summary: nil)
-            }
         } catch {
-            // 断网兜底：黄金对话
+            // 断网兜底：黄金对话（直接给出「暂时的理解」）
             if messages[aiIndex].text.isEmpty {
                 messages[aiIndex].text = Self.goldenReply(for: launch)
             }
-            markCrossroadsReady(summary: Self.goldenSummary(for: launch))
+            reachedInsight = true
         }
-    }
 
-    private func applyDone(_ done: ChatStreamDone) {
-        if let id = done.conversationId { conversationId = id }
-        if let c = done.crossroads, c.ready {
-            markCrossroadsReady(summary: c.summary)
-            matchQuery = c.matchQuery
+        // AI 已给出足够的理解（服务端标注岔路口 / 已有两轮澄清）→ 出验证 chips
+        let aiCount = messages.filter { $0.role == .ai && !$0.text.isEmpty }.count
+        if stage == .clarify, reachedInsight || aiCount >= 2 {
+            try? await Task.sleep(for: .milliseconds(850))
+            stage = .review
+            showActionChips = true
         }
-    }
-
-    private func markCrossroadsReady(summary: String?) {
-        crossroadsReady = true
-        if let summary { crossroadsSummary = summary }
-    }
-
-    // MARK: match（看看走过这条路的人）
-
-    func showMatch(supabase: SupabaseService) async {
-        guard !matchReady, !loadingMatch else { return }
-        loadingMatch = true
-        defer { loadingMatch = false }
-
-        let query = matchQuery ?? Self.defaultQuery(for: launch)
-        let pool = supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
-
-        if let resp = try? await supabase.match(userState: query) {
-            var picked: [Traveler] = []
-            for m in resp.matches {
-                if let t = pool.first(where: { $0.id == m.travelerId }) {
-                    picked.append(t)
-                    matchReasons[t.id] = m.reason
-                }
-            }
-            matches = picked.isEmpty ? Self.fallbackMatches(from: pool) : picked
-        } else {
-            matches = Self.fallbackMatches(from: pool)
-        }
-        matchReady = true
     }
 
     // MARK: - 兜底内容
 
-    private static func fallbackMatches(from pool: [Traveler]) -> [Traveler] {
-        let similar = pool.filter { $0.isSimilar }
-        let base = similar.isEmpty ? pool : similar
-        return Array(base.prefix(3))
-    }
-
-    private static func defaultQuery(for launch: ChatLaunch) -> MatchQuery {
-        MatchQuery(lifeStage: "职业/身份转换期", constraints: ["害怕沉没成本", "收入波动顾虑"],
-                   tension: launch.question, decisionStage: "临界点", supportNeed: "想看别人怎么走过")
-    }
-
     private static func goldenSummary(for launch: ChatLaunch) -> String {
         switch launch.topic {
-        case .career: return "深耕设计 vs 转型产品"
+        case .career, nil: return "深耕设计 vs 转型产品"
         case .study: return "继续工作 vs 辞职读研"
         case .family: return "留在当前城市 vs 搬回家乡"
         case .love: return "维持异地 vs 为 TA 换城"
@@ -165,6 +190,6 @@ final class ChatModel {
     }
 
     private static func goldenReply(for launch: ChatLaunch) -> String {
-        "先接住你——会反复盘旋，说明这件事对你不轻。给你一个**初步判断**（不是结论）：你纠结的其实不是「能不能学会新技能」，而是「要不要放下已经积累的身份」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**\(goldenSummary(for: launch))**。\n\n两条路都没有标准答案，区别在于你更怕哪一种「后悔」。要不要看看真正走过这条路的人，是怎么面对同一个岔路口的？"
+        "先接住你——会反复盘旋，说明这件事对你不轻。我先试着说一个**暂时的理解**：你卡住的可能不只是「该选哪一个」，而是既想保护「真正重视的东西」，又不想忽略「现实里已经出现的信号」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**\(goldenSummary(for: launch))**。\n\n所以你需要的也许不是别人替你判断，而是把**真实意愿**和**害怕付出的代价**拆开来看。这个理解接近你吗？"
     }
 }
