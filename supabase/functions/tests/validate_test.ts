@@ -5,8 +5,10 @@ import {
   validateChatInput,
   validateDiaryInput,
   validateKaleidoscopeInput,
+  validateLabChoiceInput,
   validateListInput,
   validateMatchInput,
+  validatePersonaInput,
   validateSaveCardGameInput,
   validateSaveDimensionInput,
   validateSimulateInput,
@@ -267,5 +269,228 @@ Deno.test("kaleidoscopeInput rejects invalid mode", () => {
   assertHttpError(
     () => validateKaleidoscopeInput({}),
     "INVALID_INPUT",
+  );
+});
+
+Deno.test("kaleidoscopeInput parses recently_viewed_ids", () => {
+  const input = validateKaleidoscopeInput({
+    mode: "similar",
+    recently_viewed_ids: [1, 2, 3],
+  });
+  assert(input.recentlyViewedIds.length === 3);
+  const empty = validateKaleidoscopeInput({ mode: "different" });
+  assert(empty.recentlyViewedIds.length === 0);
+});
+
+Deno.test("kaleidoscopeInput rejects non-integer recently_viewed_ids", () => {
+  assertHttpError(
+    () =>
+      validateKaleidoscopeInput({
+        mode: "similar",
+        recently_viewed_ids: [1.5],
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("labChoiceInput accepts minimal and full input", () => {
+  const minimal = validateLabChoiceInput({ question: "要不要转行？" });
+  assert(minimal.question.includes("转行"));
+  assert(minimal.constraints === undefined);
+  const full = validateLabChoiceInput({
+    question: "要不要转行？",
+    topic: "职业",
+    constraints: ["不降薪"],
+    previous_choices: ["继续现职"],
+  });
+  assert(full.topic === "职业");
+  assert(full.constraints?.[0] === "不降薪");
+  assert(full.previousChoices?.[0] === "继续现职");
+});
+
+Deno.test("labChoiceInput rejects empty question", () => {
+  assertHttpError(
+    () => validateLabChoiceInput({ question: " " }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("personaInput defaults to generate", () => {
+  const input = validatePersonaInput({});
+  assert(input.action === "generate");
+  assert(input.jobId === undefined);
+});
+
+Deno.test("personaInput status requires job_id", () => {
+  assertHttpError(
+    () => validatePersonaInput({ action: "status" }),
+    "INVALID_INPUT",
+  );
+  const input = validatePersonaInput({
+    action: "status",
+    job_id: "01901234-5678-7abc-8def-0123456789ab",
+  });
+  assert(input.action === "status");
+  assert(input.jobId === "01901234-5678-7abc-8def-0123456789ab");
+});
+
+Deno.test("personaInput rejects invalid action", () => {
+  assertHttpError(
+    () => validatePersonaInput({ action: "delete" }),
+    "INVALID_INPUT",
+  );
+});
+
+// ==================== Edge-case Coverage ====================
+
+Deno.test("chat rejects malformed conversation_id", () => {
+  assertHttpError(
+    () =>
+      validateChatInput({
+        conversation_id: "not-a-uuid",
+        topic: "职业",
+        message: "你好",
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("match rejects non-object user_state and accepts full state", () => {
+  assertHttpError(
+    () => validateMatchInput({ user_state: "oops" }),
+    "INVALID_INPUT",
+  );
+  const full = validateMatchInput({
+    user_state: {
+      life_stage: "职业中期",
+      constraints: ["预算", "家庭"],
+      tension: "稳定与成长",
+      decision_stage: "权衡中",
+      support_need: "过来人经验",
+    },
+  });
+  assert(full.life_stage === "职业中期");
+  assert(full.constraints?.length === 2);
+  assert(full.support_need === "过来人经验");
+});
+
+Deno.test("simulate enforces the 1..10 year boundary", () => {
+  assert(
+    validateSimulateInput({ question: "q", choice: "c", years: 10 }).years ===
+      10,
+  );
+  assertHttpError(
+    () => validateSimulateInput({ question: "q", choice: "c", years: 11 }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateSimulateInput({ question: "q", choice: "c", years: 2.5 }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("diary rejects empty transcript", () => {
+  assertHttpError(
+    () => validateDiaryInput({ transcript: "   " }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("saveDimension honors custom source and rejects >20 tags", () => {
+  const input = validateSaveDimensionInput({
+    dimension: "personality",
+    tags: ["内向"],
+    source: "card_game",
+  });
+  assert(input.source === "card_game");
+  assertHttpError(
+    () =>
+      validateSaveDimensionInput({
+        dimension: "skill",
+        tags: Array.from({ length: 21 }, (_, i) => `t${i}`),
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("saveCardGame rejects >9 final_cards and out-of-range rounds", () => {
+  assertHttpError(
+    () =>
+      validateSaveCardGameInput({
+        kind: "life",
+        final_cards: Array.from({ length: 10 }, (_, i) => ({
+          id: `c${i}`,
+          name: `卡${i}`,
+        })),
+        rounds: 1,
+        accepted: [],
+        traded: [],
+      }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () =>
+      validateSaveCardGameInput({
+        kind: "life",
+        final_cards: [{ id: "c1", name: "稳定" }],
+        rounds: 101,
+        accepted: [],
+        traded: [],
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("listInput floors invalid limit back to default", () => {
+  const input = validateListInput({ limit: 0, offset: 5 });
+  assert(input.limit === 20, "limit<1 should reset to default 20");
+  assert(input.offset === 5);
+});
+
+Deno.test("bountyInput rejects oversized question", () => {
+  assertHttpError(
+    () =>
+      validateBountyInput({
+        question: "x".repeat(201),
+        tags: ["职业"],
+        detail: "d",
+        reward: "r",
+      }),
+    "INPUT_TOO_LONG",
+  );
+});
+
+Deno.test("kaleidoscopeInput rejects >20 recently_viewed_ids", () => {
+  assertHttpError(
+    () =>
+      validateKaleidoscopeInput({
+        mode: "similar",
+        recently_viewed_ids: Array.from({ length: 21 }, (_, i) => i + 1),
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("labChoiceInput rejects >10 constraints", () => {
+  assertHttpError(
+    () =>
+      validateLabChoiceInput({
+        question: "要不要转行？",
+        constraints: Array.from({ length: 11 }, (_, i) => `c${i}`),
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("personaInput generate accepts prompt_override and rejects oversize", () => {
+  const input = validatePersonaInput({
+    action: "generate",
+    prompt_override: "更温柔一些",
+  });
+  assert(input.action === "generate");
+  assert(input.promptOverride === "更温柔一些");
+  assertHttpError(
+    () => validatePersonaInput({ prompt_override: "x".repeat(501) }),
+    "INPUT_TOO_LONG",
   );
 });

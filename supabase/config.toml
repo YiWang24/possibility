@@ -52,3 +52,9 @@ verify_jwt = true
 
 [functions.community]
 verify_jwt = true
+
+[functions.lab-choices]
+verify_jwt = true
+
+[functions.persona]
+verify_jwt = true

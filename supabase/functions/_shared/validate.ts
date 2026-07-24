@@ -339,7 +339,33 @@ export function validateBountyResponseInput(
 
 export type KaleidoscopeInput = {
   mode: "similar" | "different";
+  recentlyViewedIds: number[];
 };
+
+function optionalIntArray(
+  value: unknown,
+  field: string,
+  maxItems: number,
+): number[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > maxItems) {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      `${field} 必须是长度不超过 ${maxItems} 的整数数组。`,
+    );
+  }
+  return value.map((item, index) => {
+    if (!Number.isInteger(item)) {
+      throw new HttpError(
+        400,
+        "INVALID_INPUT",
+        `${field}[${index}] 必须是整数。`,
+      );
+    }
+    return item as number;
+  });
+}
 
 export function validateKaleidoscopeInput(value: unknown): KaleidoscopeInput {
   const body = object(value);
@@ -351,5 +377,68 @@ export function validateKaleidoscopeInput(value: unknown): KaleidoscopeInput {
       "mode 必须是 similar 或 different。",
     );
   }
-  return { mode: mode as "similar" | "different" };
+  return {
+    mode: mode as "similar" | "different",
+    recentlyViewedIds: optionalIntArray(
+      body.recently_viewed_ids,
+      "recently_viewed_ids",
+      20,
+    ),
+  };
+}
+
+export type LabChoiceInput = {
+  question: string;
+  topic?: string;
+  constraints?: string[];
+  previousChoices?: string[];
+};
+
+export function validateLabChoiceInput(value: unknown): LabChoiceInput {
+  const body = object(value);
+  return {
+    question: string(body.question, "question", LIMITS.question)!,
+    topic: string(body.topic, "topic", LIMITS.topic, false),
+    constraints: optionalStringArray(
+      body.constraints,
+      "constraints",
+      10,
+      200,
+    ),
+    previousChoices: optionalStringArray(
+      body.previous_choices,
+      "previous_choices",
+      10,
+      100,
+    ),
+  };
+}
+
+export type PersonaInput = {
+  action: "generate" | "status";
+  jobId?: string;
+  promptOverride?: string;
+};
+
+export function validatePersonaInput(value: unknown): PersonaInput {
+  const body = object(value);
+  const action = string(body.action, "action", 20, false) ?? "generate";
+  if (action !== "generate" && action !== "status") {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "action 必须是 generate 或 status。",
+    );
+  }
+  if (action === "status") {
+    const jobId = uuid(body.job_id, "job_id");
+    if (!jobId) {
+      throw new HttpError(400, "INVALID_INPUT", "status 需要有效的 job_id。");
+    }
+    return { action, jobId };
+  }
+  return {
+    action,
+    promptOverride: string(body.prompt_override, "prompt_override", 500, false),
+  };
 }

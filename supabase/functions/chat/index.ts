@@ -130,10 +130,18 @@ Deno.serve(async (req) => {
             signal,
           );
           if (!cancelled) {
+            // 对齐原型探索对话契约：is_enough 表示岔路口是否已足够清晰，
+            // next_actions 给出下一步入口；同时保留 crossroads/profile 原字段。
+            const nextActions = signal.crossroads.ready
+              ? [{ type: "match", label: "看看走过类似岔路口、结局不同的人" }]
+              : [];
             controller.enqueue(sseEvent({
               done: true,
               conversation_id: conversation.id,
               crossroads: signal.crossroads,
+              is_enough: signal.crossroads.ready,
+              analysis: signal.crossroads.summary,
+              next_actions: nextActions,
               profile,
               high_risk: signal.high_risk,
               signal_degraded: signalResult.degraded,
