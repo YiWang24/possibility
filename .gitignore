@@ -1,1 +1,8 @@
 .DS_Store
+
+# Supabase / 后端
+supabase/.branches
+supabase/.temp
+supabase/functions/.env
+.env
+node_modules/

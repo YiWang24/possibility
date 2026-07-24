@@ -1,0 +1,39 @@
+# 万花筒 KALEIDO · Supabase 本地/项目配置
+project_id = "kaleido"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 16
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+# 匿名登录：对上 PRD「匿名/隐私」入口
+enable_anonymous_sign_ins = true
+
+[storage]
+enabled = true
+
+# ---- Edge Functions：全部强制校验 JWT ----
+[functions.chat]
+verify_jwt = true
+
+[functions.match]
+verify_jwt = true
+
+[functions.simulate]
+verify_jwt = true
+
+[functions.analyze-diary]
+verify_jwt = true
