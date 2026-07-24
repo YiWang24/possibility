@@ -198,8 +198,8 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .diary .top button{all:unset;cursor:pointer;font-size:12.5px;color:var(--blue);font-weight:500;padding:6px 12px;border-radius:999px;background:rgba(94,150,255,.12)}
 .diary-actions{display:flex;align-items:center;gap:6px}
 .diary .top .diary-title-link{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:3px 3px 3px 0;border-radius:9px;color:var(--ink)}
-.diary .top .diary-title-link:hover .diary-detail-icon{color:#fff;border-color:rgba(111,165,255,.5);background:rgba(94,150,255,.16)}
-.diary-detail-icon{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#9DBCFF;border:1px solid rgba(111,165,255,.25);background:rgba(94,150,255,.08);font-size:14px;line-height:1;transition:color .2s,border-color .2s,background .2s}
+.diary .top .diary-title-link:hover .diary-detail-icon{color:#fff;border-color:rgba(255,255,255,.34);background:rgba(255,255,255,.11)}
+.diary-detail-icon{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-size:14px;line-height:1;transition:color .2s,border-color .2s,background .2s}
 .dweek{display:flex;justify-content:space-between;margin-top:14px}
 .dday{all:unset;cursor:pointer;box-sizing:border-box;text-align:center;width:36px;border-radius:11px;padding:2px 0;transition:background .18s,transform .18s}
 .dday:hover{background:rgba(255,255,255,.045)}.dday:active{transform:scale(.94)}
@@ -461,7 +461,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 }
 .push.open{transform:none}
 .push .top{flex:none;padding:64px 22px 12px;display:flex;align-items:center;gap:13px;background:linear-gradient(rgba(10,12,18,.96),rgba(10,12,18,.85));backdrop-filter:blur(8px);z-index:5}
-.backbtn{all:unset;cursor:pointer;width:36px;height:36px;border-radius:50%;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card)}
+.backbtn{all:unset;cursor:pointer;box-sizing:border-box;width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card)}
 .push .top h2{font-size:16px;font-weight:600;letter-spacing:.08em}
 .push .top .sub2{font-size:11px;color:var(--faint);margin-top:2px}
 .push .scroll{flex:1;overflow-y:auto;padding:10px 20px 24px;scrollbar-width:none}
@@ -676,7 +676,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   transform:translate(calc(-50% + var(--fan-x,0px)),var(--fan-y,0px)) rotate(var(--fan-r,0deg));
   z-index:var(--fan-z,5)
 }
-.choice:hover,.choice:focus-visible{z-index:12;border-color:rgba(255,255,255,.34);box-shadow:0 16px 28px -12px rgba(0,0,0,.78)}
+.choice:hover,.choice:focus-visible{border-color:rgba(255,255,255,.34);box-shadow:0 16px 28px -12px rgba(0,0,0,.78)}
 .choice:active{cursor:grabbing}
 .choice.dragging{opacity:.22}
 .choice .g{font-size:19px}
@@ -687,6 +687,26 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   content:"✓";position:absolute;z-index:8;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
   background:var(--btn-g);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;
 }
+.choices .choice.on{z-index:70!important}
+.choices .choice:hover,.choices .choice:focus-visible{z-index:90!important}
+.choices .choice.front-card{z-index:92!important}
+.choices .choice.dragging{z-index:100!important}
+.choices:hover .choice.front-card,.choices.fanned .choice.front-card,.choices:focus-within .choice.front-card{
+  transform:translate(calc(-50% + var(--fan-x,0px)),calc(var(--fan-y,0px) - 9px)) rotate(var(--fan-r,0deg)) scale(1.035)
+}
+.choice.choice-create{border-color:rgba(255,255,255,.13);background:radial-gradient(150px 100px at 82% -12%,rgba(227,92,193,.15),transparent 64%),#131720}
+.choice.choice-create .g{display:grid;place-items:center;width:27px;height:27px;border-radius:9px;color:#F2E8FF;background:rgba(227,92,193,.12);border:1px solid rgba(227,92,193,.24)}
+.choice.choice-create b{color:#E3D9F4}.choice.choice-create p{color:#777F93}
+.custom-choice-editor{display:none;margin:-1px 0 10px;padding:13px;border-radius:17px;background:linear-gradient(145deg,rgba(94,150,255,.08),rgba(227,92,193,.055));border:1px solid rgba(143,161,255,.19)}
+.custom-choice-editor.show{display:block;animation:msgin .25s ease}
+.custom-choice-editor .head{display:flex;align-items:center;justify-content:space-between;gap:12px}.custom-choice-editor .head b{font-size:12px}.custom-choice-editor .head span{font-size:9px;color:var(--faint)}
+.custom-choice-fields{display:grid;grid-template-columns:1fr;gap:7px;margin-top:10px}
+.custom-choice-fields input,.custom-choice-fields textarea{box-sizing:border-box;width:100%;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(6,8,16,.54);color:var(--ink);font:11.5px/1.55 var(--sans);padding:9px 11px}
+.custom-choice-fields textarea{height:48px;resize:none}.custom-choice-fields input:focus,.custom-choice-fields textarea:focus{outline:1px solid rgba(143,161,255,.55)}
+.choice-gesture-hint{display:flex;align-items:center;gap:6px;margin:-5px 2px 7px;font-size:9.5px;color:#8F98AE}
+.choice-gesture-hint span{padding:3px 7px;border-radius:999px;color:#D9D0F5;background:rgba(143,123,255,.1);border:1px solid rgba(143,123,255,.17)}
+.choice-gesture-hint b{font-weight:500;color:#B6BED0}.choice-gesture-hint i{font-style:normal;color:#5D6578}
+.custom-choice-cue{position:absolute;left:12px;right:12px;bottom:9px;font-size:7.5px;letter-spacing:.02em;color:#929AB0;white-space:nowrap}
 .carry-section{
   display:none;margin:8px 8px 0;padding:12px 12px 10px;border-radius:18px;
   background:linear-gradient(145deg,rgba(255,176,103,.07),rgba(94,150,255,.055));
@@ -729,6 +749,8 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   font-size:14px;font-weight:600;white-space:nowrap;backdrop-filter:blur(6px);
   will-change:transform;
 }
+.drag-ghost.delete-ready{color:#FFE5DE;background:rgba(60,20,22,.96);border-color:rgba(255,122,77,.74);box-shadow:var(--shadow-float),0 0 26px rgba(255,92,74,.3)}
+.drag-ghost.delete-ready span{color:#FF9B83}
 .dial.drop-hot .ring{filter:saturate(1.5) brightness(1.15);opacity:1}
 .dial.drop-hot .glowring{opacity:.9;filter:blur(22px)}
 .dial.drop-hot::before{
@@ -1246,6 +1268,20 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .life-entry .copy{flex:1;position:relative}.life-entry .cap{font-size:9.5px;letter-spacing:.2em;color:#B9AEFF}
 .life-entry b{display:block;font-size:13.5px;margin-top:4px}.life-entry p{font-size:10.5px;line-height:1.55;color:var(--sub);margin-top:3px}
 .life-entry .go{font-size:18px;color:#D6CEFF}
+.card-game-hub{background-image:radial-gradient(420px 260px at 100% 0,rgba(143,123,255,.16),transparent 72%)}
+.card-game-hub .scroll{padding:10px 20px 46px}
+.card-hub-hero{padding:13px 3px 20px}.card-hub-hero .ey{font-size:10px;letter-spacing:.24em;color:#B9AEFF}.card-hub-hero h2{font-size:22px;line-height:1.35;letter-spacing:-.02em;white-space:nowrap;margin-top:9px}.card-hub-hero p{font-size:13px;line-height:1.7;color:var(--sub);margin-top:9px}
+.card-game-primary{all:unset;cursor:pointer;box-sizing:border-box;width:100%;min-height:310px;padding:21px;border-radius:24px;position:relative;overflow:hidden;text-align:left;background:radial-gradient(250px 170px at 100% 0,rgba(227,92,193,.24),transparent 70%),linear-gradient(145deg,#20274A,#171827 68%);border:1px solid rgba(184,169,255,.3);box-shadow:0 20px 42px -28px rgba(143,123,255,.9);transition:transform .16s,border-color .2s}
+.card-game-primary:active{transform:scale(.985)}.card-game-primary:hover{border-color:rgba(202,191,255,.5)}
+.card-primary-intro{display:flex;align-items:center;gap:18px}.card-primary-copy{min-width:0;flex:1}
+.card-hub-deck{width:82px;height:96px;position:relative;flex:none}.card-hub-deck i{position:absolute;inset:7px 13px 3px;border-radius:14px;background:linear-gradient(145deg,#5E96FF,#8F7BFF 54%,#E35CC1);border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 16px rgba(0,0,0,.28)}.card-hub-deck i:first-child{transform:translateX(-10px) rotate(-10deg);opacity:.6}.card-hub-deck i:last-child{transform:translateX(10px) rotate(9deg)}.card-hub-deck i:last-child::after{content:"✦";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-style:normal;font-size:20px}
+.card-game-primary .cap{display:block;font-size:10.5px;letter-spacing:.18em;color:#C5BAFF}.card-game-primary .title{display:block;font-size:20px;font-weight:700;line-height:1.38;margin-top:7px}.card-game-primary .desc{display:block;font-size:12.5px;line-height:1.65;color:#D0D5E2;margin-top:8px}.card-game-primary .start{display:flex;align-items:center;justify-content:space-between;margin-top:15px;padding:12px 14px;border-radius:14px;font-size:13px;color:#fff;background:linear-gradient(90deg,rgba(94,150,255,.3),rgba(143,123,255,.25));border:1px solid rgba(159,175,255,.34);box-shadow:0 8px 18px -12px rgba(94,150,255,.8)}.card-game-primary .start b{font-size:14px}.card-game-primary .start span{font-size:11px;color:#CFD8F7}
+.card-game-rule-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}.card-game-rule-strip span{padding:10px 8px;border-radius:12px;background:rgba(7,9,17,.3);border:1px solid rgba(255,255,255,.09);font-size:11.5px;line-height:1.45;color:#D3D7E2}.card-game-rule-strip b{display:block;color:#D2C9FF;font-size:10px;letter-spacing:.1em;margin-bottom:4px}
+.card-hub-other{margin-top:22px}.card-hub-other-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:0 2px 10px}.card-hub-other-head b{font-size:13px}.card-hub-other-head span{font-size:9.5px;color:var(--faint)}
+.card-game-options{display:flex;flex-direction:column;gap:9px}.card-game-option{all:unset;cursor:pointer;box-sizing:border-box;width:100%;display:grid;grid-template-columns:45px minmax(0,1fr) 18px;align-items:center;gap:12px;padding:15px;border-radius:19px;background:var(--card);border:1px solid var(--line);transition:transform .16s,border-color .2s,background .2s}.card-game-option:active{transform:scale(.985)}
+.card-game-option .mark{width:45px;height:45px;border-radius:15px;display:grid;place-items:center;font-size:20px}.card-game-option .copy{min-width:0}.card-game-option .copy b{display:block;font-size:13px}.card-game-option .copy p{font-size:10px;line-height:1.55;color:var(--faint);margin-top:4px}.card-game-option .copy small{display:block;margin-top:5px;font-size:8.5px;letter-spacing:.08em;color:#9CADCF}.card-game-option .go{color:#8993AA;font-size:17px}
+.card-game-option.marriage .mark{color:#FFD0E8;background:rgba(227,92,193,.12)}.card-game-option.family .mark{color:#A4F2D7;background:rgba(62,217,164,.1)}.card-game-option.social .mark{color:#C4D7FF;background:rgba(94,150,255,.12)}
+.card-game-option.marriage:hover{border-color:rgba(240,150,206,.34);background:rgba(227,92,193,.055)}.card-game-option.family:hover{border-color:rgba(112,229,193,.32);background:rgba(62,217,164,.045)}.card-game-option.social:hover{border-color:rgba(146,181,255,.34);background:rgba(94,150,255,.05)}
 
 .life-game{
   position:absolute;inset:0;z-index:74;background:
@@ -1474,15 +1510,45 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .private-note{display:flex;gap:9px;align-items:flex-start;margin-top:13px;padding:10px 12px;border-radius:13px;text-align:left;background:rgba(62,217,164,.07);border:1px solid rgba(62,217,164,.18);font-size:10px;line-height:1.6;color:#9ACDBB}
 .private-note i{font-style:normal;color:var(--teal)}
 .relationship-game{background-image:radial-gradient(410px 300px at 110% 0,rgba(240,106,205,.17),transparent 68%),radial-gradient(340px 280px at -15% 100%,rgba(255,122,77,.11),transparent 68%)}
-.relationship-game .linear-pick-card.on{background:linear-gradient(145deg,rgba(184,69,128,.94),rgba(104,66,147,.95));border-color:rgba(255,183,220,.72);box-shadow:0 0 0 1px rgba(255,168,216,.18),0 12px 28px -8px rgba(227,92,193,.68)}
-.relationship-game .linear-pick-card small{color:#7D2656}
-.relation-duel{display:grid;grid-template-columns:1fr 34px 1fr;align-items:center;gap:7px;margin-top:25px}
-.relation-duel .vs{text-align:center;font-size:9px;letter-spacing:.16em;color:#6E7485}
-.relation-choice{all:unset;cursor:pointer;box-sizing:border-box;min-height:238px;padding:18px 14px;border-radius:22px;position:relative;overflow:hidden;text-align:left;background:radial-gradient(150px 120px at 100% 0,rgba(240,106,205,.17),transparent 70%),#171923;border:1px solid rgba(255,255,255,.09);box-shadow:0 18px 32px -24px #000;transition:transform .2s,border-color .2s,background .2s}
-.relation-choice:hover,.relation-choice:focus-visible{transform:translateY(-5px);border-color:rgba(240,150,206,.42)}.relation-choice:active{transform:scale(.98)}
-.relation-choice .glyph{display:block;font-size:32px;color:#FFD0E8}.relation-choice .keep{display:block;margin-top:55px;font-size:8.5px;letter-spacing:.16em;color:#C77FA9}.relation-choice b{display:block;margin-top:7px;font-size:16px}.relation-choice p{font-size:9.5px;line-height:1.55;color:var(--faint);margin-top:7px}
-.relation-round-copy{text-align:center}.relation-round-copy .ey{font-size:9px;letter-spacing:.2em;color:#E890C0}.relation-round-copy h2{font-size:21px;line-height:1.45;margin-top:8px}.relation-round-copy p{font-size:10.5px;line-height:1.65;color:var(--sub);margin-top:7px}
+.marriage-select-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.marriage-pick-card{
+  all:unset;cursor:pointer;box-sizing:border-box;min-width:0;min-height:142px;padding:14px 13px;border-radius:19px;
+  display:flex;flex-direction:column;align-items:flex-start;position:relative;overflow:hidden;
+  background:radial-gradient(130px 90px at 100% 0,rgba(240,106,205,.12),transparent 72%),#151822;
+  border:1px solid rgba(255,255,255,.09);box-shadow:0 15px 27px -23px #000;transition:transform .16s,border-color .2s,background .2s;
+}
+.marriage-pick-card:active{transform:scale(.975)}.marriage-pick-card:hover{border-color:rgba(240,150,206,.35)}
+.marriage-pick-card .card-no{font-size:8px;letter-spacing:.15em;color:#73798A}.marriage-pick-card .glyph{font-size:27px;line-height:1;color:#FFD0E8;margin-top:14px}
+.marriage-pick-card b{display:block;font-size:12.5px;line-height:1.35;margin-top:auto;padding-top:13px}.marriage-pick-card em{display:block;font-style:normal;font-size:9px;color:#8D93A7;margin-top:3px}
+.marriage-pick-card small{display:none;position:absolute;right:10px;top:10px;width:21px;height:21px;border-radius:50%;align-items:center;justify-content:center;font-size:10px;color:#401229;background:#FFD0E8}
+.marriage-pick-card.on{background:linear-gradient(145deg,rgba(184,69,128,.9),rgba(104,66,147,.93));border-color:rgba(255,183,220,.72);box-shadow:0 14px 28px -16px rgba(227,92,193,.8)}
+.marriage-pick-card.on .card-no,.marriage-pick-card.on em{color:rgba(255,255,255,.7)}.marriage-pick-card.on small,.marriage-pick-card.trade-pick small{display:flex}
+.marriage-pick-card.trade-pick{background:linear-gradient(145deg,rgba(132,54,52,.96),rgba(103,46,71,.95));border-color:rgba(255,166,137,.78)}
+.marriage-pick-card.trade-pick small{color:#2A1010;background:#FFB092}
+.marriage-scenario-card{
+  margin:18px auto 0;max-width:304px;min-height:224px;padding:24px 22px;border-radius:25px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:flex-end;text-align:left;
+  background:radial-gradient(230px 150px at 100% 0,rgba(240,106,205,.28),transparent 72%),linear-gradient(145deg,#211724,#121620 66%);
+  border:1px solid rgba(240,150,206,.25);box-shadow:0 24px 52px -28px rgba(227,92,193,.9);
+}
+.marriage-scenario-card .serial{position:absolute;left:22px;top:20px;font-size:8.5px;letter-spacing:.2em;color:#DB8DBA}
+.marriage-scenario-card .mark{position:absolute;right:22px;top:18px;font-size:30px;color:rgba(255,219,237,.34)}
+.marriage-scenario-card h2{font-size:22px;line-height:1.35}.marriage-scenario-card p{font-size:11px;line-height:1.72;color:#B2B7C6;margin-top:9px}
+.marriage-held-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}.marriage-held-strip span{padding:5px 8px;border-radius:999px;font-size:9px;color:#F4C7DD;background:rgba(240,106,205,.08);border:1px solid rgba(240,150,206,.18)}
+.marriage-trade-note{font-size:10.5px;line-height:1.68;color:#FFBEA7;margin-bottom:13px;padding:11px 12px;border-radius:14px;background:rgba(255,122,77,.09);border:1px solid rgba(255,122,77,.2)}
+.value-game.family-theme{background-image:radial-gradient(420px 300px at 110% 0,rgba(62,217,164,.18),transparent 68%),radial-gradient(340px 280px at -15% 100%,rgba(94,150,255,.12),transparent 68%)}
+.value-game.social-theme{background-image:radial-gradient(420px 300px at 110% 0,rgba(94,150,255,.2),transparent 68%),radial-gradient(340px 280px at -15% 100%,rgba(143,123,255,.15),transparent 68%)}
+.value-game.family-theme .marriage-pick-card .glyph{color:#A4F2D7}.value-game.social-theme .marriage-pick-card .glyph{color:#C4D7FF}
+.value-game.family-theme .marriage-pick-card.on{background:linear-gradient(145deg,rgba(37,133,114,.94),rgba(45,91,110,.95));border-color:rgba(143,237,207,.7);box-shadow:0 14px 28px -16px rgba(62,217,164,.72)}
+.value-game.social-theme .marriage-pick-card.on{background:linear-gradient(145deg,rgba(59,101,188,.95),rgba(82,64,145,.95));border-color:rgba(164,192,255,.72);box-shadow:0 14px 28px -16px rgba(94,150,255,.78)}
+.value-game.family-theme .marriage-pick-card.on small{color:#083126;background:#A4F2D7}.value-game.social-theme .marriage-pick-card.on small{color:#102553;background:#C4D7FF}
+.value-game.family-theme .marriage-scenario-card{background:radial-gradient(230px 150px at 100% 0,rgba(62,217,164,.26),transparent 72%),linear-gradient(145deg,#15241F,#111820 66%);border-color:rgba(112,229,193,.25);box-shadow:0 24px 52px -28px rgba(62,217,164,.82)}
+.value-game.social-theme .marriage-scenario-card{background:radial-gradient(230px 150px at 100% 0,rgba(94,150,255,.28),transparent 72%),linear-gradient(145deg,#151B2D,#111520 66%);border-color:rgba(146,181,255,.26);box-shadow:0 24px 52px -28px rgba(94,150,255,.82)}
+.value-game.family-theme .marriage-scenario-card .serial{color:#7DE0BF}.value-game.social-theme .marriage-scenario-card .serial{color:#9EBBFF}
+.relationship-game .stamp-card::before,.value-game .stamp-card::before{content:"情境"}
 .relation-result{padding-top:8px;text-align:center}.relation-result .heart{width:76px;height:76px;margin:0 auto;border-radius:26px;display:grid;place-items:center;font-size:30px;color:#FFE3F1;background:linear-gradient(145deg,#B94A82,#6E4D9F);box-shadow:0 18px 38px -16px rgba(227,92,193,.75)}.relation-result h2{font-size:23px;margin-top:16px}.relation-result>p{font-size:11px;line-height:1.75;color:var(--sub);margin-top:8px}.relation-final-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.relation-final-card{padding:14px 7px;border-radius:16px;background:#171923;border:1px solid rgba(240,150,206,.18)}.relation-final-card i{display:block;font-style:normal;font-size:22px;color:#FFD0E8}.relation-final-card b{display:block;font-size:10.5px;margin-top:7px}
+.value-game.family-theme .relation-result .heart{color:#D9FFF2;background:linear-gradient(145deg,#258572,#315D72);box-shadow:0 18px 38px -16px rgba(62,217,164,.72)}
+.value-game.social-theme .relation-result .heart{color:#E2EBFF;background:linear-gradient(145deg,#3B65BC,#594592);box-shadow:0 18px 38px -16px rgba(94,150,255,.75)}
 /* ============ 我擅长 浮层 ============ */
 .backdrop{position:absolute;inset:0;z-index:58;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .3s}
 .backdrop.open{opacity:1;visibility:visible}
@@ -1767,12 +1833,12 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       </div>
     </div>
 
-    <button class="life-entry" id="lifeEntry" onclick="openLifeGame()">
+    <button class="life-entry" id="lifeEntry" onclick="openCardGameHub()">
       <span class="mini-deck"><i></i><i></i></span>
       <span class="copy">
-        <span class="cap">画像深潜 · 5–8 分钟</span>
+        <span class="cap">四套卡牌探索 · 3–8 分钟</span>
         <b id="lifeEntryTitle">人生卡牌：你最后会留下什么？</b>
-        <p id="lifeEntryDesc">经历多轮人生取舍，直到自然留下三张底牌</p>
+        <p id="lifeEntryDesc">人生、婚姻、家庭、人际交往 · 选择一套开始</p>
       </span>
       <span class="go">›</span>
     </button>
@@ -1807,12 +1873,17 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
         </button>
         <button class="dim todo" id="dimBtnLove" onclick="openDimensionSheet('love')">
           <span class="ic" style="background:rgba(255,122,77,.16)">✿</span>
-          <span class="tx"><b>我在情感关系中在意</b><p class="empty" id="dimLove">尚未填写</p></span>
+          <span class="tx"><b>我在恋爱关系中在意</b><p class="empty" id="dimLove">尚未填写</p></span>
           <span class="ar">›</span>
         </button>
         <button class="dim todo" id="dimBtnFamily" onclick="openDimensionSheet('family')">
           <span class="ic" style="background:rgba(62,217,164,.14)">⌂</span>
           <span class="tx"><b>我在家庭关系中在意</b><p class="empty" id="dimFamily">尚未填写</p></span>
+          <span class="ar">›</span>
+        </button>
+        <button class="dim todo" id="dimBtnSocial" onclick="openDimensionSheet('social')">
+          <span class="ic" style="background:rgba(94,150,255,.15)">◎</span>
+          <span class="tx"><b>我在人际交往中在意</b><p class="empty" id="dimSocial">尚未填写</p></span>
           <span class="ar">›</span>
         </button>
       </div>
@@ -1859,7 +1930,8 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     </div>
     <div class="knob-hint">拖动旋钮，1 – 10 年任意停留</div>
 
-    <div class="sec-t"><h3>我的选择卡</h3><span id="choiceDeckMeta">按住拖入实验室</span></div>
+    <div class="sec-t"><h3>我的选择卡</h3><span id="choiceDeckMeta">左右滑动选择 · 向上拖入实验室</span></div>
+    <div class="choice-gesture-hint"><span>自定义卡</span><b>双击编辑</b><i>·</i><b>向上拖动删除</b></div>
     <div class="choices" id="choices">
       <button class="choice" data-name="继续做设计" style="--stamp-glow:rgba(94,150,255,.22)" onclick="pickChoice(this)">
         <span class="g">🎨</span><b>继续做设计</b><p>深耕交互，走专家路线</p>
@@ -1873,6 +1945,16 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       <button class="choice" data-name="放弃探索" style="--stamp-glow:rgba(255,176,103,.18)" onclick="pickChoice(this)">
         <span class="g">🍃</span><b>放弃探索</b><p>先安顿好现在的生活</p>
       </button>
+      <button class="choice custom-choice-card choice-create" id="customChoiceCard" data-name="" data-custom-ready="false" style="--stamp-glow:rgba(227,92,193,.2)" onclick="openCustomChoiceEditor()">
+        <span class="g">＋</span><b id="customChoiceCardTitle">自定义选择</b><p id="customChoiceCardDesc">写下你真正想探索的选项</p>
+      </button>
+    </div>
+    <div class="custom-choice-editor" id="customChoiceEditor">
+      <div class="head"><b id="customChoiceEditorTitle">新增一张选择卡</b><span>Enter 保存 · Esc 取消</span></div>
+      <div class="custom-choice-fields">
+        <input id="customChoiceName" maxlength="18" placeholder="选择名称，例如：先休息三个月" onkeydown="handleCustomChoiceEditorKey(event)">
+        <textarea id="customChoiceDesc" maxlength="42" placeholder="补充一句说明（可选）" onkeydown="handleCustomChoiceEditorKey(event)"></textarea>
+      </div>
     </div>
 
     <div class="carry-section" id="carrySection">
@@ -2297,6 +2379,53 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     <div class="scroll" id="assessmentResultBody"></div>
   </section>
 
+  <!-- ============ 卡牌游戏大厅 ============ -->
+  <section class="push card-game-hub" id="cardGameHub">
+    <div class="top">
+      <button class="backbtn" onclick="closePush('cardGameHub')" aria-label="返回认识自己">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div><h2>卡牌探索</h2><div class="sub2">选择一套卡牌，看看最后会留下什么</div></div>
+    </div>
+    <div class="scroll">
+      <div class="card-hub-hero">
+        <div class="ey">CARD EXPLORATION</div>
+        <h2>在取舍中，看见你真正重视的事</h2>
+        <p>跟着直觉做出选择，在一次次取舍里，留下此刻对你最重要的三件事。</p>
+      </div>
+      <button class="card-game-primary" onclick="launchCardGame('life')">
+        <span class="card-primary-intro">
+          <span class="card-hub-deck"><i></i><i></i></span>
+          <span class="card-primary-copy">
+            <span class="cap">LIFE CARDS · 5–8 分钟</span>
+            <span class="title">人生卡牌：你最后会留下什么？</span>
+            <span class="desc">从能力、关系、信念与现实支点中先选九张，经历一段不断要求取舍的人生。</span>
+          </span>
+        </span>
+        <span class="card-game-rule-strip">
+          <span><b>01 · 选择</b>先凭直觉选 9 张</span>
+          <span><b>02 · 加码</b>接受后情境升级</span>
+          <span><b>03 · 交换</b>拒绝就放下 2 张</span>
+        </span>
+        <span class="start"><b>开始取舍</b><span>9 → 7 → 5 → 3　›</span></span>
+      </button>
+      <div class="card-hub-other">
+        <div class="card-hub-other-head"><b>也可以，从一段关系开始</b><span>每套约 3 分钟</span></div>
+        <div class="card-game-options">
+          <button class="card-game-option marriage" onclick="launchCardGame('marriage')">
+            <span class="mark">♡</span><span class="copy"><b>婚姻关系卡牌</b><p>看见婚姻中最想守住的承诺、边界与未来</p><small>选 9 张 · 多轮加码 · 最终留 3 张</small></span><span class="go">›</span>
+          </button>
+          <button class="card-game-option family" onclick="launchCardGame('family')">
+            <span class="mark">⌂</span><span class="copy"><b>家庭关系卡牌</b><p>看见家庭中最关心的安全、支持与自主</p><small>选 9 张 · 多轮加码 · 最终留 3 张</small></span><span class="go">›</span>
+          </button>
+          <button class="card-game-option social" onclick="launchCardGame('social')">
+            <span class="mark">◎</span><span class="copy"><b>人际交往卡牌</b><p>看见交往中最重视的真诚、边界与连接</p><small>选 9 张 · 多轮加码 · 最终留 3 张</small></span><span class="go">›</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ 人生卡牌游戏 ============ -->
   <div class="life-game" id="lifeGame" aria-hidden="true">
     <div class="life-top">
@@ -2311,11 +2440,11 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     <div class="life-foot" id="lifeFoot"></div>
   </div>
 
-  <!-- ============ 关系取舍卡牌 ============ -->
+  <!-- ============ 婚姻卡牌 ============ -->
   <div class="life-game relationship-game" id="relationshipGame" aria-hidden="true">
     <div class="life-top">
       <button class="life-back" onclick="relationshipBack()" aria-label="返回">‹</button>
-      <div class="life-top-copy"><b id="relationshipTopTitle">关系卡牌</b><p id="relationshipTopSub">三次靠近与取舍</p></div>
+      <div class="life-top-copy"><b id="relationshipTopTitle">婚姻卡牌</b><p id="relationshipTopSub">在多轮取舍中看见最关心的事</p></div>
       <div class="life-progress">
         <div class="track"><i id="relationshipProgressBar"></i></div>
         <span id="relationshipProgressText">准备开始</span>
@@ -2323,6 +2452,20 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     </div>
     <div class="life-body" id="relationshipBody"></div>
     <div class="life-foot" id="relationshipFoot"></div>
+  </div>
+
+  <!-- ============ 家庭 / 人际卡牌 ============ -->
+  <div class="life-game value-game" id="valueGame" aria-hidden="true">
+    <div class="life-top">
+      <button class="life-back" onclick="valueGameBack()" aria-label="返回">‹</button>
+      <div class="life-top-copy"><b id="valueGameTopTitle">关系卡牌</b><p id="valueGameTopSub">在多轮取舍中看见最关心的事</p></div>
+      <div class="life-progress">
+        <div class="track"><i id="valueGameProgressBar"></i></div>
+        <span id="valueGameProgressText">准备开始</span>
+      </div>
+    </div>
+    <div class="life-body" id="valueGameBody"></div>
+    <div class="life-foot" id="valueGameFoot"></div>
   </div>
 
   <!-- ============ 动态画像维度浮层 ============ -->
@@ -2707,7 +2850,7 @@ function dynamicPersonaRandom(seed){
   };
 }
 function currentPersonaSnapshot(){
-  const selectors=['#personalityBaseText','#dimSkill','#dimLike','#dimLove','#dimFamily'];
+  const selectors=['#personalityBaseText','#dimSkill','#dimLike','#dimLove','#dimFamily','#dimSocial'];
   const values=selectors.map(selector=>$(selector)?.textContent.trim()||'').filter(Boolean);
   const filled=values.filter(value=>!/(尚未|待探索|未填写)/.test(value));
   const signature=[...document.querySelectorAll('#lifeSignatureCards span')].map(node=>node.textContent.trim()).filter(Boolean);
@@ -2722,7 +2865,7 @@ function refreshDynamicPersona(){
   const content=[...snapshot.values,...snapshot.signature].join(' ');
   const formSignals={
     crystal:(content.match(/结构|有序|计划|理性|思考|分析|原则|边界|才华|智商/g)||[]).length,
-    bloom:(content.match(/共情|陪伴|关系|家庭|亲情|朋友|爱|善良|信任/g)||[]).length,
+    bloom:(content.match(/共情|陪伴|关系|家庭|亲情|朋友|人际|真诚|尊重|回应|交流|支持|爱|善良|信任/g)||[]).length,
     wing:(content.match(/视觉|手绘|创造|审美|表达|自由|好奇|喜欢/g)||[]).length,
     orbit:(content.match(/独处|探索|学习|尝试|成长|行动|勇气|坚强/g)||[]).length
   };
@@ -3548,6 +3691,152 @@ function saveEditQ(){
 
 /* ================= 实验室：连续时间旋钮 ================= */
 let labYear = 5, labPick = null;
+const CUSTOM_CHOICE_STORE_KEY='kaleido_lab_custom_choice_v1';
+let customChoices=[];
+let editingCustomChoiceId=null;
+function normalizeCustomChoices(saved){
+  const items=Array.isArray(saved)?saved:(saved?.name?[{...saved,id:saved.id||`custom-${Date.now().toString(36)}`}]:[]);
+  return items
+    .filter(item=>item?.name)
+    .map((item,index)=>({
+      id:String(item.id||`custom-${Date.now().toString(36)}-${index}`).replace(/[^\w-]/g,'')||`custom-${Date.now().toString(36)}-${index}`,
+      name:String(item.name).trim().slice(0,18),
+      desc:String(item.desc||'我的自定义选择').trim().slice(0,42)||'我的自定义选择'
+    }));
+}
+function persistCustomChoices(){
+  safeStoreSet(CUSTOM_CHOICE_STORE_KEY,customChoices);
+}
+function layoutChoiceDeck(){
+  const deck=document.getElementById('choices');
+  if(!deck)return;
+  const cards=[...deck.querySelectorAll(':scope > .choice')];
+  const total=cards.length;
+  const spread=Math.min(310,Math.max(224,(total-1)*52));
+  const step=total>1?spread/(total-1):0;
+  const center=(total-1)/2;
+  cards.forEach((card,index)=>{
+    const distance=index-center;
+    const normalized=center?distance/center:0;
+    card.style.setProperty('--fan-x',`${Math.round(distance*step)}px`);
+    card.style.setProperty('--fan-y',`${Math.round(-5+Math.pow(Math.abs(normalized),1.35)*23)}px`);
+    card.style.setProperty('--fan-r',`${(normalized*16).toFixed(1)}deg`);
+    card.style.setProperty('--fan-z',String(Math.round(20-Math.abs(distance)*2)));
+    card.style.setProperty('--stack-z',String(Math.round(20-Math.abs(distance)*2)));
+  });
+  deck.style.height=total>7?'194px':'178px';
+}
+function renderCustomChoices(){
+  const deck=document.getElementById('choices'),createCard=document.getElementById('customChoiceCard');
+  if(!deck||!createCard)return;
+  const selectedId=deck.querySelector(':scope > .choice[data-custom-id].on')?.dataset.customId||null;
+  deck.querySelectorAll(':scope > .choice[data-custom-id]').forEach(card=>card.remove());
+  createCard.insertAdjacentHTML('beforebegin',customChoices.map((item,index)=>`
+    <button class="choice custom-choice-card custom-choice-item" data-custom-id="${escapeHTML(item.id)}" data-name="${escapeHTML(item.name)}" style="--stamp-glow:${index%2?'rgba(143,123,255,.22)':'rgba(227,92,193,.18)'}" onclick="handleCustomChoiceClick(this,event)" title="${escapeHTML(item.name)} · 双击编辑 · 向上拖动删除" aria-label="${escapeHTML(item.name)}，双击编辑，向上拖动删除">
+      <span class="g">✍️</span><b>${escapeHTML(item.name)}</b><p>${escapeHTML(item.desc)}</p>
+      <small class="custom-choice-cue">双击编辑 · ↑ 删除</small>
+    </button>`).join(''));
+  layoutChoiceDeck();
+  const selectableCount=deck.querySelectorAll(':scope > .choice:not([data-custom-ready="false"])').length;
+  if($('#choiceDeckMeta'))$('#choiceDeckMeta').textContent=`${selectableCount} 张 · 左右滑动选择`;
+  if(selectedId){
+    const selectedItem=customChoices.find(choice=>choice.id===selectedId);
+    const selectedCard=deck.querySelector(`[data-custom-id="${selectedId}"]`);
+    if(selectedItem&&selectedCard){
+      selectedCard.classList.add('on');
+      labPick=selectedItem.name;
+      $('#dialPick').textContent=labPick;
+      syncLabReady();
+    }
+  }
+}
+let lastCustomChoiceTap={id:null,at:0};
+function handleCustomChoiceClick(card,event){
+  const now=Date.now(),id=card.dataset.customId;
+  const isDouble=event.detail>=2||(lastCustomChoiceTap.id===id&&now-lastCustomChoiceTap.at<380);
+  if(isDouble){
+    event.preventDefault();
+    event.stopPropagation();
+    lastCustomChoiceTap={id:null,at:0};
+    openCustomChoiceEditor(id);
+    return;
+  }
+  lastCustomChoiceTap={id,at:now};
+  pickChoice(card);
+}
+function openCustomChoiceEditor(id=null){
+  const item=id?customChoices.find(choice=>choice.id===id):null;
+  editingCustomChoiceId=item?.id||null;
+  $('#customChoiceEditorTitle').textContent=item?'编辑这张选择卡':'新增一张选择卡';
+  $('#customChoiceName').value=item?.name||'';
+  $('#customChoiceDesc').value=item?.desc||'';
+  $('#customChoiceEditor').classList.add('show');
+  choicesDeck.classList.add('fanned');
+  requestAnimationFrame(()=>{
+    $('#customChoiceEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+    $('#customChoiceName').focus();
+  });
+}
+function closeCustomChoiceEditor(){
+  $('#customChoiceEditor').classList.remove('show');
+  editingCustomChoiceId=null;
+}
+function handleCustomChoiceEditorKey(event){
+  if(event.isComposing)return;
+  if(event.key==='Escape'){
+    event.preventDefault();
+    closeCustomChoiceEditor();
+    return;
+  }
+  if(event.key==='Enter'&&!event.shiftKey){
+    event.preventDefault();
+    saveCustomChoice();
+  }
+}
+function saveCustomChoice(){
+  const name=$('#customChoiceName').value.trim();
+  const desc=$('#customChoiceDesc').value.trim();
+  if(!name){toast('先写下这张选择卡的名称');$('#customChoiceName').focus();return}
+  const isEditing=Boolean(editingCustomChoiceId);
+  const selectedId=$('#choices .choice[data-custom-id].on')?.dataset.customId||null;
+  const data={name:name.slice(0,18),desc:desc.slice(0,42)||'我的自定义选择'};
+  if(editingCustomChoiceId){
+    const index=customChoices.findIndex(choice=>choice.id===editingCustomChoiceId);
+    if(index>=0)customChoices[index]={...customChoices[index],...data};
+  }else{
+    data.id=`custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,6)}`;
+    customChoices.push(data);
+  }
+  const savedId=editingCustomChoiceId||data.id;
+  persistCustomChoices();
+  renderCustomChoices();
+  closeCustomChoiceEditor();
+  if(selectedId&&selectedId===savedId){
+    const selected=$(`#choices [data-custom-id="${savedId}"]`);
+    selected?.classList.add('on');
+    labPick=data.name;
+    $('#dialPick').textContent=labPick;
+    syncLabReady();
+  }
+  toast(isEditing?'自定义选择卡已更新':'新的自定义选择卡已加入卡组');
+}
+function deleteCustomChoice(id,requireConfirm=true){
+  const item=customChoices.find(choice=>choice.id===id);
+  if(!item||(requireConfirm&&!window.confirm(`删除“${item.name}”这张选择卡？`)))return;
+  const selected=$(`#choices [data-custom-id="${id}"]`)?.classList.contains('on');
+  customChoices=customChoices.filter(choice=>choice.id!==id);
+  persistCustomChoices();
+  renderCustomChoices();
+  if(selected){
+    labPick=null;
+    $('#dialPick').textContent='把选择卡拖进来';
+    syncLabReady();
+  }
+  toast('自定义选择卡已删除');
+}
+customChoices=normalizeCustomChoices(safeStoreGet(CUSTOM_CHOICE_STORE_KEY));
+persistCustomChoices();
+renderCustomChoices();
 const CARRY_LIMIT=3;
 const carrySelected=new Set();
 const floorAnswers={};
@@ -3737,29 +4026,17 @@ dialEl.addEventListener('pointermove', e=>{
 const phoneEl = document.querySelector('.phone');
 const choicesDeck = document.getElementById('choices');
 let cardDrag = null, justDragged = false;
-function layoutLabChoiceCards(){
-  const cards=[...choicesDeck.querySelectorAll('.choice')],n=cards.length;
-  const center=(n-1)/2,edge=Math.max(center,1);
-  const spread=n<=3?88:n===4?112:140;
-  cards.forEach((card,i)=>{
-    const norm=(i-center)/edge;
-    const y=-3+Math.pow(Math.abs(norm),1.7)*14;
-    card.style.setProperty('--fan-x',`${Math.round(norm*spread)}px`);
-    card.style.setProperty('--fan-y',`${Math.round(y)}px`);
-    card.style.setProperty('--fan-r',`${(norm*16).toFixed(1)}deg`);
-    card.style.setProperty('--fan-z',String(12-Math.round(Math.abs(norm)*4)));
-    card.style.setProperty('--stack-z',String(12-Math.round(Math.abs(i-center)*2)));
-  });
-}
 function refreshLabChoices(question,topicHint=''){
   const type=detectLabChoiceType(question,topicHint),deck=LAB_CHOICE_DECKS[type];
   choicesDeck.classList.remove('fanned');
   choicesDeck.innerHTML=deck.map(card=>`
     <button class="choice" data-name="${escapeHTML(card.name)}" style="--stamp-glow:${card.glow}" onclick="pickChoice(this)">
       <span class="g">${card.g}</span><b>${escapeHTML(card.name)}</b><p>${escapeHTML(card.copy)}</p>
-    </button>`).join('');
-  $('#choiceDeckMeta').textContent=`${deck.length} 张 · 按住拖入实验室`;
-  layoutLabChoiceCards();
+    </button>`).join('')+`
+    <button class="choice custom-choice-card choice-create" id="customChoiceCard" data-name="" data-custom-ready="false" style="--stamp-glow:rgba(227,92,193,.2)" onclick="openCustomChoiceEditor()">
+      <span class="g">＋</span><b>自定义选择</b><p>写下你真正想探索的选项</p>
+    </button>`;
+  renderCustomChoices();
   labPick=null;
   $('#dialPick').textContent='把选择卡拖进来';
   $('#carrySection').classList.remove('reveal');
@@ -3771,10 +4048,31 @@ function refreshLabChoices(question,topicHint=''){
   renderFloorTest();
   syncLabReady();
 }
+function bringChoiceToFront(card){
+  if(!card||!choicesDeck.contains(card))return;
+  choicesDeck.querySelectorAll('.choice.front-card').forEach(item=>{
+    if(item!==card)item.classList.remove('front-card');
+  });
+  card.classList.add('front-card');
+}
+function nearestChoiceAtX(x){
+  const cards=[...choicesDeck.querySelectorAll(':scope > .choice:not([data-custom-ready="false"])')];
+  return cards.reduce((nearest,card)=>{
+    const rect=card.getBoundingClientRect();
+    const distance=Math.abs(x-(rect.left+rect.width/2));
+    return !nearest||distance<nearest.distance?{card,distance}:nearest;
+  },null)?.card||null;
+}
+choicesDeck.addEventListener('pointerover',event=>{
+  const card=event.target.closest('.choice');
+  if(card)bringChoiceToFront(card);
+});
+choicesDeck.addEventListener('focusin',event=>{
+  const card=event.target.closest('.choice');
+  if(card)bringChoiceToFront(card);
+});
 choicesDeck.addEventListener('pointerdown', e=>{
   if(e.pointerType==='mouse' || choicesDeck.classList.contains('fanned')) return;
-  e.preventDefault();
-  e.stopPropagation();
   choicesDeck.classList.add('fanned');
 }, true);
 document.addEventListener('pointerdown', e=>{
@@ -3786,6 +4084,11 @@ function overDialPt(x, y){
   const dr = dialEl.getBoundingClientRect();
   return Math.hypot(x-(dr.left+dr.width/2), y-(dr.top+dr.height/2)) < dr.width/2 + 30;
 }
+function overCustomDeleteSwipe(st,x,y){
+  if(!st.card.dataset.customId)return false;
+  const dy=y-st.sy,dx=Math.abs(x-st.sx);
+  return dy<-68&&Math.abs(dy)>dx*.72&&!overDialPt(x,y);
+}
 function ghostLoop(st){
   if(st.done){ return; }
   st.gx += (st.tx - st.gx) * .4;
@@ -3795,7 +4098,9 @@ function ghostLoop(st){
   st.raf = requestAnimationFrame(()=>ghostLoop(st));
 }
 function beginChoiceDrag(card,e){
+  if(card.dataset.customReady==='false')return;
   if(e.pointerType==='mouse' && e.button!==0) return;
+  bringChoiceToFront(card);
   if(cardDrag){
     cardDrag.done = true;
     if(cardDrag.raf) cancelAnimationFrame(cardDrag.raf);
@@ -3815,8 +4120,24 @@ function moveChoiceDrag(e){
   st.cx = e.clientX; st.cy = e.clientY;
   const pr = phoneEl.getBoundingClientRect();
   if(!st.active){
-    if(Math.hypot(e.clientX-st.sx,e.clientY-st.sy) < 8) return;
+    const dx=e.clientX-st.sx,dy=e.clientY-st.sy;
+    if(Math.hypot(dx,dy) < 8) return;
     st.active = true;
+    if(Math.abs(dx)>Math.abs(dy)*1.12){
+      st.browsing=true;
+      choicesDeck.classList.add('browsing');
+    }
+  }
+  if(st.browsing){
+    const target=nearestChoiceAtX(e.clientX);
+    if(target){
+      st.browseCard=target;
+      bringChoiceToFront(target);
+    }
+    e.preventDefault();
+    return;
+  }
+  if(!st.ghost){
     const g = document.createElement('div');
     g.className = 'drag-ghost';
     g.innerHTML = `<span>${st.card.querySelector('.g').textContent}</span>${st.card.dataset.name}`;
@@ -3831,11 +4152,20 @@ function moveChoiceDrag(e){
   st.tx = e.clientX-pr.left;
   st.ty = e.clientY-pr.top;
   const hot = overDialPt(e.clientX,e.clientY);
-  dialEl.classList.toggle('drop-hot',hot);
-  if(hot!==st.hot){
-    $('#dialPick').textContent = hot ? '松手，放入实验室' : (labPick || '把选择卡拖进来');
-    st.hot = hot;
+  const deleteHot = overCustomDeleteSwipe(st,e.clientX,e.clientY);
+  if(deleteHot!==st.deleteHot){
+    st.deleteHot=deleteHot;
+    st.ghost.classList.toggle('delete-ready',deleteHot);
+    st.ghost.querySelector('span').textContent=deleteHot?'↑':st.card.querySelector('.g').textContent;
+    st.ghost.lastChild.textContent=deleteHot?` 松手删除「${st.card.dataset.name}」`:st.card.dataset.name;
   }
+  dialEl.classList.toggle('drop-hot',hot);
+  if(deleteHot){
+    $('#dialPick').textContent=labPick||'把选择卡拖进来';
+  }else if(hot!==st.hot){
+    $('#dialPick').textContent = hot ? '松手，放入实验室' : (labPick || '把选择卡拖进来');
+  }
+  st.hot = hot;
   e.preventDefault();
 }
 function finishChoiceDrag(e){
@@ -3847,6 +4177,12 @@ function finishChoiceDrag(e){
   }catch(_){}
   if(!st.active) return; /* 纯点击：交给 onclick */
   st.done = true;
+  if(st.browsing){
+    justDragged=true;
+    choicesDeck.classList.remove('browsing');
+    pickChoice(st.browseCard||st.card);
+    return;
+  }
   if(st.raf) cancelAnimationFrame(st.raf);
   justDragged = true;
   st.card.classList.remove('dragging');
@@ -3855,8 +4191,16 @@ function finishChoiceDrag(e){
   const ghost = st.ghost;
   const px = Number.isFinite(e.clientX) ? e.clientX : st.cx;
   const py = Number.isFinite(e.clientY) ? e.clientY : st.cy;
+  const deleteSwipe=st.deleteHot||overCustomDeleteSwipe(st,px,py);
   const dropped = st.hot || overDialPt(px,py);
-  if(dropped){
+  if(deleteSwipe){
+    ghost.style.transition='transform .28s ease, opacity .28s ease';
+    ghost.style.transform=`translate(${st.tx}px,${st.ty-38}px) translate(-50%,-50%) scale(.82)`;
+    ghost.style.opacity='0';
+    setTimeout(()=>ghost.remove(),320);
+    deleteCustomChoice(st.card.dataset.customId,false);
+    $('#dialPick').textContent=labPick||'把选择卡拖进来';
+  }else if(dropped){
     const dr = dialEl.getBoundingClientRect();
     ghost.style.transition = 'transform .38s cubic-bezier(.3,.9,.3,1), opacity .38s ease';
     ghost.style.transform = `translate(${dr.left+dr.width/2-pr.left}px,${dr.top+dr.height/2-pr.top}px) translate(-50%,-50%) scale(.2)`;
@@ -3882,8 +4226,9 @@ choicesDeck.addEventListener('pointerdown',e=>{
 document.addEventListener('pointermove',moveChoiceDrag,{passive:false});
 document.addEventListener('pointerup',finishChoiceDrag);
 document.addEventListener('pointercancel',finishChoiceDrag);
-document.getElementById('choices').addEventListener('click', e=>{
-  if(justDragged){ e.stopPropagation(); e.preventDefault(); justDragged = false; }
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.choice'))return;
+  if(justDragged){e.stopPropagation();e.preventDefault();justDragged=false}
 }, true);
 
 /* 底线卡：横向可滑，向上拖入同一个仪表盘 */
@@ -3963,6 +4308,7 @@ document.getElementById('carryDeck').addEventListener('click',e=>{
 },true);
 
 function pickChoice(c){
+  bringChoiceToFront(c);
   document.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');
   labPick = c.dataset.name;
@@ -4930,7 +5276,7 @@ const DEMO_ASSESSMENTS={
     introTitle:'当关系变重要时，<br>你会怎样靠近或保护自己？',
     intro:'请想象一段对你重要的亲密关系，按照你真实的反应回答。题目参考依恋焦虑与回避构念重新编写，仅用于 Demo 自我探索。',
     notices:['18题，观察安全感需求与距离调节','高低都不是好坏，而是不同的保护方式','结果不用于诊断，也不替代真实关系中的沟通'],
-    resultTitle:'关系画像',resultSub:'亲密关系构念 · Demo 改写版',saveLabel:'写入“我在情感关系中在意”',
+    resultTitle:'恋爱关系画像',resultSub:'亲密关系构念 · Demo 改写版',saveLabel:'写入“我在恋爱关系中在意”',
     dims:{
       anxiety:{name:'确认需要',label:'及时回应',color:'#EC8C86',desc:'关系不确定时，更需要清晰回应与稳定确认'},
       avoidance:{name:'距离需要',label:'尊重边界',color:'#8EA1D8',desc:'关系靠近时，更重视自主空间与不被侵入'}
@@ -5014,8 +5360,9 @@ function safeStoreSet(key,value){
 function updateProfileCompletion(){
   const fill=$('#pfill'),text=$('#ppct');
   if(!fill||!text)return;
+  const dimensions=document.querySelectorAll('.dims .dim');
   const completed=document.querySelectorAll('.dims .dim:not(.todo)').length;
-  const pct=Math.min(100,completed*20);
+  const pct=dimensions.length?Math.min(100,Math.round(completed/dimensions.length*100)):0;
   fill.style.width=pct+'%';
   text.textContent=pct+'%';
 }
@@ -5555,8 +5902,8 @@ function lifeSetTop(title, sub, pct, progress){
   $('#lifeProgressText').textContent = progress;
 }
 function lifeSetFoot(html){ $('#lifeFoot').innerHTML = html; }
-function enableLifeSwipe(centerArc=false){
-  document.querySelectorAll('#lifeBody [data-swipe]').forEach(surface=>{
+function enableLifeSwipe(centerArc=false,rootSelector='#lifeBody'){
+  document.querySelectorAll(`${rootSelector} [data-swipe]`).forEach(surface=>{
     let down=false,startX=0,startScroll=0;
     surface.addEventListener('pointerdown',e=>{
       if(e.pointerType!=='mouse' || e.target.closest('button')) return;
@@ -5581,6 +5928,28 @@ function enableLifeSwipe(centerArc=false){
     if(centerArc && surface.classList.contains('stamp-scroll')) surface.scrollLeft=55;
   });
 }
+function openCardGameHub(){
+  closeSheet();
+  $('#cardGameHub').classList.add('open');
+  $('#cardGameHub .scroll').scrollTop=0;
+}
+function launchCardGame(kind){
+  closePush('cardGameHub');
+  if(kind==='life'){
+    openLifeGame();
+    startLifeCards();
+    return;
+  }
+  if(kind==='marriage'){
+    openRelationshipGame();
+    startRelationshipCards();
+    return;
+  }
+  if(kind==='family'||kind==='social'){
+    openValueCardGame(kind);
+    startValueCards();
+  }
+}
 function openLifeGame(){
   closeSheet();
   $('#lifeGame').classList.add('open');
@@ -5602,10 +5971,12 @@ function lifeBack(){
     return;
   }
   if(lifeState.phase==='select'){
-    renderLifeIntro();
+    closeLifeGame();
+    openCardGameHub();
     return;
   }
   closeLifeGame();
+  openCardGameHub();
   if(lifeState.phase==='draw') toast('人生卡牌进度已为你保留');
 }
 function resetLifeGame(){
@@ -6100,7 +6471,7 @@ function saveLifeResult(){
   safeStoreSet('kaleido_life_signature_v1',{ids:signatureIds,createdAt:new Date().toISOString()});
   renderLifeSignature(signatureIds);
   $('#lifeEntryTitle').textContent=`${a.title} · 已完成`;
-  $('#lifeEntryDesc').textContent=`${a.hiddenTraits.length} 条深层画像已私密保存 · 默认不展示`;
+  $('#lifeEntryDesc').textContent=`${a.hiddenTraits.length} 条深层画像已私密保存 · 另有 3 套关系卡牌`;
   updateProfileCompletion();
   refreshDynamicPersona();
   closeLifeGame();
@@ -6115,7 +6486,7 @@ function renderLifeSignature(ids){
   body.innerHTML=cards.map(c=>`<div class="card-mini"><i>${c.glyph}</i><span>${c.name}</span></div>`).join('');
 }
 
-/* ================= 关系取舍卡牌 · 轻量版 ================= */
+/* ================= 婚姻卡牌 · 多轮交换 ================= */
 const RELATIONSHIP_CARDS=[
   {id:'trust',name:'彼此信任',glyph:'∞',group:'安全',copy:'不用反复证明，也相信对方不会轻易离开'},
   {id:'response',name:'及时回应',glyph:'◉',group:'安全',copy:'重要时刻不失联，让需要被明确接住'},
@@ -6126,14 +6497,52 @@ const RELATIONSHIP_CARDS=[
   {id:'space',name:'尊重边界',glyph:'◌',group:'自主',copy:'亲密不等于侵入，彼此仍有自己的空间'},
   {id:'choice',name:'允许不同',glyph:'↔',group:'自主',copy:'可以有不同意见、节奏与人生选择'},
   {id:'repair',name:'愿意修复',glyph:'↻',group:'成长',copy:'冲突后不冷处理，愿意回来重新连接'},
-  {id:'growth',name:'共同成长',glyph:'↗',group:'成长',copy:'互相支持成为更完整的自己'}
+  {id:'growth',name:'共同成长',glyph:'↗',group:'成长',copy:'互相支持成为更完整的自己'},
+  {id:'loyalty',name:'忠诚承诺',glyph:'◇',group:'安全',copy:'把彼此放进长期选择，不轻易越过共同约定'},
+  {id:'money',name:'经济共识',glyph:'◎',group:'现实',copy:'对收入、消费、储蓄和风险有可协商的共识'},
+  {id:'chores',name:'生活分工',glyph:'▦',group:'现实',copy:'家务与照顾责任不默认落在一个人身上'},
+  {id:'families',name:'家庭边界',glyph:'⌂',group:'现实',copy:'面对双方家庭时，伴侣关系有清晰的共同边界'},
+  {id:'children',name:'生育共识',glyph:'○',group:'未来',copy:'是否生育、如何养育，都能诚实讨论并共同决定'},
+  {id:'future',name:'共同目标',glyph:'✦',group:'未来',copy:'愿意把城市、事业与生活方式放进同一张未来地图'},
+  {id:'admiration',name:'彼此欣赏',glyph:'❋',group:'连接',copy:'熟悉以后仍能看见对方的光，而不只看见不足'},
+  {id:'selfhood',name:'保留自我',glyph:'△',group:'自主',copy:'进入婚姻后仍保有朋友、兴趣和独立的精神世界'}
 ];
-const relationshipState={phase:'intro',selected:new Set(),pairs:[],round:0,winners:[],choices:[]};
-const RELATIONSHIP_PROMPTS=[
-  ['关系出现误会时','这一次，你更想优先守住哪一种需要？'],
-  ['生活压力挤进关系时','如果暂时不能两全，你更不愿失去哪一张？'],
-  ['关系走向长期之后','哪一种需要更像你判断“值得继续”的底线？']
+const MARRIAGE_SCENARIOS=[
+  {title:'重要约定临时落空',copy:'对方因为工作连续取消两次重要约定，并希望你再体谅一次。',theme:'承诺',severity:1},
+  {title:'生活节奏越来越不同',copy:'一个人需要规律与计划，另一个人更习惯随性决定，日常摩擦开始增加。',theme:'生活',severity:1},
+  {title:'争吵后需要长时间独处',copy:'每次冲突后，对方都需要几天才能重新沟通，而你更想当下把问题说开。',theme:'沟通',severity:1},
+  {title:'收入差距逐渐扩大',copy:'一方的收入和资源快速增长，关系里的付出、话语权与消费方式开始失衡。',theme:'经济',severity:2},
+  {title:'双方家庭频繁介入',copy:'父母不断参与住房、节日与生活安排，你们很难形成属于两个人的边界。',theme:'家庭',severity:2},
+  {title:'长期异地成为常态',copy:'未来三年很难生活在同一座城市，见面、陪伴与个人发展需要重新排序。',theme:'距离',severity:2},
+  {title:'事业机会只能支持一方',copy:'一份重要机会要求全家迁居，另一方也必须放下正在上升的事业路径。',theme:'选择',severity:3},
+  {title:'生育决定出现分歧',copy:'对是否要孩子、什么时候要孩子，你们的答案开始走向不同方向。',theme:'未来',severity:3},
+  {title:'照顾责任突然变重',copy:'双方父母都需要长期照顾，时间、金钱与情绪容量同时受到挤压。',theme:'责任',severity:3},
+  {title:'信任出现明显裂缝',copy:'你发现对方长期隐瞒一件重要的事，解释并不足以立刻恢复安全感。',theme:'信任',severity:4},
+  {title:'冲突变成持续回避',copy:'你们已经很久无法谈论真正的问题，表面平静，内心距离却越来越远。',theme:'修复',severity:4},
+  {title:'婚姻进入重大低谷',copy:'长期压力让亲密、信任与共同目标同时动摇，你们必须决定如何继续。',theme:'关系',severity:4}
 ];
+const MARRIAGE_SEVERITY_META=[
+  null,
+  {name:'日常磨合',copy:'先从婚姻中常见但可协商的差异开始。'},
+  {name:'持续拉扯',copy:'你选择接受，新的情境开始触及长期生活安排。'},
+  {name:'重要分歧',copy:'连续接受让选择进入事业、家庭与未来规划。'},
+  {name:'关系低谷',copy:'情境已经触及信任与婚姻能否继续的核心。'}
+];
+const relationshipState={
+  phase:'intro',
+  selected:new Set(),
+  held:[],
+  accepted:[],
+  traded:[],
+  round:0,
+  pressure:1,
+  acceptStreak:0,
+  seenScenarios:new Set(),
+  current:null,
+  tradePick:new Set(),
+  reasonDraft:{cannotAccept:'',abandon:''},
+  selectScroll:0
+};
 function relationshipSetTop(title,sub,pct,progress){
   $('#relationshipTopTitle').textContent=title;
   $('#relationshipTopSub').textContent=sub;
@@ -6152,106 +6561,267 @@ function closeRelationshipGame(){
   $('#relationshipGame').setAttribute('aria-hidden','true');
 }
 function relationshipBack(){
-  if(relationshipState.phase==='select'){renderRelationshipIntro();return}
-  if(relationshipState.phase==='duel'){
-    relationshipState.round=0;relationshipState.winners=[];relationshipState.choices=[];
-    renderRelationshipSelect();return;
-  }
+  if(relationshipState.phase==='trade'){relationshipState.tradePick.clear();renderRelationshipDecision();return}
+  if(relationshipState.phase==='decision'){renderRelationshipDraw();return}
+  if(relationshipState.phase==='select'){closeRelationshipGame();openCardGameHub();return}
   closeRelationshipGame();
+  openCardGameHub();
+  if(relationshipState.phase==='draw')toast('婚姻卡牌进度已为你保留');
 }
 function resetRelationshipGame(){
-  relationshipState.phase='intro';relationshipState.selected.clear();relationshipState.pairs=[];
-  relationshipState.round=0;relationshipState.winners=[];relationshipState.choices=[];
+  relationshipState.phase='intro';
+  relationshipState.selected.clear();
+  relationshipState.held=[];
+  relationshipState.accepted=[];
+  relationshipState.traded=[];
+  relationshipState.round=0;
+  relationshipState.pressure=1;
+  relationshipState.acceptStreak=0;
+  relationshipState.seenScenarios.clear();
+  relationshipState.current=null;
+  relationshipState.tradePick.clear();
+  relationshipState.reasonDraft={cannotAccept:'',abandon:''};
+  relationshipState.selectScroll=0;
   renderRelationshipIntro();
 }
 function renderRelationshipIntro(){
   relationshipState.phase='intro';
-  relationshipSetTop('关系卡牌','三次靠近与取舍',0,'准备开始');
+  relationshipSetTop('婚姻卡牌','在多轮取舍中看见最关心的事',0,'准备开始');
   $('#relationshipBody').innerHTML=`
     <div class="life-intro">
       <div class="linear-spread spread" aria-hidden="true">${[0,1,2,3,4].map(()=>'<i class="linear-card"></i>').join('')}</div>
-      <div class="ey">RELATIONSHIP CARDS</div>
-      <h2>关系不能什么都要，<br>你会先守住什么？</h2>
-      <p>先选出6张对你重要的关系需要，再经历3次轻量两难。每次守住一张、放下一张，最后留下你的3张关系底牌。</p>
+      <div class="ey">MARRIAGE CARDS</div>
+      <h2>当婚姻不断要求取舍<br>你最后会守住什么？</h2>
+      <p>先选出 9 张婚姻底牌，再持续面对婚姻情境。接受会保留底牌，但下一轮压力会加重；不接受则交换 2 张，直到自然剩下最关心的 3 点。</p>
       <div class="life-rules">
-        <div class="life-rule"><i>01</i><div><b>选择6张关系需要</b><p>按照此刻的直觉，不必考虑“正确答案”。</p></div></div>
-        <div class="life-rule"><i>02</i><div><b>经历3次二选一</b><p>不是永久放弃，只是在压力出现时看见你的优先级。</p></div></div>
-        <div class="life-rule"><i>03</i><div><b>留下3张关系底牌</b><p>它们会写入“我在情感关系中在意”。</p></div></div>
+        <div class="life-rule"><i>01</i><div><b>选择 9 张婚姻底牌</b><p>从安全、连接、自主、现实与未来中凭直觉选择。</p></div></div>
+        <div class="life-rule"><i>02</i><div><b>接受后，情境继续加码</b><p>连续接受会从日常磨合逐渐进入关系低谷。</p></div></div>
+        <div class="life-rule"><i>03</i><div><b>不接受，就交换 2 张</b><p>每次固定放下两张，直到自然留下最重要的三张。</p></div></div>
       </div>
     </div>`;
-  relationshipSetFoot(`<button class="btn-ink" onclick="startRelationshipCards()">开始选牌</button>`);
+  relationshipSetFoot(`<button class="btn-ink" onclick="startRelationshipCards()">开始婚姻取舍</button>`);
 }
 function startRelationshipCards(){
-  relationshipState.phase='select';relationshipState.selected.clear();relationshipState.pairs=[];
-  relationshipState.round=0;relationshipState.winners=[];relationshipState.choices=[];
+  relationshipState.phase='select';
+  relationshipState.selected.clear();
+  relationshipState.held=[];
+  relationshipState.accepted=[];
+  relationshipState.traded=[];
+  relationshipState.round=0;
+  relationshipState.pressure=1;
+  relationshipState.acceptStreak=0;
+  relationshipState.seenScenarios.clear();
+  relationshipState.current=null;
+  relationshipState.tradePick.clear();
+  relationshipState.reasonDraft={cannotAccept:'',abandon:''};
+  relationshipState.selectScroll=0;
   renderRelationshipSelect();
 }
-function relationshipCardHTML(card,i){
-  const on=relationshipState.selected.has(card.id);
-  return `<button class="linear-pick-card${on?' on':''}" data-relation-id="${card.id}" style="--i:${i};z-index:${i+1}" onclick="toggleRelationshipCard('${card.id}')">
-    <span class="card-no">RELATION · ${String(i+1).padStart(2,'0')}</span>
-    <span class="glyph">${card.glyph}</span><span><b>${card.name}</b><em>${card.group}</em></span><small>✓</small>
+function relationshipCardHTML(card,i,mode='select'){
+  const on=mode==='trade'?relationshipState.tradePick.has(card.id):relationshipState.selected.has(card.id);
+  const action=mode==='trade'?`toggleRelationshipTrade('${card.id}')`:`toggleRelationshipCard('${card.id}')`;
+  return `<button class="marriage-pick-card${on?(mode==='trade'?' trade-pick':' on'):''}" data-relation-id="${card.id}" onclick="${action}" aria-pressed="${on}">
+    <span class="card-no">MARRIAGE · ${String(i+1).padStart(2,'0')}</span>
+    <span class="glyph">${card.glyph}</span><span><b>${card.name}</b><em>${card.group}</em></span><small>${mode==='trade'?'×':'✓'}</small>
   </button>`;
 }
 function renderRelationshipSelect(){
   relationshipState.phase='select';
   const count=relationshipState.selected.size;
-  relationshipSetTop('选择关系底牌','选出此刻最重要的6张',12,`已选 ${count}/6`);
+  relationshipSetTop('选择婚姻底牌',`向下滑动浏览全部 ${RELATIONSHIP_CARDS.length} 张`,Math.max(4,count*2),`已选 ${count}/9`);
   $('#relationshipBody').innerHTML=`
-    <div class="life-section-head">
-      <div><div class="ey">WHAT MATTERS</div><h2>什么让你愿意靠近？</h2></div>
-      <span>已选 <b id="relationshipSelectedCount">${count}</b>/6</span>
+    <div class="life-select-summary">
+      <div class="row">
+        <div><div class="ey">YOUR MARRIAGE</div><h2>婚姻中，你最想守住什么？</h2></div>
+        <div class="life-select-count">已选<br><b id="relationshipSelectedCount">${count}</b><small>/9</small></div>
+      </div>
+      <div class="life-select-meter"><i id="relationshipSelectionMeter" style="width:${count/9*100}%"></i></div>
     </div>
-    <div class="linear-select-viewport">
-      <div class="linear-select-track expanded">${RELATIONSHIP_CARDS.map(relationshipCardHTML).join('')}</div>
-    </div>
-    <div class="swipe-copy"><span>先凭直觉选择，之后还有三次取舍</span><i>左右滑动 ↔</i></div>`;
-  relationshipSetFoot(`<button class="btn-ink" id="relationshipSelectNext" ${count===6?'':'disabled'} onclick="confirmRelationshipCards()">带着这6张牌继续</button>`);
+    <div class="life-select-guide"><span>没有标准答案，选择你此刻真正关心的</span><i>向下滑动 ↓</i></div>
+    <div class="marriage-select-grid">${RELATIONSHIP_CARDS.map((card,i)=>relationshipCardHTML(card,i)).join('')}</div>
+    <div class="life-select-end">已展示全部 ${RELATIONSHIP_CARDS.length} 张婚姻底牌</div>`;
+  relationshipSetFoot(`<button class="btn-ink" id="relationshipSelectNext" ${count===9?'':'disabled'} onclick="confirmRelationshipCards()">${count===9?'带着这 9 张牌继续':`还需选择 ${9-count} 张`}</button>`);
+  requestAnimationFrame(()=>{$('#relationshipBody').scrollTop=relationshipState.selectScroll});
 }
 function toggleRelationshipCard(id){
+  relationshipState.selectScroll=$('#relationshipBody').scrollTop;
   if(relationshipState.selected.has(id))relationshipState.selected.delete(id);
-  else if(relationshipState.selected.size<6)relationshipState.selected.add(id);
-  else{toast('这一轮先选6张关系底牌');return}
+  else if(relationshipState.selected.size<9)relationshipState.selected.add(id);
+  else{toast('这一局先选择 9 张婚姻底牌');return}
   const card=document.querySelector(`#relationshipBody [data-relation-id="${id}"]`);
-  if(card)card.classList.toggle('on',relationshipState.selected.has(id));
+  if(card){
+    card.classList.toggle('on',relationshipState.selected.has(id));
+    card.setAttribute('aria-pressed',String(relationshipState.selected.has(id)));
+  }
   $('#relationshipSelectedCount').textContent=relationshipState.selected.size;
-  $('#relationshipSelectNext').disabled=relationshipState.selected.size!==6;
-  $('#relationshipProgressText').textContent=`已选 ${relationshipState.selected.size}/6`;
+  $('#relationshipSelectionMeter').style.width=(relationshipState.selected.size/9*100)+'%';
+  const next=$('#relationshipSelectNext');
+  next.disabled=relationshipState.selected.size!==9;
+  next.textContent=relationshipState.selected.size===9?'带着这 9 张牌继续':`还需选择 ${9-relationshipState.selected.size} 张`;
+  $('#relationshipProgressText').textContent=`已选 ${relationshipState.selected.size}/9`;
 }
 function confirmRelationshipCards(){
-  if(relationshipState.selected.size!==6)return;
-  const chosen=RELATIONSHIP_CARDS.filter(c=>relationshipState.selected.has(c.id));
-  relationshipState.pairs=[[chosen[0],chosen[1]],[chosen[2],chosen[3]],[chosen[4],chosen[5]]];
-  relationshipState.round=0;relationshipState.winners=[];relationshipState.choices=[];
-  renderRelationshipDuel();
+  if(relationshipState.selected.size!==9)return;
+  relationshipState.held=[...relationshipState.selected];
+  relationshipState.round=0;
+  relationshipState.pressure=1;
+  relationshipState.acceptStreak=0;
+  relationshipState.seenScenarios.clear();
+  renderRelationshipDraw();
 }
-function renderRelationshipDuel(){
-  relationshipState.phase='duel';
-  const round=relationshipState.round,pair=relationshipState.pairs[round],prompt=RELATIONSHIP_PROMPTS[round];
-  relationshipSetTop('关系取舍',prompt[0],30+round*22,`第 ${round+1}/3 轮`);
+function relationshipGameProgress(extra=0){
+  const released=(9-relationshipState.held.length)/6;
+  return Math.min(96,16+released*72+Math.min(relationshipState.round,8)*1.5+extra);
+}
+function relationshipScenarioOptions(){
+  const target=relationshipState.pressure;
+  return MARRIAGE_SCENARIOS
+    .map((scenario,index)=>({
+      scenario,
+      distance:Math.abs(scenario.severity-target),
+      seen:relationshipState.seenScenarios.has(scenario.title)?1:0,
+      order:(index*7+relationshipState.round*11)%19
+    }))
+    .sort((a,b)=>a.distance-b.distance||a.seen-b.seen||a.order-b.order)
+    .slice(0,5)
+    .map(item=>item.scenario);
+}
+function renderRelationshipDraw(){
+  relationshipState.phase='draw';
+  relationshipState.current=null;
+  relationshipState.tradePick.clear();
+  relationshipState.reasonDraft={cannotAccept:'',abandon:''};
+  const severity=MARRIAGE_SEVERITY_META[relationshipState.pressure];
+  relationshipSetTop('抽取婚姻情境',`持有 ${relationshipState.held.length} 张婚姻底牌`,relationshipGameProgress(),`第 ${relationshipState.round+1} 轮`);
+  const options=relationshipScenarioOptions();
   $('#relationshipBody').innerHTML=`
-    <div class="relation-round-copy">
-      <div class="ey">CHOICE ${String(round+1).padStart(2,'0')}</div>
-      <h2>${prompt[0]}</h2><p>${prompt[1]}</p>
+    <div class="stage-copy">
+      <div class="ey">MARRIAGE · ROUND ${String(relationshipState.round+1).padStart(2,'0')}</div>
+      <h2>婚姻会带来怎样的取舍？</h2>
+      <p>${relationshipState.acceptStreak?`你已连续接受 ${relationshipState.acceptStreak} 次，情境正在变得更难。`:'从五张情境牌中凭直觉抽一张。'}</p>
     </div>
-    <div class="relation-duel">
-      ${relationshipChoiceHTML(pair[0],pair[1])}
-      <div class="vs">OR</div>
-      ${relationshipChoiceHTML(pair[1],pair[0])}
+    <div class="fate-pressure severity-${relationshipState.pressure}">
+      <div class="head"><span>婚姻压力</span><b>${severity.name}</b></div>
+      <div class="track">${[1,2,3,4].map(level=>`<i class="${level<=relationshipState.pressure?'on':''}"></i>`).join('')}</div>
+      <p>${severity.copy}</p>
+    </div>
+    <div class="stamp-scroll" data-swipe>
+      <div class="stamp-arc spread" aria-label="抽取一张婚姻情境牌">
+        ${options.map((scenario,i)=>`<button class="stamp-card" onclick="drawRelationshipScenario(${i})" aria-label="抽第 ${i+1} 张牌"></button>`).join('')}
+      </div>
+    </div>
+    <div class="draw-hint">左右滑动牌弧 · 点击其中一张</div>`;
+  $('#relationshipBody').dataset.options=JSON.stringify(options);
+  relationshipSetFoot('');
+  requestAnimationFrame(()=>enableLifeSwipe(true,'#relationshipBody'));
+}
+function drawRelationshipScenario(i){
+  const options=JSON.parse($('#relationshipBody').dataset.options||'[]');
+  relationshipState.current=options[i];
+  if(relationshipState.current)relationshipState.seenScenarios.add(relationshipState.current.title);
+  renderRelationshipDecision();
+}
+function renderRelationshipDecision(){
+  relationshipState.phase='decision';
+  const scenario=relationshipState.current;
+  const severity=MARRIAGE_SEVERITY_META[relationshipState.pressure];
+  const canTrade=relationshipState.held.length-2>=3;
+  relationshipSetTop('婚姻情境',`持有 ${relationshipState.held.length} 张婚姻底牌`,relationshipGameProgress(5),`第 ${relationshipState.round+1} 轮`);
+  const held=relationshipState.held.map(id=>RELATIONSHIP_CARDS.find(card=>card.id===id)).filter(Boolean);
+  $('#relationshipBody').innerHTML=`
+    <div class="setback-view">
+      <div class="age-badge">第 ${relationshipState.round+1} 轮 · ${scenario.theme}</div>
+      <div class="marriage-scenario-card">
+        <div class="serial">MARRIAGE · ${String(relationshipState.round+1).padStart(2,'0')}</div>
+        <span class="mark">♡</span>
+        <h2>${scenario.title}</h2><p>${scenario.copy}</p>
+      </div>
+      <div class="impact-badge severity-${relationshipState.pressure}">${severity.name} · 不接受需交换 2 张</div>
+      <p class="decision-copy">接受，会保留全部婚姻底牌，但下一轮情境会继续加重；<br>不接受，则交换 2 张，直到自然只剩最关心的三点。</p>
+      <div class="marriage-held-strip">${held.map(card=>`<span>${card.name}</span>`).join('')}</div>
+      <div class="decision-actions">
+        <button class="decision-btn" onclick="acceptRelationshipScenario()">我能接受</button>
+        <button class="decision-btn reject" onclick="chooseRelationshipTrade()" ${canTrade?'':'disabled'}>${canTrade?'我不接受':'已剩最终三张'}</button>
+      </div>
     </div>`;
   relationshipSetFoot('');
 }
-function relationshipChoiceHTML(card,other){
-  return `<button class="relation-choice" onclick="chooseRelationshipCard('${card.id}','${other.id}')">
-    <span class="glyph">${card.glyph}</span><span class="keep">KEEP THIS</span><b>${card.name}</b><p>${card.copy}</p>
-  </button>`;
+function acceptRelationshipScenario(){
+  relationshipState.accepted.push({round:relationshipState.round,scenario:relationshipState.current,severity:relationshipState.pressure});
+  relationshipState.acceptStreak++;
+  relationshipState.pressure=Math.min(4,relationshipState.pressure+1);
+  finishRelationshipRound();
 }
-function chooseRelationshipCard(winnerId,loserId){
-  relationshipState.winners.push(winnerId);
-  relationshipState.choices.push({round:relationshipState.round,winner:winnerId,loser:loserId});
+function chooseRelationshipTrade(){
+  if(relationshipState.held.length-2<3){
+    toast('最后三张婚姻底牌不能再交换');
+    return;
+  }
+  relationshipState.tradePick.clear();
+  renderRelationshipTrade();
+}
+function renderRelationshipTrade(){
+  relationshipState.phase='trade';
+  const picked=relationshipState.tradePick.size;
+  const held=relationshipState.held.map(id=>RELATIONSHIP_CARDS.find(card=>card.id===id)).filter(Boolean);
+  relationshipSetTop('交换婚姻底牌','选择 2 张作为这轮取舍',relationshipGameProgress(7),`已选 ${picked}/2`);
+  $('#relationshipBody').innerHTML=`
+    <div class="life-section-head">
+      <div><div class="ey">THE TRADE</div><h2>你愿意用什么交换？</h2></div>
+      <span>已选 <b id="relationshipTradeCount">${picked}</b>/2</span>
+    </div>
+    <div class="marriage-trade-note">为了不让“${relationshipState.current.title}”成为婚姻常态，请从仍持有的 ${relationshipState.held.length} 张底牌中放下 2 张。最后三张会被保留。</div>
+    <div class="marriage-select-grid">${held.map((card,i)=>relationshipCardHTML(card,i,'trade')).join('')}</div>
+    <div class="choice-reasons">
+      <div class="reason-field">
+        <label>为什么你不能接受这个情境？<span>写下第一反应</span></label>
+        <textarea id="relationshipCannotAccept" maxlength="160" oninput="updateRelationshipReason('cannotAccept',this.value)" placeholder="例如：这会让我失去对长期承诺的信任……">${escapeHTML(relationshipState.reasonDraft.cannotAccept)}</textarea>
+      </div>
+      <div class="reason-field">
+        <label>为什么愿意先放下这两张牌？<span>没有标准答案</span></label>
+        <textarea id="relationshipAbandon" maxlength="160" oninput="updateRelationshipReason('abandon',this.value)" placeholder="例如：相比信任，它们仍有机会慢慢协商……">${escapeHTML(relationshipState.reasonDraft.abandon)}</textarea>
+      </div>
+    </div>`;
+  relationshipSetFoot(`<button class="btn-ink" id="relationshipTradeConfirm" ${picked===2?'':'disabled'} onclick="confirmRelationshipTrade()">确认交换 2 张牌</button>`);
+}
+function toggleRelationshipTrade(id){
+  if(relationshipState.tradePick.has(id))relationshipState.tradePick.delete(id);
+  else if(relationshipState.tradePick.size<2)relationshipState.tradePick.add(id);
+  else{toast('这一轮需要交换 2 张婚姻底牌');return}
+  const card=document.querySelector(`#relationshipBody [data-relation-id="${id}"]`);
+  if(card){
+    card.classList.toggle('trade-pick',relationshipState.tradePick.has(id));
+    card.setAttribute('aria-pressed',String(relationshipState.tradePick.has(id)));
+  }
+  $('#relationshipTradeCount').textContent=relationshipState.tradePick.size;
+  $('#relationshipTradeConfirm').disabled=relationshipState.tradePick.size!==2;
+  $('#relationshipProgressText').textContent=`已选 ${relationshipState.tradePick.size}/2`;
+}
+function updateRelationshipReason(field,value){
+  relationshipState.reasonDraft[field]=value;
+}
+function confirmRelationshipTrade(){
+  if(relationshipState.tradePick.size!==2)return;
+  const ids=[...relationshipState.tradePick];
+  relationshipState.traded.push({
+    round:relationshipState.round,
+    scenario:relationshipState.current,
+    ids,
+    reasons:{
+      cannotAccept:relationshipState.reasonDraft.cannotAccept.trim(),
+      abandon:relationshipState.reasonDraft.abandon.trim()
+    }
+  });
+  relationshipState.held=relationshipState.held.filter(id=>!relationshipState.tradePick.has(id));
+  relationshipState.tradePick.clear();
+  relationshipState.acceptStreak=0;
+  relationshipState.pressure=Math.max(1,relationshipState.pressure-1);
+  finishRelationshipRound();
+}
+function finishRelationshipRound(){
   relationshipState.round++;
-  if(relationshipState.round>=3)renderRelationshipResult();
-  else renderRelationshipDuel();
+  if(relationshipState.held.length===3)renderRelationshipResult();
+  else renderRelationshipDraw();
 }
 function relationshipResultCopy(cards){
   const counts={};cards.forEach(c=>counts[c.group]=(counts[c.group]||0)+1);
@@ -6260,30 +6830,32 @@ function relationshipResultCopy(cards){
     安全:'你最先确认的，是这段关系是否可靠、持续、能够接住彼此。',
     连接:'对你来说，被理解和真实靠近比表面上的和平更重要。',
     自主:'你需要的是不以失去自己为代价的亲密，尊重会让你更愿意靠近。',
-    成长:'你看重关系面对问题后的变化能力，而不只是一开始是否合拍。'
+    成长:'你看重关系面对问题后的变化能力，而不只是一开始是否合拍。',
+    现实:'你关注婚姻能否真正承载生活，责任与边界需要被具体协商。',
+    未来:'你在意的不只是当下相爱，也在意两个人能否走向同一个未来。'
   };
   return copy[top];
 }
 function renderRelationshipResult(){
   relationshipState.phase='result';
-  const cards=relationshipState.winners.map(id=>RELATIONSHIP_CARDS.find(c=>c.id===id));
-  relationshipSetTop('你的关系底牌','三次取舍后的优先级',100,'完成');
+  const cards=relationshipState.held.map(id=>RELATIONSHIP_CARDS.find(c=>c.id===id)).filter(Boolean);
+  relationshipSetTop('你的婚姻底牌','多轮取舍后最关心的三点',100,'完成');
   $('#relationshipBody').innerHTML=`
     <div class="relation-result">
       <div class="heart">♡</div>
-      <h2>你会先守住这些</h2>
-      <p>${relationshipResultCopy(cards)}<br>这不是固定答案，只是你此刻在压力情境中的选择。</p>
+      <h2>婚姻中，你最关心这三点</h2>
+      <p>${relationshipResultCopy(cards)}<br>它们来自多轮情境与交换，不是固定答案，而是你此刻真实的优先级。</p>
       <div class="relation-final-cards">${cards.map(c=>`<div class="relation-final-card"><i>${c.glyph}</i><b>${c.name}</b></div>`).join('')}</div>
       <div class="result-insight" style="text-align:left;margin-top:16px">
-        <div class="cap">RELATIONSHIP SIGNAL · 可写入画像</div>
+        <div class="cap">MARRIAGE SIGNAL · 可写入画像</div>
         <h4>${cards.map(c=>c.name).join(' · ')}</h4>
-        <p>三次选择会作为关系偏好的轻量证据保存，你仍然可以回到关键词面板继续修改。</p>
+        <p>本次经历了 ${relationshipState.round} 轮情境，接受 ${relationshipState.accepted.length} 次、主动交换 ${relationshipState.traded.length} 次。这三点会成为恋爱关系画像的优先信号。</p>
       </div>
     </div>`;
-  relationshipSetFoot(`<button class="btn-ink" onclick="saveRelationshipResult()">保存到情感关系画像</button>`);
+  relationshipSetFoot(`<button class="btn-ink" onclick="saveRelationshipResult()">保存婚姻中最关心的三点</button>`);
 }
 function saveRelationshipResult(){
-  const cards=relationshipState.winners.map(id=>RELATIONSHIP_CARDS.find(c=>c.id===id)).filter(Boolean);
+  const cards=relationshipState.held.map(id=>RELATIONSHIP_CARDS.find(c=>c.id===id)).filter(Boolean);
   const tags=cards.map(c=>c.name);
   if(tags.length!==3)return;
   $('#dimLove').textContent=tags.join(' · ');
@@ -6291,13 +6863,501 @@ function saveRelationshipResult(){
   $('#dimBtnLove').classList.remove('todo');
   tags.forEach(t=>dimensionState.love.selected.add(t));
   dimensionState.love.saved=true;
-  safeStoreSet('kaleido_relationship_cards_v1',{ids:cards.map(c=>c.id),tags,choices:relationshipState.choices,createdAt:new Date().toISOString()});
+  safeStoreSet('kaleido_relationship_cards_v1',{
+    ids:cards.map(c=>c.id),
+    tags,
+    accepted:relationshipState.accepted,
+    traded:relationshipState.traded,
+    rounds:relationshipState.round,
+    createdAt:new Date().toISOString()
+  });
   updateProfileCompletion();
+  refreshDynamicPersona();
   closeRelationshipGame();
-  toast('三张关系底牌已写入画像');
+  toast('婚姻中最关心的三点已写入画像');
 }
 
-/* ================= 四个动态画像维度浮层 ================= */
+/* ================= 家庭 / 人际卡牌 · 通用多轮交换 ================= */
+const VALUE_CARD_GAMES={
+  family:{
+    title:'家庭卡牌',
+    dimensionTitle:'家庭关系',
+    introQuestion:'当家庭不断要求取舍<br>你最后会守住什么？',
+    introCopy:'先选出 9 张家庭底牌，再持续面对家庭情境。接受会保留底牌并提高下一轮压力；不接受则交换 2 张，直到自然剩下最关心的 3 点。',
+    question:'在家庭关系中，你最想守住什么？',
+    themeClass:'family-theme',
+    glyph:'⌂',
+    target:'#dimFamily',
+    button:'#dimBtnFamily',
+    dimensionKey:'family',
+    storageKey:'kaleido_family_cards_v1',
+    cards:[
+      {id:'health',name:'健康平安',glyph:'＋',group:'安全'},
+      {id:'respect',name:'互相尊重',glyph:'◇',group:'边界'},
+      {id:'support',name:'有事一起承担',glyph:'∞',group:'支持'},
+      {id:'talk',name:'坦诚沟通',glyph:'“”',group:'沟通'},
+      {id:'understand',name:'被理解',glyph:'≈',group:'沟通'},
+      {id:'boundary',name:'清晰边界',glyph:'◌',group:'边界'},
+      {id:'choice',name:'允许不同选择',glyph:'↔',group:'自主'},
+      {id:'presence',name:'重要时刻在场',glyph:'◉',group:'支持'},
+      {id:'money',name:'经济安全',glyph:'◎',group:'安全'},
+      {id:'fairness',name:'公平分工',glyph:'▦',group:'责任'},
+      {id:'partner',name:'尊重彼此伴侣',glyph:'♡',group:'边界'},
+      {id:'elders',name:'照顾长辈',glyph:'⌂',group:'责任'},
+      {id:'contact',name:'保持联系',glyph:'⌁',group:'支持'},
+      {id:'vulnerable',name:'能表达脆弱',glyph:'▽',group:'沟通'},
+      {id:'noGuilt',name:'不用愧疚控制',glyph:'△',group:'自主'},
+      {id:'promise',name:'说到做到',glyph:'✓',group:'责任'},
+      {id:'harmony',name:'家庭和睦',glyph:'❋',group:'安全'},
+      {id:'self',name:'保留自我',glyph:'✦',group:'自主'}
+    ],
+    scenarios:[
+      {title:'节日安排出现分歧',copy:'双方都希望你按自己的方式过节，你需要在陪伴与个人安排之间协调。',theme:'相处',severity:1},
+      {title:'家人联系频率不同',copy:'有人希望每天联系，有人更习惯各自生活，彼此开始误读这种距离。',theme:'联系',severity:1},
+      {title:'个人决定被频繁追问',copy:'家人出于关心不断询问你的工作、伴侣与生活计划。',theme:'边界',severity:1},
+      {title:'家庭付出开始失衡',copy:'同一个人长期承担更多家务、情绪安抚与联络责任，却很少被看见。',theme:'分工',severity:2},
+      {title:'亲属提出经济请求',copy:'一笔不小的家庭支出需要你支持，但它会明显影响自己的生活计划。',theme:'经济',severity:2},
+      {title:'伴侣与父母意见冲突',copy:'最亲近的两方都希望你明确站在自己这边，关系边界变得紧张。',theme:'边界',severity:2},
+      {title:'照顾责任突然加重',copy:'一位家人需要长期照料，时间、金钱与个人发展同时被挤压。',theme:'责任',severity:3},
+      {title:'重要人生选择不被认可',copy:'你的城市、职业或伴侣选择遭到家人持续反对。',theme:'自主',severity:3},
+      {title:'家庭经济进入低谷',copy:'收入骤减与持续支出让每个人都必须重新分配资源和责任。',theme:'安全',severity:3},
+      {title:'家人长期用愧疚施压',copy:'爱与责任被反复用来要求服从，你很难在拒绝后保持平静。',theme:'控制',severity:4},
+      {title:'重大疾病改变家庭结构',copy:'一场长期疾病让照顾、收入与未来安排都需要彻底重组。',theme:'危机',severity:4},
+      {title:'家庭关系面临破裂',copy:'多年的冲突累积到临界点，有人考虑彻底停止往来。',theme:'修复',severity:4}
+    ],
+    severity:[
+      null,
+      {name:'日常磨合',copy:'先从家庭里常见的节奏与边界差异开始。'},
+      {name:'持续拉扯',copy:'新的情境开始触及分工、经济与伴侣边界。'},
+      {name:'重大责任',copy:'连续接受让选择进入照顾、发展与家庭安全。'},
+      {name:'家庭危机',copy:'情境已经触及控制、疾病与关系能否继续。'}
+    ],
+    groupCopy:{
+      安全:'你最先确认的，是家庭能否提供稳定、健康与不轻易崩塌的生活基础。',
+      边界:'你需要亲近，也需要家人尊重彼此的选择与边界。',
+      支持:'对你来说，家人的意义在于重要时刻能够真正出现并共同承担。',
+      沟通:'你更在意真实感受能否被说出、听见和理解。',
+      自主:'你希望爱不是服从，每个人都能保留自己的道路与完整性。',
+      责任:'你看重承诺、分工与照顾能否被公平而具体地落实。'
+    }
+  },
+  social:{
+    title:'人际卡牌',
+    dimensionTitle:'人际交往',
+    introQuestion:'在人群与关系之间<br>你最后会守住什么？',
+    introCopy:'先选出 9 张人际底牌，再持续面对交往情境。接受会保留底牌并提高下一轮压力；不接受则交换 2 张，直到自然剩下最关心的 3 点。',
+    question:'在人际交往中，你最想守住什么？',
+    themeClass:'social-theme',
+    glyph:'◎',
+    target:'#dimSocial',
+    button:'#dimBtnSocial',
+    dimensionKey:'social',
+    storageKey:'kaleido_social_cards_v1',
+    cards:[
+      {id:'honesty',name:'真诚',glyph:'◇',group:'真诚'},
+      {id:'respect',name:'被尊重',glyph:'✦',group:'边界'},
+      {id:'response',name:'互相回应',glyph:'◉',group:'连接'},
+      {id:'reciprocity',name:'有来有往',glyph:'↔',group:'支持'},
+      {id:'safety',name:'情绪安全',glyph:'○',group:'轻松'},
+      {id:'secret',name:'保守秘密',glyph:'◌',group:'真诚'},
+      {id:'boundary',name:'清晰边界',glyph:'△',group:'边界'},
+      {id:'refuse',name:'允许拒绝',glyph:'×',group:'边界'},
+      {id:'interest',name:'共同兴趣',glyph:'❋',group:'连接'},
+      {id:'depth',name:'深度交流',glyph:'∞',group:'连接'},
+      {id:'ease',name:'轻松自在',glyph:'⌁',group:'轻松'},
+      {id:'contact',name:'稳定联系',glyph:'◎',group:'支持'},
+      {id:'repair',name:'冲突修复',glyph:'↻',group:'成长'},
+      {id:'help',name:'彼此支持',glyph:'＋',group:'支持'},
+      {id:'values',name:'价值观相近',glyph:'≈',group:'真诚'},
+      {id:'compare',name:'不被比较',glyph:'=',group:'轻松'},
+      {id:'admire',name:'被欣赏',glyph:'♡',group:'成长'},
+      {id:'space',name:'独处空间',glyph:'□',group:'轻松'}
+    ],
+    scenarios:[
+      {title:'消息没有及时回复',copy:'一位重要朋友最近回复变慢，你不知道这是忙碌还是关系正在降温。',theme:'回应',severity:1},
+      {title:'聚会里被暂时忽略',copy:'大家聊得热烈，你几次想加入却没有被接住。',theme:'融入',severity:1},
+      {title:'观点出现明显不同',copy:'你和朋友对一件重要议题看法相反，气氛开始变得微妙。',theme:'差异',severity:1},
+      {title:'付出长期不对等',copy:'你总是主动联系、倾听和帮助，对方却很少回应你的需要。',theme:'互惠',severity:2},
+      {title:'秘密被转述给别人',copy:'一件只说给朋友听的事，后来出现在共同圈子里。',theme:'信任',severity:2},
+      {title:'朋友提出越界请求',copy:'对方希望你付出大量时间或资源，并把拒绝理解成不够朋友。',theme:'边界',severity:2},
+      {title:'共同好友要求你站队',copy:'两位朋友发生严重冲突，都希望你公开支持自己。',theme:'冲突',severity:3},
+      {title:'重要机会形成竞争',copy:'你和朋友同时争取一个稀缺机会，比较与不安开始进入关系。',theme:'竞争',severity:3},
+      {title:'价值观差异持续扩大',copy:'曾经亲近的人在重要选择上越来越不同，每次交流都更难自在。',theme:'变化',severity:3},
+      {title:'关系里长期遭到贬低',copy:'对方不断用玩笑否定你的能力和感受，并说你太敏感。',theme:'尊重',severity:4},
+      {title:'朋友圈出现集体排斥',copy:'熟悉的圈子开始有意绕开你，解释与修复的空间越来越少。',theme:'归属',severity:4},
+      {title:'友谊进入信任危机',copy:'隐瞒、站队与失衡同时出现，你必须判断这段关系是否还能继续。',theme:'危机',severity:4}
+    ],
+    severity:[
+      null,
+      {name:'日常摩擦',copy:'先从回应、融入与观点不同开始。'},
+      {name:'关系失衡',copy:'新的情境开始触及互惠、信任与边界。'},
+      {name:'重要冲突',copy:'连续接受让选择进入竞争、站队与价值差异。'},
+      {name:'信任危机',copy:'情境已经触及尊重、归属与关系能否继续。'}
+    ],
+    groupCopy:{
+      真诚:'你最重视关系里的真实与可信，不愿靠猜测和表面和平维持连接。',
+      边界:'你希望人际关系足够亲近，也允许拒绝并尊重彼此的界限。',
+      连接:'深度交流与被回应，会让你真正感觉自己在关系之中。',
+      支持:'你看重有来有往，关系需要在行动上互相接住。',
+      轻松:'你需要的是不必持续证明自己、可以自然呼吸的相处。',
+      成长:'你在意关系是否能容纳欣赏、修复与彼此变得更好。'
+    }
+  }
+};
+const valueGameState={
+  kind:'family',
+  phase:'intro',
+  selected:new Set(),
+  held:[],
+  accepted:[],
+  traded:[],
+  round:0,
+  pressure:1,
+  acceptStreak:0,
+  seenScenarios:new Set(),
+  current:null,
+  tradePick:new Set(),
+  reasonDraft:{cannotAccept:'',abandon:''},
+  selectScroll:0
+};
+function valueGameConfig(){return VALUE_CARD_GAMES[valueGameState.kind]}
+function valueGameSetTop(title,sub,pct,progress){
+  $('#valueGameTopTitle').textContent=title;
+  $('#valueGameTopSub').textContent=sub;
+  $('#valueGameProgressBar').style.width=pct+'%';
+  $('#valueGameProgressText').textContent=progress;
+}
+function valueGameSetFoot(html){$('#valueGameFoot').innerHTML=html}
+function openValueCardGame(kind){
+  const cfg=VALUE_CARD_GAMES[kind];
+  if(!cfg)return;
+  closeSheet();
+  const switchingKind=valueGameState.kind!==kind;
+  valueGameState.kind=kind;
+  const game=$('#valueGame');
+  game.className=`life-game value-game ${cfg.themeClass}`;
+  game.classList.add('open');
+  game.setAttribute('aria-hidden','false');
+  if(switchingKind)resetValueGame();
+  else renderValueGamePhase();
+}
+function closeValueGame(){
+  $('#valueGame').classList.remove('open');
+  $('#valueGame').setAttribute('aria-hidden','true');
+}
+function valueGameBack(){
+  if(valueGameState.phase==='trade'){valueGameState.tradePick.clear();renderValueGameDecision();return}
+  if(valueGameState.phase==='decision'){renderValueGameDraw();return}
+  if(valueGameState.phase==='select'){closeValueGame();openCardGameHub();return}
+  closeValueGame();
+  openCardGameHub();
+  if(valueGameState.phase==='draw')toast(`${valueGameConfig().title}进度已为你保留`);
+}
+function resetValueGame(){
+  valueGameState.phase='intro';
+  valueGameState.selected.clear();
+  valueGameState.held=[];
+  valueGameState.accepted=[];
+  valueGameState.traded=[];
+  valueGameState.round=0;
+  valueGameState.pressure=1;
+  valueGameState.acceptStreak=0;
+  valueGameState.seenScenarios.clear();
+  valueGameState.current=null;
+  valueGameState.tradePick.clear();
+  valueGameState.reasonDraft={cannotAccept:'',abandon:''};
+  valueGameState.selectScroll=0;
+  renderValueGameIntro();
+}
+function renderValueGamePhase(){
+  const renders={
+    intro:renderValueGameIntro,
+    select:renderValueGameSelect,
+    draw:renderValueGameDraw,
+    decision:renderValueGameDecision,
+    trade:renderValueGameTrade,
+    result:renderValueGameResult
+  };
+  (renders[valueGameState.phase]||renderValueGameIntro)();
+}
+function renderValueGameIntro(){
+  const cfg=valueGameConfig();
+  valueGameState.phase='intro';
+  valueGameSetTop(cfg.title,'在多轮取舍中看见最关心的事',0,'准备开始');
+  $('#valueGameBody').innerHTML=`
+    <div class="life-intro">
+      <div class="linear-spread spread" aria-hidden="true">${[0,1,2,3,4].map(()=>'<i class="linear-card"></i>').join('')}</div>
+      <div class="ey">${valueGameState.kind==='family'?'FAMILY':'SOCIAL'} CARDS</div>
+      <h2>${cfg.introQuestion}</h2>
+      <p>${cfg.introCopy}</p>
+      <div class="life-rules">
+        <div class="life-rule"><i>01</i><div><b>选择 9 张${cfg.dimensionTitle}底牌</b><p>按照此刻真正关心的事情凭直觉选择。</p></div></div>
+        <div class="life-rule"><i>02</i><div><b>接受后，情境继续加码</b><p>连续接受会让下一轮从日常摩擦逐渐走向关系危机。</p></div></div>
+        <div class="life-rule"><i>03</i><div><b>不接受，就交换 2 张</b><p>每次固定放下两张，直到自然留下最重要的三张。</p></div></div>
+      </div>
+    </div>`;
+  valueGameSetFoot(`<button class="btn-ink" onclick="startValueCards()">开始${cfg.dimensionTitle}取舍</button>`);
+}
+function startValueCards(){
+  valueGameState.phase='select';
+  valueGameState.selected.clear();
+  valueGameState.held=[];
+  valueGameState.accepted=[];
+  valueGameState.traded=[];
+  valueGameState.round=0;
+  valueGameState.pressure=1;
+  valueGameState.acceptStreak=0;
+  valueGameState.seenScenarios.clear();
+  valueGameState.current=null;
+  valueGameState.tradePick.clear();
+  valueGameState.reasonDraft={cannotAccept:'',abandon:''};
+  valueGameState.selectScroll=0;
+  renderValueGameSelect();
+}
+function valueGameCardHTML(card,i,mode='select'){
+  const on=mode==='trade'?valueGameState.tradePick.has(card.id):valueGameState.selected.has(card.id);
+  const action=mode==='trade'?`toggleValueTrade('${card.id}')`:`toggleValueCard('${card.id}')`;
+  return `<button class="marriage-pick-card${on?(mode==='trade'?' trade-pick':' on'):''}" data-value-id="${card.id}" onclick="${action}" aria-pressed="${on}">
+    <span class="card-no">${valueGameState.kind==='family'?'FAMILY':'SOCIAL'} · ${String(i+1).padStart(2,'0')}</span>
+    <span class="glyph">${card.glyph}</span><span><b>${card.name}</b><em>${card.group}</em></span><small>${mode==='trade'?'×':'✓'}</small>
+  </button>`;
+}
+function renderValueGameSelect(){
+  const cfg=valueGameConfig(),count=valueGameState.selected.size;
+  valueGameState.phase='select';
+  valueGameSetTop(`选择${cfg.dimensionTitle}底牌`,`向下滑动浏览全部 ${cfg.cards.length} 张`,Math.max(4,count*2),`已选 ${count}/9`);
+  $('#valueGameBody').innerHTML=`
+    <div class="life-select-summary">
+      <div class="row">
+        <div><div class="ey">YOUR ${valueGameState.kind==='family'?'FAMILY':'CONNECTIONS'}</div><h2>${cfg.question}</h2></div>
+        <div class="life-select-count">已选<br><b id="valueSelectedCount">${count}</b><small>/9</small></div>
+      </div>
+      <div class="life-select-meter"><i id="valueSelectionMeter" style="width:${count/9*100}%"></i></div>
+    </div>
+    <div class="life-select-guide"><span>没有标准答案，选择你此刻真正关心的</span><i>向下滑动 ↓</i></div>
+    <div class="marriage-select-grid">${cfg.cards.map((card,i)=>valueGameCardHTML(card,i)).join('')}</div>
+    <div class="life-select-end">已展示全部 ${cfg.cards.length} 张${cfg.dimensionTitle}底牌</div>`;
+  valueGameSetFoot(`<button class="btn-ink" id="valueSelectNext" ${count===9?'':'disabled'} onclick="confirmValueCards()">${count===9?'带着这 9 张牌继续':`还需选择 ${9-count} 张`}</button>`);
+  requestAnimationFrame(()=>{$('#valueGameBody').scrollTop=valueGameState.selectScroll});
+}
+function toggleValueCard(id){
+  valueGameState.selectScroll=$('#valueGameBody').scrollTop;
+  if(valueGameState.selected.has(id))valueGameState.selected.delete(id);
+  else if(valueGameState.selected.size<9)valueGameState.selected.add(id);
+  else{toast('这一局先选择 9 张底牌');return}
+  const on=valueGameState.selected.has(id);
+  const card=document.querySelector(`#valueGameBody [data-value-id="${id}"]`);
+  if(card){card.classList.toggle('on',on);card.setAttribute('aria-pressed',String(on))}
+  $('#valueSelectedCount').textContent=valueGameState.selected.size;
+  $('#valueSelectionMeter').style.width=(valueGameState.selected.size/9*100)+'%';
+  const next=$('#valueSelectNext');
+  next.disabled=valueGameState.selected.size!==9;
+  next.textContent=valueGameState.selected.size===9?'带着这 9 张牌继续':`还需选择 ${9-valueGameState.selected.size} 张`;
+  $('#valueGameProgressText').textContent=`已选 ${valueGameState.selected.size}/9`;
+}
+function confirmValueCards(){
+  if(valueGameState.selected.size!==9)return;
+  valueGameState.held=[...valueGameState.selected];
+  valueGameState.round=0;
+  valueGameState.pressure=1;
+  valueGameState.acceptStreak=0;
+  valueGameState.seenScenarios.clear();
+  renderValueGameDraw();
+}
+function valueGameProgress(extra=0){
+  const released=(9-valueGameState.held.length)/6;
+  return Math.min(96,16+released*72+Math.min(valueGameState.round,8)*1.5+extra);
+}
+function valueScenarioOptions(){
+  const cfg=valueGameConfig(),target=valueGameState.pressure;
+  return cfg.scenarios
+    .map((scenario,index)=>({
+      scenario,
+      distance:Math.abs(scenario.severity-target),
+      seen:valueGameState.seenScenarios.has(scenario.title)?1:0,
+      order:(index*7+valueGameState.round*11)%19
+    }))
+    .sort((a,b)=>a.distance-b.distance||a.seen-b.seen||a.order-b.order)
+    .slice(0,5)
+    .map(item=>item.scenario);
+}
+function renderValueGameDraw(){
+  const cfg=valueGameConfig();
+  valueGameState.phase='draw';
+  valueGameState.current=null;
+  valueGameState.tradePick.clear();
+  valueGameState.reasonDraft={cannotAccept:'',abandon:''};
+  const severity=cfg.severity[valueGameState.pressure],options=valueScenarioOptions();
+  valueGameSetTop(`抽取${cfg.dimensionTitle}情境`,`持有 ${valueGameState.held.length} 张底牌`,valueGameProgress(),`第 ${valueGameState.round+1} 轮`);
+  $('#valueGameBody').innerHTML=`
+    <div class="stage-copy">
+      <div class="ey">${valueGameState.kind==='family'?'FAMILY':'SOCIAL'} · ROUND ${String(valueGameState.round+1).padStart(2,'0')}</div>
+      <h2>${cfg.dimensionTitle}会带来怎样的取舍？</h2>
+      <p>${valueGameState.acceptStreak?`你已连续接受 ${valueGameState.acceptStreak} 次，情境正在变得更难。`:'从五张情境牌中凭直觉抽一张。'}</p>
+    </div>
+    <div class="fate-pressure severity-${valueGameState.pressure}">
+      <div class="head"><span>${cfg.dimensionTitle}压力</span><b>${severity.name}</b></div>
+      <div class="track">${[1,2,3,4].map(level=>`<i class="${level<=valueGameState.pressure?'on':''}"></i>`).join('')}</div>
+      <p>${severity.copy}</p>
+    </div>
+    <div class="stamp-scroll" data-swipe>
+      <div class="stamp-arc spread" aria-label="抽取一张${cfg.dimensionTitle}情境牌">
+        ${options.map((scenario,i)=>`<button class="stamp-card" onclick="drawValueScenario(${i})" aria-label="抽第 ${i+1} 张牌"></button>`).join('')}
+      </div>
+    </div>
+    <div class="draw-hint">左右滑动牌弧 · 点击其中一张</div>`;
+  $('#valueGameBody').dataset.options=JSON.stringify(options);
+  valueGameSetFoot('');
+  requestAnimationFrame(()=>enableLifeSwipe(true,'#valueGameBody'));
+}
+function drawValueScenario(i){
+  const options=JSON.parse($('#valueGameBody').dataset.options||'[]');
+  valueGameState.current=options[i];
+  if(valueGameState.current)valueGameState.seenScenarios.add(valueGameState.current.title);
+  renderValueGameDecision();
+}
+function renderValueGameDecision(){
+  const cfg=valueGameConfig(),scenario=valueGameState.current;
+  valueGameState.phase='decision';
+  const severity=cfg.severity[valueGameState.pressure];
+  const canTrade=valueGameState.held.length-2>=3;
+  const held=valueGameState.held.map(id=>cfg.cards.find(card=>card.id===id)).filter(Boolean);
+  valueGameSetTop(`${cfg.dimensionTitle}情境`,`持有 ${valueGameState.held.length} 张底牌`,valueGameProgress(5),`第 ${valueGameState.round+1} 轮`);
+  $('#valueGameBody').innerHTML=`
+    <div class="setback-view">
+      <div class="age-badge">第 ${valueGameState.round+1} 轮 · ${scenario.theme}</div>
+      <div class="marriage-scenario-card">
+        <div class="serial">${valueGameState.kind==='family'?'FAMILY':'SOCIAL'} · ${String(valueGameState.round+1).padStart(2,'0')}</div>
+        <span class="mark">${cfg.glyph}</span>
+        <h2>${scenario.title}</h2><p>${scenario.copy}</p>
+      </div>
+      <div class="impact-badge severity-${valueGameState.pressure}">${severity.name} · 不接受需交换 2 张</div>
+      <p class="decision-copy">接受，会保留全部底牌，但下一轮情境会继续加重；<br>不接受，则交换 2 张，直到自然只剩最关心的三点。</p>
+      <div class="marriage-held-strip">${held.map(card=>`<span>${card.name}</span>`).join('')}</div>
+      <div class="decision-actions">
+        <button class="decision-btn" onclick="acceptValueScenario()">我能接受</button>
+        <button class="decision-btn reject" onclick="chooseValueTrade()" ${canTrade?'':'disabled'}>${canTrade?'我不接受':'已剩最终三张'}</button>
+      </div>
+    </div>`;
+  valueGameSetFoot('');
+}
+function acceptValueScenario(){
+  valueGameState.accepted.push({round:valueGameState.round,scenario:valueGameState.current,severity:valueGameState.pressure});
+  valueGameState.acceptStreak++;
+  valueGameState.pressure=Math.min(4,valueGameState.pressure+1);
+  finishValueRound();
+}
+function chooseValueTrade(){
+  if(valueGameState.held.length-2<3){toast('最后三张底牌不能再交换');return}
+  valueGameState.tradePick.clear();
+  renderValueGameTrade();
+}
+function renderValueGameTrade(){
+  const cfg=valueGameConfig(),picked=valueGameState.tradePick.size;
+  valueGameState.phase='trade';
+  const held=valueGameState.held.map(id=>cfg.cards.find(card=>card.id===id)).filter(Boolean);
+  valueGameSetTop(`交换${cfg.dimensionTitle}底牌`,'选择 2 张作为这轮取舍',valueGameProgress(7),`已选 ${picked}/2`);
+  $('#valueGameBody').innerHTML=`
+    <div class="life-section-head">
+      <div><div class="ey">THE TRADE</div><h2>你愿意用什么交换？</h2></div>
+      <span>已选 <b id="valueTradeCount">${picked}</b>/2</span>
+    </div>
+    <div class="marriage-trade-note">为了不让“${valueGameState.current.title}”成为关系常态，请从仍持有的 ${valueGameState.held.length} 张底牌中放下 2 张。最后三张会被保留。</div>
+    <div class="marriage-select-grid">${held.map((card,i)=>valueGameCardHTML(card,i,'trade')).join('')}</div>
+    <div class="choice-reasons">
+      <div class="reason-field">
+        <label>为什么你不能接受这个情境？<span>写下第一反应</span></label>
+        <textarea maxlength="160" oninput="updateValueReason('cannotAccept',this.value)" placeholder="写下真正触碰到底线的部分……">${escapeHTML(valueGameState.reasonDraft.cannotAccept)}</textarea>
+      </div>
+      <div class="reason-field">
+        <label>为什么愿意先放下这两张牌？<span>没有标准答案</span></label>
+        <textarea maxlength="160" oninput="updateValueReason('abandon',this.value)" placeholder="相比之下，什么更值得优先守住……">${escapeHTML(valueGameState.reasonDraft.abandon)}</textarea>
+      </div>
+    </div>`;
+  valueGameSetFoot(`<button class="btn-ink" id="valueTradeConfirm" ${picked===2?'':'disabled'} onclick="confirmValueTrade()">确认交换 2 张牌</button>`);
+}
+function toggleValueTrade(id){
+  if(valueGameState.tradePick.has(id))valueGameState.tradePick.delete(id);
+  else if(valueGameState.tradePick.size<2)valueGameState.tradePick.add(id);
+  else{toast('这一轮需要交换 2 张底牌');return}
+  const on=valueGameState.tradePick.has(id);
+  const card=document.querySelector(`#valueGameBody [data-value-id="${id}"]`);
+  if(card){card.classList.toggle('trade-pick',on);card.setAttribute('aria-pressed',String(on))}
+  $('#valueTradeCount').textContent=valueGameState.tradePick.size;
+  $('#valueTradeConfirm').disabled=valueGameState.tradePick.size!==2;
+  $('#valueGameProgressText').textContent=`已选 ${valueGameState.tradePick.size}/2`;
+}
+function updateValueReason(field,value){valueGameState.reasonDraft[field]=value}
+function confirmValueTrade(){
+  if(valueGameState.tradePick.size!==2)return;
+  const ids=[...valueGameState.tradePick];
+  valueGameState.traded.push({
+    round:valueGameState.round,
+    scenario:valueGameState.current,
+    ids,
+    reasons:{
+      cannotAccept:valueGameState.reasonDraft.cannotAccept.trim(),
+      abandon:valueGameState.reasonDraft.abandon.trim()
+    }
+  });
+  valueGameState.held=valueGameState.held.filter(id=>!valueGameState.tradePick.has(id));
+  valueGameState.tradePick.clear();
+  valueGameState.acceptStreak=0;
+  valueGameState.pressure=Math.max(1,valueGameState.pressure-1);
+  finishValueRound();
+}
+function finishValueRound(){
+  valueGameState.round++;
+  if(valueGameState.held.length===3)renderValueGameResult();
+  else renderValueGameDraw();
+}
+function renderValueGameResult(){
+  const cfg=valueGameConfig();
+  valueGameState.phase='result';
+  const cards=valueGameState.held.map(id=>cfg.cards.find(card=>card.id===id)).filter(Boolean);
+  const counts={};
+  cards.forEach(card=>counts[card.group]=(counts[card.group]||0)+1);
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];
+  valueGameSetTop(`你的${cfg.dimensionTitle}底牌`,'多轮取舍后最关心的三点',100,'完成');
+  $('#valueGameBody').innerHTML=`
+    <div class="relation-result">
+      <div class="heart">${cfg.glyph}</div>
+      <h2>${cfg.dimensionTitle}中，你最关心这三点</h2>
+      <p>${cfg.groupCopy[top]||'这三点构成了你此刻最想守住的关系优先级。'}<br>它们来自多轮情境与交换，仍可以被未来的经历继续修正。</p>
+      <div class="relation-final-cards">${cards.map(card=>`<div class="relation-final-card"><i>${card.glyph}</i><b>${card.name}</b></div>`).join('')}</div>
+      <div class="result-insight" style="text-align:left;margin-top:16px">
+        <div class="cap">${valueGameState.kind==='family'?'FAMILY':'SOCIAL'} SIGNAL · 可写入画像</div>
+        <h4>${cards.map(card=>card.name).join(' · ')}</h4>
+        <p>本次经历了 ${valueGameState.round} 轮情境，接受 ${valueGameState.accepted.length} 次、主动交换 ${valueGameState.traded.length} 次。</p>
+      </div>
+    </div>`;
+  valueGameSetFoot(`<button class="btn-ink" onclick="saveValueGameResult()">保存${cfg.dimensionTitle}中最关心的三点</button>`);
+}
+function saveValueGameResult(){
+  const cfg=valueGameConfig();
+  const cards=valueGameState.held.map(id=>cfg.cards.find(card=>card.id===id)).filter(Boolean);
+  const tags=cards.map(card=>card.name);
+  if(tags.length!==3)return;
+  $(cfg.target).textContent=tags.join(' · ');
+  $(cfg.target).classList.remove('empty');
+  $(cfg.button).classList.remove('todo');
+  tags.forEach(tag=>dimensionState[cfg.dimensionKey].selected.add(tag));
+  dimensionState[cfg.dimensionKey].saved=true;
+  safeStoreSet(cfg.storageKey,{
+    ids:cards.map(card=>card.id),
+    tags,
+    accepted:valueGameState.accepted,
+    traded:valueGameState.traded,
+    rounds:valueGameState.round,
+    createdAt:new Date().toISOString()
+  });
+  updateProfileCompletion();
+  refreshDynamicPersona();
+  closeValueGame();
+  toast(`${cfg.dimensionTitle}中最关心的三点已写入画像`);
+}
+
+/* ================= 五个动态画像维度浮层 ================= */
 const DIMENSION_CONFIG={
   skill:{
     title:'我擅长',question:'你是否清楚自己擅长什么？',target:'#dimSkill',button:'#dimBtnSkill',
@@ -6324,7 +7384,7 @@ const DIMENSION_CONFIG={
     ]
   },
   love:{
-    title:'我在情感关系中在意',question:'一段关系里，什么让你感觉被爱？',target:'#dimLove',button:'#dimBtnLove',
+    title:'我在恋爱关系中在意',question:'一段恋爱关系里，什么让你感觉被爱？',target:'#dimLove',button:'#dimBtnLove',
     batches:[
       ['坦诚沟通','稳定陪伴','彼此信任','尊重边界','共同成长'],
       ['情绪被理解','说到做到','保留个人空间','遇事站在一起','有回应'],
@@ -6333,7 +7393,7 @@ const DIMENSION_CONFIG={
     selected:[],
     tests:[
       ['关系安全感与靠近方式','18题 Demo 构念版 · 理解安全感与边界需要','约 4 分钟','#552A3D'],
-      ['关系卡牌：靠近还是退后？','从6张关系需要出发，经历3次轻量取舍','约 2 分钟','#6A294D']
+      ['婚姻卡牌：最后会留下什么？','从9张婚姻底牌出发，在多轮取舍中留下最关心的3点','约 3 分钟','#6A294D']
     ]
   },
   family:{
@@ -6345,7 +7405,20 @@ const DIMENSION_CONFIG={
     ],
     selected:[],
     tests:[
-      ['家庭关系与期待','20题 Demo 构念版 · 看见你想守住的家庭价值','约 5 分钟','#28443F']
+      ['家庭关系与期待','20题 Demo 构念版 · 看见你想守住的家庭价值','约 5 分钟','#28443F'],
+      ['家庭卡牌：最后会守住什么？','从9张家庭底牌出发，在多轮取舍中留下最关心的3点','约 3 分钟','#235A4B']
+    ]
+  },
+  social:{
+    title:'我在人际交往中在意',question:'和朋友、同事或熟人相处时，你最希望守住什么？',target:'#dimSocial',button:'#dimBtnSocial',
+    batches:[
+      ['真诚','互相尊重','有来有往','清晰边界','轻松自在'],
+      ['深度交流','稳定联系','保守秘密','允许拒绝','彼此支持'],
+      ['价值观相近','不被比较','冲突后愿意修复','共同兴趣','保留独处空间']
+    ],
+    selected:[],
+    tests:[
+      ['人际卡牌：最后会守住什么？','从9张人际底牌出发，在多轮取舍中留下最关心的3点','约 3 分钟','#29466A']
     ]
   }
 };
@@ -6427,7 +7500,7 @@ function addCustomDimensionTag(){
 function renderDimensionTests(){
   const tests=DIMENSION_CONFIG[activeDimension].tests;
   $('#dimensionTests').innerHTML=tests.map((t,i)=>`
-    <button class="test" style="${tests.length===1||i===2||activeDimension==='love'?'grid-column:1/-1;':''}background:radial-gradient(220px 130px at 90% -15%,${t[3]}CC,transparent 68%),#171A24" onclick="startDimensionTool('${escapeHTML(t[0])}')">
+    <button class="test" style="${tests.length===1||i===2?'grid-column:1/-1;':''}background:radial-gradient(220px 130px at 90% -15%,${t[3]}CC,transparent 68%),#171A24" onclick="startDimensionTool('${escapeHTML(t[0])}')">
       <b>${escapeHTML(t[0])}</b><p>${escapeHTML(t[1])}</p><span class="tm2">${escapeHTML(t[2])}</span>
     </button>`).join('');
 }
@@ -6435,8 +7508,10 @@ function startDimensionTool(name){
   if(name==='优势证据探索'){closeSheet();openAssessmentIntro('strength');return}
   if(name==='霍兰德兴趣测评'){closeSheet();openAssessmentIntro('holland');return}
   if(name==='关系安全感与靠近方式'){closeSheet();openAssessmentIntro('love');return}
-  if(name==='关系卡牌：靠近还是退后？'){closeSheet();openRelationshipGame();return}
+  if(name==='婚姻卡牌：最后会留下什么？'){closeSheet();openRelationshipGame();return}
   if(name==='家庭关系与期待'){closeSheet();openAssessmentIntro('family');return}
+  if(name==='家庭卡牌：最后会守住什么？'){closeSheet();openValueCardGame('family');return}
+  if(name==='人际卡牌：最后会守住什么？'){closeSheet();openValueCardGame('social');return}
 }
 function saveDimension(){
   const cfg=DIMENSION_CONFIG[activeDimension];
@@ -6473,7 +7548,8 @@ function migrateToBlankProfileDefaults(){
       'kaleido_demo_profile_bigfive_v1','kaleido_demo_profile_bigfive_v2',
       'kaleido_demo_profile_strength_v1','kaleido_demo_profile_love_v1',
       'kaleido_demo_profile_family_v1','kaleido_life_signature_v1',
-      'kaleido_relationship_cards_v1'
+      'kaleido_relationship_cards_v1','kaleido_family_cards_v1',
+      'kaleido_social_cards_v1'
     ].forEach(key=>localStorage.removeItem(key));
     localStorage.setItem(marker,'1');
   }catch(e){}
@@ -6519,6 +7595,18 @@ if(savedRelationshipCards?.tags?.length===3){
   savedRelationshipCards.tags.forEach(t=>dimensionState.love.selected.add(t));
   dimensionState.love.saved=true;
 }
+[
+  ['family','kaleido_family_cards_v1','#dimFamily','#dimBtnFamily'],
+  ['social','kaleido_social_cards_v1','#dimSocial','#dimBtnSocial']
+].forEach(([kind,key,target,button])=>{
+  const saved=safeStoreGet(key);
+  if(saved?.tags?.length!==3)return;
+  $(target).textContent=saved.tags.join(' · ');
+  $(target).classList.remove('empty');
+  $(button).classList.remove('todo');
+  saved.tags.forEach(tag=>dimensionState[kind].selected.add(tag));
+  dimensionState[kind].saved=true;
+});
 updateProfileCompletion();
 refreshDynamicPersona();
 
