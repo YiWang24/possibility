@@ -142,20 +142,36 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .gochip:active{transform:scale(.95)}
 
 /* ============ 万花筒光球（签名元素） ============ */
+/* 数字人光球：熔岩灯 —— 彩色光团在球体内缓慢游走、融合 */
 .orb{
-  position:relative;border-radius:50%;
-  background:conic-gradient(from 0deg,#5E96FF,#8F7BFF,#E35CC1,#FF7A4D,#5E96FF);
-  animation:orbspin 26s linear infinite;
+  position:relative;border-radius:50%;overflow:hidden;
+  background:
+    radial-gradient(circle at 38% 30%, rgba(255,255,255,.5), rgba(255,255,255,0) 42%),
+    radial-gradient(circle at 50% 55%, #4A55D6 0%, #2A2F9E 70%, #1B1E5C 100%);
 }
 .orb::before{
-  content:"";position:absolute;inset:14%;border-radius:50%;
-  background:conic-gradient(from 140deg,#FF7A4D,#5E96FF,#E35CC1,#FF7A4D);
-  filter:blur(6px);opacity:.9;
-  animation:orbspin 18s linear infinite reverse;
+  content:"";position:absolute;left:-25%;top:-25%;width:105%;height:105%;border-radius:50%;
+  background:radial-gradient(circle at 45% 45%, #6FA5FF 0%, rgba(143,123,255,.75) 45%, rgba(143,123,255,0) 72%);
+  filter:blur(6px);mix-blend-mode:screen;
+  animation:orblava1 9s ease-in-out infinite;
 }
 .orb::after{
-  content:"";position:absolute;inset:30%;border-radius:50%;
-  background:radial-gradient(circle at 40% 35%, #FFFFFF 0%, rgba(232,240,255,.7) 45%, rgba(232,240,255,0) 75%);
+  content:"";position:absolute;right:-30%;bottom:-30%;width:95%;height:95%;border-radius:50%;
+  background:radial-gradient(circle at 50% 50%, #F06ACD 0%, rgba(255,122,77,.7) 48%, rgba(255,122,77,0) 74%);
+  filter:blur(7px);mix-blend-mode:screen;
+  animation:orblava2 12s ease-in-out infinite;animation-delay:-4s;
+}
+@keyframes orblava1{
+  0%,100%{transform:translate(0,0) scale(1)}
+  30%{transform:translate(38%,30%) scale(1.25)}
+  55%{transform:translate(55%,62%) scale(.8)}
+  78%{transform:translate(18%,42%) scale(1.1)}
+}
+@keyframes orblava2{
+  0%,100%{transform:translate(0,0) scale(1)}
+  28%{transform:translate(-40%,-28%) scale(1.3)}
+  56%{transform:translate(-62%,-58%) scale(.75)}
+  80%{transform:translate(-22%,-15%) scale(1.12)}
 }
 .orb-halo{position:relative}
 .orb-halo::before{
@@ -166,7 +182,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 @keyframes orbspin{to{transform:rotate(360deg)}}
 @keyframes breathe{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:1}}
 @media (prefers-reduced-motion:reduce){
-  .orb,.orb::before,.orb-halo::before,.kal-disc,.kal-disc .k-l2,.kal-disc .k-flower,.wave i{animation:none !important}
+  .orb::before,.orb::after,.orb-halo::before,.kal-disc,.wave i,.ask .glow,.ask .glow2,.ask .glow3{animation:none !important}
 }
 
 /* ============ 01 认识自己 ============ */
@@ -212,9 +228,34 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   box-shadow:var(--shadow-card);
   padding:24px 22px 22px;
 }
-.ask .glow{position:absolute;top:-70px;right:-60px;width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle at 45% 45%, rgba(111,165,255,.6), rgba(143,123,255,.25) 50%, transparent 72%);
-  filter:blur(8px);animation:breathe 7s ease-in-out infinite;pointer-events:none}
+/* 熔岩灯光斑：多个光球沿各自路径缓慢游走、时聚时散 */
+.ask .glow,.ask .glow2,.ask .glow3{position:absolute;border-radius:50%;pointer-events:none;will-change:transform}
+.ask .glow{top:-70px;right:-40px;width:230px;height:230px;
+  background:radial-gradient(circle at 45% 45%, rgba(111,165,255,.65), rgba(143,123,255,.28) 52%, transparent 72%);
+  filter:blur(10px);animation:lava1 13s ease-in-out infinite}
+.ask .glow2{bottom:-90px;left:-60px;width:200px;height:200px;
+  background:radial-gradient(circle at 50% 45%, rgba(227,92,193,.42), rgba(143,123,255,.2) 55%, transparent 75%);
+  filter:blur(12px);animation:lava2 17s ease-in-out infinite;animation-delay:-6s}
+.ask .glow3{top:30%;left:32%;width:150px;height:150px;
+  background:radial-gradient(circle at 50% 50%, rgba(255,255,255,.34), rgba(157,188,255,.16) 55%, transparent 72%);
+  filter:blur(14px);animation:lava3 11s ease-in-out infinite;animation-delay:-3s}
+@keyframes lava1{
+  0%,100%{transform:translate(0,0) scale(1)}
+  25%{transform:translate(-90px,60px) scale(1.25)}
+  50%{transform:translate(-150px,150px) scale(.85)}
+  75%{transform:translate(-40px,90px) scale(1.15)}
+}
+@keyframes lava2{
+  0%,100%{transform:translate(0,0) scale(1)}
+  30%{transform:translate(110px,-80px) scale(1.3)}
+  55%{transform:translate(190px,-160px) scale(.8)}
+  80%{transform:translate(60px,-40px) scale(1.1)}
+}
+@keyframes lava3{
+  0%,100%{transform:translate(0,0) scale(1);opacity:.8}
+  33%{transform:translate(70px,50px) scale(1.5);opacity:1}
+  66%{transform:translate(-60px,-40px) scale(.65);opacity:.55}
+}
 .ask .tag{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.28em;color:#9DBCFF}
 .ask .tag::before{content:"";width:18px;height:1.5px;background:rgba(157,188,255,.6)}
 .ask h2{position:relative;font-size:22px;line-height:1.55;margin-top:12px;font-weight:700;letter-spacing:.01em}
@@ -564,14 +605,10 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   position:absolute;inset:0;border-radius:50%;overflow:hidden;
   box-shadow:0 0 70px rgba(96,112,222,.55), 0 0 24px rgba(168,111,227,.4), inset 0 0 30px rgba(255,255,255,.15);
 }
-.kal-disc svg{display:block;width:100%;height:100%}
-.kal-disc .k-l2,.kal-disc .k-flower{transform-box:view-box;transform-origin:center}
+.kal-disc canvas{display:block;width:100%;height:100%}
+.kal-disc::after{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;border:1.5px solid rgba(255,255,255,.35)}
 .kal-disc.spin{animation:kspin 2.6s cubic-bezier(.2,.8,.2,1) forwards}
-.kal-disc.spin .k-l2{animation:klayer2 2.6s cubic-bezier(.2,.8,.2,1) forwards}
-.kal-disc.spin .k-flower{animation:kflower 2.6s cubic-bezier(.2,.8,.2,1) forwards}
-@keyframes kspin{0%{transform:rotate(0);filter:blur(0)}30%{filter:blur(2.5px)}100%{transform:rotate(1170deg);filter:blur(0)}}
-@keyframes klayer2{to{transform:rotate(-660deg)}}
-@keyframes kflower{to{transform:rotate(420deg)}}
+@keyframes kspin{0%{transform:rotate(0);filter:blur(0)}30%{filter:blur(1.5px)}100%{transform:rotate(390deg);filter:blur(0)}}
 .kal-hint{margin-top:20px;font-size:12px;color:var(--faint);letter-spacing:.15em}
 .kal-actions{margin-top:auto;width:100%;display:flex;flex-direction:column;gap:10px;align-items:center}
 .kal-actions .btn-ink{width:100%}
@@ -870,6 +907,8 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 
     <div class="ask">
       <div class="glow"></div>
+      <div class="glow2"></div>
+      <div class="glow3"></div>
       <div class="tag">今天想探索什么</div>
       <h2>说出那个<br><em>在心里盘旋</em>的问题</h2>
       <div class="askbox">
@@ -1157,35 +1196,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 
     <div class="kal-disc-wrap" id="kalDiscWrap">
       <div class="kal-disc" id="kalDisc">
-        <svg viewBox="0 0 230 230" aria-hidden="true">
-          <defs>
-            <radialGradient id="gSil" cx="35%" cy="30%" r="80%">
-              <stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#C9C2D6"/><stop offset="1" stop-color="#4A4556"/>
-            </radialGradient>
-            <radialGradient id="gBlu" cx="35%" cy="30%" r="80%">
-              <stop offset="0" stop-color="#9FBEFF"/><stop offset="1" stop-color="#2338B8"/>
-            </radialGradient>
-            <linearGradient id="gMag" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#E883D6"/><stop offset="1" stop-color="#7C2168"/>
-            </linearGradient>
-            <linearGradient id="gPet" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#D9B3F5"/><stop offset=".5" stop-color="#A86FE3"/><stop offset="1" stop-color="#7C3FC4"/>
-            </linearGradient>
-            <g id="kwedge">
-              <circle cx="115" cy="24" r="12" fill="url(#gSil)" stroke="rgba(255,255,255,.5)" stroke-width="1"/>
-              <path d="M99 55 L115 39 L131 55 L131 64 L115 48 L99 64 Z" fill="#2A2F9E"/>
-              <rect x="86" y="52" width="18" height="7" rx="2" fill="#7FB4D9" transform="rotate(-40 95 55)"/>
-              <rect x="124" y="46" width="12" height="10" rx="2.5" fill="url(#gMag)" transform="rotate(18 130 51)"/>
-              <circle cx="140" cy="30" r="6" fill="url(#gBlu)"/>
-            </g>
-            <path id="kpetal" d="M115 50 C104 66 103 94 115 106 C127 94 126 66 115 50 Z" fill="url(#gPet)" stroke="rgba(255,255,255,.28)" stroke-width="1"/>
-          </defs>
-          <circle cx="115" cy="115" r="115" fill="#6070DE"/>
-          <g class="k-layer" id="kl1"></g>
-          <g class="k-layer k-l2" id="kl2" opacity=".45" style="mix-blend-mode:screen"></g>
-          <g class="k-flower" id="kflower"></g>
-          <circle cx="115" cy="115" r="113.5" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
-        </svg>
+        <canvas id="kalCanvas" width="460" height="460"></canvas>
       </div>
     </div>
     <div class="kal-hint" id="kalHint" style="display:none">光在旋转，人生在折叠……</div>
@@ -1231,7 +1242,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     <button class="btn-ink" style="margin-top:22px" onclick="saveSkill()">保存到我的画像</button>
   </div>
 
-  <button class="drawfab show" id="drawfab" onclick="openKal()">
+  <button class="drawfab" id="drawfab" onclick="openKal()">
     <span class="miniorb"></span>随机抽取
   </button>
 
@@ -1802,7 +1813,7 @@ function openKal(){
   $('#kal').classList.add('show');
   resetKal();
 }
-function closeKal(){ clearTimeout(kalTimer); $('#kal').classList.remove('show'); }
+function closeKal(){ clearTimeout(kalTimer); cancelAnimationFrame(kalRAF); $('#kal').classList.remove('show'); }
 function resetKal(){
   $('#kalOpts').style.display = 'flex';
   $('#kalConfirm').style.display = 'flex';
@@ -1831,7 +1842,9 @@ function spinKal(){
   disc.classList.remove('spin');
   void disc.offsetWidth;
   disc.classList.add('spin');
+  kalSpin();
   kalTimer = setTimeout(()=>{
+    cancelAnimationFrame(kalRAF);
     const pool = USERS.filter(u=> kalM==='similar' ? u.sim : !u.sim);
     kalUser = pool[Math.floor(Math.random()*pool.length)];
     wrap.classList.remove('show');
@@ -2188,24 +2201,114 @@ function saveSkill(){
 }
 
 /* ================= 初始化 ================= */
-/* 万花筒图案：12 个镜像分段 + 中心六瓣花 */
+/* 万花筒（参考 bobbyroe/kaleidoscope 的架构）：
+   1. 「筒内景」：离屏源画布里几颗宝石持续公转 + 自转（对应原仓库缓冲场景中运动的多面体）
+   2. 「三镜筒」：正三角形交替镜像，按 6 三角=1 六边形、中心+外环 7 组铺满圆盘
+   3. 每帧重绘源画布并重新铺贴 → 图案随筒内景运动持续折叠变化 */
+const KAL_SIZE = 460, KAL_R = KAL_SIZE/2;
+const KAL_TRI = 68;                     /* 三角形外接圆半径（画布单位） */
+const SRC_SIZE = 200;
+let kalSrc = null, kalTris = [], kalGems = [], kalRAF = null, kalLast = 0, kalT = 0, kalBoost = 0;
+const GEM_COLS = ['#F06ACD','#9FBEFF','#5E96FF','#8F7BFF','#D9B3F5','#FF7A4D','#FFB067','#E35CC1'];
 function buildKaleido(){
-  const ring = id=>{
-    let s = '';
-    for(let i=0;i<12;i++){
-      const a = i*30;
-      const t = (i%2===0)
-        ? `rotate(${a} 115 115)`
-        : `rotate(${a} 115 115) translate(230 0) scale(-1 1)`;
-      s += `<use href="#kwedge" transform="${t}"/>`;
+  /* 筒内景：固定一组宝石的轨道参数（伪随机，图案可复现） */
+  let seed = 12;
+  const rnd = ()=>{ seed = (seed*9301+49297)%233280; return seed/233280; };
+  kalGems = [];
+  for(let j=0;j<7;j++){
+    kalGems.push({
+      orbit: 22 + rnd()*62,             /* 公转半径 */
+      phase: rnd()*Math.PI*2,
+      spd: .28 + rnd()*.5,              /* 公转速度 */
+      rspd: (rnd()>.5?1:-1)*(.4+rnd()*.9), /* 自转速度 */
+      r: 20 + rnd()*22,                 /* 宝石大小 */
+      col: GEM_COLS[Math.floor(rnd()*GEM_COLS.length)],
+      kind: Math.floor(rnd()*4),
+    });
+  }
+  kalSrc = document.createElement('canvas');
+  kalSrc.width = kalSrc.height = SRC_SIZE;
+  /* 三镜筒网格：中心 + 6 个环绕六边形，每组 6 个交替镜像的三角形 */
+  kalTris = [];
+  for(let h=-1;h<6;h++){
+    const hx = h===-1 ? 0 : Math.cos(Math.PI/3*h)*KAL_TRI*3;
+    const hy = h===-1 ? 0 : Math.sin(Math.PI/3*h)*KAL_TRI*3;
+    for(let i=0;i<6;i++){
+      kalTris.push({hx, hy, a: Math.PI/3*i, flip: i%2===1});
     }
-    document.getElementById(id).innerHTML = s;
-  };
-  ring('kl1'); ring('kl2');
-  let f = '';
-  for(let i=0;i<6;i++){ f += `<use href="#kpetal" transform="rotate(${i*60} 115 115)"/>`; }
-  f += `<polygon points="115,104 124.5,109.5 124.5,120.5 115,126 105.5,120.5 105.5,109.5" fill="#2A2F9E" stroke="#B9A5F0" stroke-width="1"/>`;
-  document.getElementById('kflower').innerHTML = f;
+  }
+  drawKalSource(0);
+  renderKaleido();
+}
+function drawKalSource(t){
+  const c = kalSrc.getContext('2d');
+  const bg = c.createLinearGradient(0,0,SRC_SIZE,SRC_SIZE);
+  bg.addColorStop(0,'#3D48C8'); bg.addColorStop(.55,'#6070DE'); bg.addColorStop(1,'#2A2F9E');
+  c.fillStyle = bg; c.fillRect(0,0,SRC_SIZE,SRC_SIZE);
+  const cx = SRC_SIZE/2, cy = SRC_SIZE/2;
+  kalGems.forEach(gm=>{
+    const a = gm.phase + t*gm.spd;
+    const x = cx + Math.cos(a)*gm.orbit;
+    const y = cy + Math.sin(a)*gm.orbit;
+    c.save(); c.translate(x,y); c.rotate(t*gm.rspd);
+    const g = c.createRadialGradient(-gm.r*.3,-gm.r*.3,gm.r*.1, 0,0,gm.r*1.2);
+    g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(.35,gm.col); g.addColorStop(1,'rgba(10,12,40,.9)');
+    c.fillStyle = g;
+    const r = gm.r;
+    c.beginPath();
+    if(gm.kind===0){ c.arc(0,0,r,0,Math.PI*2); }
+    else if(gm.kind===1){ c.moveTo(0,-r); c.lineTo(r*.8,0); c.lineTo(0,r); c.lineTo(-r*.8,0); c.closePath(); }
+    else if(gm.kind===2){ c.rect(-r,-r*.4,r*2,r*.8); }
+    else { c.moveTo(0,-r); c.lineTo(r,r*.7); c.lineTo(-r,r*.7); c.closePath(); }
+    c.fill();
+    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1.5; c.stroke();
+    c.restore();
+  });
+}
+function renderKaleido(){
+  const cv = document.getElementById('kalCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const k = KAL_TRI;
+  ctx.clearRect(0,0,KAL_SIZE,KAL_SIZE);
+  kalTris.forEach(tr=>{
+    ctx.save();
+    ctx.translate(KAL_R + tr.hx, KAL_R + tr.hy);
+    ctx.rotate(tr.a);
+    ctx.translate(-k, 0);
+    if(tr.flip) ctx.scale(1,-1);        /* 交替镜像 → 相邻三角接缝对齐 */
+    ctx.beginPath();                    /* 正三角形裁剪（顶点在外接圆 0°/120°/240°） */
+    ctx.moveTo(k,0);
+    ctx.lineTo(k*Math.cos(2*Math.PI/3), k*Math.sin(2*Math.PI/3));
+    ctx.lineTo(k*Math.cos(4*Math.PI/3), k*Math.sin(4*Math.PI/3));
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(kalSrc, -k, -k, k*2, k*2);  /* 同一份筒内景贴满每个三角 */
+    ctx.restore();
+  });
+  /* 中心亮核 */
+  const core = ctx.createRadialGradient(KAL_R,KAL_R,0,KAL_R,KAL_R,30);
+  core.addColorStop(0,'rgba(255,255,255,.85)');
+  core.addColorStop(.6,'rgba(217,179,245,.25)');
+  core.addColorStop(1,'rgba(217,179,245,0)');
+  ctx.fillStyle = core;
+  ctx.beginPath(); ctx.arc(KAL_R,KAL_R,30,0,Math.PI*2); ctx.fill();
+}
+/* 动画循环：筒内景持续运动；spin 时注入速度脉冲，随时间衰减（快→慢） */
+function kalLoop(now){
+  const dt = Math.min(50, now - kalLast); kalLast = now;
+  kalT += dt * .0005 * (1 + kalBoost);
+  kalBoost *= Math.pow(.9982, dt);
+  drawKalSource(kalT);
+  renderKaleido();
+  kalRAF = requestAnimationFrame(kalLoop);
+}
+function kalSpin(){
+  kalBoost = 16;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ drawKalSource(kalT+=2); renderKaleido(); return; }
+  cancelAnimationFrame(kalRAF);
+  kalLast = performance.now();
+  kalRAF = requestAnimationFrame(kalLoop);
 }
 buildKaleido();
 buildTicks();
