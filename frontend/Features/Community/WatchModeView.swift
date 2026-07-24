@@ -39,33 +39,47 @@ struct WatchModeView: View {
         GeometryReader { geo in
             let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
             ZStack {
+                stageBackground
                 kaleidoBackdrop(center: center)
                 centerRing(center: center)
                 bubbles(center: center)
-                    .mask(
-                        RadialGradient(stops: [
-                            .init(color: .black, location: 0),
-                            .init(color: .black, location: 0.62),
-                            .init(color: .black.opacity(0.08), location: 1),
-                        ], center: .center, startRadius: 0, endRadius: max(geo.size.width, geo.size.height) * 0.62)
-                    )
                 VStack {
                     Spacer()
                     Text("无限滑动浏览 · 点击卡片查看主页")
-                        .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-                        .padding(.bottom, 10)
+                        .font(.system(size: 9.5)).foregroundStyle(Color(hex: 0x9AA4BC, alpha: 0.62))
+                        .padding(.bottom, 9)
                 }
             }
             .contentShape(Rectangle())
             .gesture(dragGesture)
         }
-        .frame(height: 470)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+        .frame(height: 548)
+        // 原型 .masonry.watch-mode 的 mask-image：椭圆渐隐 vignette
+        .mask(
+            RadialGradient(stops: [
+                .init(color: .black, location: 0),
+                .init(color: .black, location: 0.64),
+                .init(color: .black.opacity(0.76), location: 0.78),
+                .init(color: .clear, location: 1),
+            ], center: UnitPoint(x: 0.5, y: 0.48), startRadius: 0, endRadius: 340)
+        )
         .onChange(of: searchQuery) { _, query in
             recenterOnSearch(query)
         }
         .onDisappear { motionTask?.cancel() }
+    }
+
+    /// 原型 watch-mode 舞台背景：三个弱径向光斑
+    private var stageBackground: some View {
+        ZStack {
+            RadialGradient(colors: [Color(hex: 0x5E96FF, alpha: 0.11), .clear],
+                           center: UnitPoint(x: 0.5, y: 0.47), startRadius: 0, endRadius: 210)
+            RadialGradient(colors: [Color(hex: 0xE35CC1, alpha: 0.06), .clear],
+                           center: UnitPoint(x: 0.14, y: 0.18), startRadius: 0, endRadius: 180)
+            RadialGradient(colors: [Color(hex: 0x3ED9A4, alpha: 0.04), .clear],
+                           center: UnitPoint(x: 0.9, y: 0.8), startRadius: 0, endRadius: 165)
+        }
+        .allowsHitTesting(false)
     }
 
     // MARK: 确定性用户（原型 watchHash / watchUserAt）
@@ -149,71 +163,131 @@ struct WatchModeView: View {
         return (x * x + y * y).squareRoot()
     }
 
+    /// 圆形毛玻璃气泡（原型 .watch-user：154×154 · 玻璃渐变 + 高光 + 色相辉光 + 流光 + 星点）
     private func bubble(_ u: WatchUser, isFocus: Bool) -> some View {
-        VStack(spacing: 5) {
-            TravelerAvatar(initial: u.name.prefix(1).description, hue: u.hue, size: 40)
-            Text(u.name).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.ink)
-            Text(u.base.bio).font(.system(size: 8.5)).foregroundStyle(Theme.sub)
-                .lineLimit(2).multilineTextAlignment(.center)
-                .frame(width: 96)
+        let glow = Theme.hue(u.hue).accent
+        return VStack(spacing: 0) {
+            TravelerAvatar(initial: u.name.prefix(1).description, hue: u.hue, size: 43)
+                .overlay(Circle().strokeBorder(.white.opacity(0.82), lineWidth: 1.5))
+                .shadow(color: .black.opacity(0.4), radius: 7, y: 4)
+                .shadow(color: glow.opacity(0.3), radius: 6)
+            Text(u.name)
+                .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
+                .lineLimit(1)
+                .shadow(color: .black.opacity(0.65), radius: 4, y: 2)
+                .padding(.top, 4)
+            Text(u.base.bio)
+                .font(.system(size: 9)).foregroundStyle(Color(hex: 0xEEF3FF, alpha: 0.82))
+                .lineLimit(2).multilineTextAlignment(.center).lineSpacing(1.5)
+                .shadow(color: .black.opacity(0.7), radius: 2.5, y: 1)
+                .frame(width: 112)
+                .padding(.top, 3)
             HStack(spacing: 4) {
                 ForEach(u.base.tags.prefix(2), id: \.self) { tag in
-                    Text(tag).font(.system(size: 7.5)).foregroundStyle(Color(hex: 0x9DBCFF))
-                        .padding(.horizontal, 6).padding(.vertical, 2)
-                        .background(Color(hex: 0x5E96FF, alpha: 0.14), in: Capsule())
+                    Text(tag)
+                        .font(.system(size: 7.5)).foregroundStyle(Color(hex: 0xE1E9FF))
+                        .lineLimit(1)
+                        .padding(.horizontal, 5).padding(.vertical, 2.5)
+                        .background(Color(hex: 0xD6E2FF, alpha: 0.12), in: Capsule())
+                        .overlay(Capsule().strokeBorder(Color(hex: 0xDFE9FF, alpha: 0.1), lineWidth: 1))
                 }
             }
+            .frame(maxWidth: 114)
+            .padding(.top, 5)
         }
-        .frame(width: 132, height: 132)
-        .background(
-            RadialGradient(colors: [Color.white.opacity(0.1), Color.white.opacity(0.03), .clear],
-                           center: UnitPoint(x: 0.5, y: 0.35), startRadius: 4, endRadius: 78),
-            in: Circle()
-        )
-        .background(Color(hex: 0x0D1120, alpha: 0.72), in: Circle())
-        .overlay(
-            Circle().strokeBorder(
-                AngularGradient(colors: [
-                    Theme.hue(u.hue).accent.opacity(isFocus ? 0.9 : 0.42),
-                    .white.opacity(0.1),
-                    Theme.hue(u.hue).accent.opacity(isFocus ? 0.65 : 0.28),
-                    .white.opacity(0.08),
-                    Theme.hue(u.hue).accent.opacity(isFocus ? 0.9 : 0.42),
-                ], center: .center),
-                lineWidth: isFocus ? 1.6 : 1)
-        )
-        .shadow(color: Theme.hue(u.hue).accent.opacity(isFocus ? 0.4 : 0.12), radius: isFocus ? 18 : 9, y: 5)
+        .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 10)
+        .frame(width: 154, height: 154)
+        .background {
+            ZStack {
+                // 玻璃底 + 左上白高光 + 右下色相辉光
+                LinearGradient(colors: [Color(hex: 0x1D2640, alpha: 0.58), Color(hex: 0x080B18, alpha: 0.38)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+                RadialGradient(colors: [Color.white.opacity(0.16), .clear],
+                               center: UnitPoint(x: 0.25, y: 0.16), startRadius: 0, endRadius: 42)
+                RadialGradient(colors: [glow.opacity(0.24), .clear],
+                               center: UnitPoint(x: 0.78, y: 0.76), startRadius: 0, endRadius: 80)
+            }
+        }
+        .clipShape(Circle())
+        // 内圈流光（原型 ::before conic 渐变 + 1px 内描边）
+        .overlay {
+            Circle()
+                .strokeBorder(
+                    AngularGradient(stops: [
+                        .init(color: .white.opacity(0.16), location: 0),
+                        .init(color: .clear, location: 0.18),
+                        .init(color: .white.opacity(0.06), location: 0.35),
+                        .init(color: .clear, location: 0.58),
+                        .init(color: glow.opacity(0.22), location: 0.78),
+                        .init(color: .clear, location: 1),
+                    ], center: .center, angle: .degrees(30)),
+                    lineWidth: 1.2)
+                .padding(3)
+        }
+        // 星点（原型 ::after 四个 radial 亮点）
+        .overlay {
+            GeometryReader { geo in
+                let w = geo.size.width, h = geo.size.height
+                Circle().fill(.white.opacity(0.86)).frame(width: 2, height: 2).position(x: w * 0.23, y: h * 0.35)
+                Circle().fill(.white.opacity(0.55)).frame(width: 1.6, height: 1.6).position(x: w * 0.76, y: h * 0.27)
+                Circle().fill(.white.opacity(0.62)).frame(width: 1.4, height: 1.4).position(x: w * 0.68, y: h * 0.68)
+                Circle().fill(glow.opacity(0.9)).frame(width: 1.6, height: 1.6).position(x: w * 0.35, y: h * 0.78)
+            }
+            .allowsHitTesting(false)
+        }
+        .overlay(Circle().strokeBorder(
+            isFocus ? Color(hex: 0xDEE9FF, alpha: 0.78) : Color(hex: 0xCFE0FF, alpha: 0.23), lineWidth: 1))
+        .brightness(isFocus ? 0.09 : 0)
+        .saturation(isFocus ? 1.14 : 1)
+        .shadow(color: .black.opacity(0.84), radius: 16, y: 12)
+        .shadow(color: glow.opacity(isFocus ? 0.42 : 0.18), radius: isFocus ? 22 : 13)
     }
 
-    // MARK: 背景（32s conic 旋转环 + 虚线中心环）
+    // MARK: 背景（原型 .watch-kaleido：双细环上的彩色弧段 · 32s 旋转 · opacity .16）
+
+    private static let arcSegments: [(from: Double, to: Double, color: Color)] = [
+        (0.09, 0.12, Color(hex: 0x5E96FF, alpha: 0.4)),
+        (0.27, 0.30, Color(hex: 0xE35CC1, alpha: 0.32)),
+        (0.46, 0.49, Color(hex: 0xFF7A4D, alpha: 0.28)),
+        (0.68, 0.71, Color(hex: 0x8F7BFF, alpha: 0.35)),
+    ]
 
     private func kaleidoBackdrop(center: CGPoint) -> some View {
         TimelineView(.animation(minimumInterval: 1.0 / 20, paused: reduceMotion)) { timeline in
             let angle = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 32) / 32 * 360
             ZStack {
-                Circle()
-                    .strokeBorder(AngularGradient(colors: Theme.orbConicColors, center: .center), lineWidth: 60)
-                    .frame(width: 430, height: 430)
-                    .rotationEffect(.degrees(angle))
-                    .opacity(0.16)
-                    .blur(radius: 18)
+                // conic-gradient 弧段裁到 46% 与 67% 两个细环半径（470 盘面）
+                ForEach([218.0, 316.0], id: \.self) { diameter in
+                    ForEach(Array(Self.arcSegments.enumerated()), id: \.offset) { _, seg in
+                        Circle()
+                            .trim(from: seg.from, to: seg.to)
+                            .stroke(seg.color, style: StrokeStyle(lineWidth: 4.5, lineCap: .round))
+                            .frame(width: diameter, height: diameter)
+                    }
+                }
             }
+            .rotationEffect(.degrees(angle - 90))
+            .opacity(0.16)
             .position(center)
         }
         .allowsHitTesting(false)
     }
 
+    /// 原型 .watch-center-ring：190pt 虚线环 + 内外辉光 + 上/左两个刻度
     private func centerRing(center: CGPoint) -> some View {
         ZStack {
             Circle()
-                .strokeBorder(Color.white.opacity(0.18), style: StrokeStyle(lineWidth: 1, dash: [5, 7]))
+                .strokeBorder(Color(hex: 0x9DBCFF, alpha: 0.34), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
                 .frame(width: 190, height: 190)
-            ForEach(0..<4, id: \.self) { i in
-                Rectangle().fill(Color.white.opacity(0.25))
-                    .frame(width: i % 2 == 0 ? 1 : 10, height: i % 2 == 0 ? 10 : 1)
-                    .offset(x: i == 1 ? -95 : i == 3 ? 95 : 0,
-                            y: i == 0 ? -95 : i == 2 ? 95 : 0)
-            }
+                .shadow(color: Color(hex: 0x5E96FF, alpha: 0.16), radius: 17)
+                .background(
+                    Circle().fill(
+                        RadialGradient(colors: [.clear, Color(hex: 0x5E96FF, alpha: 0.08)],
+                                       center: .center, startRadius: 62, endRadius: 95))
+                        .frame(width: 190, height: 190)
+                )
+            Rectangle().fill(Color(hex: 0x9DBCFF, alpha: 0.3)).frame(width: 1, height: 7).offset(y: -98.5)
+            Rectangle().fill(Color(hex: 0x9DBCFF, alpha: 0.3)).frame(width: 7, height: 1).offset(x: -98.5)
         }
         .position(center)
         .allowsHitTesting(false)

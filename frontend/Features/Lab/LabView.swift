@@ -14,6 +14,14 @@ struct LabView: View {
     @State private var dragPoint: CGPoint = .zero
     @State private var isHotDial = false
     @State private var dialFrame: CGRect = .zero
+    /// 扇形牌堆：入场时从堆叠展开（原型 .choices:hover / .fanned）
+    @State private var fanned = false
+    /// 最近点过的卡（原型 .front-card：上浮 -9px + scale 1.035）
+    @State private var frontCard: String?
+    /// 自定义选择编辑器（原型 .custom-choice-editor）
+    @State private var showCustomEditor = false
+    @State private var customName = ""
+    @State private var customDesc = ""
 
     private let space = "lab"
 
@@ -133,28 +141,201 @@ struct LabView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: 选择卡
+    // MARK: 选择卡（原型 .choices 扇形牌堆：堆叠 → 展开，带弹性过冲）
 
-    private var choicesSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SectionHeader(title: "我的选择卡", trailing: "按住卡片，拖进上方实验室")
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 11), GridItem(.flexible(), spacing: 11)], spacing: 11) {
-                ForEach(model.choices) { choice in
-                    choiceCard(choice)
-                }
+    /// 牌堆条目：真实选择卡 + 末尾「自定义选择」创建卡
+    private enum DeckItem: Identifiable {
+        case choice(LabModel.Choice)
+        case create
+        var id: String {
+            switch self {
+            case .choice(let c): return c.id
+            case .create: return "__create__"
             }
         }
     }
 
-    private func choiceCard(_ choice: LabModel.Choice) -> some View {
-        let on = model.pick == choice.name
-        let isDragging = draggingChoice?.id == choice.id
-        return ChoiceCardBody(choice: choice, isOn: on)
-            .opacity(isDragging ? 0.25 : 1)
-            .scaleEffect(isDragging ? 0.96 : 1)
-            .contentShape(Rectangle())
-            .onTapGesture { withAnimation(.easeOut(duration: 0.18)) { model.pickChoice(choice.name) } }
-            .gesture(dragGesture(choice))
+    private var deckItems: [DeckItem] {
+        model.choices.map { .choice($0) } + [.create]
+    }
+
+    private var choicesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "我的选择卡", trailing: "点选或拖进上方转盘")
+            gestureHint
+            if showCustomEditor { customEditor }
+            choiceDeck
+        }
+    }
+
+    /// 原型 .choice-gesture-hint
+    private var gestureHint: some View {
+        HStack(spacing: 6) {
+            Text("手势")
+                .font(.system(size: 9)).foregroundStyle(Color(hex: 0xD9D0F5))
+                .padding(.horizontal, 7).padding(.vertical, 3)
+                .background(Color(hex: 0x8F7BFF, alpha: 0.1), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color(hex: 0x8F7BFF, alpha: 0.17), lineWidth: 1))
+            Text("单击选中").font(.system(size: 9.5)).foregroundStyle(Color(hex: 0xB6BED0))
+            Text("·").foregroundStyle(Color(hex: 0x5D6578))
+            Text("按住拖入转盘").font(.system(size: 9.5)).foregroundStyle(Color(hex: 0xB6BED0))
+            Text("·").foregroundStyle(Color(hex: 0x5D6578))
+            Text("长按自定义卡可删除").font(.system(size: 9.5)).foregroundStyle(Color(hex: 0x5D6578))
+        }
+    }
+
+    /// 原型 layoutChoiceDeck：spread = min(310, max(224, (n-1)*52))，
+    /// y = -5 + |norm|^1.35 * 23，rotate = norm * 16deg，弹性 cubic-bezier(.22,1.32,.36,1)
+    private var choiceDeck: some View {
+        let items = deckItems
+        let total = items.count
+        let spread = min(310.0, max(224.0, Double(total - 1) * 52))
+        let step = total > 1 ? spread / Double(total - 1) : 0
+        let center = Double(total - 1) / 2
+        return ZStack {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                let distance = Double(index) - center
+                let normalized = center > 0 ? distance / center : 0
+                deckCard(item)
+                    .rotationEffect(.degrees(fanned ? normalized * 16 : 0), anchor: .bottom)
+                    .offset(x: fanned ? distance * step : 0,
+                            y: fanned ? -5 + pow(abs(normalized), 1.35) * 23 + (frontCard == item.id ? -9 : 0) : 0)
+                    .scaleEffect(frontCard == item.id && fanned ? 1.035 : 1)
+                    .zIndex(deckZ(item, distance: distance))
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: total > 7 ? 194 : 178)
+        .padding(.top, 6)
+        .onAppear {
+            guard !fanned else { return }
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.62).delay(0.25)) { fanned = true }
+        }
+    }
+
+    private func deckZ(_ item: DeckItem, distance: Double) -> Double {
+        if case .choice(let c) = item {
+            if draggingChoice?.id == c.id { return 30 }
+            if frontCard == c.id { return 28 }
+            if model.pick == c.name { return 24 }
+        }
+        return 20 - abs(distance) * 2
+    }
+
+    @ViewBuilder
+    private func deckCard(_ item: DeckItem) -> some View {
+        switch item {
+        case .choice(let choice):
+            let isDragging = draggingChoice?.id == choice.id
+            ChoiceCardBody(choice: choice, isOn: model.pick == choice.name)
+                .opacity(isDragging ? 0.22 : 1)
+                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+                        model.pickChoice(choice.name)
+                        frontCard = choice.id
+                    }
+                }
+                .contextMenu {
+                    if choice.isCustom {
+                        Button(role: .destructive) {
+                            withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) {
+                                model.removeCustomChoice(choice.name)
+                            }
+                        } label: { Label("删除这张卡", systemImage: "trash") }
+                    }
+                }
+                .gesture(dragGesture(choice))
+        case .create:
+            createCard
+        }
+    }
+
+    /// 原型 .choice-create「自定义选择」卡
+    private var createCard: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.22)) { showCustomEditor.toggle() }
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("✍️").font(.system(size: 14))
+                    .frame(width: 27, height: 27)
+                    .background(Color(hex: 0xE35CC1, alpha: 0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .strokeBorder(Color(hex: 0xE35CC1, alpha: 0.24), lineWidth: 1))
+                Text("自定义选择").font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color(hex: 0xE3D9F4)).padding(.top, 10)
+                Text("写下真正在考虑的那条路").font(.system(size: 10.5))
+                    .foregroundStyle(Color(hex: 0x777F93)).lineSpacing(2).padding(.top, 6)
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 13).padding(.vertical, 17)
+            .frame(width: 116, height: 148, alignment: .topLeading)
+            .background {
+                ZStack(alignment: .topTrailing) {
+                    Color(hex: 0x131720)
+                    RadialGradient(colors: [Color(hex: 0xE35CC1, alpha: 0.15), .clear],
+                                   center: UnitPoint(x: 0.82, y: -0.12), startRadius: 0, endRadius: 120)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.13), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+            .shadow(color: .black.opacity(0.5), radius: 6, y: 3)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// 原型 .custom-choice-editor
+    private var customEditor: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("写一张自己的选择卡").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.ink)
+                Spacer()
+                Text("名称 ≤18 字 · 描述 ≤42 字").font(.system(size: 9)).foregroundStyle(Theme.faint)
+            }
+            TextField("", text: $customName,
+                      prompt: Text("选择名称，例如：去大厂做 AI").foregroundColor(Theme.faint))
+                .font(.system(size: 11.5)).foregroundStyle(Theme.ink).tint(Theme.blue)
+                .padding(.horizontal, 11).padding(.vertical, 9)
+                .background(Color(hex: 0x060810, alpha: 0.54), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
+            TextField("", text: $customDesc,
+                      prompt: Text("一句话描述这条路").foregroundColor(Theme.faint), axis: .vertical)
+                .font(.system(size: 11.5)).foregroundStyle(Theme.ink).tint(Theme.blue)
+                .lineLimit(2...2)
+                .padding(.horizontal, 11).padding(.vertical, 9)
+                .background(Color(hex: 0x060810, alpha: 0.54), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
+            HStack {
+                Spacer()
+                Button("取消") {
+                    withAnimation(.easeOut(duration: 0.2)) { showCustomEditor = false }
+                }
+                .font(.system(size: 11.5)).foregroundStyle(Theme.faint).buttonStyle(.plain)
+                Button("加入牌堆") {
+                    if model.addCustomChoice(name: customName, desc: customDesc) {
+                        customName = ""; customDesc = ""
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { showCustomEditor = false }
+                        toast.show("已加入你的选择卡")
+                    } else {
+                        toast.show("名称和描述都要填，且不能重名")
+                    }
+                }
+                .font(.system(size: 11.5, weight: .semibold)).foregroundStyle(.white)
+                .padding(.horizontal, 16).padding(.vertical, 7)
+                .background(Theme.buttonGradient, in: Capsule())
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(13)
+        .background(
+            LinearGradient(colors: [Color(hex: 0x5E96FF, alpha: 0.08), Color(hex: 0xE35CC1, alpha: 0.055)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing),
+            in: RoundedRectangle(cornerRadius: 17, style: .continuous)
+        )
+        .overlay(RoundedRectangle(cornerRadius: 17, style: .continuous)
+            .strokeBorder(Color(hex: 0x8FA1FF, alpha: 0.19), lineWidth: 1))
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
     private func dragGesture(_ choice: LabModel.Choice) -> some Gesture {
@@ -249,36 +430,58 @@ struct LabView: View {
     }
 }
 
-// MARK: - 选择卡卡面
+// MARK: - 选择卡卡面（原型 .choice：116×148 · 虚线边 · 右上光斑 · 选中 ✓）
 
 private struct ChoiceCardBody: View {
     let choice: LabModel.Choice
     let isOn: Bool
 
+    /// 自定义卡右上光斑偏品红（原型 --stamp-glow 交替）
+    private var stampGlow: Color {
+        choice.isCustom ? Color(hex: 0xE35CC1, alpha: 0.18) : Color(hex: 0x5E96FF, alpha: 0.16)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(choice.emoji).font(.system(size: 19))
-            Text(choice.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink).padding(.top, 9)
-            Text(choice.desc).font(.system(size: 11)).foregroundStyle(Theme.sub).lineSpacing(2).padding(.top, 4)
+            Text(choice.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                .lineSpacing(3).padding(.top, 10)
+            Text(choice.desc).font(.system(size: 10.5)).foregroundStyle(Theme.sub).lineSpacing(2).padding(.top, 6)
                 .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 15).padding(.top, 18).padding(.bottom, 15)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            isOn
-                ? AnyShapeStyle(LinearGradient(colors: [Color(hex: 0x5E96FF, alpha: 0.16), Color(hex: 0x8F7BFF, alpha: 0.08)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                : AnyShapeStyle(Theme.card),
-            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(isOn ? Color(hex: 0x6FA5FF, alpha: 0.7) : Theme.line, lineWidth: 1.5))
-        .overlay(alignment: .topTrailing) {
-            if isOn {
-                Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
-                    .frame(width: 20, height: 20).background(Theme.buttonGradient, in: Circle())
-                    .padding(10)
+        .padding(.horizontal, 13).padding(.vertical, 17)
+        .frame(width: 116, height: 148, alignment: .topLeading)
+        .background {
+            ZStack(alignment: .topTrailing) {
+                Color(hex: 0x151922)
+                RadialGradient(colors: [stampGlow, .clear],
+                               center: UnitPoint(x: 0.82, y: -0.12), startRadius: 0, endRadius: 120)
+                if isOn {
+                    LinearGradient(colors: [Color(hex: 0x5E96FF, alpha: 0.26), Color(hex: 0x8F7BFF, alpha: 0.13)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                }
             }
         }
-        .shadow(color: .black.opacity(0.4), radius: 6, y: 2)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            if isOn {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.72), lineWidth: 1.5)
+            } else {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.2), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if isOn {
+                Text("✓").font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+                    .frame(width: 20, height: 20).background(Theme.buttonGradient, in: Circle())
+                    .padding(.top, 10).padding(.trailing, 12)
+            }
+        }
+        .shadow(color: isOn ? Color(hex: 0x4F7DFF, alpha: 0.5) : .black.opacity(0.5),
+                radius: isOn ? 12 : 6, y: isOn ? 8 : 3)
     }
 }
 

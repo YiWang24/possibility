@@ -230,20 +230,31 @@ final class SupabaseService {
         return try await callFunction("match", body: Body(user_state: userState), as: MatchResponse.self)
     }
 
-    /// POST /simulate：{general, optimistic, cautionary}
-    func simulate(question: String, choice: String, years: Int) async throws -> Simulation.Scenarios {
+    /// POST /simulate 完整出参：{scenarios, bottom_line_analysis, recommended_traveler_ids}
+    /// - Parameter carryCards: 底线卡（最多 6 张，validate.ts validateSimulateInputV2）
+    func simulateFull(
+        question: String, choice: String, years: Int, carryCards: [String]? = nil
+    ) async throws -> SimulationResult {
         struct Body: Encodable {
             let question: String
             let choice: String
             let years: Int
+            let carryCards: [String]?
+            enum CodingKeys: String, CodingKey {
+                case question, choice, years
+                case carryCards = "carry_cards"
+            }
         }
-        struct Response: Decodable { let scenarios: Simulation.Scenarios }
-        let res = try await callFunction(
+        return try await callFunction(
             "simulate",
-            body: Body(question: question, choice: choice, years: years),
-            as: Response.self
+            body: Body(question: question, choice: choice, years: years, carryCards: carryCards),
+            as: SimulationResult.self
         )
-        return res.scenarios
+    }
+
+    /// POST /simulate：{general, optimistic, cautionary}（兼容旧调用方，只取 scenarios）
+    func simulate(question: String, choice: String, years: Int) async throws -> Simulation.Scenarios {
+        try await simulateFull(question: question, choice: choice, years: years).scenarios
     }
 
     /// POST /analyze-diary：情绪 + 关键词

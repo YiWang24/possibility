@@ -115,10 +115,40 @@ struct TravelerServiceItem: Codable, Identifiable, Hashable, Sendable {
     }
 }
 
-/// 悬赏 —— 对应表 `bounties`
+/// 悬赏 —— 对应表 `bounties`（0007 迁移补充 tags/detail/status/created_at，
+/// POST /community action=list_bounties / get_bounty 返回全字段；旧列表调用只用前四个字段）
 struct Bounty: Codable, Identifiable, Hashable, Sendable {
     let id: Int
     let question: String
     let reward: String
     let responses: String
+    var tags: [String]? = nil
+    var detail: String? = nil
+    var status: String? = nil
+    var createdAt: String? = nil
+
+    enum CodingKeys: String, CodingKey {
+        case id, question, reward, responses, tags, detail, status
+        case createdAt = "created_at"
+    }
+}
+
+/// POST /community action=get_bounty 出参：悬赏详情 + 回应列表
+struct BountyDetailResponse: Decodable, Sendable {
+    let bounty: Bounty
+    let responses: [Reply]
+
+    /// bounty_responses 行：{id, user_id, message, created_at}
+    struct Reply: Decodable, Identifiable, Sendable {
+        let id: Int
+        let userId: UUID
+        let message: String
+        let createdAt: String?
+
+        enum CodingKeys: String, CodingKey {
+            case id, message
+            case userId = "user_id"
+            case createdAt = "created_at"
+        }
+    }
 }

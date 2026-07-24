@@ -29,6 +29,16 @@ final class AppRouter {
     var tab: AppTab = .home
     /// 对话「去人生实验室」携带的问题，LabView 出现时消费
     var pendingLabQuestion: String?
+
+    init() {
+        // 调试便利：`simctl launch ... -kaleido-tab lab|community|me` 直达指定 tab
+        switch UserDefaults.standard.string(forKey: "kaleido-tab") {
+        case "lab": tab = .lab
+        case "community": tab = .community
+        case "me": tab = .me
+        default: break
+        }
+    }
 }
 
 /// 推演结果载荷（Lab 推演完成 → ResultView）

@@ -10,11 +10,12 @@ import Observation
 @MainActor
 final class LabModel {
 
-    struct Choice: Identifiable, Hashable {
+    struct Choice: Identifiable, Hashable, Codable {
         var id: String { name }
         let emoji: String
         let name: String
         let desc: String
+        var isCustom: Bool = false
     }
 
     var question = ExploreTopic.career.sampleQuestion
@@ -28,12 +29,47 @@ final class LabModel {
     var loadStep = 0
     var result: SimResultData?
 
-    let choices: [Choice] = [
+    /// 内置选择卡（原型 4 张）
+    static let builtinChoices: [Choice] = [
         .init(emoji: "🎨", name: "继续做设计", desc: "深耕交互，走专家路线"),
         .init(emoji: "🧭", name: "转 AI 产品", desc: "换赛道，做 AI 产品经理"),
         .init(emoji: "🌱", name: "边做边尝试", desc: "不辞职，用业余时间试水"),
         .init(emoji: "🍃", name: "放弃探索", desc: "先安顿好现在的生活"),
     ]
+
+    /// 自定义选择卡（原型 customChoices · UserDefaults 持久化）
+    private(set) var customChoices: [Choice] = []
+    private static let customStoreKey = "kaleido_custom_choices_v1"
+
+    var choices: [Choice] { Self.builtinChoices + customChoices }
+
+    init() {
+        if let data = UserDefaults.standard.data(forKey: Self.customStoreKey),
+           let saved = try? JSONDecoder().decode([Choice].self, from: data) {
+            customChoices = saved
+        }
+    }
+
+    func addCustomChoice(name: String, desc: String) -> Bool {
+        let n = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(18))
+        let d = String(desc.trimmingCharacters(in: .whitespacesAndNewlines).prefix(42))
+        guard !n.isEmpty, !d.isEmpty, !choices.contains(where: { $0.name == n }) else { return false }
+        customChoices.append(Choice(emoji: "✍️", name: n, desc: d, isCustom: true))
+        persistCustom()
+        return true
+    }
+
+    func removeCustomChoice(_ name: String) {
+        customChoices.removeAll { $0.name == name }
+        if pick == name { pick = nil }
+        persistCustom()
+    }
+
+    private func persistCustom() {
+        if let data = try? JSONEncoder().encode(customChoices) {
+            UserDefaults.standard.set(data, forKey: Self.customStoreKey)
+        }
+    }
 
     static let loadSteps = ["读取你的动态画像……", "匹配 1,842 位相似旅人的经历……", "折出三种可能的未来……"]
 
