@@ -211,6 +211,8 @@ final class SupabaseService {
     ) async throws -> Out {
         var req = URLRequest(url: AppConfig.functionURL(name))
         req.httpMethod = "POST"
+        // simulate/match 的结构化生成可达 2 分钟以上，默认 60s 会提前断开
+        req.timeoutInterval = 180
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
         req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
