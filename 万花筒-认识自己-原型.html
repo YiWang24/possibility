@@ -666,19 +666,16 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     #151922;
   border:1.5px dashed rgba(255,255,255,.2);
   box-shadow:0 5px 12px -4px rgba(0,0,0,.5);
+  z-index:var(--stack-z,1);
   transition:
     transform .5s cubic-bezier(.22,1.32,.36,1),
     opacity .18s,border-color .24s,box-shadow .24s,background .24s;
   touch-action:none;user-select:none;-webkit-user-select:none;
 }
-.choice:nth-child(1){z-index:1}
-.choice:nth-child(2){z-index:4}
-.choice:nth-child(3){z-index:3}
-.choice:nth-child(4){z-index:2}
-.choices:hover .choice:nth-child(1),.choices.fanned .choice:nth-child(1),.choices:focus-within .choice:nth-child(1){transform:translate(calc(-50% - 112px),24px) rotate(-18deg)}
-.choices:hover .choice:nth-child(2),.choices.fanned .choice:nth-child(2),.choices:focus-within .choice:nth-child(2){transform:translate(calc(-50% - 38px),-4px) rotate(-6deg)}
-.choices:hover .choice:nth-child(3),.choices.fanned .choice:nth-child(3),.choices:focus-within .choice:nth-child(3){transform:translate(calc(-50% + 38px),-4px) rotate(6deg)}
-.choices:hover .choice:nth-child(4),.choices.fanned .choice:nth-child(4),.choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 112px),24px) rotate(18deg)}
+.choices:hover .choice,.choices.fanned .choice,.choices:focus-within .choice{
+  transform:translate(calc(-50% + var(--fan-x,0px)),var(--fan-y,0px)) rotate(var(--fan-r,0deg));
+  z-index:var(--fan-z,5)
+}
 .choice:hover,.choice:focus-visible{z-index:12;border-color:rgba(255,255,255,.34);box-shadow:0 16px 28px -12px rgba(0,0,0,.78)}
 .choice:active{cursor:grabbing}
 .choice.dragging{opacity:.22}
@@ -766,10 +763,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 #scr-lab .choice .g{font-size:18px}
 #scr-lab .choice b{font-size:12.5px;margin-top:8px}
 #scr-lab .choice p{font-size:10px;line-height:1.42;margin-top:5px}
-#scr-lab .choices:hover .choice:nth-child(1),#scr-lab .choices.fanned .choice:nth-child(1),#scr-lab .choices:focus-within .choice:nth-child(1){transform:translate(calc(-50% - 112px),11px) rotate(-16deg)}
-#scr-lab .choices:hover .choice:nth-child(2),#scr-lab .choices.fanned .choice:nth-child(2),#scr-lab .choices:focus-within .choice:nth-child(2){transform:translate(calc(-50% - 38px),-3px) rotate(-5deg)}
-#scr-lab .choices:hover .choice:nth-child(3),#scr-lab .choices.fanned .choice:nth-child(3),#scr-lab .choices:focus-within .choice:nth-child(3){transform:translate(calc(-50% + 38px),-3px) rotate(5deg)}
-#scr-lab .choices:hover .choice:nth-child(4),#scr-lab .choices.fanned .choice:nth-child(4),#scr-lab .choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 112px),11px) rotate(16deg)}
 #scr-lab .carry-section{margin-top:5px}
 #scr-lab .lab-go{margin-top:12px;padding:12px 0;font-size:13px}
 #scr-lab .lab-note{margin-top:6px!important;font-size:9.5px!important;line-height:1.5!important;white-space:nowrap}
@@ -786,8 +779,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   #scr-lab .choice{width:98px;height:118px;padding:13px 11px}
   #scr-lab .choice b{font-size:11.5px}
   #scr-lab .choice p{font-size:9px}
-  #scr-lab .choices:hover .choice:nth-child(1),#scr-lab .choices.fanned .choice:nth-child(1),#scr-lab .choices:focus-within .choice:nth-child(1){transform:translate(calc(-50% - 107px),9px) rotate(-15deg)}
-  #scr-lab .choices:hover .choice:nth-child(4),#scr-lab .choices.fanned .choice:nth-child(4),#scr-lab .choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 107px),9px) rotate(15deg)}
   #scr-lab .carry-section{padding:12px}
   #scr-lab .carry-card{min-height:72px}
   #scr-lab .lab-note{display:none}
@@ -1757,6 +1748,9 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       <div class="glow3"></div>
       <div class="tag">今天想探索什么</div>
       <h2>说出那个<br><em>在心里盘旋</em>的问题</h2>
+      <!-- TODO(API): 此输入区后续接入探索对话 API。
+           请求建议包含 question、topic、已有动态画像摘要与最近对话轮次；
+           返回建议包含 clarification（追问）、analysis（阶段分析）、isEnough（信息是否充分）和 nextActions（下一步入口）。 -->
       <div class="askbox no-topic" id="askBox">
         <div class="askcat hidden" id="askCat">✦ <b id="askCatTag"></b></div>
         <button class="ask-clear" id="askClear" type="button" aria-label="清空输入" onclick="clearAskText()">×</button>
@@ -1865,7 +1859,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     </div>
     <div class="knob-hint">拖动旋钮，1 – 10 年任意停留</div>
 
-    <div class="sec-t"><h3>我的选择卡</h3><span>悬停展开，按住拖入实验室</span></div>
+    <div class="sec-t"><h3>我的选择卡</h3><span id="choiceDeckMeta">按住拖入实验室</span></div>
     <div class="choices" id="choices">
       <button class="choice" data-name="继续做设计" style="--stamp-glow:rgba(94,150,255,.22)" onclick="pickChoice(this)">
         <span class="g">🎨</span><b>继续做设计</b><p>深耕交互，走专家路线</p>
@@ -3367,6 +3361,8 @@ function assistantAfter(html,delay=700){
   s.appendChild(think); scrollBottom();
   setTimeout(()=>{ think.remove(); appendChat('ai',html); },delay);
 }
+/* TODO(API): MVP 目前用本地规则模拟回复。接入后由 API 根据 question/topic/messages/profile
+   返回 clarification、analysis、isEnough 与 nextActions，再驱动下面的对话状态。 */
 function startChat(){
   const q = $('#askText').value.trim();
   if(!q){ toast('先写下你的问题吧'); return; }
@@ -3454,6 +3450,7 @@ function openLabFromChat(){
   if(q){
     $('#labQText').textContent=q;
     $('#rsQText').textContent=q;
+    refreshLabChoices(q,chatState.topic);
   }
   go('lab');
   $('#scr-lab').scrollTop=0;
@@ -3544,6 +3541,7 @@ function saveEditQ(){
   if(!v){ toast('问题不能为空'); return; }
   $('#labQText').textContent = v;
   $('#rsQText').textContent = v;
+  refreshLabChoices(v);
   toggleEditQ(false);
   toast('探索问题已更新');
 }
@@ -3553,6 +3551,50 @@ let labYear = 5, labPick = null;
 const CARRY_LIMIT=3;
 const carrySelected=new Set();
 const floorAnswers={};
+const LAB_CHOICE_DECKS={
+  career:[
+    {g:'🎨',name:'继续当前方向',copy:'留下来，继续积累',glow:'rgba(94,150,255,.22)'},
+    {g:'🧭',name:'直接切换方向',copy:'进入新的职业路径',glow:'rgba(143,123,255,.24)'},
+    {g:'🌱',name:'边做边尝试',copy:'保留工作，小步试水',glow:'rgba(62,217,164,.2)'},
+    {g:'⏸',name:'暂缓决定',copy:'先恢复精力和空间',glow:'rgba(255,176,103,.18)'}
+  ],
+  study:[
+    {g:'📖',name:'继续当前计划',copy:'按原目标投入准备',glow:'rgba(94,150,255,.22)'},
+    {g:'🧭',name:'更换学习方向',copy:'转专业或换项目',glow:'rgba(143,123,255,.24)'},
+    {g:'🌱',name:'先低成本试学',copy:'用课程和项目验证',glow:'rgba(62,217,164,.2)'},
+    {g:'⏳',name:'推迟一个周期',copy:'留出时间重新判断',glow:'rgba(255,176,103,.18)'}
+  ],
+  relationship:[
+    {g:'♡',name:'继续投入修复',copy:'坦白需要，共同调整',glow:'rgba(240,106,205,.2)'},
+    {g:'↔',name:'说清边界观察',copy:'约定改变，再看行动',glow:'rgba(94,150,255,.22)'},
+    {g:'◌',name:'暂时拉开距离',copy:'先恢复自己的感受',glow:'rgba(143,123,255,.22)'},
+    {g:'◇',name:'结束这段关系',copy:'承认不适合再继续',glow:'rgba(255,122,77,.2)'},
+    {g:'◎',name:'寻求第三方帮助',copy:'一起找专业支持',glow:'rgba(62,217,164,.18)'}
+  ],
+  family:[
+    {g:'⌂',name:'坦白沟通',copy:'把真实想法说清楚',glow:'rgba(255,176,103,.2)'},
+    {g:'🌱',name:'先做小范围尝试',copy:'用行动减少担心',glow:'rgba(62,217,164,.2)'},
+    {g:'↗',name:'保留自己的决定',copy:'理解家人，也不放弃自己',glow:'rgba(143,123,255,.22)'}
+  ],
+  general:[
+    {g:'＝',name:'保持现在',copy:'先不改变，继续观察',glow:'rgba(94,150,255,.2)'},
+    {g:'↗',name:'做出改变',copy:'接受代价，向前一步',glow:'rgba(143,123,255,.23)'},
+    {g:'🌱',name:'先做小实验',copy:'用一次行动收集证据',glow:'rgba(62,217,164,.2)'}
+  ]
+};
+function detectLabChoiceType(question,topicHint=''){
+  const hint=String(topicHint||'');
+  if(hint==='情感')return'relationship';
+  if(hint==='家庭')return'family';
+  if(hint==='升学')return'study';
+  if(hint==='职业')return'career';
+  const q=String(question||'');
+  if(/父母|家人|家庭|亲子|兄弟|姐妹/.test(q))return'family';
+  if(/感情|恋爱|伴侣|分手|婚姻|对象|爱情|复合/.test(q))return'relationship';
+  if(/升学|考研|留学|学校|专业|读研|博士|学习|考试/.test(q))return'study';
+  if(/工作|职业|转岗|离职|跳槽|创业|公司|岗位|产品|设计师|offer/i.test(q))return'career';
+  return'general';
+}
 const CARRY_META={
   income:{glyph:'▣',name:'稳定的生活来源',risk:'转型不顺时，收入可能在一段时间内下降，生活安全感受到直接冲击。'},
   health:{glyph:'＋',name:'不透支身体',risk:'反复尝试与加倍学习可能挤压睡眠和恢复时间，身体先替选择支付代价。'},
@@ -3695,6 +3737,40 @@ dialEl.addEventListener('pointermove', e=>{
 const phoneEl = document.querySelector('.phone');
 const choicesDeck = document.getElementById('choices');
 let cardDrag = null, justDragged = false;
+function layoutLabChoiceCards(){
+  const cards=[...choicesDeck.querySelectorAll('.choice')],n=cards.length;
+  const center=(n-1)/2,edge=Math.max(center,1);
+  const spread=n<=3?88:n===4?112:140;
+  cards.forEach((card,i)=>{
+    const norm=(i-center)/edge;
+    const y=-3+Math.pow(Math.abs(norm),1.7)*14;
+    card.style.setProperty('--fan-x',`${Math.round(norm*spread)}px`);
+    card.style.setProperty('--fan-y',`${Math.round(y)}px`);
+    card.style.setProperty('--fan-r',`${(norm*16).toFixed(1)}deg`);
+    card.style.setProperty('--fan-z',String(12-Math.round(Math.abs(norm)*4)));
+    card.style.setProperty('--stack-z',String(12-Math.round(Math.abs(i-center)*2)));
+  });
+}
+function refreshLabChoices(question,topicHint=''){
+  const type=detectLabChoiceType(question,topicHint),deck=LAB_CHOICE_DECKS[type];
+  choicesDeck.classList.remove('fanned');
+  choicesDeck.innerHTML=deck.map(card=>`
+    <button class="choice" data-name="${escapeHTML(card.name)}" style="--stamp-glow:${card.glow}" onclick="pickChoice(this)">
+      <span class="g">${card.g}</span><b>${escapeHTML(card.name)}</b><p>${escapeHTML(card.copy)}</p>
+    </button>`).join('');
+  $('#choiceDeckMeta').textContent=`${deck.length} 张 · 按住拖入实验室`;
+  layoutLabChoiceCards();
+  labPick=null;
+  $('#dialPick').textContent='把选择卡拖进来';
+  $('#carrySection').classList.remove('reveal');
+  carrySelected.clear();
+  document.querySelectorAll('.carry-card').forEach(card=>card.classList.remove('on'));
+  $('#carryCount').textContent='0';
+  $('#carryDeck').scrollLeft=0;
+  renderCarryTray();
+  renderFloorTest();
+  syncLabReady();
+}
 choicesDeck.addEventListener('pointerdown', e=>{
   if(e.pointerType==='mouse' || choicesDeck.classList.contains('fanned')) return;
   e.preventDefault();
@@ -3799,8 +3875,9 @@ function finishChoiceDrag(e){
     $('#dialPick').textContent = labPick || '把选择卡拖进来';
   }
 }
-document.querySelectorAll('.choice').forEach(card=>{
-  card.addEventListener('pointerdown',e=>beginChoiceDrag(card,e));
+choicesDeck.addEventListener('pointerdown',e=>{
+  const card=e.target.closest('.choice');
+  if(card)beginChoiceDrag(card,e);
 });
 document.addEventListener('pointermove',moveChoiceDrag,{passive:false});
 document.addEventListener('pointerup',finishChoiceDrag);
@@ -3897,6 +3974,7 @@ function pickChoice(c){
   }
   syncLabReady();
 }
+refreshLabChoices($('#labQText').textContent);
 function getLoadSteps(){
   return carrySelected.size
     ?['读取你的动态画像与对话……',`装入 ${carrySelected.size} 张不愿交换的底线卡……`,'用最坏结果逐张检验……']
