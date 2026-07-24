@@ -586,27 +586,155 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .kal-rescard .qt{font-size:13px;color:var(--sub);line-height:1.85;margin-top:8px}
 
 /* ============ 用户主页（push） ============ */
-.prof-hero{position:relative;margin:6px -22px 0;padding:26px 22px 22px}
-.prof-hero .bgw{position:absolute;inset:0;opacity:.6;pointer-events:none}
-.prof-row{display:flex;align-items:center;gap:15px;position:relative}
-.prof-av{width:62px;height:62px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:600;color:#fff;box-shadow:var(--shadow-card)}
-.prof-row h2{font-size:19px;font-weight:700}
-.prof-row .bio{font-size:12.5px;color:var(--sub);margin-top:5px}
-.prof-hero .stags{margin-top:14px;position:relative}
-.prof-hero .stag{font-size:11px;padding:5px 12px;background:rgba(94,150,255,.15)}
-.traj{padding:20px 20px 8px;margin-top:4px}
-.tj{display:flex;gap:16px;position:relative;padding-bottom:22px}
-.tj::before{content:"";position:absolute;left:7px;top:20px;bottom:0;width:1.5px;background:linear-gradient(rgba(143,123,255,.6),rgba(143,123,255,.1))}
-.tj:last-child::before{display:none}
-.tj .nd{flex:none;width:15px;height:15px;border-radius:50%;background:var(--aurora-deep);border:3px solid var(--card);box-shadow:0 0 0 1.5px rgba(143,123,255,.5);margin-top:3px}
-.tj .age{font-size:12px;color:var(--blue);font-weight:600}
-.tj h4{font-size:14px;font-weight:600;margin-top:3px}
-.tj p{font-size:12px;color:var(--sub);line-height:1.7;margin-top:4px}
-.prof-dims{padding:20px;margin-top:12px}
-.prof-dims .orb-halo{width:76px;height:76px;margin:0 auto}
-.prof-dims .orb{width:76px;height:76px}
-.prof-dims .cap{text-align:center;font-size:11px;color:var(--faint);letter-spacing:.25em;margin-top:14px}
-.hello{position:sticky;bottom:0;padding:14px 0 6px;background:linear-gradient(transparent,var(--paper) 40%)}
+#profilePage{background:#090B12}
+#profilePage .top{padding-bottom:11px;border-bottom:1px solid var(--line);background:rgba(9,11,18,.9)}
+#profilePage .top h2{letter-spacing:.04em}
+#profilePage .scroll{padding:0 0 22px;background:#090B12}
+.prof-top-copy{min-width:0}
+.prof-top-more{
+  all:unset;cursor:pointer;margin-left:auto;width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:var(--raised);
+  border:1px solid var(--line);font-size:18px;letter-spacing:.12em;color:var(--sub);
+}
+.prof-hero{
+  position:relative;overflow:hidden;padding:22px 22px 20px;
+  background:
+    radial-gradient(260px 180px at 85% -20%,rgba(94,150,255,.28),transparent 68%),
+    radial-gradient(240px 180px at -10% 115%,rgba(227,92,193,.13),transparent 72%),
+    linear-gradient(160deg,#111625,#0B0E17 68%);
+  border-bottom:1px solid var(--line);
+}
+.prof-hero::after{
+  content:"";position:absolute;right:-34px;top:28px;width:124px;height:124px;border-radius:50%;
+  border:1px solid rgba(143,123,255,.12);box-shadow:0 0 0 22px rgba(94,150,255,.035),0 0 0 44px rgba(227,92,193,.025);
+  pointer-events:none;
+}
+.prof-row{display:flex;align-items:center;gap:16px;position:relative;z-index:1}
+.prof-av{
+  position:relative;width:74px;height:74px;border-radius:26px;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;color:#fff;
+  border:1px solid rgba(255,255,255,.18);box-shadow:0 14px 30px -12px rgba(0,0,0,.85);
+}
+.prof-av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:17px;height:17px;border-radius:50%;background:var(--teal);border:3px solid #10131D}
+.prof-id{min-width:0}
+.prof-name-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prof-name-line h2{font-size:21px;font-weight:700;letter-spacing:.03em}
+.prof-verified{font-size:10px;color:#AFC8FF;background:rgba(94,150,255,.13);border:1px solid rgba(94,150,255,.26);padding:3px 7px;border-radius:999px}
+.prof-loc{font-size:12px;color:var(--sub);margin-top:5px}
+.prof-transition{position:relative;z-index:1;margin-top:18px;font-size:15px;font-weight:600;letter-spacing:.02em}
+.prof-transition i{font-style:normal;color:var(--blue);margin:0 7px}
+.prof-years{position:relative;z-index:1;margin-top:7px;font-size:12px;color:var(--sub)}
+.prof-tags{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.prof-tags span{font-size:11px;color:#C6D7FF;background:rgba(94,150,255,.11);border:1px solid rgba(94,150,255,.2);padding:6px 10px;border-radius:999px}
+.prof-tabs{
+  position:sticky;top:0;z-index:8;display:grid;grid-template-columns:repeat(4,1fr);
+  background:rgba(10,12,18,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+}
+.prof-tab{
+  all:unset;cursor:pointer;position:relative;text-align:center;padding:15px 2px 14px;
+  font-size:11.5px;color:var(--faint);white-space:nowrap;transition:color .2s;
+}
+.prof-tab::after{content:"";position:absolute;left:24%;right:24%;bottom:0;height:2px;border-radius:2px;background:var(--blue);transform:scaleX(0);transition:transform .22s}
+.prof-tab.on{color:var(--ink);font-weight:600}
+.prof-tab.on::after{transform:scaleX(1)}
+.prof-panel{display:none;padding:20px 20px 8px;animation:msgin .32s ease}
+.prof-panel.on{display:block}
+.prof-section-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.prof-section-title h3{font-size:15px;font-weight:600}
+.prof-section-title span{font-size:10.5px;color:var(--faint)}
+.prof-quote{
+  position:relative;padding:22px 20px;border-radius:22px;overflow:hidden;
+  background:linear-gradient(145deg,rgba(94,150,255,.15),rgba(143,123,255,.08));
+  border:1px solid rgba(111,165,255,.25);font-size:15px;line-height:1.85;font-weight:500;
+}
+.prof-quote::before{content:"“";position:absolute;right:14px;top:-16px;font:700 76px/1 Georgia,serif;color:rgba(111,165,255,.12)}
+.story-copy{margin-top:20px}
+.story-copy h3{font-size:15px;font-weight:600}
+.story-copy p{font-size:13.5px;line-height:2;color:#C8CDDA;margin-top:10px}
+.story-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+.story-fact{padding:13px 8px;text-align:center;border-radius:16px;background:var(--card);border:1px solid var(--line)}
+.story-fact b{display:block;font-size:15px;color:var(--ink)}
+.story-fact span{display:block;font-size:10px;color:var(--faint);margin-top:4px}
+.prof-lock{
+  position:relative;margin-top:18px;padding:19px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(150deg,rgba(27,31,43,.96),rgba(18,21,31,.96));border:1px solid rgba(111,165,255,.2);
+}
+.prof-lock-lines{filter:blur(4px);opacity:.24;user-select:none}
+.prof-lock-lines i{display:block;height:8px;border-radius:5px;background:var(--sub);margin:9px 0}
+.prof-lock-lines i:nth-child(2){width:76%}.prof-lock-lines i:nth-child(3){width:88%}
+.prof-lock-copy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+.prof-lock-copy b{font-size:13.5px}.prof-lock-copy span{font-size:11px;color:var(--sub);margin-top:6px}
+.story-full{margin-top:18px;padding:18px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.story-full h4{font-size:13.5px;color:#B9CCFF}.story-full p{font-size:13px;line-height:1.9;color:var(--sub);margin-top:9px}
+.prof-timeline{margin-top:4px}
+.pt-item{position:relative;padding-left:30px}
+.pt-item:not(:last-child)::before{content:"";position:absolute;left:8px;top:22px;bottom:-5px;width:1px;background:linear-gradient(var(--violet-soft),rgba(143,123,255,.08))}
+.pt-dot{position:absolute;left:1px;top:15px;width:15px;height:15px;border-radius:50%;background:var(--aurora-deep);border:3px solid #0B0E17;box-shadow:0 0 0 1px rgba(143,123,255,.5)}
+.pt-card{
+  all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;margin-bottom:12px;padding:15px 16px;
+  border-radius:18px;background:var(--card);border:1px solid var(--line);
+}
+.pt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pt-age{font-size:11px;color:var(--blue);font-weight:600}
+.pt-card h4{font-size:14px;margin-top:3px;font-weight:600}
+.pt-arrow{color:var(--faint);transition:transform .2s}
+.pt-detail{max-height:0;overflow:hidden;font-size:12px;line-height:1.75;color:var(--sub);transition:max-height .28s,margin .28s}
+.pt-card.open .pt-detail{max-height:100px;margin-top:9px}
+.pt-card.open .pt-arrow{transform:rotate(90deg)}
+.pt-locked{all:unset;cursor:pointer;display:block;box-sizing:border-box;width:calc(100% - 30px);margin:4px 0 0 30px;padding:17px;border-radius:18px;border:1px dashed rgba(111,165,255,.3);text-align:center;color:var(--sub);font-size:11.5px}
+.advice-chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:0 -20px;padding:0 20px 4px}
+.advice-chips::-webkit-scrollbar{display:none}
+.advice-chip{all:unset;cursor:pointer;white-space:nowrap;padding:8px 13px;border-radius:999px;background:var(--raised);border:1px solid var(--line);font-size:11.5px;color:var(--sub)}
+.advice-chip.on{color:#fff;background:var(--blue-deep);border-color:rgba(111,165,255,.55)}
+.advice-card{margin-top:15px;padding:19px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.advice-card .num{font-size:10px;letter-spacing:.2em;color:var(--blue)}
+.advice-card h4{font-size:15px;line-height:1.55;margin-top:7px}
+.advice-card p{font-size:12.5px;line-height:1.85;color:var(--sub);margin-top:9px}
+.advice-steps{margin-top:14px;display:flex;flex-direction:column;gap:9px}
+.advice-step{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:#C9CFDC;line-height:1.65}
+.advice-step i{font-style:normal;flex:none;width:20px;height:20px;border-radius:7px;background:rgba(62,217,164,.12);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:10px}
+.consult-card{padding:21px;border-radius:24px;background:linear-gradient(150deg,#151C34,#111327 72%);border:1px solid rgba(111,165,255,.28);box-shadow:var(--shadow-card)}
+.consult-card+.consult-card{margin-top:12px}
+.consult-card.materials{background:linear-gradient(150deg,#172820,#101A17 72%);border-color:rgba(62,217,164,.25)}
+.consult-card.companion{background:linear-gradient(150deg,#2B1B2D,#17121F 72%);border-color:rgba(227,92,193,.25)}
+.consult-price{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.consult-price .ey{font-size:10px;letter-spacing:.25em;color:#9DBCFF}
+.consult-price h3{font-size:18px;margin-top:7px}.consult-price strong{font-size:25px;color:#fff}.consult-price strong small{font-size:11px;color:var(--sub);font-weight:400}
+.consult-desc{font-size:12px;line-height:1.75;color:var(--sub);margin-top:12px}
+.consult-meta{display:flex;gap:14px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.consult-meta span{font-size:11px;color:var(--sub)}.consult-meta b{color:var(--ink);font-weight:500}
+.consult-topics{margin-top:18px;display:flex;flex-wrap:wrap;gap:7px}
+.consult-topics span{font-size:11px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.055);color:#C8CEDD}
+.consult-steps{margin-top:20px;padding:18px;border-radius:20px;background:var(--card);border:1px solid var(--line)}
+.consult-step{display:flex;gap:12px;align-items:flex-start;padding:10px 0}
+.consult-step:not(:last-child){border-bottom:1px solid var(--line)}
+.consult-step i{font-style:normal;width:22px;height:22px;flex:none;border-radius:50%;background:rgba(94,150,255,.13);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:10px}
+.consult-step b{font-size:12.5px;font-weight:500}.consult-step p{font-size:11px;color:var(--faint);margin-top:3px}
+.prof-inline-cta{all:unset;cursor:pointer;display:block;box-sizing:border-box;width:100%;margin-top:16px;padding:14px;text-align:center;border-radius:999px;background:var(--btn-g);font-size:13.5px;font-weight:600;color:#fff}
+.prof-paybar{flex:none;display:grid;grid-template-columns:1.22fr 1fr;gap:9px;padding:12px 14px 28px;border-top:1px solid var(--line);background:rgba(10,12,18,.96);backdrop-filter:blur(14px)}
+.prof-paybtn{all:unset;cursor:pointer;min-height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;font-size:12.5px;font-weight:600;border:1px solid rgba(111,165,255,.35);color:#D8E3FF;background:rgba(94,150,255,.08)}
+.prof-paybtn strong{font-size:15px;color:#fff}
+.prof-paybtn.primary{border:none;color:#fff;background:var(--btn-g);box-shadow:0 8px 20px -8px rgba(79,125,255,.65)}
+.prof-paybtn[disabled]{cursor:default;opacity:.55}
+.prof-modal{position:absolute;inset:0;z-index:74;display:flex;align-items:flex-end;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .25s}
+.prof-modal.open{opacity:1;visibility:visible}
+.prof-dialog{width:100%;max-height:78%;overflow-y:auto;padding:12px 22px 34px;border-radius:28px 28px 0 0;background:#11141D;border-top:1px solid rgba(255,255,255,.1);transform:translateY(102%);transition:transform .3s cubic-bezier(.32,.72,.32,1);scrollbar-width:none}
+.prof-modal.open .prof-dialog{transform:none}
+.prof-dialog .grab{width:40px;height:4px;border-radius:3px;background:rgba(255,255,255,.18);margin:0 auto 18px}
+.prof-dialog-head{display:flex;align-items:center;justify-content:space-between}
+.prof-dialog-head h3{font-size:18px}.prof-dialog-close{all:unset;cursor:pointer;width:32px;height:32px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.order-card{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+.order-card b{font-size:13.5px}.order-card p{font-size:11px;color:var(--sub);margin-top:4px}.order-card strong{font-size:22px;white-space:nowrap}
+.pay-note{font-size:11px;color:var(--faint);line-height:1.7;margin-top:13px}
+.prof-dialog-action{all:unset;cursor:pointer;box-sizing:border-box;width:100%;margin-top:20px;padding:15px;text-align:center;border-radius:999px;background:var(--btn-g);color:#fff;font-size:14px;font-weight:600}
+.consult-form-label{display:block;font-size:12px;color:var(--sub);margin-top:18px}
+.consult-choice-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.consult-choice{all:unset;cursor:pointer;padding:8px 12px;border-radius:999px;background:var(--raised);border:1px solid var(--line);font-size:11.5px;color:var(--sub)}
+.consult-choice.on{color:#fff;background:var(--blue-deep);border-color:rgba(111,165,255,.55)}
+.consult-question{box-sizing:border-box;width:100%;min-height:90px;margin-top:10px;padding:13px 14px;resize:none;border-radius:16px;background:var(--raised);border:1px solid var(--line);color:var(--ink);font:13px/1.7 var(--sans)}
+.consult-question:focus{outline:1px solid rgba(111,165,255,.7)}
+.prof-success{text-align:center;padding:20px 0 4px}.prof-success .icon{width:62px;height:62px;margin:0 auto;border-radius:50%;background:rgba(62,217,164,.14);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:28px}
+.prof-success h3{font-size:18px;margin-top:16px}.prof-success p{font-size:12px;line-height:1.8;color:var(--sub);margin-top:8px}
 
 /* ============ 我擅长 浮层 ============ */
 .backdrop{position:absolute;inset:0;z-index:58;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .3s}
@@ -691,7 +819,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     <span style="background:#D7F464"></span>
   </div>
 
-  <p class="note">可交互：语音日记提取情绪与关键词 · 探索标签进输入框 · 对话可继续提问 · 实验室拖入选择卡 + 1–10 年连续旋钮 · 更换问题 · 万花筒抽取 · 用户主页。</p>
+  <p class="note">可交互：语音日记提取情绪与关键词 · 探索标签进输入框 · 对话可继续提问 · 实验室拖入选择卡 + 1–10 年连续旋钮 · 更换问题 · 万花筒抽取 · 用户主页四 Tab、经历解锁与咨询流程。</p>
 </aside>
 
 <!-- ================= 手机 ================= -->
@@ -986,12 +1114,23 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   <!-- ============ 用户主页 push ============ -->
   <section class="push" id="profilePage">
     <div class="top">
-      <button class="backbtn" onclick="closePush('profilePage')" aria-label="返回">
+      <button class="backbtn" onclick="closeProfile()" aria-label="返回">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <div><h2>用户主页</h2></div>
+      <div class="prof-top-copy"><h2 id="profileTopName">旅人主页</h2><p class="sub2">真实经历 · 已验证</p></div>
+      <button class="prof-top-more" onclick="toast('更多操作：分享主页 · 举报 · 屏蔽')" aria-label="更多操作">···</button>
     </div>
     <div class="scroll" id="profileScroll"></div>
+    <div class="prof-paybar" id="profilePaybar">
+      <button class="prof-paybtn" id="unlockProfileBtn" onclick="openProfileCheckout('unlock')">解锁完整经验 <strong>¥9.9</strong></button>
+      <button class="prof-paybtn primary" onclick="openProfileCheckout('consult')">向她咨询 <strong>¥29</strong></button>
+    </div>
+    <div class="prof-modal" id="profileModal" onclick="closeProfileModal()">
+      <div class="prof-dialog" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle" onclick="event.stopPropagation()">
+        <div class="grab"></div>
+        <div id="profileModalBody"></div>
+      </div>
+    </div>
   </section>
 
   <!-- ============ 推演加载 ============ -->
@@ -1128,12 +1267,12 @@ const HUES = [
   {g:'linear-gradient(135deg,#171243,#4A3BD1 60%,#8F7BFF)', a:'#6E58E8'},
 ];
 const USERS = [
-  { id:1, name:'未命名的海', ini:'海', hue:0, sim:true,
+  { id:1, name:'林可', ini:'可', hue:0, sim:true,
     quote:'转过来才发现，最难的不是学技能，是重建身份认同。',
-    tags:['交互转产品','3 年'],
-    bio:'前大厂交互设计师，现 AI 产品负责人',
+    tags:['28 岁转型','边工作边尝试','设计背景','未降薪明显幅度'],
+    bio:'交互设计 → AI 产品经理',
     traj:[
-      {age:'26 岁',t:'入行交互设计',d:'校招进大厂，画了三年原型图，开始怀疑「我只是需求的翻译器」。'},
+      {age:'28 岁',t:'开始尝试转型 AI 产品',d:'利用下班时间学习和实践，在公司申请了一个小型 AI 项目，逐步承担更多产品职责。'},
       {age:'30 岁',t:'转型产品经理',d:'降薪去创业公司，第一年被业务按在地上摩擦，但第一次为结果负责。'},
       {age:'33 岁',t:'AI 产品负责人',d:'带 6 人小组做 AI 工具，设计背景成了最大的差异化优势。'},
     ],
@@ -1173,6 +1312,63 @@ const USERS = [
     ],
     dims:[['我擅长','听出话背后的那句话'],['我喜欢','来访者说「被你说中了」的瞬间'],['我是什么样的人','内向但不冷'],['我希望认识什么样的人','35 岁以后才换方向的人']]},
 ];
+const PROFILE_META = {
+  1:{
+    age:33,city:'杭州',from:'交互设计',to:'AI 产品经理',years:'转型 5 年',
+    intro:'我在 28 岁时开始尝试转型 AI 产品。没有裸辞，也没有把过去全部推倒重来，而是利用下班时间学习和实践，在公司申请小型 AI 项目，逐步承担更多产品职责。30 岁完成内部转岗，后来跳到互联网公司，现在负责 AI 产品方向。',
+    full:'真正的转折不是拿到产品经理的 title，而是第一次独立为结果负责。设计经验让我更懂用户，但商业判断、数据意识和跨团队推进都需要从零补课。前一年我做了 47 次用户访谈，把每次失败都整理成可复用的判断框架。回头看，最有效的路径不是囤课，而是尽早进入一个真实项目。',
+    advice:{
+      decision:['先用一个 6 周的小项目验证兴趣，不急着辞职。','把“想转型”改成一个可验证的问题：我愿不愿意持续为结果负责？','至少找 3 位真实从业者，问清工作中最消耗人的部分。'],
+      ability:['把用户研究、信息架构和原型能力翻译成产品语言。','刻意补齐数据分析、商业判断和项目推进三项短板。','作品集不要只放界面，要讲清目标、取舍和结果。'],
+      interview:['准备一个你真正推动过的项目，而不是包装出的完整案例。','回答冲突题时说明你如何建立共同目标。','主动展示对 AI 能力边界与失败场景的理解。']
+    },
+    result:'5 年完成转型，未出现明显降薪',consulted:42,response:'通常 4 小时内回复'
+  },
+  2:{
+    age:32,city:'南京',from:'互联网运营',to:'心理学在读',years:'重启 2 年',
+    intro:'30 岁重新走进本科课堂，我并不比别人更勇敢，只是终于承认继续待在熟悉的工作里会越来越空。决定重读本科之前，我用半年做财务准备，也和家人反复沟通。',
+    full:'最难的是接受自己重新成为新手。课程、实习和经济压力同时出现时，我把目标缩小到每周能完成的动作，并保留一份远程兼职。稳定感没有消失，只是从职位变成了自己可执行的节奏。',
+    advice:{
+      decision:['先计算能支撑多久，而不是只问自己敢不敢。','试听真实课程，确认喜欢的是学科还是想象。','提前设计与家人的沟通边界。'],
+      ability:['把运营中的沟通与洞察迁移到访谈训练。','保持每周复盘，建立长期学习节奏。','尽早进入真实实习场景。'],
+      interview:['诚实解释重启原因，不必把每一步合理化。','用行动证据说明你的长期投入。','准备面对年龄相关问题的稳定表达。']
+    },
+    result:'边读书边维持远程收入',consulted:27,response:'通常当天回复'
+  },
+  3:{
+    age:29,city:'厦门',from:'大厂运营',to:'间隔年探索',years:'Gap 第 1 年',
+    intro:'裸辞后的前两个月，我仍然每天打开招聘软件。后来开始环岛骑行，才意识到休息不是为了更快回到原轨道，而是重新听见自己的节奏。',
+    full:'存款减少会制造真实焦虑，所以我给这段间隔年设置了预算上限、复盘节点和退出条件。第三个月之后，我开始用短项目换住宿，也重新接触写作。没有得到标准答案，但知道下一份工作不能再以透支身体为代价。',
+    advice:{
+      decision:['为 Gap 设置预算上限和最晚复盘日。','区分“逃离现在”和“走向新的方向”。','在离职前处理保险、现金流和居住问题。'],
+      ability:['用小项目保持工作手感。','记录精力变化，找到真正恢复你的活动。','建立低成本生活系统。'],
+      interview:['不回避空窗期，说明你完成了哪些探索。','把零散经历组织成选择逻辑。','明确下一份工作的底线。']
+    },
+    result:'睡眠恢复，重新建立生活节奏',consulted:18,response:'通常 8 小时内回复'
+  },
+  4:{
+    age:31,city:'成都',from:'视觉设计',to:'独立开发',years:'独立第 2 年',
+    intro:'我没有等到技术完全准备好才开始。第一款产品用了三周上线，几乎没人付费；第二款也失败了。第三款小工具终于覆盖房租。',
+    full:'一个人做产品最重要的不是全栈，而是知道什么暂时不做。设计背景帮我快速做出体验，但真正让产品活下来的是持续访谈、定价实验和克制功能范围。',
+    advice:{
+      decision:['先做能在两周内交付的最小版本。','上线前找到 10 个真实潜在用户。','给自己设定可承受的试错预算。'],
+      ability:['学会用低代码和 AI 补足开发环节。','把定价当成产品设计的一部分。','建立每周固定的用户反馈节奏。'],
+      interview:['独立开发经历要用数据说明。','解释你主动砍掉了什么。','展示从失败版本到当前版本的变化。']
+    },
+    result:'第三款产品开始覆盖房租',consulted:35,response:'通常 6 小时内回复'
+  },
+  5:{
+    age:37,city:'上海',from:'产品经理',to:'心理咨询师',years:'转型 3 年',
+    intro:'35 岁开始系统学习心理咨询时，我的时薪从 500 变成 0。那段时间最难的不是收入，而是接受新的职业身份需要慢慢长出来。',
+    full:'我保留了一部分产品顾问工作，用三年完成课程、督导和实习。过去的产品经验让我善于结构化问题，但咨询训练要求我放下解决问题的冲动，真正听见对方。',
+    advice:{
+      decision:['先体验真实课程和个人咨询。','预留至少两年的训练时间。','不要低估督导与个人成长成本。'],
+      ability:['练习倾听，不急着给建议。','建立稳定的案例记录与督导机制。','把结构化能力用于整理，而不是控制对话。'],
+      interview:['说明转型中的持续训练证据。','坦诚面对经验时数。','把过去职业经验转化成理解人的能力。']
+    },
+    result:'完成实习，开始稳定接案',consulted:31,response:'通常当天回复'
+  }
+};
 const BOUNTIES = [
   {q:'有没有人从设计转数据分析？想听第一年最难的是什么', r:'悬赏 3 个真实故事', n:'12 人回应'},
   {q:'26 岁要不要辞职考研？家里催我先稳定下来', r:'悬赏 5 个亲历者', n:'31 人回应'},
@@ -1659,41 +1855,311 @@ function kalView(){
 }
 
 /* ================= 用户主页 ================= */
+let activeProfileUser = null;
+let activeProfileTab = 'story';
+const unlockedProfileIds = new Set();
+const ADVICE_TITLES = {
+  decision:['转型前，先做一次低成本验证','先判断这条路是否真的适合你'],
+  ability:['把旧能力翻译成新岗位的优势','迁移能力比从零开始更重要'],
+  interview:['让面试官看见真实的行动证据','少讲决心，多讲你已经做过什么']
+};
+const PROFILE_SERVICES = [
+  {
+    id:'consult',type:'1 对 1 咨询',title:'针对你的具体问题深聊',
+    price:'29',unit:'/ 小时',style:'',
+    desc:'围绕转型选择、能力差距、作品集或求职准备，结合亲历给出针对性建议。',
+    tags:['实时文字沟通','1 小时','24 小时内可追问']
+  },
+  {
+    id:'materials',type:'资料工具包',title:'海外学校申请材料包',
+    price:'9.9',unit:'',style:'materials',
+    desc:'包含选校比较表、申请时间线、文书自查清单和材料命名模板，购买后即可查看。',
+    tags:['4 份模板','申请清单','永久查看']
+  },
+  {
+    id:'companion',type:'阶段陪跑',title:'申请陪跑服务',
+    price:'599',unit:'/ 期',style:'companion',
+    desc:'从目标拆解到材料提交的 4 周陪跑，每周复盘进度并提供关键节点反馈。',
+    tags:['4 周','每周复盘','材料反馈']
+  }
+];
+
 function openProfile(id){
   const u = USERS.find(x=>x.id===id);
+  if(!u) return;
+  activeProfileUser = u;
+  activeProfileTab = 'story';
+  $('#profileTopName').textContent = u.name;
+  renderProfile();
+  $('#profileScroll').scrollTop = 0;
+  closeProfileModal();
+  $('#profilePage').classList.add('open');
+}
+
+function renderProfile(){
+  const u = activeProfileUser;
+  if(!u) return;
+  const m = PROFILE_META[u.id];
   const h = HUES[u.hue];
+  const unlocked = unlockedProfileIds.has(u.id);
+  const adviceKind = 'decision';
   $('#profileScroll').innerHTML = `
     <div class="prof-hero">
-      <div class="bgw" style="background:radial-gradient(360px 220px at 20% 0%,${u.hue===2?'rgba(62,217,164,.22)':'rgba(94,150,255,.22)'},transparent 70%)"></div>
       <div class="prof-row">
         <div class="prof-av" style="background:${h.g}">${u.ini}</div>
-        <div>
-          <h2>${u.name}</h2>
-          <p class="bio">${u.bio} · 人生是旷野，不是轨道</p>
+        <div class="prof-id">
+          <div class="prof-name-line"><h2>${u.name}</h2><span class="prof-verified">经历已验证</span></div>
+          <p class="prof-loc">${m.age} 岁 · ${m.city}</p>
         </div>
       </div>
-      <div class="stags">${u.tags.map(t=>`<span class="stag">${t}</span>`).join('')}</div>
+      <div class="prof-transition">${m.from}<i>→</i>${m.to}</div>
+      <div class="prof-years">${m.years} · ${m.result}</div>
+      <div class="prof-tags">${u.tags.map(t=>`<span>${t}</span>`).join('')}</div>
     </div>
 
-    <div class="sec-t"><h3>人生关键轨迹</h3><span>${u.traj.length} 个转折点</span></div>
-    <div class="card traj">
-      ${u.traj.map(t=>`<div class="tj"><div class="nd"></div><div><div class="age">${t.age}</div><h4>${t.t}</h4><p>${t.d}</p></div></div>`).join('')}
+    <div class="prof-tabs" role="tablist" aria-label="用户主页内容">
+      <button class="prof-tab${activeProfileTab==='story'?' on':''}" role="tab" aria-selected="${activeProfileTab==='story'}" onclick="switchProfileTab('story',this)">她的故事</button>
+      <button class="prof-tab${activeProfileTab==='timeline'?' on':''}" role="tab" aria-selected="${activeProfileTab==='timeline'}" onclick="switchProfileTab('timeline',this)">时间线</button>
+      <button class="prof-tab${activeProfileTab==='advice'?' on':''}" role="tab" aria-selected="${activeProfileTab==='advice'}" onclick="switchProfileTab('advice',this)">经验与建议</button>
+      <button class="prof-tab${activeProfileTab==='service'?' on':''}" role="tab" aria-selected="${activeProfileTab==='service'}" onclick="switchProfileTab('service',this)">可提供服务</button>
     </div>
 
-    <div class="sec-t"><h3>动态画像</h3><span>由 TA 的记录生成</span></div>
-    <div class="card prof-dims">
-      <div class="orb-halo"><div class="orb"></div></div>
-      <div class="cap">动态数字人 · 探索者</div>
-      <div class="dims" style="margin-top:16px">
-        ${u.dims.map(d=>`<div class="dim" style="cursor:default"><span class="tx"><b>${d[0]}</b><p>${d[1]}</p></span></div>`).join('')}
+    <section class="prof-panel${activeProfileTab==='story'?' on':''}" id="prof-story" role="tabpanel">
+      <div class="prof-quote">${u.quote}</div>
+      <div class="story-copy">
+        <h3>我的转型故事</h3>
+        <p>${m.intro}</p>
+      </div>
+      <div class="story-facts">
+        <div class="story-fact"><b>${m.years.match(/\d+/)?.[0] || u.traj.length} 年</b><span>真实实践</span></div>
+        <div class="story-fact"><b>${u.traj.length}</b><span>关键节点</span></div>
+        <div class="story-fact"><b>${m.consulted}</b><span>已帮助人数</span></div>
+      </div>
+      <div class="story-full">
+        <h4>完整故事 · 最难的一关</h4>
+        <p>${m.full}</p>
+      </div>
+    </section>
+
+    <section class="prof-panel${activeProfileTab==='timeline'?' on':''}" id="prof-timeline" role="tabpanel">
+      <div class="prof-section-title"><h3>人生关键轨迹</h3><span>点击节点展开详情</span></div>
+      <div class="prof-timeline">
+        ${u.traj.map((t,i)=>`
+          <div class="pt-item">
+            <span class="pt-dot"></span>
+            <button class="pt-card${i===0?' open':''}" onclick="toggleProfileMilestone(this)" aria-expanded="${i===0}">
+              <span class="pt-head">
+                <span><span class="pt-age">${t.age}</span><h4>${t.t}</h4></span>
+                <span class="pt-arrow">›</span>
+              </span>
+              <span class="pt-detail">${t.d}</span>
+            </button>
+          </div>`).join('')}
+      </div>
+      <div class="story-full"><h4>轨迹说明</h4><p>以上节点由本人补充，并结合公开履历完成基础验证。经历只代表个人路径，不构成标准答案。</p></div>
+    </section>
+
+    <section class="prof-panel${activeProfileTab==='advice'?' on':''}" id="prof-advice" role="tabpanel">
+      <div class="prof-section-title"><h3>把踩过的坑留给后来人</h3><span>${unlocked?'全部可见':'部分可见'}</span></div>
+      <div class="advice-chips">
+        <button class="advice-chip on" onclick="selectProfileAdvice('decision',this)">转型决策</button>
+        <button class="advice-chip" onclick="selectProfileAdvice('ability',this)">能力迁移</button>
+        <button class="advice-chip" onclick="selectProfileAdvice('interview',this)">求职面试</button>
+      </div>
+      <div id="profileAdviceContent">${profileAdviceHTML(adviceKind)}</div>
+    </section>
+
+    <section class="prof-panel${activeProfileTab==='service'?' on':''}" id="prof-service" role="tabpanel">
+      <div class="prof-section-title"><h3>她可以提供这些服务</h3><span>共 ${PROFILE_SERVICES.length} 项</span></div>
+      ${PROFILE_SERVICES.map(s=>`
+        <div class="consult-card ${s.style}">
+          <div class="consult-price">
+            <div><div class="ey">${s.type}</div><h3>${s.title}</h3></div>
+            <strong>¥${s.price}<small>${s.unit}</small></strong>
+          </div>
+          <p class="consult-desc">${s.desc}</p>
+          ${s.id==='consult'?`<div class="consult-meta"><span><b>${m.response}</b></span><span>已咨询 <b>${m.consulted} 人</b></span></div>`:''}
+          <div class="consult-topics">${s.tags.map(x=>`<span>${x}</span>`).join('')}</div>
+          <button class="prof-inline-cta" onclick="openProfileService('${s.id}')">选择这项服务 · ¥${s.price}</button>
+        </div>`).join('')}
+      <div class="consult-steps">
+        <div class="prof-section-title" style="margin-bottom:4px"><h3>服务保障</h3><span>平台担保</span></div>
+        <div class="consult-step"><i>1</i><div><b>选择服务并补充需求</b><p>不同类型会进入对应的确认或申请流程</p></div></div>
+        <div class="consult-step"><i>2</i><div><b>平台确认交付范围</b><p>下单前明确服务内容、周期与回复方式</p></div></div>
+        <div class="consult-step"><i>3</i><div><b>完成后再确认交付</b><p>有争议可申请平台介入处理</p></div></div>
+      </div>
+    </section>`;
+
+  const unlockBtn = $('#unlockProfileBtn');
+  unlockBtn.disabled = unlocked;
+  unlockBtn.innerHTML = unlocked ? '完整经验已解锁 <strong>✓</strong>' : '解锁完整经验 <strong>¥9.9</strong>';
+}
+
+function switchProfileTab(tab, btn){
+  activeProfileTab = tab;
+  document.querySelectorAll('#profilePage .prof-tab').forEach(b=>{
+    const on = b===btn;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-selected',String(on));
+  });
+  document.querySelectorAll('#profilePage .prof-panel').forEach(p=>p.classList.remove('on'));
+  $('#prof-'+tab).classList.add('on');
+}
+
+function toggleProfileMilestone(btn){
+  const open = btn.classList.toggle('open');
+  btn.setAttribute('aria-expanded',String(open));
+}
+
+function profileAdviceHTML(kind){
+  const m = PROFILE_META[activeProfileUser.id];
+  const unlocked = unlockedProfileIds.has(activeProfileUser.id);
+  const tips = m.advice[kind];
+  return `
+    <div class="advice-card">
+      <div class="num">${ADVICE_TITLES[kind][1]}</div>
+      <h4>${ADVICE_TITLES[kind][0]}</h4>
+      <p>${tips[0]}</p>
+      <div class="advice-steps">
+        ${tips.slice(0,unlocked?tips.length:1).map((t,i)=>`<div class="advice-step"><i>${i+1}</i><span>${t}</span></div>`).join('')}
       </div>
     </div>
+    ${unlocked ? '' : `
+      <div class="prof-lock" aria-label="其余建议尚未解锁">
+        <div class="prof-lock-lines"><i></i><i></i><i></i></div>
+        <div class="prof-lock-copy"><b>还有 ${tips.length-1} 条亲历经验</b><span>解锁完整经验后可查看全部内容</span></div>
+      </div>`}`;
+}
 
-    <div class="hello">
-      <button class="btn-ink" style="width:100%" onclick="toast('已向 ${u.name} 打招呼，等 TA 的回声')">打个招呼</button>
-    </div>
-    <div style="height:26px"></div>`;
-  $('#profilePage').classList.add('open');
+function selectProfileAdvice(kind, btn){
+  document.querySelectorAll('#prof-advice .advice-chip').forEach(b=>b.classList.toggle('on',b===btn));
+  $('#profileAdviceContent').innerHTML = profileAdviceHTML(kind);
+}
+
+function openProfileCheckout(type){
+  if(!activeProfileUser) return;
+  if(type!=='unlock'){
+    openProfileService('consult');
+    return;
+  }
+  if(type==='unlock' && unlockedProfileIds.has(activeProfileUser.id)){
+    toast('完整经验已经解锁');
+    return;
+  }
+  const body = $('#profileModalBody');
+  body.innerHTML = `
+    <div class="prof-dialog-head"><h3 id="profileModalTitle">解锁完整经验</h3><button class="prof-dialog-close" onclick="closeProfileModal()" aria-label="关闭">✕</button></div>
+    <div class="order-card"><div><b>${activeProfileUser.name}的完整经验与建议</b><p>转型判断 · 能力迁移 · 求职面试</p></div><strong>¥9.9</strong></div>
+    <p class="pay-note">一次解锁，长期可看。故事和时间线保持完整公开，付费仅用于解锁进阶经验与建议。</p>
+    <button class="prof-dialog-action" onclick="confirmProfileUnlock()">确认支付 ¥9.9</button>`;
+  $('#profileModal').classList.add('open');
+}
+
+function openProfileService(id){
+  if(!activeProfileUser) return;
+  const service = PROFILE_SERVICES.find(s=>s.id===id);
+  if(!service) return;
+  const m = PROFILE_META[activeProfileUser.id];
+  const body = $('#profileModalBody');
+  if(id==='consult'){
+    body.innerHTML = `
+      <div class="prof-dialog-head"><h3 id="profileModalTitle">预约 1 对 1 咨询</h3><button class="prof-dialog-close" onclick="closeProfileModal()" aria-label="关闭">✕</button></div>
+      <div class="order-card"><div><b>与${activeProfileUser.name}进行 1 小时咨询</b><p>${m.response} · 24 小时内可追问一次</p></div><strong>¥29</strong></div>
+      <label class="consult-form-label">你最想咨询哪一类问题？</label>
+      <div class="consult-choice-row">
+        ${['转型时机','能力迁移','作品集','求职面试','薪资风险'].map((x,i)=>`<button class="consult-choice${i===0?' on':''}" onclick="selectConsultTopic(this)">${x}</button>`).join('')}
+      </div>
+      <label class="consult-form-label" for="consultQuestion">补充你的具体情况</label>
+      <textarea class="consult-question" id="consultQuestion" placeholder="例如：我有 5 年交互设计经验，正在考虑内部转岗，但担心产品能力不够……"></textarea>
+      <p class="pay-note">你的问题只会发送给咨询者本人，不会公开展示。</p>
+      <button class="prof-dialog-action" onclick="submitConsultRequest()">确认并支付 ¥29</button>`;
+  }else if(id==='materials'){
+    body.innerHTML = `
+      <div class="prof-dialog-head"><h3 id="profileModalTitle">海外学校申请材料包</h3><button class="prof-dialog-close" onclick="closeProfileModal()" aria-label="关闭">✕</button></div>
+      <div class="order-card"><div><b>4 份申请工具模板</b><p>选校表 · 时间线 · 文书自查 · 材料清单</p></div><strong>¥9.9</strong></div>
+      <div class="story-full"><h4>购买后可获得</h4><p>可复制的选校比较表、按月份拆分的申请时间线、文书内容自查清单，以及统一的文件命名和提交检查模板。</p></div>
+      <p class="pay-note">数字内容购买后立即解锁，可在「我的服务」中长期查看。</p>
+      <button class="prof-dialog-action" onclick="completeProfileService('materials')">确认支付 ¥9.9</button>`;
+  }else{
+    body.innerHTML = `
+      <div class="prof-dialog-head"><h3 id="profileModalTitle">申请陪跑服务</h3><button class="prof-dialog-close" onclick="closeProfileModal()" aria-label="关闭">✕</button></div>
+      <div class="order-card"><div><b>4 周申请陪跑</b><p>目标拆解 · 每周复盘 · 材料反馈</p></div><strong>¥599</strong></div>
+      <label class="consult-form-label">你目前处在哪个阶段？</label>
+      <div class="consult-choice-row">
+        ${['刚开始了解','正在选校','准备文书','即将提交'].map((x,i)=>`<button class="consult-choice${i===0?' on':''}" onclick="selectConsultTopic(this)">${x}</button>`).join('')}
+      </div>
+      <label class="consult-form-label" for="serviceQuestion">简单介绍你的申请目标</label>
+      <textarea class="consult-question" id="serviceQuestion" placeholder="例如：目标 2027 年秋季入学，希望申请交互设计相关硕士，目前还没有开始选校……"></textarea>
+      <p class="pay-note">提交后会先确认目标与服务边界，双方确认适合后再开始 4 周陪跑。</p>
+      <button class="prof-dialog-action" onclick="submitCompanionService()">提交申请并支付 ¥599</button>`;
+  }
+  $('#profileModal').classList.add('open');
+}
+
+function selectConsultTopic(btn){
+  document.querySelectorAll('#profileModal .consult-choice').forEach(b=>b.classList.toggle('on',b===btn));
+}
+
+function confirmProfileUnlock(){
+  unlockedProfileIds.add(activeProfileUser.id);
+  closeProfileModal();
+  renderProfile();
+  toast('完整经验已解锁 ✦');
+}
+
+function submitConsultRequest(){
+  const q = $('#consultQuestion').value.trim();
+  if(!q){
+    toast('请先简单描述你的具体情况');
+    $('#consultQuestion').focus();
+    return;
+  }
+  $('#profileModalBody').innerHTML = `
+    <div class="prof-success">
+      <div class="icon">✓</div>
+      <h3>咨询请求已提交</h3>
+      <p>${activeProfileUser.name}会在约定时间内回复你。<br>收到回复后，你还可以围绕原问题追问一次。</p>
+      <button class="prof-dialog-action" onclick="closeProfileModal()">完成</button>
+    </div>`;
+  toast('已向她发起咨询');
+}
+
+function completeProfileService(id){
+  const service = PROFILE_SERVICES.find(s=>s.id===id);
+  $('#profileModalBody').innerHTML = `
+    <div class="prof-success">
+      <div class="icon">✓</div>
+      <h3>${service.title}已解锁</h3>
+      <p>服务内容已放入「我的服务」。<br>你可以随时回来查看和使用。</p>
+      <button class="prof-dialog-action" onclick="closeProfileModal()">立即查看</button>
+    </div>`;
+  toast('材料包已添加到我的服务');
+}
+
+function submitCompanionService(){
+  const q = $('#serviceQuestion').value.trim();
+  if(!q){
+    toast('请先简单介绍你的申请目标');
+    $('#serviceQuestion').focus();
+    return;
+  }
+  $('#profileModalBody').innerHTML = `
+    <div class="prof-success">
+      <div class="icon">✓</div>
+      <h3>陪跑申请已提交</h3>
+      <p>${activeProfileUser.name}会先确认你的目标与时间安排。<br>匹配成功后，将从第一次目标拆解开始计入 4 周服务期。</p>
+      <button class="prof-dialog-action" onclick="closeProfileModal()">完成</button>
+    </div>`;
+  toast('申请陪跑服务已提交');
+}
+
+function closeProfileModal(){
+  $('#profileModal').classList.remove('open');
+}
+
+function closeProfile(){
+  closeProfileModal();
+  closePush('profilePage');
 }
 
 /* ================= 我擅长浮层 ================= */
