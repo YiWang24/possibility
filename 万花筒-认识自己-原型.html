@@ -1723,6 +1723,23 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       </button>
     </div>
 
+    <div class="carry-section">
+      <div class="carry-head">
+        <div><div class="ey">NON-NEGOTIABLES · 来自你的画像与对话</div><h3>这条路上，什么必须一起带走？</h3></div>
+        <span>已装入 <b id="carryCount">0</b>/3</span>
+      </div>
+      <p class="carry-copy">它们不是锦上添花的愿望，而是这次转变不能交换掉的底线。选出三张，再一起放进实验室。</p>
+      <div class="carry-deck" id="carryDeck">
+        <button class="carry-card" data-carry="income"><span class="glyph">▣</span><b>稳定的生活来源</b><small>来自对话 · 收入担忧</small></button>
+        <button class="carry-card" data-carry="health"><span class="glyph">＋</span><b>不透支身体</b><small>来自日记 · 最近睡得晚</small></button>
+        <button class="carry-card" data-carry="relation"><span class="glyph">♡</span><b>重要关系不被牺牲</b><small>来自关系画像</small></button>
+        <button class="carry-card" data-carry="craft"><span class="glyph">✦</span><b>保住七年专业积累</b><small>来自对话 · 无法割舍</small></button>
+        <button class="carry-card" data-carry="creation"><span class="glyph">◇</span><b>创造的实感</b><small>来自动态画像</small></button>
+        <button class="carry-card" data-carry="exit"><span class="glyph">↩</span><b>仍有退路可选</b><small>来自处境扫描</small></button>
+      </div>
+      <div class="carry-lock" id="carryLock"><i></i><span>还需选择 3 张必须带上的牌</span></div>
+    </div>
+
     <button class="btn-ink btn-cta lab-go" id="simBtn" disabled onclick="runSim()">开始推演</button>
     <p class="lab-note" style="text-align:center;font-size:11px;color:var(--faint);margin-top:14px;line-height:1.8">基于动态画像与 1,842 位相似旅人经历 · 它不是预言，是一面镜子</p>
   </section>
@@ -1884,6 +1901,13 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
             <h5><i style="background:var(--violet-soft)"></i>但仍会留下的价值</h5>
             <li>拓宽了认知边界</li><li>积累了跨领域经验</li><li>更清楚自己真正想要的</li>
           </div>
+        </div>
+        <div class="floor-test" id="floorTest">
+          <div class="overline">BOTTOM-LINE STRESS TEST · 底线压力测试</div>
+          <h4>最差的可能，是否击穿了你必须带走的东西？</h4>
+          <p>不要判断它“值不值得”，只回答：如果最坏结果真的发生，这张底牌受到冲击，你是否仍能承受并继续走下去？</p>
+          <div class="floor-items" id="floorItems"></div>
+          <div class="floor-verdict" id="floorVerdict"></div>
         </div>
       </div>
 
@@ -2756,6 +2780,78 @@ function saveEditQ(){
 
 /* ================= 实验室：连续时间旋钮 ================= */
 let labYear = 5, labPick = null;
+const CARRY_LIMIT=3;
+const carrySelected=new Set();
+const floorAnswers={};
+const CARRY_META={
+  income:{glyph:'▣',name:'稳定的生活来源',risk:'转型不顺时，收入可能在一段时间内下降，生活安全感受到直接冲击。'},
+  health:{glyph:'＋',name:'不透支身体',risk:'反复尝试与加倍学习可能挤压睡眠和恢复时间，身体先替选择支付代价。'},
+  relation:{glyph:'♡',name:'重要关系不被牺牲',risk:'压力与时间投入可能让你减少陪伴，也可能加剧家人对这次改变的不理解。'},
+  craft:{glyph:'✦',name:'保住七年专业积累',risk:'最差情况下，新岗位没有站稳，原有专业身份也因中断而需要重新证明。'},
+  creation:{glyph:'◇',name:'创造的实感',risk:'你可能进入一个更偏协调和推进的岗位，却发现真正动手创造的时刻反而更少。'},
+  exit:{glyph:'↩',name:'仍有退路可选',risk:'如果投入过深、现金流下降或履历断裂，回到原路径的成本会明显升高。'}
+};
+function syncLabReady(){
+  const ready=Boolean(labPick)&&carrySelected.size===CARRY_LIMIT;
+  const btn=$('#simBtn');
+  btn.disabled=!ready;
+  if(ready){
+    btn.removeAttribute('disabled');
+    btn.textContent='带着 3 张底牌开始推演';
+  }else{
+    btn.setAttribute('disabled','');
+    btn.textContent=labPick?'还要装入 3 张底牌':'开始推演';
+  }
+}
+function toggleCarryCard(btn){
+  const id=btn.dataset.carry;
+  if(carrySelected.has(id)) carrySelected.delete(id);
+  else{
+    if(carrySelected.size>=CARRY_LIMIT){toast('这一轮只能带三张最不能失去的牌');return}
+    carrySelected.add(id);
+  }
+  btn.classList.toggle('on',carrySelected.has(id));
+  $('#carryCount').textContent=carrySelected.size;
+  const left=CARRY_LIMIT-carrySelected.size;
+  const lock=$('#carryLock');
+  lock.classList.toggle('ready',left===0);
+  lock.querySelector('span').textContent=left===0?'三张底牌已装入，会在最坏结果中逐张检验':`还需选择 ${left} 张必须带上的牌`;
+  syncLabReady();
+}
+document.querySelectorAll('.carry-card').forEach(btn=>btn.addEventListener('click',()=>toggleCarryCard(btn)));
+function renderFloorTest(){
+  Object.keys(floorAnswers).forEach(k=>delete floorAnswers[k]);
+  $('#floorItems').innerHTML=[...carrySelected].map(id=>{
+    const m=CARRY_META[id];
+    return `<div class="floor-item" data-floor="${id}">
+      <div class="floor-item-head"><i>${m.glyph}</i><b>${m.name}</b></div>
+      <p>${m.risk}</p>
+      <div class="floor-actions">
+        <button class="accept" onclick="answerFloor('${id}','accept',this)">最差如此，仍可承受</button>
+        <button class="reject" onclick="answerFloor('${id}','reject',this)">这已经越过底线</button>
+      </div>
+    </div>`;
+  }).join('');
+  const verdict=$('#floorVerdict');
+  verdict.className='floor-verdict';
+  verdict.innerHTML='';
+}
+function answerFloor(id,answer,btn){
+  floorAnswers[id]=answer;
+  btn.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');
+  if(Object.keys(floorAnswers).length<CARRY_LIMIT)return;
+  const rejected=Object.entries(floorAnswers).filter(([,v])=>v==='reject').map(([id])=>CARRY_META[id].name);
+  const verdict=$('#floorVerdict');
+  if(!rejected.length){
+    verdict.className='floor-verdict show go';
+    verdict.innerHTML='<div class="cap">可以继续转变 · 但不是盲目乐观</div><b>你看见了最差结果，也确认它没有击穿三张底牌。</b><p>这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这三张底牌分别保留现实缓冲。</p>';
+  }else{
+    verdict.className='floor-verdict show stop';
+    verdict.innerHTML=`<div class="cap">暂时不要直接跨过去</div><b>最坏结果会击穿：${rejected.join('、')}</b><p>这不等于你不适合改变。先为这些底线建立保护条件，再回来重新测试。</p>`;
+  }
+  verdict.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 const YMIN = 1, YMAX = 10;
 const yearToAng = y => -90 + (y - YMIN) * (180 / (YMAX - YMIN));
 const angToYear = a => YMIN + (a + 90) * ((YMAX - YMIN) / 180);
@@ -2938,12 +3034,12 @@ function pickChoice(c){
   c.classList.add('on');
   labPick = c.dataset.name;
   $('#dialPick').textContent = labPick;
-  $('#simBtn').disabled = false;
-  $('#simBtn').removeAttribute('disabled');
+  syncLabReady();
 }
-const LOAD_STEPS = ['读取你的动态画像……','匹配 1,842 位相似旅人的经历……','折出三种可能的未来……'];
+const LOAD_STEPS = ['读取你的动态画像与对话……','装入三张不可割舍的底牌……','用最坏结果逐张施压……'];
 function runSim(){
   if(!labPick){ toast('先拖一张选择卡进实验室'); return; }
+  if(carrySelected.size!==CARRY_LIMIT){ toast('还要选出三张必须一起带走的底牌'); return; }
   $('#loadName').textContent = labPick;
   const load = $('#simload');
   load.classList.add('show');
@@ -2957,6 +3053,7 @@ function runSim(){
       load.classList.remove('show');
       $('#resultSub').textContent = `${labPick} · ${labYear} 年后`;
       $('#rsPeople').innerHTML = USERS.filter(u=>u.sim).map(simCardHTML).join('');
+      renderFloorTest();
       $('#resultPage').classList.add('open');
     }
   }, 1100);
@@ -2965,6 +3062,7 @@ function rsTab(i, btn){
   document.querySelectorAll('#rsSeg button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   document.querySelectorAll('.rs-panel').forEach((p,idx)=>p.classList.toggle('on', idx===i));
+  if(i===2&&carrySelected.size===CARRY_LIMIT&&$('#floorItems').children.length===0)renderFloorTest();
 }
 
 /* ================= 社区 ================= */
