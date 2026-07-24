@@ -337,6 +337,49 @@ export function validateBountyResponseInput(
   };
 }
 
+export type GetBountyInput = {
+  bounty_id: number;
+};
+
+export function validateGetBountyInput(value: unknown): GetBountyInput {
+  const body = object(value);
+  const bountyId = body.bounty_id;
+  if (!Number.isInteger(bountyId) || (bountyId as number) < 1) {
+    throw new HttpError(400, "INVALID_INPUT", "bounty_id 必须是正整数。");
+  }
+  return { bounty_id: bountyId as number };
+}
+
+export type DiarySummaryInput = {
+  period: "month" | "year";
+  ref: string;
+};
+
+export function validateDiarySummaryInput(value: unknown): DiarySummaryInput {
+  const body = object(value);
+  const period = string(body.period, "period", 10)!;
+  if (period !== "month" && period !== "year") {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "period 必须是 month 或 year。",
+    );
+  }
+  const ref = string(body.ref, "ref", 10)!;
+  if (period === "month") {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(ref)) {
+      throw new HttpError(
+        400,
+        "INVALID_INPUT",
+        "month 的 ref 必须形如 2026-07。",
+      );
+    }
+  } else if (!/^\d{4}$/.test(ref)) {
+    throw new HttpError(400, "INVALID_INPUT", "year 的 ref 必须形如 2026。");
+  }
+  return { period, ref };
+}
+
 export type KaleidoscopeInput = {
   mode: "similar" | "different";
   recentlyViewedIds: number[];

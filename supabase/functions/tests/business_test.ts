@@ -8,6 +8,7 @@ import { sseEvent } from "../_shared/sse.ts";
 import {
   chatSignalSchema,
   diarySchema,
+  diarySummarySchema,
   labChoiceSchema,
   matchSchema,
   personaSchema,
@@ -130,6 +131,7 @@ Deno.test("all structured-output schemas are internally consistent", () => {
     ["labChoiceSchema", labChoiceSchema as unknown as JsonSchemaNode],
     ["personaSchema", personaSchema as unknown as JsonSchemaNode],
     ["diarySchema", diarySchema as unknown as JsonSchemaNode],
+    ["diarySummarySchema", diarySummarySchema as unknown as JsonSchemaNode],
     ["chatSignalSchema", chatSignalSchema as unknown as JsonSchemaNode],
   ];
   for (const [name, schema] of schemas) {
@@ -156,6 +158,13 @@ Deno.test("persona schema bounds match fallback output contract", () => {
   assert(p.hue.minimum === 0 && p.hue.maximum === 360);
   assert(p.lobes.minimum === 3 && p.lobes.maximum === 9);
   assert(p.seed.minimum === 0 && p.seed.maximum === 99_999);
+});
+
+Deno.test("diary summary schema caps highlights at 5", () => {
+  const p = diarySummarySchema.properties;
+  assert(p.highlights.maxItems === 5);
+  assert(diarySummarySchema.required.includes("insight"));
+  assert(diarySummarySchema.required.includes("highlights"));
 });
 
 // ==================== SSE 事件编码契约 ====================

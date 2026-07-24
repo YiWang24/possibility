@@ -11,6 +11,7 @@ import {
 import {
   validateBountyInput,
   validateBountyResponseInput,
+  validateGetBountyInput,
   validateKaleidoscopeInput,
   validateListInput,
 } from "../_shared/validate.ts";
@@ -205,6 +206,32 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true, id: data.id });
       }
 
+      // ==================== Get Bounty Detail ====================
+      case "get_bounty": {
+        const input = validateGetBountyInput(body);
+        const { data: bounty, error } = await db
+          .from("bounties")
+          .select("id,question,reward,responses,tags,detail,status,created_at")
+          .eq("id", input.bounty_id)
+          .maybeSingle();
+        if (error) {
+          console.error("get bounty failed:", error.message);
+          throw new HttpError(500, "DATABASE_ERROR", "读取悬赏失败。");
+        }
+        if (!bounty) {
+          throw new HttpError(404, "NOT_FOUND", "悬赏不存在。");
+        }
+        const { data: responses, error: rErr } = await db
+          .from("bounty_responses")
+          .select("id,user_id,message,created_at")
+          .eq("bounty_id", input.bounty_id)
+          .order("created_at", { ascending: true });
+        if (rErr) {
+          console.error("get bounty responses failed:", rErr.message);
+        }
+        return jsonResponse({ bounty, responses: responses ?? [] });
+      }
+
       // ==================== Respond to Bounty ====================
       case "respond_bounty": {
         const input = validateBountyResponseInput(body);
@@ -238,7 +265,7 @@ Deno.serve(async (req) => {
         throw new HttpError(
           400,
           "INVALID_ACTION",
-          "action 必须是 kaleidoscope_draw/list_bounties/create_bounty/respond_bounty/list_travelers 之一。",
+          "action 必须是 kaleidoscope_draw/list_bounties/create_bounty/get_bounty/respond_bounty/list_travelers 之一。",
         );
     }
   } catch (error) {

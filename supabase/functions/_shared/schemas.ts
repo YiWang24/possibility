@@ -170,6 +170,20 @@ export const diarySchema = {
   additionalProperties: false,
 } as const;
 
+export const diarySummarySchema = {
+  type: "object",
+  properties: {
+    insight: { type: "string", minLength: 1 },
+    highlights: {
+      type: "array",
+      maxItems: 5,
+      items: { type: "string", minLength: 1 },
+    },
+  },
+  required: ["insight", "highlights"],
+  additionalProperties: false,
+} as const;
+
 export const chatSignalSchema = {
   type: "object",
   properties: {
@@ -271,6 +285,11 @@ export type DiaryOutput = {
   emotions: string[];
   keywords: string[];
   dim_updates: Array<{ dimension: string; value: string }>;
+};
+
+export type DiarySummaryOutput = {
+  insight: string;
+  highlights: string[];
 };
 
 export type ChatSignal = {

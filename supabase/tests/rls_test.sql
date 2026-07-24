@@ -36,11 +36,11 @@ begin
   if (select count(*) from public.travelers) <> 12 then
     raise exception 'anon should read all 12 seeded travelers';
   end if;
-  if (select count(*) from public.traveler_details) <> 5 then
-    raise exception 'anon should read all 5 traveler_details';
+  if (select count(*) from public.traveler_details) <> 12 then
+    raise exception 'anon should read all 12 traveler_details';
   end if;
-  if (select count(*) from public.traveler_services) <> 3 then
-    raise exception 'anon should read all 3 traveler_services';
+  if (select count(*) from public.traveler_services) <> 10 then
+    raise exception 'anon should read all 10 traveler_services';
   end if;
   if (select count(*) from public.bounties) <> 3 then
     raise exception 'anon should read all 3 seeded bounties';
@@ -163,6 +163,10 @@ values (
 -- 用户 A 创建自己的悬赏（0007 起 authenticated 可写、RLS 锁 user_id）。
 insert into public.bounties (question, reward, responses, user_id)
 values ('转行第一年最难的是什么', '感谢', '0', '11111111-1111-4111-8111-111111111111');
+
+-- 用户 A 回应种子悬赏（get_bounty 依赖回应公开可读，见 0009）。
+insert into public.bounty_responses (bounty_id, user_id, message)
+values (1, '11111111-1111-4111-8111-111111111111', '我有类似经历，可以分享');
 
 -- ==================== 4. updated_at 触发器 ====================
 -- INSERT 不触发 BEFORE UPDATE 触发器，故可用一个旧时间写入基线；
@@ -335,6 +339,22 @@ begin
   end if;
   if (select count(*) from public.bounties) < 4 then
     raise exception 'bounties (incl. others) should be readable by all';
+  end if;
+
+  -- 悬赏回应公开可读（0009）：B 能读到 A 对悬赏 1 的回应。
+  if (
+    select count(*) from public.bounty_responses
+    where bounty_id = 1
+      and user_id = '11111111-1111-4111-8111-111111111111'
+  ) <> 1 then
+    raise exception 'bounty_responses should be readable by all authenticated users';
+  end if;
+
+  -- 但 B 不能改写 A 的回应（策略过滤为 0 行，found=false）。
+  update public.bounty_responses set message = 'hacked'
+  where user_id = '11111111-1111-4111-8111-111111111111';
+  if found then
+    raise exception 'cross-user bounty_response update unexpectedly succeeded';
   end if;
 
   -- 写入 A 的从属数据必须被拒。
