@@ -467,22 +467,42 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .yp.on{background:var(--btn-g);color:#fff;border-color:rgba(111,165,255,.6);font-weight:600;box-shadow:0 6px 16px -6px rgba(79,125,255,.55)}
 .knob-hint{text-align:center;font-size:11px;color:var(--faint);margin-top:12px;letter-spacing:.1em}
 
-.choices{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:14px}
+.choices{position:relative;height:178px;margin-top:14px;padding-top:2px;overflow:visible}
 .choice{
-  all:unset;cursor:grab;position:relative;padding:18px 15px 15px;border-radius:18px;
-  background:var(--card);border:1.5px solid var(--line);box-shadow:var(--shadow-card);
-  transition:border-color .18s,background .18s,opacity .18s,transform .18s;
+  all:unset;cursor:grab;position:absolute;left:50%;top:0;display:block;box-sizing:border-box;
+  width:116px;height:148px;padding:17px 13px;border-radius:18px;
+  transform:translateX(-50%);transform-origin:50% 100%;will-change:transform;
+  background:
+    radial-gradient(150px 100px at 82% -12%,var(--stamp-glow,rgba(94,150,255,.16)),transparent 64%),
+    #151922;
+  border:1.5px dashed rgba(255,255,255,.2);
+  box-shadow:0 5px 12px -4px rgba(0,0,0,.5);
+  transition:
+    transform .5s cubic-bezier(.22,1.32,.36,1),
+    opacity .18s,border-color .24s,box-shadow .24s,background .24s;
   touch-action:none;user-select:none;-webkit-user-select:none;
 }
+.choice:nth-child(1){z-index:1}
+.choice:nth-child(2){z-index:4}
+.choice:nth-child(3){z-index:3}
+.choice:nth-child(4){z-index:2}
+.choices:hover .choice:nth-child(1),.choices.fanned .choice:nth-child(1),.choices:focus-within .choice:nth-child(1){transform:translate(calc(-50% - 112px),24px) rotate(-18deg)}
+.choices:hover .choice:nth-child(2),.choices.fanned .choice:nth-child(2),.choices:focus-within .choice:nth-child(2){transform:translate(calc(-50% - 38px),-4px) rotate(-6deg)}
+.choices:hover .choice:nth-child(3),.choices.fanned .choice:nth-child(3),.choices:focus-within .choice:nth-child(3){transform:translate(calc(-50% + 38px),-4px) rotate(6deg)}
+.choices:hover .choice:nth-child(4),.choices.fanned .choice:nth-child(4),.choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 112px),24px) rotate(18deg)}
+.choice:hover,.choice:focus-visible{z-index:12;border-color:rgba(255,255,255,.34);box-shadow:0 16px 28px -12px rgba(0,0,0,.78)}
 .choice:active{cursor:grabbing}
-.choice.dragging{opacity:.25;transform:scale(.96)}
+.choice.dragging{opacity:.22}
 .choice .g{font-size:19px}
-.choice b{display:block;font-size:14px;font-weight:600;margin-top:9px}
-.choice p{font-size:11px;color:var(--sub);margin-top:4px;line-height:1.55}
-.choice.on{border-color:rgba(111,165,255,.7);background:linear-gradient(150deg,rgba(94,150,255,.16),rgba(143,123,255,.08))}
+.choice b{display:block;font-size:13px;font-weight:600;margin-top:10px;line-height:1.35}
+.choice p{font-size:10.5px;color:var(--sub);margin-top:6px;line-height:1.5}
+.choice.on{border-color:rgba(111,165,255,.72);background:linear-gradient(150deg,rgba(94,150,255,.26),rgba(143,123,255,.13)),#151922;box-shadow:0 12px 28px -12px rgba(79,125,255,.68)}
 .choice.on::after{
-  content:"✓";position:absolute;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
+  content:"✓";position:absolute;z-index:8;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
   background:var(--btn-g);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;
+}
+@media (prefers-reduced-motion:reduce){
+  .choice{transition:none}
 }
 .drag-ghost{
   position:absolute;left:0;top:0;z-index:70;pointer-events:none;
@@ -549,6 +569,93 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .comm-tabs button.on{color:var(--ink);font-weight:700;font-size:17px}
 .comm-tabs button.on::after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:18px;height:3px;border-radius:2px;background:var(--aurora)}
 .masonry{margin-top:16px;column-count:2;column-gap:11px}
+.masonry.watch-mode{
+  position:relative;height:548px;margin:4px -22px -42px;column-count:initial;overflow:hidden;
+  border-radius:0;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:
+    radial-gradient(300px 280px at 50% 47%,rgba(94,150,255,.11),transparent 72%),
+    radial-gradient(260px 230px at 14% 18%,rgba(227,92,193,.06),transparent 74%),
+    radial-gradient(240px 220px at 90% 80%,rgba(62,217,164,.04),transparent 76%);
+  border:0;
+  -webkit-mask-image:radial-gradient(ellipse 82% 88% at 50% 48%,#000 0 64%,rgba(0,0,0,.76) 78%,transparent 100%);
+  mask-image:radial-gradient(ellipse 82% 88% at 50% 48%,#000 0 64%,rgba(0,0,0,.76) 78%,transparent 100%);
+}
+.masonry.watch-mode.dragging{cursor:grabbing}
+.watch-kaleido{
+  position:absolute;left:50%;top:50%;width:470px;height:470px;border-radius:50%;pointer-events:none;
+  transform:translate(-50%,-50%);opacity:.16;
+  background:conic-gradient(from 0deg,transparent 0 9%,rgba(94,150,255,.4) 9% 12%,transparent 12% 27%,rgba(227,92,193,.32) 27% 30%,transparent 30% 46%,rgba(255,122,77,.28) 46% 49%,transparent 49% 68%,rgba(143,123,255,.35) 68% 71%,transparent 71%);
+  -webkit-mask:radial-gradient(circle,transparent 0 45%,#000 46% 47%,transparent 48% 66%,#000 67% 68%,transparent 69%);
+  mask:radial-gradient(circle,transparent 0 45%,#000 46% 47%,transparent 48% 66%,#000 67% 68%,transparent 69%);
+  animation:orbspin 32s linear infinite;
+}
+.watch-center-ring{
+  position:absolute;left:50%;top:50%;width:190px;height:190px;pointer-events:none;
+  transform:translate(-50%,-50%);border:1px dashed rgba(157,188,255,.34);
+  border-radius:50%;
+  box-shadow:0 0 34px rgba(94,150,255,.16),inset 0 0 26px rgba(94,150,255,.08);
+}
+.watch-center-ring::before,.watch-center-ring::after{content:"";position:absolute;background:rgba(157,188,255,.3)}
+.watch-center-ring::before{left:50%;top:-7px;width:1px;height:7px}.watch-center-ring::after{top:50%;left:-7px;width:7px;height:1px}
+.watch-grid{position:absolute;inset:0;pointer-events:none}
+.watch-user{
+  all:unset;cursor:pointer;position:absolute;left:50%;top:50%;width:154px;height:154px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  pointer-events:auto;will-change:transform,opacity;transform-origin:center;
+  box-sizing:border-box;padding:12px 22px 10px;overflow:hidden;border-radius:50%;
+  border:1px solid rgba(207,224,255,.23);
+  background:linear-gradient(145deg,rgba(29,38,64,.58),rgba(8,11,24,.38));
+  background:
+    radial-gradient(circle at 25% 16%,rgba(255,255,255,.16),transparent 27%),
+    radial-gradient(circle at 78% 76%,color-mix(in srgb,var(--watch-glow) 24%,transparent),transparent 52%),
+    linear-gradient(145deg,rgba(29,38,64,.58),rgba(8,11,24,.38));
+  -webkit-backdrop-filter:blur(12px) saturate(1.28);backdrop-filter:blur(12px) saturate(1.28);
+  box-shadow:0 16px 36px -18px rgba(0,0,0,.84),0 0 24px rgba(94,150,255,.15),inset 0 0 26px rgba(255,255,255,.045);
+  box-shadow:0 16px 36px -18px rgba(0,0,0,.84),0 0 26px color-mix(in srgb,var(--watch-glow) 18%,transparent),inset 0 0 26px rgba(255,255,255,.045);
+  transition:border-color .18s,box-shadow .18s,filter .18s;
+}
+.watch-user::before{
+  content:"";position:absolute;inset:3px;pointer-events:none;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.1);
+  background:conic-gradient(from 30deg,rgba(255,255,255,.16),transparent 18%,rgba(255,255,255,.06) 35%,transparent 58%,color-mix(in srgb,var(--watch-glow) 22%,transparent) 78%,transparent);
+}
+.watch-user::after{
+  content:"";position:absolute;inset:8px;border-radius:50%;pointer-events:none;opacity:.7;
+  background:
+    radial-gradient(circle at 23% 35%,rgba(255,255,255,.86) 0 1px,transparent 1.6px),
+    radial-gradient(circle at 76% 27%,rgba(255,255,255,.55) 0 .8px,transparent 1.4px),
+    radial-gradient(circle at 68% 68%,rgba(255,255,255,.62) 0 .7px,transparent 1.3px);
+  background:
+    radial-gradient(circle at 23% 35%,rgba(255,255,255,.86) 0 1px,transparent 1.6px),
+    radial-gradient(circle at 76% 27%,rgba(255,255,255,.55) 0 .8px,transparent 1.4px),
+    radial-gradient(circle at 68% 68%,rgba(255,255,255,.62) 0 .7px,transparent 1.3px),
+    radial-gradient(circle at 35% 78%,color-mix(in srgb,var(--watch-glow) 80%,white) 0 .8px,transparent 1.5px);
+}
+.watch-user > *{pointer-events:none;z-index:1}
+.watch-user.is-focus{filter:brightness(1.16) saturate(1.14);border-color:rgba(222,233,255,.78);box-shadow:0 18px 40px -14px rgba(0,0,0,.82),0 0 38px rgba(94,150,255,.34),inset 0 0 28px rgba(255,255,255,.1);box-shadow:0 18px 40px -14px rgba(0,0,0,.82),0 0 38px color-mix(in srgb,var(--watch-glow) 42%,transparent),inset 0 0 28px rgba(255,255,255,.1)}
+.watch-user:active{filter:brightness(1.12)}
+.watch-avatar{
+  position:relative;width:43px;height:43px;border-radius:50%;object-fit:cover;flex:none;
+  border:1.5px solid rgba(255,255,255,.82);box-shadow:0 5px 15px rgba(0,0,0,.4),0 0 12px rgba(94,150,255,.22);
+  box-shadow:0 5px 15px rgba(0,0,0,.4),0 0 12px color-mix(in srgb,var(--watch-glow) 30%,transparent);
+}
+.watch-name{position:relative;display:block;max-width:108px;margin-top:4px;font-size:12.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 8px rgba(0,0,0,.65)}
+.watch-intro{
+  position:relative;display:-webkit-box;max-width:112px;margin-top:3px;font-size:9px;line-height:1.32;
+  color:rgba(238,243,255,.82);overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-shadow:0 1px 5px rgba(0,0,0,.7);
+}
+.watch-tags{position:relative;display:flex;justify-content:center;gap:4px;max-width:114px;margin-top:5px;overflow:hidden}
+.watch-tags span{
+  display:block;max-width:56px;padding:2.5px 5px;border-radius:999px;background:rgba(214,226,255,.12);border:1px solid rgba(223,233,255,.1);
+  color:#E1E9FF;font-size:7.5px;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.watch-hint{
+  position:absolute;left:50%;bottom:9px;z-index:180;transform:translateX(-50%);
+  padding:6px 12px;border:0;background:transparent;
+  font-size:9.5px;color:rgba(154,164,188,.62);white-space:nowrap;pointer-events:none;
+}
+@media (prefers-reduced-motion:reduce){.watch-kaleido{animation:none}}
 .ucard{
   break-inside:avoid;margin-bottom:11px;border-radius:20px;background:var(--card);border:1px solid var(--line);
   box-shadow:var(--shadow-card);overflow:hidden;cursor:pointer;transition:transform .15s;
@@ -652,8 +759,9 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .prof-av{
   position:relative;width:74px;height:74px;border-radius:26px;flex:none;
   display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:600;color:#fff;
-  border:1px solid rgba(255,255,255,.18);box-shadow:0 14px 30px -12px rgba(0,0,0,.85);
+  border:1px solid rgba(255,255,255,.18);box-shadow:0 14px 30px -12px rgba(0,0,0,.85);overflow:hidden;
 }
+.prof-av img{width:100%;height:100%;object-fit:cover}
 .prof-av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:17px;height:17px;border-radius:50%;background:var(--teal);border:3px solid #10131D}
 .prof-id{min-width:0}
 .prof-name-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -964,7 +1072,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .backdrop{position:absolute;inset:0;z-index:58;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:all .3s}
 .backdrop.open{opacity:1;visibility:visible}
 .sheet{
-  position:absolute;left:0;right:0;bottom:0;z-index:60;max-height:78%;overflow-y:auto;scrollbar-width:none;
+  position:absolute;left:0;right:0;bottom:0;z-index:60;max-height:78%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
   background:#10131C;border-radius:30px 30px 0 0;border-top:1px solid rgba(255,255,255,.1);
   padding:14px 24px 40px;
   transform:translateY(105%);transition:transform .34s cubic-bezier(.32,.72,.32,1);
@@ -991,7 +1099,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .custom-tag-panel input:focus{outline:1px solid rgba(62,217,164,.55)}.custom-tag-panel button{all:unset;cursor:pointer;padding:0 14px;border-radius:12px;font-size:11px;color:#06140F;background:var(--teal);font-weight:600}
 .tests{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px}
 .test{
-  all:unset;cursor:pointer;padding:16px 14px;border-radius:18px;position:relative;overflow:hidden;
+  all:unset;cursor:pointer;min-width:0;padding:16px 14px;border-radius:18px;position:relative;overflow:hidden;
   border:1px solid rgba(255,255,255,.1);box-shadow:var(--shadow-card);transition:transform .15s;
 }
 .test:active{transform:scale(.97)}
@@ -1306,18 +1414,18 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     </div>
     <div class="knob-hint">拖动旋钮，1 – 10 年任意停留</div>
 
-    <div class="sec-t"><h3>我的选择卡</h3><span>按住卡片，拖进上方实验室</span></div>
+    <div class="sec-t"><h3>我的选择卡</h3><span>悬停展开，按住拖入实验室</span></div>
     <div class="choices" id="choices">
-      <button class="choice" data-name="继续做设计" onclick="pickChoice(this)">
+      <button class="choice" data-name="继续做设计" style="--stamp-glow:rgba(94,150,255,.22)" onclick="pickChoice(this)">
         <span class="g">🎨</span><b>继续做设计</b><p>深耕交互，走专家路线</p>
       </button>
-      <button class="choice" data-name="转 AI 产品" onclick="pickChoice(this)">
+      <button class="choice" data-name="转 AI 产品" style="--stamp-glow:rgba(143,123,255,.24)" onclick="pickChoice(this)">
         <span class="g">🧭</span><b>转 AI 产品</b><p>换赛道，做 AI 产品经理</p>
       </button>
-      <button class="choice" data-name="边做边尝试" onclick="pickChoice(this)">
+      <button class="choice" data-name="边做边尝试" style="--stamp-glow:rgba(62,217,164,.2)" onclick="pickChoice(this)">
         <span class="g">🌱</span><b>边做边尝试</b><p>不辞职，用业余时间试水</p>
       </button>
-      <button class="choice" data-name="放弃探索" onclick="pickChoice(this)">
+      <button class="choice" data-name="放弃探索" style="--stamp-glow:rgba(255,176,103,.18)" onclick="pickChoice(this)">
         <span class="g">🍃</span><b>放弃探索</b><p>先安顿好现在的生活</p>
       </button>
     </div>
@@ -1737,6 +1845,48 @@ const USERS = [
       {age:'35 岁',t:'转行心理咨询',d:'读了三年在职硕士，时薪从 500 变成 0，又慢慢变回 300。'},
     ],
     dims:[['我擅长','听出话背后的那句话'],['我喜欢','来访者说「被你说中了」的瞬间'],['我是什么样的人','内向但不冷'],['我希望认识什么样的人','35 岁以后才换方向的人']]},
+  { id:6,name:'折返跑者',ini:'折',hue:0,sim:false,
+    quote:'从咨询公司离开后，我把最擅长的访谈留了下来，转去做用户研究。',
+    tags:['咨询转用户研究','31 岁','深圳'],bio:'管理咨询 → 用户研究',
+    traj:[{age:'27 岁',t:'进入管理咨询',d:'高强度项目让我快速成长，也让我开始在意工作与人的真实关系。'},{age:'31 岁',t:'转型用户研究',d:'用访谈与行业分析经验进入互联网，从交付报告转向影响产品。'}],
+    dims:[['我擅长','从复杂信息里找到关键矛盾'],['我喜欢','深度访谈'],['我是什么样的人','理性但对人好奇'],['我希望认识什么样的人','想把通用能力迁移到新行业的人']],
+    meta:{age:31,city:'深圳',from:'管理咨询',to:'用户研究',years:'转型 1 年',result:'保留访谈优势，重建产品视角',consulted:16,response:'通常当天回复'}},
+  { id:7,name:'北纬三十度',ini:'北',hue:2,sim:false,
+    quote:'离开大厂去大理，不是躺平，而是第一次自己定义生意和生活。',
+    tags:['运营转主理人','小城生活','34 岁'],bio:'互联网运营 → 民宿主理人',
+    traj:[{age:'29 岁',t:'大厂运营负责人',d:'业务越做越大，但生活只剩会议与复盘。'},{age:'34 岁',t:'搬到大理经营民宿',d:'从选址、改造到获客全部自己做，重新理解了工作与生活的边界。'}],
+    dims:[['我擅长','把体验变成可持续的小生意'],['我喜欢','认识来自不同城市的人'],['我是什么样的人','温和的冒险派'],['我希望认识什么样的人','认真考虑离开大城市的人']],
+    meta:{age:34,city:'大理',from:'互联网运营',to:'民宿主理人',years:'转型 2 年',result:'建立稳定淡旺季经营模型',consulted:38,response:'通常 6 小时内回复'}},
+  { id:8,name:'纸飞机',ini:'纸',hue:4,sim:false,
+    quote:'我没辞职学编程，而是先用公司里没人愿意整理的数据做了第一个项目。',
+    tags:['财务转数据','内部转岗','27 岁'],bio:'财务分析 → 数据分析师',
+    traj:[{age:'25 岁',t:'财务共享中心',d:'重复报表占据了大部分时间，我开始用脚本自动化日常工作。'},{age:'27 岁',t:'内部转岗数据分析',d:'用真实业务数据做作品集，在原公司完成了第一次岗位迁移。'}],
+    dims:[['我擅长','把业务问题变成指标'],['我喜欢','自动化重复工作'],['我是什么样的人','谨慎的实践派'],['我希望认识什么样的人','想低风险转技术岗的人']],
+    meta:{age:27,city:'北京',from:'财务分析',to:'数据分析师',years:'转型 1 年',result:'内部转岗，收入保持稳定',consulted:24,response:'通常 4 小时内回复'}},
+  { id:9,name:'木棉',ini:'棉',hue:1,sim:false,
+    quote:'重新工作后，我没有隐藏全职妈妈的五年，那段经历训练了最真实的协调能力。',
+    tags:['重返职场','生涯咨询','36 岁'],bio:'全职妈妈 → 生涯咨询师',
+    traj:[{age:'30 岁',t:'暂停工作照顾家庭',d:'五年里失去职业身份，也积累了对家庭分工和女性处境的理解。'},{age:'36 岁',t:'成为生涯咨询师',d:'完成系统训练，从同伴互助开始逐步建立咨询案例。'}],
+    dims:[['我擅长','看见选择背后的现实约束'],['我喜欢','陪人找回行动感'],['我是什么样的人','柔软但有边界'],['我希望认识什么样的人','正在重返职场的女性']],
+    meta:{age:36,city:'广州',from:'全职妈妈',to:'生涯咨询师',years:'重返职场 1 年',result:'完成训练并开始稳定接案',consulted:46,response:'通常当天回复'}},
+  { id:10,name:'十点半',ini:'十',hue:3,sim:false,
+    quote:'建筑教会我处理复杂约束，UX 让我终于能更快看到设计是否真的有用。',
+    tags:['建筑转 UX','作品集','29 岁'],bio:'建筑设计 → UX 设计师',
+    traj:[{age:'24 岁',t:'进入建筑事务所',d:'习惯了长周期项目与复杂协作，但很难及时得到用户反馈。'},{age:'29 岁',t:'转型 UX 设计',d:'用半年完成三个真实项目，进入 SaaS 团队负责企业端体验。'}],
+    dims:[['我擅长','处理复杂系统与空间关系'],['我喜欢','快速验证设计'],['我是什么样的人','耐心的结构控'],['我希望认识什么样的人','从传统设计转数字产品的人']],
+    meta:{age:29,city:'苏州',from:'建筑设计',to:'UX 设计师',years:'转型 2 年',result:'进入 SaaS 团队负责核心流程',consulted:29,response:'通常 8 小时内回复'}},
+  { id:11,name:'河岸书店',ini:'书',hue:2,sim:false,
+    quote:'四十岁开书店不是浪漫冲动，而是一份算过租金、库存和现金流的计划。',
+    tags:['广告转书店','40 岁','实体创业'],bio:'广告策划 → 独立书店主理人',
+    traj:[{age:'35 岁',t:'广告公司创意总监',d:'做过很多品牌故事，却越来越想经营一个真实的公共空间。'},{age:'40 岁',t:'开设社区书店',d:'用活动策划和会员制降低单纯卖书的经营风险。'}],
+    dims:[['我擅长','策划让人愿意参与的内容'],['我喜欢','社区里的慢关系'],['我是什么样的人','现实主义的理想派'],['我希望认识什么样的人','认真考虑实体创业的人']],
+    meta:{age:40,city:'成都',from:'广告策划',to:'独立书店主理人',years:'创业第 2 年',result:'书店实现月度现金流平衡',consulted:33,response:'通常当天回复'}},
+  { id:12,name:'远山灯塔',ini:'灯',hue:0,sim:false,
+    quote:'工程师转产品营销后，我才发现解释技术不是降维，而是另一种专业。',
+    tags:['技术转市场','产品营销','32 岁'],bio:'后端工程师 → 产品营销',
+    traj:[{age:'26 岁',t:'后端工程师',d:'喜欢技术，也常常主动给客户解释复杂功能。'},{age:'32 岁',t:'转型产品营销',d:'从技术布道切入，负责开发者产品的定位、内容和上市。'}],
+    dims:[['我擅长','把技术讲成人能理解的价值'],['我喜欢','连接产品与市场'],['我是什么样的人','外向的工程师'],['我希望认识什么样的人','想从技术走向业务的人']],
+    meta:{age:32,city:'上海',from:'后端工程师',to:'产品营销',years:'转型 2 年',result:'负责两条开发者产品上市',consulted:21,response:'通常 4 小时内回复'}},
 ];
 const PROFILE_META = {
   1:{
@@ -1795,6 +1945,20 @@ const PROFILE_META = {
     result:'完成实习，开始稳定接案',consulted:31,response:'通常当天回复'
   }
 };
+function profileMetaFor(u){
+  if(PROFILE_META[u.id]) return PROFILE_META[u.id];
+  const m=u.meta;
+  return {
+    ...m,
+    intro:`${u.quote} ${u.traj[0].d}`,
+    full:u.traj.map(t=>`${t.age}，${t.t}：${t.d}`).join(' '),
+    advice:{
+      decision:[`先用真实的小项目验证自己是否适合「${m.to}」。`,'算清时间、现金流与最坏结果，再决定是否离开当前岗位。','找到至少三位已经走过相似路径的人交叉验证。'],
+      ability:[`把「${m.from}」积累的通用能力翻译成新岗位能理解的证据。`,'优先补齐一个最影响入场的短板，不追求一次学完。','用真实交付建立作品，而不是只展示课程练习。'],
+      interview:['用具体行动解释转型，不把故事包装成一条直线。','讲清旧经历如何帮助你解决新岗位的问题。','主动说明仍在补齐的短板和下一步计划。']
+    }
+  };
+}
 const BOUNTIES = [
   {q:'有没有人从设计转数据分析？想听第一年最难的是什么', r:'悬赏 3 个真实故事', n:'12 人回应'},
   {q:'26 岁要不要辞职考研？家里催我先稳定下来', r:'悬赏 5 个亲历者', n:'31 人回应'},
@@ -2165,7 +2329,19 @@ dialEl.addEventListener('pointermove', e=>{
 
 /* ================= 拖拽选择卡进实验室（rAF 平滑跟随） ================= */
 const phoneEl = document.querySelector('.phone');
+const choicesDeck = document.getElementById('choices');
 let cardDrag = null, justDragged = false;
+choicesDeck.addEventListener('pointerdown', e=>{
+  if(e.pointerType==='mouse' || choicesDeck.classList.contains('fanned')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  choicesDeck.classList.add('fanned');
+}, true);
+document.addEventListener('pointerdown', e=>{
+  if(e.pointerType!=='mouse' && !choicesDeck.contains(e.target)){
+    choicesDeck.classList.remove('fanned');
+  }
+}, true);
 function overDialPt(x, y){
   const dr = dialEl.getBoundingClientRect();
   return Math.hypot(x-(dr.left+dr.width/2), y-(dr.top+dr.height/2)) < dr.width/2 + 30;
@@ -2178,69 +2354,93 @@ function ghostLoop(st){
   st.ghost.style.transform = `translate(${st.gx}px,${st.gy}px) translate(-50%,-50%) rotate(${tilt}deg)`;
   st.raf = requestAnimationFrame(()=>ghostLoop(st));
 }
+function beginChoiceDrag(card,e){
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  if(cardDrag){
+    cardDrag.done = true;
+    if(cardDrag.raf) cancelAnimationFrame(cardDrag.raf);
+    cardDrag.card.classList.remove('dragging');
+    if(cardDrag.ghost) cardDrag.ghost.remove();
+  }
+  document.querySelectorAll('.drag-ghost').forEach(g=>g.remove());
+  cardDrag = {
+    card,pointerId:e.pointerId,sx:e.clientX,sy:e.clientY,
+    cx:e.clientX,cy:e.clientY,active:false,ghost:null,hot:false,done:false
+  };
+  try{ card.setPointerCapture(e.pointerId); }catch(_){}
+}
+function moveChoiceDrag(e){
+  const st = cardDrag;
+  if(!st || e.pointerId!==st.pointerId) return;
+  st.cx = e.clientX; st.cy = e.clientY;
+  const pr = phoneEl.getBoundingClientRect();
+  if(!st.active){
+    if(Math.hypot(e.clientX-st.sx,e.clientY-st.sy) < 8) return;
+    st.active = true;
+    const g = document.createElement('div');
+    g.className = 'drag-ghost';
+    g.innerHTML = `<span>${st.card.querySelector('.g').textContent}</span>${st.card.dataset.name}`;
+    phoneEl.appendChild(g);
+    st.ghost = g;
+    st.gx = st.tx = e.clientX-pr.left;
+    st.gy = st.ty = e.clientY-pr.top;
+    g.style.transform = `translate(${st.gx}px,${st.gy}px) translate(-50%,-50%)`;
+    st.card.classList.add('dragging');
+    ghostLoop(st);
+  }
+  st.tx = e.clientX-pr.left;
+  st.ty = e.clientY-pr.top;
+  const hot = overDialPt(e.clientX,e.clientY);
+  dialEl.classList.toggle('drop-hot',hot);
+  if(hot!==st.hot){
+    $('#dialPick').textContent = hot ? '松手，放入实验室' : (labPick || '把选择卡拖进来');
+    st.hot = hot;
+  }
+  e.preventDefault();
+}
+function finishChoiceDrag(e){
+  const st = cardDrag;
+  if(!st || e.pointerId!==st.pointerId) return;
+  cardDrag = null;
+  try{
+    if(st.card.hasPointerCapture(st.pointerId)) st.card.releasePointerCapture(st.pointerId);
+  }catch(_){}
+  if(!st.active) return; /* 纯点击：交给 onclick */
+  st.done = true;
+  if(st.raf) cancelAnimationFrame(st.raf);
+  justDragged = true;
+  st.card.classList.remove('dragging');
+  dialEl.classList.remove('drop-hot');
+  const pr = phoneEl.getBoundingClientRect();
+  const ghost = st.ghost;
+  const px = Number.isFinite(e.clientX) ? e.clientX : st.cx;
+  const py = Number.isFinite(e.clientY) ? e.clientY : st.cy;
+  const dropped = st.hot || overDialPt(px,py);
+  if(dropped){
+    const dr = dialEl.getBoundingClientRect();
+    ghost.style.transition = 'transform .38s cubic-bezier(.3,.9,.3,1), opacity .38s ease';
+    ghost.style.transform = `translate(${dr.left+dr.width/2-pr.left}px,${dr.top+dr.height/2-pr.top}px) translate(-50%,-50%) scale(.2)`;
+    ghost.style.opacity = '0';
+    setTimeout(()=>ghost.remove(),420);
+    pickChoice(st.card);
+    const pk = $('#dialPick');
+    pk.classList.remove('pop'); void pk.offsetWidth; pk.classList.add('pop');
+    toast(`「${st.card.dataset.name}」已放入实验室`);
+  }else{
+    const cr = st.card.getBoundingClientRect();
+    ghost.style.transition = 'transform .3s ease, opacity .3s ease';
+    ghost.style.transform = `translate(${cr.left+cr.width/2-pr.left}px,${cr.top+cr.height/2-pr.top}px) translate(-50%,-50%) scale(.6)`;
+    ghost.style.opacity = '0';
+    setTimeout(()=>ghost.remove(),340);
+    $('#dialPick').textContent = labPick || '把选择卡拖进来';
+  }
+}
 document.querySelectorAll('.choice').forEach(card=>{
-  card.addEventListener('pointerdown', e=>{
-    document.querySelectorAll('.drag-ghost').forEach(g=>g.remove());
-    cardDrag = {card, sx:e.clientX, sy:e.clientY, active:false, ghost:null, hot:false, done:false};
-    card.setPointerCapture(e.pointerId);
-  });
-  card.addEventListener('pointermove', e=>{
-    if(!cardDrag || cardDrag.card!==card) return;
-    const pr = phoneEl.getBoundingClientRect();
-    if(!cardDrag.active){
-      if(Math.hypot(e.clientX-cardDrag.sx, e.clientY-cardDrag.sy) < 8) return;
-      cardDrag.active = true;
-      const g = document.createElement('div');
-      g.className = 'drag-ghost';
-      g.innerHTML = `<span>${card.querySelector('.g').textContent}</span>${card.dataset.name}`;
-      phoneEl.appendChild(g);
-      cardDrag.ghost = g;
-      cardDrag.gx = cardDrag.tx = e.clientX - pr.left;
-      cardDrag.gy = cardDrag.ty = e.clientY - pr.top;
-      g.style.transform = `translate(${cardDrag.gx}px,${cardDrag.gy}px) translate(-50%,-50%)`;
-      card.classList.add('dragging');
-      ghostLoop(cardDrag);
-    }
-    cardDrag.tx = e.clientX - pr.left;
-    cardDrag.ty = e.clientY - pr.top;
-    const hot = overDialPt(e.clientX, e.clientY);
-    dialEl.classList.toggle('drop-hot', hot);
-    if(hot !== cardDrag.hot){
-      $('#dialPick').textContent = hot ? '松手，放入实验室' : (labPick || '把选择卡拖进来');
-      cardDrag.hot = hot;
-    }
-  });
-  ['pointerup','pointercancel'].forEach(ev=>card.addEventListener(ev, e=>{
-    if(!cardDrag || cardDrag.card!==card) return;
-    const st = cardDrag; cardDrag = null;
-    if(!st.active) return; /* 纯点击：交给 onclick */
-    st.done = true;
-    if(st.raf) cancelAnimationFrame(st.raf);
-    justDragged = true;
-    card.classList.remove('dragging');
-    dialEl.classList.remove('drop-hot');
-    const pr = phoneEl.getBoundingClientRect();
-    const ghost = st.ghost;
-    if(overDialPt(e.clientX, e.clientY)){
-      const dr = dialEl.getBoundingClientRect();
-      ghost.style.transition = 'transform .38s cubic-bezier(.3,.9,.3,1), opacity .38s ease';
-      ghost.style.transform = `translate(${dr.left+dr.width/2-pr.left}px,${dr.top+dr.height/2-pr.top}px) translate(-50%,-50%) scale(.2)`;
-      ghost.style.opacity = '0';
-      setTimeout(()=>ghost.remove(), 420);
-      pickChoice(card);
-      const pk = $('#dialPick');
-      pk.classList.remove('pop'); void pk.offsetWidth; pk.classList.add('pop');
-      toast(`「${card.dataset.name}」已放入实验室`);
-    } else {
-      const cr = card.getBoundingClientRect();
-      ghost.style.transition = 'transform .3s ease, opacity .3s ease';
-      ghost.style.transform = `translate(${cr.left+cr.width/2-pr.left}px,${cr.top+cr.height/2-pr.top}px) translate(-50%,-50%) scale(.6)`;
-      ghost.style.opacity = '0';
-      setTimeout(()=>ghost.remove(), 340);
-      $('#dialPick').textContent = labPick || '把选择卡拖进来';
-    }
-  }));
+  card.addEventListener('pointerdown',e=>beginChoiceDrag(card,e));
 });
+document.addEventListener('pointermove',moveChoiceDrag,{passive:false});
+document.addEventListener('pointerup',finishChoiceDrag);
+document.addEventListener('pointercancel',finishChoiceDrag);
 document.getElementById('choices').addEventListener('click', e=>{
   if(justDragged){ e.stopPropagation(); e.preventDefault(); justDragged = false; }
 }, true);
@@ -2299,6 +2499,177 @@ function bountyHTML(b){
     <p>${b.n}</p>
   </div>`;
 }
+const WATCH_DX=160,WATCH_DY=184,WATCH_COLS=9,WATCH_ROWS=7;
+const WATCH_NAME_HEADS=['云间','南岸','北辰','晚晴','松野','青屿','白露','橙湾','星河','木槿','晴川','远帆','林深','小满','月桥','山止','海盐','春序','微光','野渡','风眠','竹影','晨雾','栖迟'];
+const WATCH_NAME_TAILS=['拾光','行舟','折页','听风','慢跑','看海','造梦','写信','观星','种树','漫游','读城','寻路','开花','向晚','未央','煮茶','登山','停云','问路','放映','织网','点灯','候鸟'];
+const WATCH_AVATARS=Array.from({length:16},(_,i)=>`assets/community-avatars/avatar-${String(i+1).padStart(2,'0')}.png`);
+const watchUserCache=new Map(),watchProfileUsers=new Map();
+let watchUserSequence=1000;
+let watchCommunity = null;
+function watchHash(q,r,salt=0){
+  let h=Math.imul(q,73856093)^Math.imul(r,19349663)^Math.imul(salt+1,83492791);
+  h=Math.imul(h^(h>>>16),2246822507);
+  h=Math.imul(h^(h>>>13),3266489909);
+  return (h^(h>>>16))>>>0;
+}
+function watchUserAt(q,r){
+  const key=`${q}:${r}`;
+  if(watchUserCache.has(key)){
+    const cached=watchUserCache.get(key);
+    watchUserCache.delete(key);watchUserCache.set(key,cached);
+    return cached;
+  }
+  const seed=watchHash(q,r);
+  const base=USERS[seed%USERS.length],m=profileMetaFor(base);
+  const name=WATCH_NAME_HEADS[seed%WATCH_NAME_HEADS.length]+WATCH_NAME_TAILS[(seed>>>8)%WATCH_NAME_TAILS.length];
+  const avatarIndex=((q*7+r*11)%WATCH_AVATARS.length+WATCH_AVATARS.length)%WATCH_AVATARS.length;
+  const u={
+    id:watchUserSequence++,name,ini:name.slice(0,1),avatar:WATCH_AVATARS[avatarIndex],hue:(seed>>>12)%5,sim:false,
+    quote:base.quote,tags:base.tags.slice(0,2),bio:base.bio,
+    traj:base.traj.map(t=>({...t})),dims:base.dims.map(d=>[...d]),
+    meta:{age:m.age,city:m.city,from:m.from,to:m.to,years:m.years,result:m.result,consulted:m.consulted,response:m.response}
+  };
+  watchUserCache.set(key,u);
+  if(watchUserCache.size>360) watchUserCache.delete(watchUserCache.keys().next().value);
+  return u;
+}
+function watchCommunityHTML(){
+  return `
+    <div class="watch-kaleido"></div>
+    <div class="watch-center-ring"></div>
+    <div class="watch-grid" id="watchGrid">
+      ${Array.from({length:WATCH_COLS*WATCH_ROWS},()=>`
+        <button class="watch-user">
+          <img class="watch-avatar" alt="" draggable="false">
+          <span class="watch-name"></span>
+          <span class="watch-intro"></span>
+          <span class="watch-tags"></span>
+        </button>`).join('')}
+    </div>
+    <div class="watch-hint">无限滑动浏览 · 点击卡片查看主页</div>`;
+}
+function bindWatchCard(btn,u,key){
+  if(btn.dataset.key===key) return;
+  btn.dataset.key=key;
+  btn.style.setProperty('--watch-glow',HUES[u.hue].a);
+  const avatar=btn.querySelector('.watch-avatar');
+  avatar.src=u.avatar;avatar.alt=`${u.name}的头像`;
+  btn.querySelector('.watch-name').textContent=u.name;
+  btn.querySelector('.watch-intro').textContent=u.bio;
+  btn.querySelector('.watch-tags').innerHTML=u.tags.map(t=>`<span>${t}</span>`).join('');
+}
+function updateWatchCommunity(st){
+  if(!st || watchCommunity!==st) return;
+  let slot=0,nearest=null,minDist=Infinity;
+  const centerQ=Math.round(-st.x/WATCH_DX);
+  for(let dq=-Math.floor(WATCH_COLS/2);dq<=Math.floor(WATCH_COLS/2);dq++){
+    const q=centerQ+dq,qOffset=(Math.abs(q)%2)*WATCH_DY/2;
+    const centerR=Math.round((-st.y-qOffset)/WATCH_DY);
+    for(let dr=-Math.floor(WATCH_ROWS/2);dr<=Math.floor(WATCH_ROWS/2);dr++){
+      const r=centerR+dr,btn=st.buttons[slot++],wx=q*WATCH_DX,wy=r*WATCH_DY+qOffset;
+      const x=wx+st.x,y=wy+st.y,key=`${q}:${r}`,dist=Math.hypot(x,y);
+      const focus=Math.max(0,1-dist/460),scale=.62+focus*.58,opacity=.28+focus*.72;
+      bindWatchCard(btn,watchUserAt(q,r),key);
+      btn.dataset.wx=wx;btn.dataset.wy=wy;
+      btn.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px)) scale(${scale})`;
+      btn.style.opacity=opacity;
+      btn.style.zIndex=String(100-Math.round(dist/10));
+      if(dist<minDist){minDist=dist;nearest=btn;}
+    }
+  }
+  st.buttons.forEach(btn=>btn.classList.toggle('is-focus',btn===nearest));
+}
+function cancelWatchMotion(){
+  if(watchCommunity?.raf){
+    cancelAnimationFrame(watchCommunity.raf);
+    watchCommunity.raf=null;
+  }
+}
+function snapWatchCommunity(st){
+  if(!st || watchCommunity!==st) return;
+  let nearest = st.buttons[0],minDist = Infinity;
+  st.buttons.forEach(btn=>{
+    const dist = Math.hypot(+btn.dataset.wx+st.x,+btn.dataset.wy+st.y);
+    if(dist<minDist){ minDist=dist; nearest=btn; }
+  });
+  const tx=-(+nearest.dataset.wx),ty=-(+nearest.dataset.wy);
+  const step = ()=>{
+    if(watchCommunity!==st) return;
+    st.x += (tx-st.x)*.18;
+    st.y += (ty-st.y)*.18;
+    updateWatchCommunity(st);
+    if(Math.abs(tx-st.x)+Math.abs(ty-st.y)>.7) st.raf=requestAnimationFrame(step);
+    else{ st.x=tx;st.y=ty;updateWatchCommunity(st);st.raf=null; }
+  };
+  st.raf=requestAnimationFrame(step);
+}
+function runWatchInertia(st,vx,vy){
+  if(!st || watchCommunity!==st) return;
+  let mx=vx*16,my=vy*16;
+  const step = ()=>{
+    if(watchCommunity!==st) return;
+    st.x+=mx;st.y+=my;mx*=.88;my*=.88;
+    updateWatchCommunity(st);
+    if(Math.abs(mx)+Math.abs(my)>.55) st.raf=requestAnimationFrame(step);
+    else{ st.raf=null;snapWatchCommunity(st); }
+  };
+  st.raf=requestAnimationFrame(step);
+}
+function beginWatchCommunity(e){
+  const st=watchCommunity;
+  if(!st || (e.pointerType==='mouse' && e.button!==0)) return;
+  cancelWatchMotion();
+  st.drag={
+    pointerId:e.pointerId,sx:e.clientX,sy:e.clientY,startX:st.x,startY:st.y,
+    lx:e.clientX,ly:e.clientY,lt:performance.now(),vx:0,vy:0,moved:false
+  };
+  st.stage.classList.add('dragging');
+}
+function moveWatchCommunity(e){
+  const st=watchCommunity,d=st?.drag;
+  if(!d || e.pointerId!==d.pointerId) return;
+  const dx=e.clientX-d.sx,dy=e.clientY-d.sy;
+  if(!d.moved && Math.hypot(dx,dy)>4) d.moved=true;
+  if(!d.moved) return;
+  const now=performance.now(),dt=Math.max(8,now-d.lt);
+  d.vx=(e.clientX-d.lx)/dt;d.vy=(e.clientY-d.ly)/dt;
+  d.lx=e.clientX;d.ly=e.clientY;d.lt=now;
+  st.x=d.startX+dx;st.y=d.startY+dy;
+  updateWatchCommunity(st);
+  e.preventDefault();
+}
+function endWatchCommunity(e){
+  const st=watchCommunity,d=st?.drag;
+  if(!d || e.pointerId!==d.pointerId) return;
+  st.drag=null;st.stage.classList.remove('dragging');
+  if(d.moved){
+    st.justDragged=true;
+    setTimeout(()=>{if(watchCommunity===st)st.justDragged=false;},100);
+    runWatchInertia(st,d.vx,d.vy);
+  }
+}
+function initWatchCommunity(){
+  const stage=document.getElementById('commFeed');
+  const buttons=[...stage.querySelectorAll('.watch-user')];
+  watchCommunity={stage,buttons,x:0,y:0,drag:null,raf:null,justDragged:false};
+  stage.addEventListener('pointerdown',beginWatchCommunity);
+  stage.addEventListener('click',e=>{
+    if(watchCommunity?.justDragged){e.preventDefault();e.stopPropagation();return;}
+    const card=e.target.closest('.watch-user');
+    if(card) watchOpenUser(card.dataset.key);
+  });
+  updateWatchCommunity(watchCommunity);
+}
+function watchOpenUser(key){
+  if(watchCommunity?.justDragged) return;
+  const u=watchUserCache.get(key);
+  if(!u) return;
+  watchProfileUsers.set(u.id,u);
+  openProfile(u.id);
+}
+document.addEventListener('pointermove',moveWatchCommunity,{passive:false});
+document.addEventListener('pointerup',endWatchCommunity);
+document.addEventListener('pointercancel',endWatchCommunity);
 function commTab(i, btn){
   document.querySelectorAll('#commTabs button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
@@ -2306,8 +2677,16 @@ function commTab(i, btn){
 }
 function renderComm(mode){
   const f = $('#commFeed');
-  if(mode===1){ f.innerHTML = BOUNTIES.map(bountyHTML).join(''); }
-  else{ f.innerHTML = USERS.map(ucardHTML).join(''); }
+  cancelWatchMotion();
+  watchCommunity=null;
+  if(mode===1){
+    f.className='masonry';
+    f.innerHTML=BOUNTIES.map(bountyHTML).join('');
+  }else{
+    f.className='masonry watch-mode';
+    f.innerHTML=watchCommunityHTML();
+    initWatchCommunity();
+  }
 }
 
 /* ================= 万花筒抽取 ================= */
@@ -2401,7 +2780,7 @@ const PROFILE_SERVICES = [
 ];
 
 function openProfile(id){
-  const u = USERS.find(x=>x.id===id);
+  const u = USERS.find(x=>x.id===id) || watchProfileUsers.get(id);
   if(!u) return;
   activeProfileUser = u;
   activeProfileTab = 'story';
@@ -2415,14 +2794,14 @@ function openProfile(id){
 function renderProfile(){
   const u = activeProfileUser;
   if(!u) return;
-  const m = PROFILE_META[u.id];
+  const m = profileMetaFor(u);
   const h = HUES[u.hue];
   const unlocked = unlockedProfileIds.has(u.id);
   const adviceKind = 'decision';
   $('#profileScroll').innerHTML = `
     <div class="prof-hero">
       <div class="prof-row">
-        <div class="prof-av" style="background:${h.g}">${u.ini}</div>
+        <div class="prof-av" style="background:${h.g}">${u.avatar?`<img src="${u.avatar}" alt="${u.name}的头像">`:u.ini}</div>
         <div class="prof-id">
           <div class="prof-name-line"><h2>${u.name}</h2><span class="prof-verified">经历已验证</span></div>
           <p class="prof-loc">${m.age} 岁 · ${m.city}</p>
@@ -2528,7 +2907,7 @@ function toggleProfileMilestone(btn){
 }
 
 function profileAdviceHTML(kind){
-  const m = PROFILE_META[activeProfileUser.id];
+  const m = profileMetaFor(activeProfileUser);
   const unlocked = unlockedProfileIds.has(activeProfileUser.id);
   const tips = m.advice[kind];
   return `
@@ -2575,7 +2954,7 @@ function openProfileService(id){
   if(!activeProfileUser) return;
   const service = PROFILE_SERVICES.find(s=>s.id===id);
   if(!service) return;
-  const m = PROFILE_META[activeProfileUser.id];
+  const m = profileMetaFor(activeProfileUser);
   const body = $('#profileModalBody');
   if(id==='consult'){
     body.innerHTML = `
