@@ -20,12 +20,14 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: frontend
+      - path: App
+      - path: Core
+      - path: Features
     dependencies:
       - package: Supabase
         product: Supabase
     info:
-      path: frontend/Info.plist
+      path: Info.plist
       properties:
         CFBundleDisplayName: 万花筒
         UILaunchScreen: {}
