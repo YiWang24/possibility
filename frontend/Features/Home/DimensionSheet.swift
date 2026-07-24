@@ -17,6 +17,9 @@ struct DimensionSheet: View {
     @State private var custom: [String] = []         // 自定义词
     @State private var showCustomInput = false
     @State private var customText = ""
+    @State private var activeAssessment: AssessmentKind?
+    /// 卡牌游戏启动回调（Phase C 接入；nil → toast 占位）
+    var onLaunchCardGame: ((String) -> Void)? = nil
 
     private var cfg: DimensionConfig { DimensionData.config(key) }
 
@@ -59,6 +62,15 @@ struct DimensionSheet: View {
         }
         .scrollIndicators(.hidden)
         .onAppear { if selected.isEmpty { selected = initialSelected } }
+        .fullScreenCover(item: $activeAssessment) { kind in
+            // 小工具测评：结果写回当前维度（原型 saveDemoAssessmentToProfile 目标一致）
+            AssessmentFlowView(kind: kind) { _, tags in
+                onSave(tags)
+                toast.show("结果已写入画像 · 原始答案默认私密")
+                dismiss()
+            }
+            .environment(toast)
+        }
     }
 
     // MARK: 关键词云
@@ -158,7 +170,15 @@ struct DimensionSheet: View {
     private var toolGrid: some View {
         VStack(spacing: 11) {
             ForEach(cfg.tools) { tool in
-                Button { toast.show("「\(tool.name)」即将上线") } label: {
+                Button {
+                    if let kind = tool.assessment {
+                        activeAssessment = kind
+                    } else if let game = tool.cardGame, let onLaunchCardGame {
+                        onLaunchCardGame(game)
+                    } else {
+                        toast.show("「\(tool.name)」即将上线")
+                    }
+                } label: {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(tool.name).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)

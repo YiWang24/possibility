@@ -6,10 +6,14 @@ import Foundation
 
 struct HomeView: View {
     @Environment(ToastCenter.self) private var toast
+    @Environment(SupabaseService.self) private var supabase
     @State private var model = HomeModel()
     @State private var chatLaunch: ChatLaunch?
     @State private var diaryLaunch: DiaryLaunch?
     @State private var activeDimension: DimensionKey?
+    @State private var showStudio = false
+    @State private var showCardHub = false
+    @State private var launchGame: CardGameKind?
 
     var body: some View {
         ScrollView {
@@ -19,6 +23,8 @@ struct HomeView: View {
                     .padding(.top, 18)
                 HomeAskCard(model: model, onSend: send)
                     .padding(.top, 22)
+                LifeEntryButton { showCardHub = true }
+                    .padding(.top, 14)
                 portraitSection
                     .padding(.top, 24)
             }
@@ -28,7 +34,7 @@ struct HomeView: View {
         }
         .scrollIndicators(.hidden)
         .screenBackground()
-        .onAppear { model.loadPortrait() }
+        .onAppear { model.loadPortrait(using: supabase) }
         .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0) }
         .fullScreenCover(item: $diaryLaunch) { launch in
             DiaryDetailView(
@@ -40,12 +46,32 @@ struct HomeView: View {
             )
         }
         .sheet(item: $activeDimension) { key in
-            DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key)) { keywords in
-                model.saveDimension(key, keywords: keywords)
-            }
+            DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key), onSave: { keywords in
+                model.saveDimension(key, keywords: keywords, using: supabase)
+            }, onLaunchCardGame: { game in
+                activeDimension = nil
+                launchGame = CardGameKind(rawValue: game)
+            })
             .presentationDetents([.fraction(0.82)])
             .presentationDragIndicator(.visible)
             .presentationBackground(Color(hex: 0x10131C))
+        }
+        .fullScreenCover(isPresented: $showStudio) {
+            ProfileStudioView(home: model) { key in
+                activeDimension = key
+            }
+            .environment(toast)
+            .environment(supabase)
+        }
+        .fullScreenCover(isPresented: $showCardHub) {
+            CardGameHubView(home: model)
+                .environment(toast)
+                .environment(supabase)
+        }
+        .fullScreenCover(item: $launchGame) { kind in
+            CardGameView(kind: kind, home: model)
+                .environment(toast)
+                .environment(supabase)
         }
     }
 
@@ -85,23 +111,22 @@ struct HomeView: View {
     private var portraitSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "探索更多画像 ›", isLink: true) {
-                toast.show("画像工作室即将上线")
+                showStudio = true
             }
             PortraitCard(
                 model: model,
-                animationPaused: chatLaunch != nil || diaryLaunch != nil,
-                onTapDim: handleDimTap,
-                onTapLifeGame: { toast.show("人生卡牌即将上线") }
+                animationPaused: chatLaunch != nil || diaryLaunch != nil || showStudio,
+                onTapDim: handleDimTap
             )
         }
     }
 
-    /// 维度点击路由：软维度开浮层；人格底色走工作室（暂占位）
+    /// 维度点击路由：软维度开浮层；人格底色进画像工作室
     private func handleDimTap(_ dim: HomeModel.PortraitDim) {
         if let key = dim.dimensionKey {
             activeDimension = key
         } else {
-            toast.show("人格底色测评即将上线")
+            showStudio = true
         }
     }
 }

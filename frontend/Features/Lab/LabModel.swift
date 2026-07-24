@@ -39,6 +39,51 @@ final class LabModel {
 
     var canSim: Bool { pick != nil && !loading }
 
+    // MARK: 底线卡（原型 carry-section / CARRY_META）
+
+    struct CarryCard: Identifiable, Hashable {
+        let id: String
+        let glyph: String
+        let name: String
+        let source: String
+        /// 最坏结果里的底线风险描述（floor test）
+        let risk: String
+    }
+
+    /// 一起带走的底线卡 id（最多 3 张）
+    var carry: [String] = []
+
+    static let carryCards: [CarryCard] = [
+        CarryCard(id: "income", glyph: "▣", name: "稳定收入", source: "对话线索",
+                  risk: "转型不顺时，收入可能在一段时间内下降，生活安全感受到直接冲击。"),
+        CarryCard(id: "health", glyph: "＋", name: "身体不透支", source: "日记线索",
+                  risk: "反复尝试与加倍学习可能挤压睡眠和恢复时间，身体先替选择支付代价。"),
+        CarryCard(id: "relation", glyph: "♡", name: "重要关系", source: "关系画像",
+                  risk: "压力与时间投入可能让你减少陪伴，也可能加剧家人对这次改变的不理解。"),
+        CarryCard(id: "craft", glyph: "✦", name: "专业积累", source: "职业画像",
+                  risk: "最差情况下，新岗位没有站稳，原有专业身份也因中断而需要重新证明。"),
+        CarryCard(id: "creation", glyph: "◇", name: "创造实感", source: "动态画像",
+                  risk: "你可能进入一个更偏协调和推进的岗位，却发现真正动手创造的时刻反而更少。"),
+        CarryCard(id: "exit", glyph: "↩", name: "保留退路", source: "处境扫描",
+                  risk: "如果投入过深、现金流下降或履历断裂，回到原路径的成本会明显升高。"),
+    ]
+
+    static func carryCard(_ id: String) -> CarryCard? {
+        carryCards.first { $0.id == id }
+    }
+
+    /// 底线卡开关；满 3 张时返回提示
+    func toggleCarry(_ id: String) -> String? {
+        if let i = carry.firstIndex(of: id) {
+            carry.remove(at: i)
+        } else if carry.count < 3 {
+            carry.append(id)
+        } else {
+            return "最多带走 3 张底线卡"
+        }
+        return nil
+    }
+
     // MARK: 交互
 
     func pickChoice(_ name: String) {
@@ -72,7 +117,8 @@ final class LabModel {
         let people = Array(pool.filter { $0.isSimilar }.prefix(3))
 
         result = SimResultData(question: question, choice: pick, years: year,
-                               scenarios: resolved, people: people.isEmpty ? Array(pool.prefix(3)) : people)
+                               scenarios: resolved, people: people.isEmpty ? Array(pool.prefix(3)) : people,
+                               carry: carry)
         loading = false
     }
 

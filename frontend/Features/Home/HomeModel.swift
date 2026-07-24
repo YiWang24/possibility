@@ -63,7 +63,7 @@ final class HomeModel {
         timerTask = nil
     }
 
-    /// 完成录音 → 分析情绪与关键词（analyze-diary，2.5s 超时即走兜底，不阻塞 UI）
+    /// 完成录音 → 分析情绪与关键词（analyze-diary 真实 LLM，12s 超时才走兜底）
     func analyzeDiary(using supabase: SupabaseService) async {
         finishRecording()
         analyzing = true
@@ -71,7 +71,7 @@ final class HomeModel {
         let transcript = sampleTranscript
         let remote = await withTaskGroup(of: DiaryAnalysis?.self) { group -> DiaryAnalysis? in
             group.addTask { try? await supabase.analyzeDiary(transcript: transcript) }
-            group.addTask { try? await Task.sleep(for: .seconds(2.5)); return nil }
+            group.addTask { try? await Task.sleep(for: .seconds(12)); return nil }
             let first = await group.next() ?? nil
             group.cancelAll()
             return first
@@ -111,8 +111,8 @@ final class HomeModel {
     /// 人格底色（走工作室测评，暂未接入 → 常为 nil）
     var personalityText: String? { filledDims["personality"] }
 
-    /// 从本地读取已填维度（冷启动调用）
-    func loadPortrait() {
+    /// 从本地读取已填维度（冷启动调用），随后云端画像合并（换机 / 重装漫游）
+    func loadPortrait(using supabase: SupabaseService? = nil) {
         var loaded: [String: String] = [:]
         for key in ["personality"] + DimensionKey.allCases.map(\.rawValue) {
             if let v = store.string(forKey: Self.storePrefix + key), !v.isEmpty {
@@ -120,6 +120,18 @@ final class HomeModel {
             }
         }
         filledDims = loaded
+        loadLifeSignature()
+
+        guard let supabase else { return }
+        Task { [weak self] in
+            guard let remote = try? await supabase.fetchRemoteProfile() else { return }
+            guard let self else { return }
+            // 远端非空、本地为空的键补进来；本地已有的以本地为准（刚编辑过更新）
+            for (key, value) in remote.dims where !value.isEmpty && self.filledDims[key] == nil {
+                self.filledDims[key] = value
+                self.store.set(value, forKey: Self.storePrefix + key)
+            }
+        }
     }
 
     /// 已保存关键词拆回数组（重开浮层时回显已选）
@@ -128,12 +140,23 @@ final class HomeModel {
         return text.components(separatedBy: " · ").filter { !$0.isEmpty }
     }
 
-    /// 保存某维度的关键词选择 → 回填 + 持久化
-    func saveDimension(_ key: DimensionKey, keywords: [String]) {
-        let text = keywords.prefix(5).joined(separator: " · ")
+    /// 保存某维度的关键词选择 → 回填 + 本地持久化 + 云端落库（失败静默，本地已存）
+    func saveDimension(_ key: DimensionKey, keywords: [String], using supabase: SupabaseService? = nil) {
+        let picked = Array(keywords.prefix(5))
+        let text = picked.joined(separator: " · ")
         guard !text.isEmpty else { return }
         filledDims[key.rawValue] = text
         store.set(text, forKey: Self.storePrefix + key.rawValue)
+        if let supabase {
+            Task { try? await supabase.saveDimensionRemote(key: key, tags: picked) }
+        }
+    }
+
+    /// 人格底色（大五测评 / MBTI 徽标写入）
+    func savePersonality(_ text: String) {
+        guard !text.isEmpty else { return }
+        filledDims["personality"] = text
+        store.set(text, forKey: Self.storePrefix + "personality")
     }
 
     /// 五维画像卡（人格底色 + 四软维度）
@@ -150,11 +173,28 @@ final class HomeModel {
         return rows
     }
 
-    /// 完成度：已填维度数 × 20%（5 维满 100%）
-    var completionPct: Int { min(100, filledDims.count * 20) }
+    /// 完成度：已填维度数 / 6（人格底色 + 5 软维度）
+    var completionPct: Int { min(100, Int((Double(filledDims.count) / 6 * 100).rounded())) }
 
-    /// 人生底牌签名（人生卡牌完成后 3 张公开底牌；暂未接入 → 空）
-    var lifeSignature: [String] { [] }
+    /// 人生底牌签名（人生卡牌完成后 3 张公开底牌；UserDefaults 持久化，卡牌游戏结算写入）
+    private(set) var lifeSignatureCards: [LifeSignatureCard] = []
+    var lifeSignature: [String] { lifeSignatureCards.map(\.name) }
+    static let lifeSignatureKey = "kaleido_life_signature_v1"
+
+    struct LifeSignatureCard: Codable, Hashable {
+        let glyph: String
+        let name: String
+    }
+
+    /// 冷启动 / 卡牌游戏结算后重新读取人生底牌
+    func loadLifeSignature() {
+        guard let data = store.data(forKey: Self.lifeSignatureKey),
+              let cards = try? JSONDecoder().decode([LifeSignatureCard].self, from: data) else {
+            lifeSignatureCards = []
+            return
+        }
+        lifeSignatureCards = Array(cards.prefix(3))
+    }
 
     /// 抽象数字形象模型：随已填维度 / 底牌变化自动重建（@Observable 联动）
     var personaModel: PersonaModel {

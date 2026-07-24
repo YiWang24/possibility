@@ -127,4 +127,51 @@ enum DemoData {
         Bounty(id: 2, question: "26 岁要不要辞职考研？家里催我先稳定下来", reward: "悬赏 5 个亲历者", responses: "31 人回应"),
         Bounty(id: 3, question: "想去小城市生活，又怕后悔，有回不来的人吗？", reward: "悬赏 3 个真实故事", responses: "8 人回应"),
     ]
+
+    // MARK: 悬赏详情（原型 BOUNTIES 详情字段，本地演示数据）
+
+    struct BountyDetail {
+        let tags: [String]
+        let amount: String
+        let goal: String
+        let asker: String
+        let time: String
+        let city: String
+        let detail: String
+        let replies: [(name: String, role: String, text: String)]
+    }
+
+    static func bountyDetail(_ id: Int) -> BountyDetail {
+        bountyDetails[id] ?? BountyDetail(
+            tags: ["真实经历"], amount: "29", goal: "征集真实故事", asker: "匿名旅人", time: "刚刚", city: "线上",
+            detail: "发帖人希望听到亲历者的真实经历，而不是抽象建议。",
+            replies: [])
+    }
+
+    private static let bountyDetails: [Int: BountyDetail] = [
+        1: BountyDetail(
+            tags: ["职业转型", "数据分析", "设计背景"], amount: "29", goal: "征集 3 个真实故事",
+            asker: "雾岛来信", time: "2 小时前", city: "杭州",
+            detail: "我做了 4 年视觉设计，最近在自学 SQL 和 Python。真正担心的不是课程学不会，而是没有数据项目经验，也不知道第一份工作是否一定会降薪。希望听到设计背景转数据分析的真实经历，尤其是入行第一年的困难和准备方式。",
+            replies: [
+                ("纸飞机", "财务分析 → 数据分析师", "第一年最难的是把“会工具”变成“能回答业务问题”，我用公司内部数据做了三个小项目。"),
+                ("十点半", "建筑设计 → UX 设计师", "虽然方向不同，但作品集转译旧能力这件事很相似，可以分享我的踩坑清单。"),
+            ]),
+        2: BountyDetail(
+            tags: ["升学选择", "辞职考研", "家庭沟通"], amount: "19.9", goal: "征集 5 位亲历者",
+            asker: "青柠汽水", time: "5 小时前", city: "南京",
+            detail: "目前工作两年，收入稳定但看不到想要的发展。想跨专业读心理学研究生，家里认为先工作、结婚更现实。我希望了解辞职备考的现金流压力、失败后的退路，以及怎样和家人沟通。",
+            replies: [
+                ("重启按钮", "30 岁重读心理学本科", "先别急着用辞职证明决心。我用了半年试听课程、准备预算，再决定重新回到校园。"),
+                ("木棉", "全职妈妈 → 生涯咨询师", "和家人沟通时，具体的预算与时间节点比“这是我的梦想”更容易建立信任。"),
+            ]),
+        3: BountyDetail(
+            tags: ["城市迁移", "生活方式", "小城创业"], amount: "39", goal: "征集 3 个真实故事",
+            asker: "在逃星期一", time: "昨天", city: "上海",
+            detail: "在上海做运营第 6 年，越来越想搬去生活成本低、节奏慢一点的城市。但担心收入、社交圈和以后回大城市的难度。想听已经搬走两年以上的人讲讲真实得失，而不只是旅行滤镜。",
+            replies: [
+                ("北纬三十度", "互联网运营 → 民宿主理人", "去大理不是躺平，我提前算了十二个月现金流，也保留了远程项目作为缓冲。"),
+                ("潮汐之外", "大厂运营 → 间隔年探索", "真正变化最大的是消费结构和关系密度，不是每天都像度假。"),
+            ]),
+    ]
 }

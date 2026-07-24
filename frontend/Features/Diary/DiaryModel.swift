@@ -29,6 +29,9 @@ final class DiaryModel {
     /// 今天是否已录音（由首页 HomeModel.analysis 推导传入）
     let hasRecordedToday: Bool
 
+    /// 云端真实日记（list-diary，按日期覆盖 demo 底座）
+    private var remoteNotes: [DiaryNote] = []
+
     init(launch: DiaryLaunch, hasRecordedToday: Bool) {
         self.hasRecordedToday = hasRecordedToday
         // 对照原型 openVoiceDiary：指定日期 > 今天已录 > 最近一篇
@@ -41,9 +44,66 @@ final class DiaryModel {
         }
     }
 
-    /// 全部条目（今天已录则含 7/23）
+    /// 拉取云端真实条目（analyze-diary 落库的记录），失败静默保持 demo 底座
+    func loadRemote(using supabase: SupabaseService) async {
+        guard let rows = try? await supabase.listDiary() else { return }
+        remoteNotes = rows.compactMap(Self.note(from:))
+    }
+
+    /// 远端行 → DiaryNote（真实表无标题 / emoji / 时长等富字段，做合理降级）
+    private static func note(from row: SupabaseService.RemoteDiaryEntry) -> DiaryNote? {
+        guard let transcript = row.transcript, !transcript.isEmpty else { return nil }
+        // created_at（ISO8601）→ "yyyy-MM-dd" 与 "M月d日 · 周x"
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = iso.date(from: row.createdAt)
+            ?? ISO8601DateFormatter().date(from: row.createdAt)
+            ?? Date()
+        let day = DateFormatter()
+        day.locale = Locale(identifier: "zh_CN")
+        day.dateFormat = "yyyy-MM-dd"
+        let label = DateFormatter()
+        label.locale = Locale(identifier: "zh_CN")
+        label.dateFormat = "M月d日 · EEE"
+        // 标题 = 转写首句截断
+        let firstSentence = transcript
+            .components(separatedBy: CharacterSet(charactersIn: "。！？!?\n"))
+            .first { !$0.isEmpty } ?? transcript
+        let emotions = row.emotions ?? []
+        return DiaryNote(
+            date: day.string(from: date),
+            label: label.string(from: date),
+            emoji: Self.emoji(for: emotions.first),
+            emotion: emotions.isEmpty ? "已记录" : emotions.joined(separator: "，"),
+            duration: "--:--",
+            title: String(firstSentence.prefix(24)),
+            keywords: row.keywords ?? [],
+            transcript: transcript
+                .components(separatedBy: "\n")
+                .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        )
+    }
+
+    private static func emoji(for emotion: String?) -> String {
+        guard let emotion else { return "🎙" }
+        if emotion.contains("焦虑") || emotion.contains("担") { return "😮‍💨" }
+        if emotion.contains("平静") || emotion.contains("踏实") { return "😌" }
+        if emotion.contains("开心") || emotion.contains("成就") || emotion.contains("被") { return "😊" }
+        if emotion.contains("纠结") || emotion.contains("犹豫") { return "😕" }
+        return "🙂"
+    }
+
+    /// 全部条目：demo 底座 + 今天刚录（7/23）+ 云端真实条目按日期覆盖 / 插入
     var entries: [DiaryNote] {
-        hasRecordedToday ? DiaryData.entries + [DiaryData.todayEntry] : DiaryData.entries
+        var base = hasRecordedToday ? DiaryData.entries + [DiaryData.todayEntry] : DiaryData.entries
+        for note in remoteNotes {
+            if let i = base.firstIndex(where: { $0.date == note.date }) {
+                base[i] = note
+            } else {
+                base.append(note)
+            }
+        }
+        return base.sorted { $0.date < $1.date }
     }
 
     var selectedEntry: DiaryNote? {

@@ -6,7 +6,7 @@ import Foundation
 // 「人格底色」走画像工作室（测评引擎），不在此列。
 
 enum DimensionKey: String, CaseIterable, Identifiable, Sendable {
-    case skill, like, love, family
+    case skill, like, love, family, social
     var id: String { rawValue }
 }
 
@@ -27,6 +27,10 @@ struct DimensionConfig: Identifiable, Sendable {
         let desc: String
         let duration: String
         let tint: UInt32
+        /// 点击启动的测评（nil → 卡牌游戏等其他工具）
+        var assessment: AssessmentKind? = nil
+        /// 点击启动的卡牌游戏（Phase C 接入）
+        var cardGame: String? = nil
     }
 }
 
@@ -44,7 +48,7 @@ enum DimensionData {
                 ["倾听", "审美判断", "组织信息", "推动事情落地", "照顾他人感受"],
             ],
             tools: [
-                .init(name: "优势证据探索", desc: "无需先选关键词，用 15 个情境反推优势信号", duration: "约 3 分钟", tint: 0x273A67),
+                .init(name: "优势证据探索", desc: "无需先选关键词，用 15 个情境反推优势信号", duration: "约 3 分钟", tint: 0x273A67, assessment: .strength),
             ]),
         .like: DimensionConfig(
             key: .like, title: "我喜欢", icon: "♡", tint: 0xE35CC1,
@@ -55,19 +59,19 @@ enum DimensionData {
                 ["照顾小动物", "记录生活", "逛展看电影", "解决一道难题", "慢慢做一顿饭"],
             ],
             tools: [
-                .init(name: "霍兰德兴趣测评", desc: "完整 30 题 · 生成 RIASEC 六维兴趣画像", duration: "约 5 分钟", tint: 0x2E3D66),
+                .init(name: "霍兰德兴趣测评", desc: "完整 30 题 · 生成 RIASEC 六维兴趣画像", duration: "约 5 分钟", tint: 0x2E3D66, assessment: .holland),
             ]),
         .love: DimensionConfig(
-            key: .love, title: "我在情感关系中在意", icon: "✿", tint: 0xFF7A4D,
-            question: "一段关系里，什么让你感觉被爱？",
+            key: .love, title: "我在恋爱关系中在意", icon: "✿", tint: 0xFF7A4D,
+            question: "一段恋爱关系里，什么让你感觉被爱？",
             batches: [
                 ["坦诚沟通", "稳定陪伴", "彼此信任", "尊重边界", "共同成长"],
                 ["情绪被理解", "说到做到", "保留个人空间", "遇事站在一起", "有回应"],
                 ["忠诚", "分享日常", "身体亲密", "价值观接近", "愿意解决冲突"],
             ],
             tools: [
-                .init(name: "关系安全感与靠近方式", desc: "18 题 Demo 构念版 · 理解安全感与边界需要", duration: "约 4 分钟", tint: 0x552A3D),
-                .init(name: "关系卡牌：靠近还是退后？", desc: "从 6 张关系需要出发，经历 3 次轻量取舍", duration: "约 2 分钟", tint: 0x6A294D),
+                .init(name: "关系安全感与靠近方式", desc: "18 题 Demo 构念版 · 理解安全感与边界需要", duration: "约 4 分钟", tint: 0x552A3D, assessment: .love),
+                .init(name: "婚姻卡牌：最后会留下什么？", desc: "从 9 张婚姻底牌出发，在多轮取舍中留下最关心的 3 点", duration: "约 3 分钟", tint: 0x6A294D, cardGame: "marriage"),
             ]),
         .family: DimensionConfig(
             key: .family, title: "我在家庭关系中在意", icon: "⌂", tint: 0x3ED9A4,
@@ -78,7 +82,19 @@ enum DimensionData {
                 ["家庭和睦", "清晰边界", "公平对待", "能够表达脆弱", "重要时刻在场"],
             ],
             tools: [
-                .init(name: "家庭关系与期待", desc: "20 题 Demo 构念版 · 看见你想守住的家庭价值", duration: "约 5 分钟", tint: 0x28443F),
+                .init(name: "家庭关系与期待", desc: "20 题 Demo 构念版 · 看见你想守住的家庭价值", duration: "约 5 分钟", tint: 0x28443F, assessment: .family),
+                .init(name: "家庭卡牌：最后会守住什么？", desc: "从 9 张家庭底牌出发，在多轮取舍中留下最关心的 3 点", duration: "约 3 分钟", tint: 0x235A4B, cardGame: "family"),
+            ]),
+        .social: DimensionConfig(
+            key: .social, title: "我在人际交往中在意", icon: "◎", tint: 0x5E96FF,
+            question: "和朋友、同事或熟人相处时，你最希望守住什么？",
+            batches: [
+                ["真诚", "互相尊重", "有来有往", "清晰边界", "轻松自在"],
+                ["深度交流", "稳定联系", "保守秘密", "允许拒绝", "彼此支持"],
+                ["价值观相近", "不被比较", "冲突后愿意修复", "共同兴趣", "保留独处空间"],
+            ],
+            tools: [
+                .init(name: "人际卡牌：最后会守住什么？", desc: "从 9 张人际底牌出发，在多轮取舍中留下最关心的 3 点", duration: "约 3 分钟", tint: 0x29466A, cardGame: "social"),
             ]),
     ]
 }

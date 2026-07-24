@@ -73,7 +73,10 @@ struct ChatView: View {
     private var messagesScroll: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                // 注意用 VStack 而非 LazyVStack：对话消息量小，而 Lazy 布局缓存在
+                // 键盘 inset 变化 + 逐帧滚动时会陷入无限重排（主线程卡死 30s+，
+                // 见 XCUITest test03 采样栈 LazySubviewPlacements）。
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(model.messages) { msg in
                         bubble(msg).id(msg.id)
                     }
@@ -93,6 +96,7 @@ struct ChatView: View {
                 .padding(.horizontal, 20).padding(.vertical, 12)
             }
             .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .onChange(of: model.messages.last?.text) { scrollToBottom(proxy) }
             .onChange(of: model.showActionChips) { scrollToBottom(proxy) }
             .onChange(of: model.showNextPanel) { scrollToBottom(proxy) }
@@ -149,7 +153,7 @@ struct ChatView: View {
 
     private var actionChips: some View {
         HStack(spacing: 9) {
-            Button(model.confirmLabel) { model.confirmInsight() }
+            Button(model.confirmLabel) { inputFocused = false; model.confirmInsight() }
                 .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white)
                 .padding(.horizontal, 16).padding(.vertical, 9)
                 .background(Theme.buttonGradient, in: Capsule())
@@ -167,6 +171,8 @@ struct ChatView: View {
 
     // MARK: 输入栏
 
+    @FocusState private var inputFocused: Bool
+
     private var inputBar: some View {
         HStack(spacing: 10) {
             TextField("想到什么，直接问…", text: $model.input)
@@ -175,8 +181,10 @@ struct ChatView: View {
                 .background(Theme.raised, in: Capsule())
                 .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
                 .submitLabel(.send)
+                .focused($inputFocused)
                 .onSubmit { model.send(model.input, supabase: supabase) }
             Button {
+                inputFocused = false
                 model.send(model.input, supabase: supabase)
             } label: {
                 Text("发送").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)

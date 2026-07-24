@@ -28,6 +28,7 @@ struct LabView: View {
                     .font(.system(size: 11)).tracking(1).foregroundStyle(Theme.faint)
                     .frame(maxWidth: .infinity).padding(.top, 12)
                 choicesSection.padding(.top, 24)
+                carrySection.padding(.top, 24)
                 PrimaryButton(title: "开始推演", wide: true, enabled: model.canSim) {
                     Task { await model.runSim(supabase: supabase) }
                 }
@@ -196,6 +197,49 @@ struct LabView: View {
             .allowsHitTesting(false)
             .transition(.scale.combined(with: .opacity))
         }
+    }
+
+    // MARK: 底线卡（原型 carry-section）
+
+    private var carrySection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("什么要一起带走？").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
+                Spacer()
+                (Text("\(model.carry.count)").bold().foregroundColor(Theme.blue) + Text("/3").foregroundColor(Theme.faint))
+                    .font(.system(size: 12)).monospacedDigit()
+            }
+            ScrollView(.horizontal) {
+                HStack(spacing: 9) {
+                    ForEach(LabModel.carryCards) { card in
+                        carryCard(card)
+                    }
+                }
+            }
+            .scrollIndicators(.hidden)
+            .padding(.horizontal, -22)
+            .contentMargins(.horizontal, 22, for: .scrollContent)
+        }
+    }
+
+    private func carryCard(_ card: LabModel.CarryCard) -> some View {
+        let on = model.carry.contains(card.id)
+        return Button {
+            if let message = model.toggleCarry(card.id) { toast.show(message) }
+        } label: {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(card.glyph).font(.system(size: 15)).foregroundStyle(on ? Theme.blue : Theme.sub)
+                Text(card.name).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                Text(card.source).font(.system(size: 9.5)).foregroundStyle(Theme.faint)
+            }
+            .frame(width: 96, alignment: .leading)
+            .padding(.horizontal, 12).padding(.vertical, 12)
+            .background(on ? Color(hex: 0x5E96FF, alpha: 0.1) : Theme.card,
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(on ? Color(hex: 0x6FA5FF, alpha: 0.65) : Theme.line, lineWidth: on ? 1.4 : 1))
+        }
+        .buttonStyle(PressScaleStyle())
     }
 
     private var disclaimer: some View {

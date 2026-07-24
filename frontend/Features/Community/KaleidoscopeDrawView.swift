@@ -15,6 +15,8 @@ struct KaleidoscopeDrawView: View {
     @State private var mode: Mode = .similar
     @State private var spinTrigger = 0
     @State private var drawn: Traveler?
+    /// 后端 AI 抽取给出的匹配理由（本地兜底时为 nil）
+    @State private var drawReason: String?
 
     private var pool: [Traveler] {
         supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
@@ -81,7 +83,7 @@ struct KaleidoscopeDrawView: View {
         switch phase {
         case .choose: return "万花筒会为你转出一位真实的旅人"
         case .spinning: return nil
-        case .result: return "看看 TA 的人生轨迹"
+        case .result: return drawReason ?? "看看 TA 的人生轨迹"
         }
     }
 
@@ -94,7 +96,7 @@ struct KaleidoscopeDrawView: View {
         case .spinning:
             VStack(spacing: 20) {
                 KaleidoscopeView(spinTrigger: spinTrigger)
-                Text("正在为你折光……").font(.system(size: 12)).tracking(1.5).foregroundStyle(Theme.faint)
+                Text("光在旋转，人生在折叠……").font(.system(size: 12)).tracking(1.5).foregroundStyle(Theme.faint)
             }
         case .result:
             if let drawn { resultCard(drawn) }
@@ -173,7 +175,7 @@ struct KaleidoscopeDrawView: View {
                             .shadow(color: Color(hex: 0x4F7DFF, alpha: 0.6), radius: 14, y: 8)
                     }
                 }
-                Button("再转一次") { withAnimation { phase = .choose; drawn = nil } }
+                Button("再转一次") { withAnimation { phase = .choose; drawn = nil; drawReason = nil } }
                     .font(.system(size: 12.5)).foregroundStyle(Theme.faint).padding(.top, 2)
             }
         }
@@ -185,10 +187,23 @@ struct KaleidoscopeDrawView: View {
         withAnimation(.easeInOut(duration: 0.3)) { phase = .spinning }
         spinTrigger += 1
         let delay: Duration = reduceMotion ? .milliseconds(500) : .milliseconds(2750)
+        let modeParam = mode == .similar ? "similar" : "different"
         Task {
-            try? await Task.sleep(for: delay)
-            let candidates = pool.filter { mode == .similar ? $0.isSimilar : !$0.isSimilar }
-            let chosen = (candidates.isEmpty ? pool : candidates).randomElement()
+            // 转盘动画与后端 AI 抽取并行；转完取结果，失败回落本地随机
+            async let spinWait: Void? = try? await Task.sleep(for: delay)
+            async let remote = try? await supabase.kaleidoscopeDraw(mode: modeParam)
+            _ = await spinWait
+            let picked = await remote
+
+            let chosen: Traveler?
+            if let picked, let t = pool.first(where: { $0.id == picked.travelerId }) {
+                chosen = t
+                drawReason = picked.reason
+            } else {
+                let candidates = pool.filter { mode == .similar ? $0.isSimilar : !$0.isSimilar }
+                chosen = (candidates.isEmpty ? pool : candidates).randomElement()
+                drawReason = nil
+            }
             withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
                 drawn = chosen
                 phase = .result

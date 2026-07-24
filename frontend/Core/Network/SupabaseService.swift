@@ -251,4 +251,74 @@ final class SupabaseService {
         struct Body: Encodable { let transcript: String }
         return try await callFunction("analyze-diary", body: Body(transcript: transcript), as: DiaryAnalysis.self)
     }
+
+    // MARK: - Edge Functions（画像 / 社区 / 日记 —— 真实调用优先，失败由调用方兜底）
+
+    /// POST /community action=kaleidoscope_draw：AI 抽取一位旅人 + 理由
+    func kaleidoscopeDraw(mode: String) async throws -> (travelerId: Int, reason: String) {
+        struct Body: Encodable {
+            let action = "kaleidoscope_draw"
+            let mode: String
+        }
+        struct DrawTraveler: Decodable { let id: Int }
+        struct Response: Decodable {
+            let traveler: DrawTraveler
+            let reason: String
+        }
+        let res = try await callFunction("community", body: Body(mode: mode), as: Response.self)
+        return (res.traveler.id, res.reason)
+    }
+
+    /// POST /save-profile action=save_dimension：维度关键词落库（服务端同步 profiles.dims）
+    func saveDimensionRemote(key: DimensionKey, tags: [String]) async throws {
+        struct Body: Encodable {
+            let action = "save_dimension"
+            let dimension: String
+            let tags: [String]
+            let source = "manual"
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction("save-profile", body: Body(dimension: key.rawValue, tags: tags), as: Response.self)
+    }
+
+    /// GET /get-profile：云端画像（dims 用于换机 / 重装漫游）
+    struct RemoteProfile: Decodable {
+        let portraitPct: Int
+        let dims: [String: String]
+        enum CodingKeys: String, CodingKey {
+            case portraitPct = "portrait_pct"
+            case dims
+        }
+    }
+
+    func fetchRemoteProfile() async throws -> RemoteProfile {
+        var req = URLRequest(url: AppConfig.functionURL("get-profile"))
+        req.timeoutInterval = 20
+        req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
+        req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        return try JSONDecoder().decode(RemoteProfile.self, from: data)
+    }
+
+    /// POST /list-diary：云端真实日记条目（analyze-diary 落库）
+    struct RemoteDiaryEntry: Decodable {
+        let id: Int
+        let transcript: String?
+        let emotions: [String]?
+        let keywords: [String]?
+        let createdAt: String
+        enum CodingKeys: String, CodingKey {
+            case id, transcript, emotions, keywords
+            case createdAt = "created_at"
+        }
+    }
+
+    func listDiary(limit: Int = 50) async throws -> [RemoteDiaryEntry] {
+        struct Body: Encodable { let limit: Int }
+        struct Response: Decodable { let entries: [RemoteDiaryEntry] }
+        return try await callFunction("list-diary", body: Body(limit: limit), as: Response.self).entries
+    }
 }

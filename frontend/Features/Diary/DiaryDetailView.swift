@@ -13,6 +13,7 @@ struct DiaryDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
+    @Environment(SupabaseService.self) private var supabase
     @State private var model: DiaryModel
 
     init(launch: DiaryLaunch, hasRecordedToday: Bool, onStartRecording: @escaping () -> Void) {
@@ -53,6 +54,7 @@ struct DiaryDetailView: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .overlay(ToastHost(message: toast.message))
+        .task { await model.loadRemote(using: supabase) }
     }
 
     private let topID = "diary-top"
@@ -161,5 +163,6 @@ struct DiaryKeywordFlow: View {
 #Preview {
     DiaryDetailView(launch: DiaryLaunch(date: nil), hasRecordedToday: false, onStartRecording: {})
         .environment(ToastCenter())
+        .environment(SupabaseService())
         .preferredColorScheme(.dark)
 }

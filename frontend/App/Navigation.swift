@@ -40,6 +40,8 @@ struct SimResultData: Identifiable {
     let scenarios: Simulation.Scenarios
     /// 类似经验的人
     let people: [Traveler]
+    /// 一起带走的底线卡 id（原型 carry-deck，供最坏结果的底线压力测试）
+    var carry: [String] = []
 }
 
 // MARK: - 旅人主页入口（就地 cover）

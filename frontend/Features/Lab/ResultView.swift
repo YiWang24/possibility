@@ -36,6 +36,9 @@ struct ResultView: View {
                     ScenarioPanel(eyebrow: specs[tab].eyebrow, accent: specs[tab].accent,
                                   bg: specs[tab].bg, scenario: specs[tab].scenario)
                         .padding(.top, 16).id(tab)
+                    if tab == 2 && !data.carry.isEmpty {
+                        FloorTestPanel(carryIds: data.carry).padding(.top, 14)
+                    }
                     peopleSection.padding(.top, 8)
                     PrimaryButton(title: "重新选择", wide: true) { dismiss() }
                         .padding(.top, 24)
@@ -189,6 +192,97 @@ private struct ScenarioPanel: View {
                 in: RoundedRectangle(cornerRadius: 16, style: .continuous)
             )
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.45), style: StrokeStyle(lineWidth: 1, dash: [4, 4])))
+    }
+}
+
+// MARK: - 底线压力测试（原型 .floor-test / renderFloorTest / answerFloor）
+
+private struct FloorTestPanel: View {
+    let carryIds: [String]
+    @State private var answers: [String: Bool] = [:]   // id → 可承受(true) / 越线(false)
+
+    private var cards: [LabModel.CarryCard] {
+        carryIds.compactMap { LabModel.carryCard($0) }
+    }
+    private var allAnswered: Bool { answers.count == cards.count && !cards.isEmpty }
+    private var rejected: [String] {
+        cards.filter { answers[$0.id] == false }.map(\.name)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Text("FLOOR TEST · 底线压力测试")
+                .font(.system(size: 8.5, weight: .semibold)).tracking(2.2)
+                .foregroundStyle(Color(hex: 0xFF9B77))
+            Text("最坏的结果，会击穿你带进来的底线吗？")
+                .font(.system(size: 15, weight: .bold)).lineSpacing(4).foregroundStyle(Theme.ink)
+            Text("逐张确认：如果这个结局真的发生，这张底线卡还守得住吗？")
+                .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.sub)
+
+            ForEach(cards) { card in
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack(spacing: 8) {
+                        Text(card.glyph).font(.system(size: 13)).foregroundStyle(Color(hex: 0xFF9B77))
+                        Text(card.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                    }
+                    Text(card.risk).font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
+                    HStack(spacing: 9) {
+                        floorButton("最差如此，仍可承受", accept: true, card: card)
+                        floorButton("这已经越过底线", accept: false, card: card)
+                    }
+                }
+                .padding(13)
+                .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+
+            if allAnswered { verdict }
+        }
+        .padding(17)
+        .background(Color(hex: 0x11151D), in: RoundedRectangle(cornerRadius: 21, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 21, style: .continuous)
+            .strokeBorder(Color(hex: 0xFF7A4D, alpha: 0.24), lineWidth: 1))
+        .animation(.easeOut(duration: 0.3), value: allAnswered)
+    }
+
+    private func floorButton(_ title: String, accept: Bool, card: LabModel.CarryCard) -> some View {
+        let on = answers[card.id] == accept
+        let tint: Color = accept ? Theme.teal : Color(hex: 0xFF8A5E)
+        return Button {
+            answers[card.id] = accept
+        } label: {
+            Text(title)
+                .font(.system(size: 10.5, weight: on ? .semibold : .regular))
+                .foregroundStyle(on ? tint : Theme.sub)
+                .frame(maxWidth: .infinity).padding(.vertical, 9)
+                .background(on ? tint.opacity(0.12) : Color.white.opacity(0.05), in: Capsule())
+                .overlay(Capsule().strokeBorder(on ? tint.opacity(0.55) : Theme.line, lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
+    }
+
+    @ViewBuilder
+    private var verdict: some View {
+        let pass = rejected.isEmpty
+        VStack(alignment: .leading, spacing: 7) {
+            Text(pass ? "可以继续转变 · 但不是盲目乐观" : "暂时不要直接跨过去")
+                .font(.system(size: 9, weight: .semibold)).tracking(1.6)
+                .foregroundStyle(pass ? Theme.teal : Color(hex: 0xFF9B77))
+            Text(pass
+                 ? "你看见了最差结果，也确认它没有击穿带入的 \(cards.count) 张底线卡。"
+                 : "最坏结果会击穿：\(rejected.joined(separator: "、"))")
+                .font(.system(size: 13, weight: .bold)).lineSpacing(4).foregroundStyle(Theme.ink)
+            Text(pass
+                 ? "这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这些底线分别保留现实缓冲。"
+                 : "这不等于你不适合改变。先为这些底线建立保护条件，再回来重新测试。")
+                .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background((pass ? Theme.teal : Color(hex: 0xFF7A4D)).opacity(0.08),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder((pass ? Theme.teal : Color(hex: 0xFF7A4D)).opacity(0.3), lineWidth: 1))
+        .transition(.opacity.combined(with: .move(edge: .top)))
     }
 }
 

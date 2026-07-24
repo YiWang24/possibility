@@ -7,6 +7,10 @@ struct CommunityView: View {
     @Environment(ToastCenter.self) private var toast
     @State private var tab = 0            // 0 为你推荐 · 1 悬赏贴
     @State private var showDraw = false
+    /// 为你推荐布局：false 卡片瀑布流 / true 放映模式（原型 watch-mode）
+    @State private var watchMode = false
+    @State private var searchText = ""
+    @State private var activeBounty: Bounty?
 
     private var travelers: [Traveler] {
         supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
@@ -21,16 +25,32 @@ struct CommunityView: View {
                 PageHeader(eyebrow: "KALEIDOSCOPE", title: "万花筒社区")
                 tabs.padding(.top, 16)
                 Group {
-                    if tab == 0 { recommendFeed } else { bountyFeed }
+                    if tab == 0 {
+                        VStack(alignment: .leading, spacing: 12) {
+                            searchBar
+                            if watchMode {
+                                WatchModeView(travelers: travelers, searchQuery: searchText)
+                            } else {
+                                recommendFeed
+                            }
+                        }
+                    } else {
+                        bountyFeed
+                    }
                 }
                 .padding(.top, 16)
             }
             .padding(.horizontal, 22).padding(.top, 20).padding(.bottom, 120)
         }
         .scrollIndicators(.hidden)
+        .scrollDisabled(watchMode && tab == 0)
         .screenBackground()
         .overlay(alignment: .bottomTrailing) { if tab == 0 { drawFab } }
         .fullScreenCover(isPresented: $showDraw) { KaleidoscopeDrawView() }
+        .fullScreenCover(item: $activeBounty) { bounty in
+            BountyDetailView(bounty: bounty)
+                .environment(toast)
+        }
     }
 
     private var tabs: some View {
@@ -38,7 +58,50 @@ struct CommunityView: View {
             tabButton("为你推荐", index: 0)
             tabButton("悬赏贴", index: 1)
             Spacer()
+            if tab == 0 { watchToggle }
         }
+    }
+
+    /// 卡片 / 放映 切换（原型 watch-mode 入口）
+    private var watchToggle: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.25)) { watchMode.toggle() }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: watchMode ? "square.grid.2x2" : "circle.hexagongrid")
+                    .font(.system(size: 11))
+                Text(watchMode ? "卡片" : "放映")
+                    .font(.system(size: 11.5, weight: .medium))
+            }
+            .foregroundStyle(watchMode ? Color(hex: 0x9DBCFF) : Theme.sub)
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(watchMode ? Color(hex: 0x5E96FF, alpha: 0.14) : Theme.raised, in: Capsule())
+            .overlay(Capsule().strokeBorder(watchMode ? Color(hex: 0x5E96FF, alpha: 0.45) : Theme.line, lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
+    }
+
+    /// 玻璃搜索条（原型 .comm-search）
+    private var searchBar: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12)).foregroundStyle(Theme.faint)
+            TextField("", text: $searchText,
+                      prompt: Text("搜索旅人、介绍或标签").foregroundColor(Theme.faint))
+                .font(.system(size: 13)).foregroundStyle(Theme.ink).tint(Theme.blue)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 13)).foregroundStyle(Theme.faint)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(Color.white.opacity(0.05), in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
     }
 
     private func tabButton(_ title: String, index: Int) -> some View {
@@ -59,10 +122,18 @@ struct CommunityView: View {
     // MARK: 为你推荐 · 双列瀑布流
 
     private var recommendFeed: some View {
-        let cols = distribute(travelers)
+        let cols = distribute(filteredTravelers)
         return HStack(alignment: .top, spacing: 11) {
             column(cols.0)
             column(cols.1)
+        }
+    }
+
+    private var filteredTravelers: [Traveler] {
+        let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !query.isEmpty else { return travelers }
+        return travelers.filter { t in
+            ([t.name, t.quote, t.bio] + t.tags).joined(separator: " ").lowercased().contains(query)
         }
     }
 
@@ -89,7 +160,7 @@ struct CommunityView: View {
     private var bountyFeed: some View {
         VStack(spacing: 11) {
             ForEach(bounties) { b in
-                BountyCard(bounty: b) { toast.show("悬赏贴详情 · 原型未展开") }
+                BountyCard(bounty: b) { activeBounty = b }
             }
         }
     }
