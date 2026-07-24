@@ -1154,6 +1154,11 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .prof-section-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
 .prof-section-title h3{font-size:15px;font-weight:600}
 .prof-section-title span{font-size:10.5px;color:var(--faint)}
+.prof-section-edit{
+  all:unset;cursor:pointer;padding:6px 10px;border-radius:999px;font-size:9.5px;color:#BFD2FF;
+  background:rgba(94,150,255,.1);border:1px solid rgba(111,165,255,.24);
+}
+.prof-section-edit:active{transform:scale(.96)}
 .prof-quote{
   position:relative;padding:22px 20px;border-radius:22px;overflow:hidden;
   background:linear-gradient(145deg,rgba(94,150,255,.15),rgba(143,123,255,.08));
@@ -2265,10 +2270,10 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       <button class="backbtn" onclick="closePush('myEditPage')" aria-label="返回我的主页">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
-      <div><h2>编辑我的主页</h2><div class="sub2">公开内容随时可以修改</div></div>
+      <div><h2 id="myEditTitle">编辑基础资料</h2><div class="sub2" id="myEditSubtitle">修改主页名片上的公开信息</div></div>
     </div>
     <div class="scroll edit-profile-scroll" id="myEditBody"></div>
-    <div class="edit-savebar"><button onclick="saveMyProfile()">保存主页</button></div>
+    <div class="edit-savebar"><button id="myEditSaveButton" onclick="saveMyProfile()">保存基础资料</button></div>
   </section>
 
   <!-- ============ 推演加载 ============ -->
@@ -5031,7 +5036,7 @@ function loadMyProfile(){
     traj:Array.isArray(saved.traj)&&saved.traj.length?saved.traj:cloneData(DEFAULT_MY_PROFILE.traj)
   };
 }
-let myProfile=loadMyProfile(),myProfileTab='story',myEditDraft=null;
+let myProfile=loadMyProfile(),myProfileTab='story',myEditDraft=null,myEditMode='basic';
 function safeProfileAvatar(src){
   return /^(assets\/community-avatars\/|data:image\/)/.test(String(src||''))?src:MY_AVATARS[0];
 }
@@ -5092,7 +5097,6 @@ function publicPersonaModel(u,items){
 }
 function publicPersonaHTML(u,isMine=false){
   const items=profilePersonaItems(u);
-  const model=publicPersonaModel(u,items);
   const lifeItem=items.find(item=>item.key==='life');
   const dimensions=items.filter(item=>item.key!=='life').map(personaPresentation);
   const total=u.id==='me'?7:Math.max(items.length,1);
@@ -5102,7 +5106,7 @@ function publicPersonaHTML(u,isMine=false){
       <div class="digital-human-stage public-persona-stage">
         <canvas class="public-dynamic-persona-canvas" role="img" aria-label="${escapeHTML(u.name)}根据公开画像结果生成的数字形象"></canvas>
         <span class="digital-human-live">PUBLIC PROFILE FORM</span>
-        <div class="digital-human-caption"><b>${escapeHTML(u.name)} · ${escapeHTML(model.shape)}</b><span>由下方公开画像结果生成</span></div>
+        <div class="digital-human-caption"><b>${escapeHTML(u.name)}</b><span>动态数字形象 · 由下方公开画像结果生成</span></div>
       </div>
       ${lifeItem&&lifeItem.cards?.length?`
         <div class="portrait-life-signature show">
@@ -5133,7 +5137,7 @@ function profileTimelineHTML(u,isMine=false){
   const title=isMine?'我的人生关键轨迹':'人生关键轨迹';
   const note=isMine?`${u.traj.length} 个节点`:'点击节点展开详情';
   return `
-    <div class="prof-section-title"><h3>${title}</h3><span>${note}</span></div>
+    <div class="prof-section-title"><h3>${title}</h3>${isMine?'<button class="prof-section-edit" onclick="openMyProfileEditor(\'story\')">编辑故事</button>':`<span>${note}</span>`}</div>
     <div class="prof-timeline">
       ${u.traj.map((t,i)=>`
         <div class="pt-item">
@@ -5395,7 +5399,7 @@ function renderMyProfile(){
       <div class="prof-transition">${escapeHTML(m.from)}<i>→</i>${escapeHTML(m.to)}</div>
       <div class="prof-years">${escapeHTML(m.years)} · ${escapeHTML(m.result)}</div>
       <div class="prof-tags">${u.tags.map(t=>`<span>${escapeHTML(t)}</span>`).join('')}</div>
-      <button class="prof-edit-btn" onclick="openMyProfileEditor()">编辑资料</button>
+      <button class="prof-edit-btn" onclick="openMyProfileEditor('basic')">编辑资料</button>
     </div>
     <div class="prof-tabs my-prof-tabs" role="tablist" aria-label="我的主页内容">
       <button class="prof-tab${myProfileTab==='story'?' on':''}" onclick="switchMyProfileTab('story',this)">我的故事</button>
@@ -5415,15 +5419,15 @@ function renderMyProfile(){
       <div class="story-full"><h4>完整故事 · 最难的一关</h4><p>${escapeHTML(m.full)}</p></div>
     </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='advice'?' on':''}" id="myprof-advice">
-      <div class="prof-section-title"><h3>我愿意分享的经验</h3><span>全部公开</span></div>
+      <div class="prof-section-title"><h3>我愿意分享的经验</h3><button class="prof-section-edit" onclick="openMyProfileEditor('advice')">编辑建议</button></div>
       ${Object.entries(m.advice).map(([kind,tips])=>`<div class="advice-card"><div class="num">${escapeHTML(ADVICE_TITLES[kind]?.[1]||'亲历经验')}</div><h4>${escapeHTML(ADVICE_TITLES[kind]?.[0]||'我的建议')}</h4><div class="advice-steps">${tips.map((tip,i)=>`<div class="advice-step"><i>${i+1}</i><span>${escapeHTML(tip)}</span></div>`).join('')}</div></div>`).join('')}
     </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='service'?' on':''}" id="myprof-service">
-      <div class="prof-section-title"><h3>我可以提供的服务</h3><span>${services.length} 项已公开</span></div>
-      ${services.length?services.map((s,i)=>`<div class="consult-card ${i===1?'materials':i===2?'companion':''}"><div class="consult-price"><div><div class="ey">${escapeHTML(s.type)}</div><h3>${escapeHTML(s.title)}</h3></div><strong>¥${escapeHTML(s.price)}</strong></div><p class="consult-desc">${escapeHTML(s.desc)}</p></div>`).join(''):'<div class="persona-empty">暂未公开服务，可在“编辑资料”中开启</div>'}
+      <div class="prof-section-title"><h3>我可以提供的服务</h3><button class="prof-section-edit" onclick="openMyProfileEditor('service')">编辑服务</button></div>
+      ${services.length?services.map((s,i)=>`<div class="consult-card ${i===1?'materials':i===2?'companion':''}"><div class="consult-price"><div><div class="ey">${escapeHTML(s.type)}</div><h3>${escapeHTML(s.title)}</h3></div><strong>¥${escapeHTML(s.price)}</strong></div><p class="consult-desc">${escapeHTML(s.desc)}</p></div>`).join(''):'<div class="persona-empty">暂未公开服务，可以在这里编辑并开启</div>'}
     </section>
     <section class="prof-panel my-prof-panel${myProfileTab==='persona'?' on':''}" id="myprof-persona">
-      <div class="prof-section-title"><h3>我的公开数字人画像</h3><span>${profilePersonaItems(u).length} 项公开</span></div>
+      <div class="prof-section-title"><h3>我的公开数字人画像</h3><button class="prof-section-edit" onclick="openMyProfileEditor('persona')">设置展示</button></div>
       ${publicPersonaHTML(u,true)}
     </section>`;
   drawPublicPersona(u,'#myprof-persona');
@@ -5435,74 +5439,98 @@ function switchMyProfileTab(tab,btn){
   $('#myprof-'+tab).classList.add('on');
   if(tab==='persona')drawPublicPersona(myProfile,'#myprof-persona');
 }
-function openMyProfileEditor(){
+function openMyProfileEditor(mode='basic'){
+  myEditMode=mode;
   myEditDraft=cloneData(myProfile);
   renderMyProfileEditor();
   $('#myEditPage').classList.add('open');
 }
 function renderMyProfileEditor(){
   const d=myEditDraft,meta=d.meta;
-  $('#myEditBody').innerHTML=`
-    <div class="edit-section">
-      <div class="edit-section-title"><b>头像</b><span>选择或上传</span></div>
-      <div class="avatar-editor">
-        ${MY_AVATARS.map(src=>`<button class="avatar-option${d.avatar===src?' on':''}" onclick="selectMyAvatar('${src}',this)"><img src="${src}" alt="头像选项"></button>`).join('')}
-        <label class="avatar-upload">＋<input type="file" accept="image/*" hidden onchange="uploadMyAvatar(this)"></label>
+  const editMeta={
+    basic:['编辑基础资料','只修改主页名片上的公开信息','保存基础资料'],
+    story:['编辑我的故事','修改故事内容和人生时间线','保存故事'],
+    advice:['编辑经验与建议','把亲历经验整理给后来的人','保存建议'],
+    service:['编辑提供服务','设置服务内容、价格和公开状态','保存服务'],
+    persona:['设置画像展示','选择主页允许公开的画像结果','保存展示设置']
+  }[myEditMode]||['编辑基础资料','只修改主页名片上的公开信息','保存基础资料'];
+  $('#myEditTitle').textContent=editMeta[0];
+  $('#myEditSubtitle').textContent=editMeta[1];
+  $('#myEditSaveButton').textContent=editMeta[2];
+
+  let content='';
+  if(myEditMode==='basic'){
+    content=`
+      <div class="edit-section">
+        <div class="edit-section-title"><b>头像</b><span>选择或上传</span></div>
+        <div class="avatar-editor">
+          ${MY_AVATARS.map(src=>`<button class="avatar-option${d.avatar===src?' on':''}" onclick="selectMyAvatar('${src}',this)"><img src="${src}" alt="头像选项"></button>`).join('')}
+          <label class="avatar-upload">＋<input type="file" accept="image/*" hidden onchange="uploadMyAvatar(this)"></label>
+        </div>
       </div>
-    </div>
-    <div class="edit-section">
-      <div class="edit-section-title"><b>基本信息</b><span>显示在主页名片</span></div>
-      <div class="edit-grid">
-        <label class="edit-field"><span>昵称</span><input id="myEditName" maxlength="12" value="${escapeHTML(d.name)}"></label>
-        <label class="edit-field"><span>年龄</span><input id="myEditAge" inputmode="numeric" maxlength="3" value="${escapeHTML(meta.age)}"></label>
-        <label class="edit-field"><span>所在城市</span><input id="myEditCity" maxlength="10" value="${escapeHTML(meta.city)}"></label>
-        <label class="edit-field"><span>当前阶段</span><input id="myEditYears" maxlength="16" value="${escapeHTML(meta.years)}"></label>
-        <label class="edit-field"><span>过去身份</span><input id="myEditFrom" maxlength="16" value="${escapeHTML(meta.from)}"></label>
-        <label class="edit-field"><span>现在身份</span><input id="myEditTo" maxlength="16" value="${escapeHTML(meta.to)}"></label>
-        <label class="edit-field wide"><span>主页标签（用逗号分隔）</span><input id="myEditTags" maxlength="50" value="${escapeHTML(d.tags.join('，'))}"></label>
-        <label class="edit-field wide"><span>一句话介绍</span><textarea id="myEditQuote" maxlength="80">${escapeHTML(d.quote)}</textarea></label>
+      <div class="edit-section">
+        <div class="edit-section-title"><b>基础信息</b><span>显示在主页名片</span></div>
+        <div class="edit-grid">
+          <label class="edit-field"><span>昵称</span><input id="myEditName" maxlength="12" value="${escapeHTML(d.name)}"></label>
+          <label class="edit-field"><span>年龄</span><input id="myEditAge" inputmode="numeric" maxlength="3" value="${escapeHTML(meta.age)}"></label>
+          <label class="edit-field"><span>所在城市</span><input id="myEditCity" maxlength="10" value="${escapeHTML(meta.city)}"></label>
+          <label class="edit-field"><span>当前阶段</span><input id="myEditYears" maxlength="16" value="${escapeHTML(meta.years)}"></label>
+          <label class="edit-field"><span>过去身份</span><input id="myEditFrom" maxlength="16" value="${escapeHTML(meta.from)}"></label>
+          <label class="edit-field"><span>现在身份</span><input id="myEditTo" maxlength="16" value="${escapeHTML(meta.to)}"></label>
+          <label class="edit-field wide"><span>目前状态</span><input id="myEditResult" maxlength="30" value="${escapeHTML(meta.result)}"></label>
+          <label class="edit-field wide"><span>主页标签（用逗号分隔）</span><input id="myEditTags" maxlength="50" value="${escapeHTML(d.tags.join('，'))}"></label>
+        </div>
+      </div>`;
+  }else if(myEditMode==='story'){
+    content=`
+      <div class="edit-section">
+        <div class="edit-section-title"><b>我的故事</b><span>公开叙事</span></div>
+        <label class="edit-field"><span>故事题记</span><textarea id="myEditQuote" maxlength="80">${escapeHTML(d.quote)}</textarea></label>
+        <label class="edit-field" style="margin-top:10px"><span>故事摘要</span><textarea id="myEditIntro" maxlength="260">${escapeHTML(meta.intro)}</textarea></label>
+        <label class="edit-field" style="margin-top:10px"><span>完整故事</span><textarea id="myEditFull" maxlength="500">${escapeHTML(meta.full)}</textarea></label>
       </div>
-    </div>
-    <div class="edit-section">
-      <div class="edit-section-title"><b>我的故事</b><span>公开叙事</span></div>
-      <label class="edit-field"><span>故事摘要</span><textarea id="myEditIntro" maxlength="260">${escapeHTML(meta.intro)}</textarea></label>
-      <label class="edit-field" style="margin-top:10px"><span>完整故事</span><textarea id="myEditFull" maxlength="500">${escapeHTML(meta.full)}</textarea></label>
-      <label class="edit-field" style="margin-top:10px"><span>目前结果</span><input id="myEditResult" maxlength="30" value="${escapeHTML(meta.result)}"></label>
-    </div>
-    <div class="edit-section">
-      <div class="edit-section-title"><b>故事时间线</b><span>可增删节点</span></div>
-      <div id="myTimelineEditor"></div>
-      <button class="edit-add" onclick="addMyTimelineItem()">＋ 添加一个人生节点</button>
-    </div>
-    <div class="edit-section">
-      <div class="edit-section-title"><b>经验与建议</b><span>每行一条建议</span></div>
-      ${Object.entries(meta.advice).map(([kind,tips])=>`
-        <label class="edit-field" style="margin-top:10px"><span>${escapeHTML(ADVICE_TITLES[kind]?.[0]||'我的建议')}</span>
-          <textarea maxlength="360" oninput="updateMyAdvice('${kind}',this.value)">${escapeHTML(tips.join('\n'))}</textarea>
-        </label>`).join('')}
-    </div>
-    <div class="edit-section">
-      <div class="edit-section-title"><b>提供服务</b><span>开启后展示在主页</span></div>
-      ${(d.services||[]).map((service,i)=>`
-        <div class="timeline-edit-item">
-          <label class="visibility-row" style="margin-bottom:9px"><div><b>${escapeHTML(service.type)}</b><span>${service.enabled?'公开中':'未公开'}</span></div>
-            <input type="checkbox" ${service.enabled?'checked':''} onchange="updateMyService(${i},'enabled',this.checked)">
-          </label>
-          <div class="edit-grid">
-            <label class="edit-field wide"><span>服务名称</span><input value="${escapeHTML(service.title)}" maxlength="24" oninput="updateMyService(${i},'title',this.value)"></label>
-            <label class="edit-field"><span>价格</span><input value="${escapeHTML(service.price)}" maxlength="8" inputmode="decimal" oninput="updateMyService(${i},'price',this.value)"></label>
-            <label class="edit-field wide"><span>服务说明</span><textarea maxlength="160" oninput="updateMyService(${i},'desc',this.value)">${escapeHTML(service.desc)}</textarea></label>
-          </div>
-        </div>`).join('')}
-    </div>
-    <div class="edit-section">
-      <div class="edit-section-title"><b>数字人画像展示</b><span>仅公开你勾选的部分</span></div>
-      <div class="visibility-list">${myPersonaSource().map(item=>`
-        <label class="visibility-row"><div><b>${escapeHTML(item.label)}</b><span>${escapeHTML(item.value)}</span></div>
-          <input type="checkbox" data-visibility="${item.key}" ${d.visibility[item.key]?'checked':''}>
-        </label>`).join('')}</div>
-    </div>`;
-  renderMyTimelineEditor();
+      <div class="edit-section">
+        <div class="edit-section-title"><b>故事时间线</b><span>可增删节点</span></div>
+        <div id="myTimelineEditor"></div>
+        <button class="edit-add" onclick="addMyTimelineItem()">＋ 添加一个人生节点</button>
+      </div>`;
+  }else if(myEditMode==='advice'){
+    content=`
+      <div class="edit-section">
+        <div class="edit-section-title"><b>经验与建议</b><span>每行一条建议</span></div>
+        ${Object.entries(meta.advice).map(([kind,tips])=>`
+          <label class="edit-field" style="margin-top:10px"><span>${escapeHTML(ADVICE_TITLES[kind]?.[0]||'我的建议')}</span>
+            <textarea maxlength="360" oninput="updateMyAdvice('${kind}',this.value)">${escapeHTML(tips.join('\n'))}</textarea>
+          </label>`).join('')}
+      </div>`;
+  }else if(myEditMode==='service'){
+    content=`
+      <div class="edit-section">
+        <div class="edit-section-title"><b>提供服务</b><span>开启后展示在主页</span></div>
+        ${(d.services||[]).map((service,i)=>`
+          <div class="timeline-edit-item">
+            <label class="visibility-row" style="margin-bottom:9px"><div><b>${escapeHTML(service.type)}</b><span>${service.enabled?'公开中':'未公开'}</span></div>
+              <input type="checkbox" ${service.enabled?'checked':''} onchange="updateMyService(${i},'enabled',this.checked)">
+            </label>
+            <div class="edit-grid">
+              <label class="edit-field wide"><span>服务名称</span><input value="${escapeHTML(service.title)}" maxlength="24" oninput="updateMyService(${i},'title',this.value)"></label>
+              <label class="edit-field"><span>价格</span><input value="${escapeHTML(service.price)}" maxlength="8" inputmode="decimal" oninput="updateMyService(${i},'price',this.value)"></label>
+              <label class="edit-field wide"><span>服务说明</span><textarea maxlength="160" oninput="updateMyService(${i},'desc',this.value)">${escapeHTML(service.desc)}</textarea></label>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }else if(myEditMode==='persona'){
+    content=`
+      <div class="edit-section">
+        <div class="edit-section-title"><b>数字人画像展示</b><span>仅公开你勾选的结果</span></div>
+        <div class="visibility-list">${myPersonaSource().map(item=>`
+          <label class="visibility-row"><div><b>${escapeHTML(item.label)}</b><span>${escapeHTML(item.value)}</span></div>
+            <input type="checkbox" data-visibility="${item.key}" ${d.visibility[item.key]?'checked':''}>
+          </label>`).join('')}</div>
+      </div>`;
+  }
+  $('#myEditBody').innerHTML=content;
+  if(myEditMode==='story')renderMyTimelineEditor();
 }
 function selectMyAvatar(src,btn){
   myEditDraft.avatar=src;
@@ -5542,26 +5570,31 @@ function updateMyService(index,key,value){
   if(myEditDraft.services&&myEditDraft.services[index])myEditDraft.services[index][key]=value;
 }
 function saveMyProfile(){
-  const name=$('#myEditName').value.trim();
-  if(!name){toast('昵称不能为空');return}
-  myEditDraft.name=name;myEditDraft.ini=name.slice(0,1);
-  myEditDraft.meta.age=$('#myEditAge').value.trim()||'—';
-  myEditDraft.meta.city=$('#myEditCity').value.trim()||'未设置';
-  myEditDraft.meta.years=$('#myEditYears').value.trim()||'正在探索';
-  myEditDraft.meta.from=$('#myEditFrom').value.trim()||'过去的我';
-  myEditDraft.meta.to=$('#myEditTo').value.trim()||'现在的我';
-  myEditDraft.meta.result=$('#myEditResult').value.trim()||'持续探索中';
-  myEditDraft.meta.intro=$('#myEditIntro').value.trim();
-  myEditDraft.meta.full=$('#myEditFull').value.trim();
-  myEditDraft.quote=$('#myEditQuote').value.trim();
-  myEditDraft.tags=$('#myEditTags').value.split(/[，,]/).map(x=>x.trim()).filter(Boolean).slice(0,5);
-  myEditDraft.bio=`${myEditDraft.meta.from} → ${myEditDraft.meta.to}`;
-  document.querySelectorAll('#myEditBody [data-visibility]').forEach(input=>{myEditDraft.visibility[input.dataset.visibility]=input.checked});
+  if(myEditMode==='basic'){
+    const name=$('#myEditName').value.trim();
+    if(!name){toast('昵称不能为空');return}
+    myEditDraft.name=name;myEditDraft.ini=name.slice(0,1);
+    myEditDraft.meta.age=$('#myEditAge').value.trim()||'—';
+    myEditDraft.meta.city=$('#myEditCity').value.trim()||'未设置';
+    myEditDraft.meta.years=$('#myEditYears').value.trim()||'正在探索';
+    myEditDraft.meta.from=$('#myEditFrom').value.trim()||'过去的我';
+    myEditDraft.meta.to=$('#myEditTo').value.trim()||'现在的我';
+    myEditDraft.meta.result=$('#myEditResult').value.trim()||'持续探索中';
+    myEditDraft.tags=$('#myEditTags').value.split(/[，,]/).map(x=>x.trim()).filter(Boolean).slice(0,5);
+    myEditDraft.bio=`${myEditDraft.meta.from} → ${myEditDraft.meta.to}`;
+  }else if(myEditMode==='story'){
+    myEditDraft.meta.intro=$('#myEditIntro').value.trim();
+    myEditDraft.meta.full=$('#myEditFull').value.trim();
+    myEditDraft.quote=$('#myEditQuote').value.trim();
+  }else if(myEditMode==='persona'){
+    document.querySelectorAll('#myEditBody [data-visibility]').forEach(input=>{myEditDraft.visibility[input.dataset.visibility]=input.checked});
+  }
   myProfile=cloneData(myEditDraft);
   safeStoreSet(MY_PROFILE_KEY,myProfile);
   renderMyProfile();
   closePush('myEditPage');
-  toast('我的主页已更新');
+  const savedLabel={basic:'基础资料',story:'我的故事',advice:'经验与建议',service:'提供服务',persona:'画像展示设置'}[myEditMode]||'主页';
+  toast(`${savedLabel}已更新`);
 }
 
 function switchProfileTab(tab, btn){
