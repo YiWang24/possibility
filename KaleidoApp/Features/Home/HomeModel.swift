@@ -81,36 +81,75 @@ final class HomeModel {
         dimUpdates: nil
     )
 
-    // MARK: 动态画像
+    // MARK: 动态画像（空白态 · 随探索生长）
+    //
+    // 对齐原型「动态画像默认使用空白状态」：5 维默认「尚未填写」，完成度 0% 起，
+    // 每填一维 +20%。已填内容持久化到 UserDefaults（本地私密，对应原型 localStorage）。
+
     struct PortraitDim: Identifiable {
-        let id = UUID()
+        let id: String
         let icon: String
         let iconTint: UInt32
         let label: String
-        let value: String
-        let isTodo: Bool
+        /// nil 表示尚未填写（todo 虚线态）
+        let value: String?
+        /// 点击打开的维度浮层；nil 表示走画像工作室（如人格底色）
+        let dimensionKey: DimensionKey?
+        var isTodo: Bool { value == nil }
     }
 
-    /// 结合服务端 profile.dims 与 demo 默认，产出画像维度卡
-    func portraitDims(profile: UserProfile?) -> [PortraitDim] {
-        let dims = profile?.dims ?? [:]
-        return [
-            PortraitDim(icon: "✦", iconTint: 0x5E96FF, label: "我擅长",
-                        value: dims["我擅长"] ?? "结构化思考 · 共情 · 视觉表达", isTodo: false),
-            PortraitDim(icon: "♡", iconTint: 0xE35CC1, label: "我喜欢",
-                        value: dims["我喜欢"] ?? "把混乱变有序 · 独处的清晨 · 手绘", isTodo: false),
-            PortraitDim(icon: "✿", iconTint: 0xFF7A4D, label: "我在情感关系中在意",
-                        value: dims["我在情感关系中在意"] ?? "待探索 · 回答 3 个小问题点亮",
-                        isTodo: dims["我在情感关系中在意"] == nil),
-            PortraitDim(icon: "⌂", iconTint: 0x3ED9A4, label: "我在家庭关系中在意",
-                        value: dims["我在家庭关系中在意"] ?? "待探索 · 回答 3 个小问题点亮",
-                        isTodo: dims["我在家庭关系中在意"] == nil),
+    /// 已填维度：dimKey → 关键词拼接文本（含 personality）。UserDefaults 持久化。
+    private(set) var filledDims: [String: String] = [:]
+    private let store = UserDefaults.standard
+    private static let storePrefix = "kaleido_dim_"
+
+    /// 人格底色（走工作室测评，暂未接入 → 常为 nil）
+    var personalityText: String? { filledDims["personality"] }
+
+    /// 从本地读取已填维度（冷启动调用）
+    func loadPortrait() {
+        var loaded: [String: String] = [:]
+        for key in ["personality"] + DimensionKey.allCases.map(\.rawValue) {
+            if let v = store.string(forKey: Self.storePrefix + key), !v.isEmpty {
+                loaded[key] = v
+            }
+        }
+        filledDims = loaded
+    }
+
+    /// 已保存关键词拆回数组（重开浮层时回显已选）
+    func selectedKeywords(for key: DimensionKey) -> [String] {
+        guard let text = filledDims[key.rawValue] else { return [] }
+        return text.components(separatedBy: " · ").filter { !$0.isEmpty }
+    }
+
+    /// 保存某维度的关键词选择 → 回填 + 持久化
+    func saveDimension(_ key: DimensionKey, keywords: [String]) {
+        let text = keywords.prefix(5).joined(separator: " · ")
+        guard !text.isEmpty else { return }
+        filledDims[key.rawValue] = text
+        store.set(text, forKey: Self.storePrefix + key.rawValue)
+    }
+
+    /// 五维画像卡（人格底色 + 四软维度）
+    var portraitDims: [PortraitDim] {
+        var rows: [PortraitDim] = [
+            PortraitDim(id: "personality", icon: "◎", iconTint: 0x5968D9,
+                        label: "人格底色", value: personalityText, dimensionKey: nil),
         ]
+        for key in DimensionKey.allCases {
+            let cfg = DimensionData.config(key)
+            rows.append(PortraitDim(id: key.rawValue, icon: cfg.icon, iconTint: cfg.tint,
+                                    label: cfg.title, value: filledDims[key.rawValue], dimensionKey: key))
+        }
+        return rows
     }
 
-    func portraitPct(profile: UserProfile?) -> Int {
-        profile?.portraitPct ?? AppConfig.Threshold.portraitInitialPct
-    }
+    /// 完成度：已填维度数 × 20%（5 维满 100%）
+    var completionPct: Int { min(100, filledDims.count * 20) }
+
+    /// 人生底牌签名（人生卡牌完成后 3 张公开底牌；暂未接入 → 空）
+    var lifeSignature: [String] { [] }
 
     // MARK: demo 人物
     let userName = "屿岸"
