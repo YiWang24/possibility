@@ -17,6 +17,8 @@ enum ChatStreamEvent: Sendable {
 
 /// SSE `event: done` 的载荷（对应 §6.1 二次结构化 + §7.3 岔路口成形判定）
 struct ChatStreamDone: Decodable, Sendable {
+    /// 本轮归属的会话；后续追问带回 `conversation_id`，服务端据此取历史
+    var conversationId: UUID?
     /// 岔路口信号；`ready == true` 时前端解锁「看看走过这条路的人」
     var crossroads: Crossroads?
     /// 本轮抽取的画像信号（维度名 → 内容），供 Home 动态画像生长
@@ -24,6 +26,7 @@ struct ChatStreamDone: Decodable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case crossroads
+        case conversationId = "conversation_id"
         case profileSignals = "profile_signals"
     }
 }

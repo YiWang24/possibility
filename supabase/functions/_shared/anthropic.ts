@@ -10,7 +10,9 @@ export function anthropic(): Anthropic {
     apiKey: runtimeConfig.anthropicApiKey,
     baseURL: runtimeConfig.anthropicBaseUrl,
     maxRetries: 2,
-    timeout: 45_000,
+    // match 的候选旅人提示词较长、simulate 需生成三套完整情景，
+    // 经网关的单次结构化生成常超过 45s，须给足余量。
+    timeout: 150_000,
   });
   return instance;
 }

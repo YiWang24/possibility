@@ -5,11 +5,10 @@ import Foundation
 // 原型 scr-home：问候 · 语音日记 · AI 发问 · 动态画像。
 
 struct HomeView: View {
-    @Environment(SupabaseService.self) private var supabase
     @Environment(ToastCenter.self) private var toast
     @State private var model = HomeModel()
     @State private var chatLaunch: ChatLaunch?
-    @State private var showSkillSheet = false
+    @State private var activeDimension: DimensionKey?
 
     var body: some View {
         ScrollView {
@@ -28,12 +27,15 @@ struct HomeView: View {
         }
         .scrollIndicators(.hidden)
         .screenBackground()
+        .onAppear { model.loadPortrait() }
         .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0) }
-        .sheet(isPresented: $showSkillSheet) {
-            SkillSheet(currentSkill: model.portraitDims(profile: supabase.profile).first?.value ?? "")
-                .presentationDetents([.fraction(0.78)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(Color(hex: 0x10131C))
+        .sheet(item: $activeDimension) { key in
+            DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key)) { keywords in
+                model.saveDimension(key, keywords: keywords)
+            }
+            .presentationDetents([.fraction(0.82)])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Color(hex: 0x10131C))
         }
     }
 
@@ -73,15 +75,22 @@ struct HomeView: View {
     private var portraitSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "探索更多画像 ›", isLink: true) {
-                toast.show("画像会随每次探索自动生长")
+                toast.show("画像工作室即将上线")
             }
             PortraitCard(
                 model: model,
-                profile: supabase.profile,
-                onTapSkill: { showSkillSheet = true },
-                onTapLike: { toast.show("「我喜欢」已由 12 篇日记归纳生成") },
-                onTapTodo: { toast.show("回答 3 个小问题即可点亮这一面") }
+                onTapDim: handleDimTap,
+                onTapLifeGame: { toast.show("人生卡牌即将上线") }
             )
+        }
+    }
+
+    /// 维度点击路由：软维度开浮层；人格底色走工作室（暂占位）
+    private func handleDimTap(_ dim: HomeModel.PortraitDim) {
+        if let key = dim.dimensionKey {
+            activeDimension = key
+        } else {
+            toast.show("人格底色测评即将上线")
         }
     }
 }

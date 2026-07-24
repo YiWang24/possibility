@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  backend-check:
+    name: Deno 格式 / lint / 类型 / 单测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: fmt / lint / check / test
+        run: npm run backend:check
+
+  db-test:
+    name: 迁移 + RLS 验证
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: 启动本地数据库
+        run: supabase db start
+
+      - name: 应用全部 migration + seed
+        run: supabase db reset
+
+      - name: RLS / 数据隔离测试
+        run: |
+          PGPASSWORD=postgres psql \
+            -v ON_ERROR_STOP=1 \
+            -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -f supabase/tests/rls_test.sql
