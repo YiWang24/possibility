@@ -4,3 +4,9 @@
 .env
 .env.local
 .env.*.local
+
+# Supabase / 后端
+supabase/.branches
+supabase/.temp
+supabase/functions/.env
+node_modules/
