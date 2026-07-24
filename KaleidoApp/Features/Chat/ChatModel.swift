@@ -26,6 +26,8 @@ final class ChatModel {
     var crossroadsReady = false
     var crossroadsSummary: String?
     private var matchQuery: MatchQuery?
+    /// 服务端会话 ID：首轮 done 事件返回，后续追问带回以延续历史
+    private var conversationId: UUID?
 
     /// match 结果
     var loadingMatch = false
@@ -77,7 +79,7 @@ final class ChatModel {
             guard let supabase else { throw URLError(.userAuthenticationRequired) }
             return try await supabase.jwt()
         })
-        let request = ChatRequest(conversationId: nil, topic: launch.topic.rawValue,
+        let request = ChatRequest(conversationId: conversationId, topic: launch.topic.rawValue,
                                   message: userText, history: Array(history))
 
         do {
@@ -103,6 +105,7 @@ final class ChatModel {
     }
 
     private func applyDone(_ done: ChatStreamDone) {
+        if let id = done.conversationId { conversationId = id }
         if let c = done.crossroads, c.ready {
             markCrossroadsReady(summary: c.summary)
             matchQuery = c.matchQuery
