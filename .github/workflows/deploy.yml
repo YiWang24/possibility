@@ -29,10 +29,10 @@ jobs:
           version: latest
 
       - name: 关联生产项目
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase link --workdir backend --project-ref "$SUPABASE_PROJECT_ID"
 
       - name: 推送数据库迁移
-        run: supabase db push
+        run: supabase db push --workdir backend
 
       - name: 同步 Edge Function 密钥
         env:
@@ -49,9 +49,9 @@ jobs:
             printf 'ANTHROPIC_CHAT_MODEL=%s\n' "${ANTHROPIC_CHAT_MODEL:-claude-sonnet-5}"
             printf 'ANTHROPIC_STRUCTURED_MODEL=%s\n' "${ANTHROPIC_STRUCTURED_MODEL:-claude-sonnet-5}"
             printf 'ANTHROPIC_DIARY_MODEL=%s\n' "${ANTHROPIC_DIARY_MODEL:-claude-sonnet-5}"
-          } > supabase/.env.ci
-          supabase secrets set --env-file supabase/.env.ci --project-ref "$SUPABASE_PROJECT_ID"
-          rm -f supabase/.env.ci
+          } > backend/.env.ci
+          supabase secrets set --env-file backend/.env.ci --project-ref "$SUPABASE_PROJECT_ID"
+          rm -f backend/.env.ci
 
       - name: 部署 Edge Functions
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+        run: supabase functions deploy --workdir backend --project-ref "$SUPABASE_PROJECT_ID"

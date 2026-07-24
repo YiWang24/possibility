@@ -1,10 +1,10 @@
 // SEEDGEN — 从原型 HTML 抽取 USERS/PROFILE_META/BOUNTIES/PROFILE_SERVICES，
-// 生成 supabase/seed.sql（幂等 insert ... on conflict do nothing）。
+// 生成 backend/seed.sql（幂等 insert ... on conflict do nothing）。
 // 用法：node scripts/gen_seed.mjs
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 
-const HTML = "万花筒-认识自己-原型.html";
-const OUT = "supabase/seed.sql";
+const HTML = "docs/万花筒-认识自己-原型.html";
+const OUT = "backend/seed.sql";
 
 const src = readFileSync(HTML, "utf8");
 
@@ -118,7 +118,7 @@ out.push("");
 out.push("commit;");
 out.push("");
 
-mkdirSync("supabase", { recursive: true });
+mkdirSync("backend", { recursive: true });
 writeFileSync(OUT, out.join("\n"), "utf8");
 console.log(
   `seed.sql 生成完毕：travelers=${USERS.length} details=${Object.keys(META).length} ` +

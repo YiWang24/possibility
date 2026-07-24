@@ -6,14 +6,14 @@
 .env.*.local
 
 # Supabase / 后端
-supabase/.branches
-supabase/.temp
-supabase/functions/.env
+backend/.branches
+backend/.temp
+backend/functions/.env
 node_modules/
 coverage/
 
 # iOS 本地配置（各自填写 Supabase 值，不进仓库；提交模板 Config.xcconfig.example）
-KaleidoApp/Config.xcconfig
+frontend/Config.xcconfig
 
 # Xcode 产物
 *.xcuserstate
