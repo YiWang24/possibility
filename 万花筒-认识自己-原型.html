@@ -336,8 +336,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .askbox.no-topic textarea{text-indent:0;padding-right:27px}
 .askbox textarea::placeholder{color:var(--faint);font-size:13.5px}
 .askbox textarea:focus{outline:none}
-.askfoot{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-.askfoot .cnt{font-size:11px;color:var(--faint)}
+.askfoot{display:flex;align-items:center;justify-content:flex-end;margin-top:6px}
 .send{
   all:unset;cursor:pointer;padding:10px 24px;border-radius:999px;font-size:13.5px;font-weight:600;
   color:#fff;background:var(--btn-g);letter-spacing:.08em;transition:transform .15s;
@@ -440,7 +439,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 #scr-home .askbox textarea{height:72px;font-size:14px;line-height:1.7;text-indent:66px}
 #scr-home .askbox.no-topic textarea{text-indent:0}
 #scr-home .askfoot{margin-top:4px}
-#scr-home .askfoot .cnt{font-size:10px}
 #scr-home .send{padding:8px 20px;font-size:12.5px}
 #scr-home .ask .chips{margin-top:auto;padding-top:15px;gap:7px}
 #scr-home .ask .chip{padding:6px 13px;font-size:11.5px}
@@ -1764,7 +1762,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
         <button class="ask-clear" id="askClear" type="button" aria-label="清空输入" onclick="clearAskText()">×</button>
         <textarea id="askText" maxlength="200" placeholder="写下任何正在心里盘旋的问题…"></textarea>
         <div class="askfoot">
-          <span class="cnt">灵感来自你 3 天前的日记</span>
           <button class="send" onclick="startChat()">发送</button>
         </div>
       </div>
