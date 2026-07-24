@@ -128,30 +128,47 @@ struct BreatheModifier: ViewModifier {
 
 struct PortraitCard: View {
     let model: HomeModel
-    let profile: UserProfile?
-    var onTapSkill: () -> Void
-    var onTapLike: () -> Void
-    var onTapTodo: () -> Void
+    var onTapDim: (HomeModel.PortraitDim) -> Void
+    var onTapLifeGame: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            OrbView(size: 96).padding(.top, 4)
-            Text("\(model.userName) · 动态数字人")
-                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink).padding(.top, 16)
-            Text("探索者 LV.3")
-                .font(.system(size: 11.5)).tracking(2).foregroundStyle(Theme.faint).padding(.top, 4)
-
-            progressBar.padding(.top, 16)
+            digitalHumanStage
+            progressBar.padding(.top, 18)
 
             VStack(spacing: 9) {
-                ForEach(model.portraitDims(profile: profile)) { dim in
+                ForEach(model.portraitDims) { dim in
                     dimRow(dim)
                 }
             }
             .padding(.top, 16)
+
+            lifeEntry.padding(.top, 14)
+            if !model.lifeSignature.isEmpty { lifeSignature.padding(.top, 14) }
         }
-        .padding(.horizontal, 20).padding(.top, 24).padding(.bottom, 18)
+        .padding(.horizontal, 20).padding(.top, 22).padding(.bottom, 18)
         .kaleidoCard()
+    }
+
+    // 数字人舞台：签名光球 + LIVE 徽标 + caption
+    private var digitalHumanStage: some View {
+        VStack(spacing: 0) {
+            OrbView(size: 96)
+                .padding(.top, 4)
+                .overlay(alignment: .top) {
+                    Text("LIVE DIGITAL SELF")
+                        .font(.system(size: 8.5, weight: .semibold)).tracking(1.5)
+                        .foregroundStyle(Color(hex: 0x9DBCFF))
+                        .padding(.horizontal, 9).padding(.vertical, 3)
+                        .background(Color(hex: 0x5E96FF, alpha: 0.14), in: Capsule())
+                        .overlay(Capsule().strokeBorder(Color(hex: 0x5E96FF, alpha: 0.3), lineWidth: 1))
+                        .offset(y: -6)
+                }
+            Text("\(model.userName) · 动态数字人")
+                .font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.ink).padding(.top, 18)
+            Text("探索者 LV.3 · 随每次探索持续生长")
+                .font(.system(size: 11)).foregroundStyle(Theme.faint).padding(.top, 4)
+        }
     }
 
     private var progressBar: some View {
@@ -160,31 +177,27 @@ struct PortraitCard: View {
                 Capsule().fill(Theme.raised)
                     .overlay(alignment: .leading) {
                         Capsule().fill(Theme.aurora)
-                            .frame(width: geo.size.width * CGFloat(model.portraitPct(profile: profile)) / 100)
+                            .frame(width: geo.size.width * CGFloat(model.completionPct) / 100)
+                            .animation(.spring(response: 0.5, dampingFraction: 0.8), value: model.completionPct)
                     }
             }
             .frame(height: 5)
-            Text("\(model.portraitPct(profile: profile))%")
+            Text("\(model.completionPct)%")
                 .font(.system(size: 11)).monospacedDigit().foregroundStyle(Theme.sub)
+                .contentTransition(.numericText())
         }
         .frame(maxWidth: 250)
     }
 
     private func dimRow(_ dim: HomeModel.PortraitDim) -> some View {
-        Button {
-            switch dim.label {
-            case "我擅长": onTapSkill()
-            case "我喜欢": onTapLike()
-            default: onTapTodo()
-            }
-        } label: {
+        Button { onTapDim(dim) } label: {
             HStack(spacing: 12) {
                 Text(dim.icon).font(.system(size: 15))
                     .frame(width: 34, height: 34)
                     .background(Color(hex: dim.iconTint, alpha: 0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(dim.label).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
-                    Text(dim.value).font(.system(size: 11.5))
+                    Text(dim.value ?? "尚未填写").font(.system(size: 11.5))
                         .foregroundStyle(dim.isTodo ? Theme.blue : Theme.sub)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -200,5 +213,58 @@ struct PortraitCard: View {
             )
         }
         .buttonStyle(PressScaleStyle())
+    }
+
+    // 人生卡牌入口
+    private var lifeEntry: some View {
+        Button(action: onTapLifeGame) {
+            HStack(spacing: 12) {
+                miniDeck
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("画像深潜 · 5–8 分钟").font(.system(size: 10)).tracking(1).foregroundStyle(Color(hex: 0x9DBCFF))
+                    Text("人生卡牌：你最后会留下什么？").font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("经历五段人生取舍，生成你的私密深层画像").font(.system(size: 11)).foregroundStyle(Theme.sub)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                Text("›").font(.system(size: 15)).foregroundStyle(Theme.faint)
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .background(
+                LinearGradient(colors: [Color(hex: 0x1A2350, alpha: 0.6), Color(hex: 0x2B1B2D, alpha: 0.4)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0x8F7BFF, alpha: 0.3), lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
+    }
+
+    private var miniDeck: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 5).fill(Theme.hue(4).gradient).frame(width: 22, height: 30).rotationEffect(.degrees(-10)).offset(x: -3)
+            RoundedRectangle(cornerRadius: 5).fill(Theme.hue(1).gradient).frame(width: 22, height: 30).rotationEffect(.degrees(8)).offset(x: 3)
+        }
+        .frame(width: 34)
+    }
+
+    // 人生底牌签名
+    private var lifeSignature: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("我的人生底牌").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                Spacer()
+                Text("来自人生卡牌").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
+            }
+            HStack(spacing: 8) {
+                ForEach(model.lifeSignature, id: \.self) { card in
+                    Text(card).font(.system(size: 12, weight: .medium)).foregroundStyle(.white)
+                        .frame(maxWidth: .infinity).padding(.vertical, 14)
+                        .background(Theme.hue(0).gradient, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+            }
+        }
+        .padding(14)
+        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
     }
 }
