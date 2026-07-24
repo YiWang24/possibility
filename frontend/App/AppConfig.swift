@@ -6,17 +6,21 @@ enum AppConfig {
 
     // MARK: - Supabase（App 侧可公开，受 RLS 约束）
 
-    /// 从 Info.plist 读取（由 Config.xcconfig 注入），本地缺省用 supabase start 的默认地址。
+    /// 从 Info.plist 读取（由 Config.xcconfig 注入），缺省回落到线上 Supabase 项目
+    /// （anon key 受 RLS 约束、可公开）；本地开发可在 Config.xcconfig 覆盖为 supabase start 地址。
     static var supabaseURL: URL {
         if let s = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String,
            let url = URL(string: s), !s.isEmpty {
             return url
         }
-        return URL(string: "http://127.0.0.1:54321")!
+        return URL(string: "https://gxmruqzcyahjlktshpkh.supabase.co")!
     }
 
     static var supabaseAnonKey: String {
-        (Bundle.main.object(forInfoDictionaryKey: "SUPABASE_ANON_KEY") as? String) ?? ""
+        if let s = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_ANON_KEY") as? String, !s.isEmpty {
+            return s
+        }
+        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4bXJ1cXpjeWFoamxrdHNocGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NjM3NjMsImV4cCI6MjEwMDQzOTc2M30.ANJKh_D-kh_4yTeE_AfvIExUaLo3S5I0jOvHSOTOQg4"
     }
 
     /// Edge Function 直连 URL（SSE 流式不走 functions.invoke）
