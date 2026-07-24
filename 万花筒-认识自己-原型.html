@@ -621,6 +621,17 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .dial .core .pick{font-size:17px;font-weight:700;margin-top:8px;line-height:1.5;min-height:28px}
 .dial .core .yr{font-size:12px;color:var(--sub);margin-top:8px}
 .dial .core .yr b{color:var(--blue);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums}
+.dial-carry-tray{
+  position:absolute;left:50%;bottom:43px;z-index:5;transform:translateX(-50%);
+  display:flex;align-items:center;justify-content:center;gap:5px;min-height:24px;pointer-events:none;
+}
+.dial-carry-token{
+  width:22px;height:22px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:#24180D;background:linear-gradient(145deg,#FFD8A8,#E9A966);
+  border:1px solid rgba(255,232,199,.82);box-shadow:0 5px 14px rgba(0,0,0,.32);
+  font-size:10px;animation:carryTokenIn .38s cubic-bezier(.2,1.5,.4,1) both;
+}
+@keyframes carryTokenIn{from{opacity:0;transform:translateY(10px) scale(.45)}to{opacity:1;transform:none}}
 .yr-presets{display:flex;justify-content:center;gap:8px;margin-top:18px}
 .yp{
   all:unset;cursor:pointer;padding:8px 16px;border-radius:999px;
@@ -665,10 +676,12 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   background:var(--btn-g);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;
 }
 .carry-section{
-  margin-top:8px;padding:15px 14px 13px;border-radius:20px;
+  display:none;margin-top:8px;padding:15px 14px 13px;border-radius:20px;
   background:linear-gradient(145deg,rgba(255,176,103,.07),rgba(94,150,255,.055));
-  border:1px solid rgba(255,176,103,.18)
+  border:1px solid rgba(255,176,103,.18);overflow:hidden
 }
+.carry-section.reveal{display:block;animation:carryReveal .52s cubic-bezier(.2,.9,.3,1) both}
+@keyframes carryReveal{from{opacity:0;max-height:0;transform:translateY(-10px);padding-top:0;padding-bottom:0}to{opacity:1;max-height:260px;transform:none}}
 .carry-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .carry-head .ey{font-size:8.5px;letter-spacing:.16em;color:#E7B77F}
 .carry-head h3{font-size:13px;margin-top:4px}
@@ -677,21 +690,22 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .carry-copy{font-size:9.5px;color:var(--sub);line-height:1.55;margin-top:6px}
 .carry-deck{
   display:flex;gap:8px;overflow-x:auto;margin:11px -14px 0;padding:2px 14px 7px;
-  scrollbar-width:none;scroll-snap-type:x proximity
+  scrollbar-width:none;scroll-snap-type:x mandatory;overscroll-behavior-x:contain
 }
 .carry-deck::-webkit-scrollbar{display:none}
 .carry-card{
-  all:unset;cursor:pointer;box-sizing:border-box;position:relative;flex:0 0 112px;min-height:92px;
+  all:unset;cursor:grab;box-sizing:border-box;position:relative;flex:0 0 calc((100% - 16px)/2.5);min-height:92px;
   padding:12px 11px;border-radius:15px;scroll-snap-align:start;
   background:#151922;border:1px dashed rgba(255,255,255,.16);
-  transition:transform .16s,border-color .2s,background .2s
+  transition:transform .16s,border-color .2s,background .2s,opacity .18s;
+  touch-action:pan-x;user-select:none;-webkit-user-select:none
 }
-.carry-card:active{transform:scale(.97)}
+.carry-card:active{cursor:grabbing;transform:scale(.97)}.carry-card.dragging{opacity:.22}
 .carry-card .glyph{font-size:16px}.carry-card b{display:block;font-size:11.5px;line-height:1.4;margin-top:7px}
 .carry-card small{display:block;font-size:8.5px;color:var(--faint);margin-top:5px}
 .carry-card.on{border-style:solid;border-color:rgba(255,190,119,.72);background:linear-gradient(145deg,rgba(255,176,103,.17),rgba(94,150,255,.08)),#151922}
 .carry-card.on::after{
-  content:"必须带";position:absolute;right:7px;top:7px;padding:3px 6px;border-radius:99px;
+  content:"已带上";position:absolute;right:7px;top:7px;padding:3px 6px;border-radius:99px;
   font-size:7.5px;color:#211308;background:#FFD09B
 }
 .carry-lock{display:flex;align-items:center;gap:7px;margin-top:8px;font-size:9px;color:var(--faint)}
@@ -765,7 +779,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   #scr-lab .choices:hover .choice:nth-child(1),#scr-lab .choices.fanned .choice:nth-child(1),#scr-lab .choices:focus-within .choice:nth-child(1){transform:translate(calc(-50% - 107px),9px) rotate(-15deg)}
   #scr-lab .choices:hover .choice:nth-child(4),#scr-lab .choices.fanned .choice:nth-child(4),#scr-lab .choices:focus-within .choice:nth-child(4){transform:translate(calc(-50% + 107px),9px) rotate(15deg)}
   #scr-lab .carry-section{padding:12px}
-  #scr-lab .carry-card{flex-basis:104px;min-height:84px}
+  #scr-lab .carry-card{min-height:84px}
   #scr-lab .lab-note{display:none}
 }
 
@@ -807,7 +821,8 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .rs-list li::before{content:"";position:absolute;left:0;top:12px;width:4px;height:4px;border-radius:50%;background:var(--faint)}
 .rs-key{margin-top:12px;padding:15px 18px;border-radius:16px;background:linear-gradient(135deg,rgba(94,150,255,.12),rgba(215,244,100,.08));border:1px dashed rgba(111,165,255,.45);font-size:12.5px;line-height:1.8;color:var(--sub)}
 .rs-key b{color:var(--ink)}
-.floor-test{margin-top:14px;padding:17px;border-radius:21px;background:#11151D;border:1px solid rgba(255,122,77,.24)}
+.floor-test{display:none;margin-top:14px;padding:17px;border-radius:21px;background:#11151D;border:1px solid rgba(255,122,77,.24)}
+.floor-test.show{display:block;animation:msgin .35s ease}
 .floor-test .overline{font-size:8.5px;letter-spacing:.17em;color:#FF9B77}
 .floor-test h4{font-size:15px;line-height:1.45;margin-top:7px}
 .floor-test>p{font-size:10.5px;color:var(--sub);line-height:1.65;margin-top:6px}
@@ -1830,6 +1845,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
           <div class="pick" id="dialPick">把选择卡拖进来</div>
           <div class="yr">推演 <b id="dialYear">5</b> 年后的你</div>
         </div>
+        <div class="dial-carry-tray" id="dialCarry" aria-label="已带入实验室的底线卡"></div>
       </div>
     </div>
     <div class="yr-presets">
@@ -1856,12 +1872,12 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
       </button>
     </div>
 
-    <div class="carry-section">
+    <div class="carry-section" id="carrySection">
       <div class="carry-head">
         <div><div class="ey">NON-NEGOTIABLES · 来自你的画像与对话</div><h3>这条路上，什么必须一起带走？</h3></div>
         <span>已装入 <b id="carryCount">0</b>/3</span>
       </div>
-      <p class="carry-copy">它们不是锦上添花的愿望，而是这次转变不能交换掉的底线。选出三张，再一起放进实验室。</p>
+      <p class="carry-copy">可选。把你不愿拿去交换的底线拖进上方仪表盘，最多带三张；也可以不带，直接开始推演。</p>
       <div class="carry-deck" id="carryDeck">
         <button class="carry-card" data-carry="income"><span class="glyph">▣</span><b>稳定的生活来源</b><small>来自对话 · 收入担忧</small></button>
         <button class="carry-card" data-carry="health"><span class="glyph">＋</span><b>不透支身体</b><small>来自日记 · 最近睡得晚</small></button>
@@ -1870,7 +1886,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
         <button class="carry-card" data-carry="creation"><span class="glyph">◇</span><b>创造的实感</b><small>来自动态画像</small></button>
         <button class="carry-card" data-carry="exit"><span class="glyph">↩</span><b>仍有退路可选</b><small>来自处境扫描</small></button>
       </div>
-      <div class="carry-lock" id="carryLock"><i></i><span>还需选择 3 张必须带上的牌</span></div>
+      <div class="carry-lock" id="carryLock"><i></i><span>左右滑动查看更多 · 按住卡片拖入仪表盘</span></div>
     </div>
 
     <button class="btn-ink btn-cta lab-go" id="simBtn" disabled onclick="runSim()">开始推演</button>
@@ -3483,16 +3499,22 @@ const CARRY_META={
   exit:{glyph:'↩',name:'仍有退路可选',risk:'如果投入过深、现金流下降或履历断裂，回到原路径的成本会明显升高。'}
 };
 function syncLabReady(){
-  const ready=Boolean(labPick)&&carrySelected.size===CARRY_LIMIT;
+  const ready=Boolean(labPick);
   const btn=$('#simBtn');
   btn.disabled=!ready;
   if(ready){
     btn.removeAttribute('disabled');
-    btn.textContent='带着 3 张底牌开始推演';
+    btn.textContent=carrySelected.size?`带着 ${carrySelected.size} 张底线卡开始推演`:'直接开始推演';
   }else{
     btn.setAttribute('disabled','');
-    btn.textContent=labPick?`还要装入 ${CARRY_LIMIT-carrySelected.size} 张底牌`:'开始推演';
+    btn.textContent='先选择一条路';
   }
+}
+function renderCarryTray(){
+  $('#dialCarry').innerHTML=[...carrySelected].map((id,i)=>{
+    const m=CARRY_META[id];
+    return `<span class="dial-carry-token" title="${escapeHTML(m.name)}" style="animation-delay:${i*.05}s">${m.glyph}</span>`;
+  }).join('');
 }
 function toggleCarryCard(btn){
   const id=btn.dataset.carry;
@@ -3503,14 +3525,23 @@ function toggleCarryCard(btn){
   }
   btn.classList.toggle('on',carrySelected.has(id));
   $('#carryCount').textContent=carrySelected.size;
-  const left=CARRY_LIMIT-carrySelected.size;
   const lock=$('#carryLock');
-  lock.classList.toggle('ready',left===0);
-  lock.querySelector('span').textContent=left===0?'三张底牌已装入，会在最坏结果中逐张检验':`还需选择 ${left} 张必须带上的牌`;
+  lock.classList.toggle('ready',carrySelected.size>0);
+  lock.querySelector('span').textContent=carrySelected.size
+    ?`已带入 ${carrySelected.size} 张 · 再次点击或拖入可调整`
+    :'左右滑动查看更多 · 按住卡片拖入仪表盘';
+  renderCarryTray();
   syncLabReady();
 }
 document.querySelectorAll('.carry-card').forEach(btn=>btn.addEventListener('click',()=>toggleCarryCard(btn)));
 function renderFloorTest(){
+  $('#floorTest').classList.toggle('show',carrySelected.size>0);
+  if(!carrySelected.size){
+    $('#floorItems').innerHTML='';
+    $('#floorVerdict').className='floor-verdict';
+    $('#floorVerdict').innerHTML='';
+    return;
+  }
   Object.keys(floorAnswers).forEach(k=>delete floorAnswers[k]);
   $('#floorItems').innerHTML=[...carrySelected].map(id=>{
     const m=CARRY_META[id];
@@ -3531,12 +3562,12 @@ function answerFloor(id,answer,btn){
   floorAnswers[id]=answer;
   btn.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
   btn.classList.add('on');
-  if(Object.keys(floorAnswers).length<CARRY_LIMIT)return;
+  if(Object.keys(floorAnswers).length<carrySelected.size)return;
   const rejected=Object.entries(floorAnswers).filter(([,v])=>v==='reject').map(([id])=>CARRY_META[id].name);
   const verdict=$('#floorVerdict');
   if(!rejected.length){
     verdict.className='floor-verdict show go';
-    verdict.innerHTML='<div class="cap">可以继续转变 · 但不是盲目乐观</div><b>你看见了最差结果，也确认它没有击穿三张底牌。</b><p>这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这三张底牌分别保留现实缓冲。</p>';
+    verdict.innerHTML=`<div class="cap">可以继续转变 · 但不是盲目乐观</div><b>你看见了最差结果，也确认它没有击穿带入的 ${carrySelected.size} 张底线卡。</b><p>这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这些底线分别保留现实缓冲。</p>`;
   }else{
     verdict.className='floor-verdict show stop';
     verdict.innerHTML=`<div class="cap">暂时不要直接跨过去</div><b>最坏结果会击穿：${rejected.join('、')}</b><p>这不等于你不适合改变。先为这些底线建立保护条件，再回来重新测试。</p>`;
@@ -3720,17 +3751,102 @@ document.getElementById('choices').addEventListener('click', e=>{
   if(justDragged){ e.stopPropagation(); e.preventDefault(); justDragged = false; }
 }, true);
 
+/* 底线卡：横向可滑，向上拖入同一个仪表盘 */
+let carryDrag=null,justCarryDragged=false;
+function beginCarryDrag(card,e){
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  carryDrag={card,pointerId:e.pointerId,sx:e.clientX,sy:e.clientY,cx:e.clientX,cy:e.clientY,active:false,cancelled:false,ghost:null,hot:false,done:false};
+  try{card.setPointerCapture(e.pointerId)}catch(_){}
+}
+function moveCarryDrag(e){
+  const st=carryDrag;
+  if(!st||e.pointerId!==st.pointerId||st.cancelled)return;
+  st.cx=e.clientX;st.cy=e.clientY;
+  const dx=e.clientX-st.sx,dy=e.clientY-st.sy;
+  if(!st.active){
+    if(Math.hypot(dx,dy)<8)return;
+    if(e.pointerType!=='mouse'&&Math.abs(dx)>Math.abs(dy)){
+      st.cancelled=true;
+      try{st.card.releasePointerCapture(st.pointerId)}catch(_){}
+      return;
+    }
+    st.active=true;
+    const pr=phoneEl.getBoundingClientRect(),g=document.createElement('div');
+    g.className='drag-ghost';
+    g.innerHTML=`<span>${st.card.querySelector('.glyph').textContent}</span>${st.card.querySelector('b').textContent}`;
+    phoneEl.appendChild(g);st.ghost=g;
+    st.gx=st.tx=e.clientX-pr.left;st.gy=st.ty=e.clientY-pr.top;
+    g.style.transform=`translate(${st.gx}px,${st.gy}px) translate(-50%,-50%)`;
+    st.card.classList.add('dragging');ghostLoop(st);
+  }
+  const pr=phoneEl.getBoundingClientRect();
+  st.tx=e.clientX-pr.left;st.ty=e.clientY-pr.top;
+  const hot=overDialPt(e.clientX,e.clientY);
+  dialEl.classList.toggle('drop-hot',hot);
+  if(hot!==st.hot){
+    $('#dialPick').textContent=hot?'松手，把底线带上':labPick;
+    st.hot=hot;
+  }
+  e.preventDefault();
+}
+function finishCarryDrag(e){
+  const st=carryDrag;
+  if(!st||e.pointerId!==st.pointerId)return;
+  carryDrag=null;
+  if(st.cancelled)return;
+  try{if(st.card.hasPointerCapture(st.pointerId))st.card.releasePointerCapture(st.pointerId)}catch(_){}
+  if(!st.active)return;
+  st.done=true;if(st.raf)cancelAnimationFrame(st.raf);
+  justCarryDragged=true;st.card.classList.remove('dragging');dialEl.classList.remove('drop-hot');
+  const pr=phoneEl.getBoundingClientRect(),ghost=st.ghost;
+  const px=Number.isFinite(e.clientX)?e.clientX:st.cx,py=Number.isFinite(e.clientY)?e.clientY:st.cy;
+  const dropped=st.hot||overDialPt(px,py);
+  if(dropped){
+    const dr=dialEl.getBoundingClientRect();
+    ghost.style.transition='transform .38s cubic-bezier(.3,.9,.3,1),opacity .38s ease';
+    ghost.style.transform=`translate(${dr.left+dr.width/2-pr.left}px,${dr.top+dr.height*.72-pr.top}px) translate(-50%,-50%) scale(.2)`;
+    ghost.style.opacity='0';setTimeout(()=>ghost.remove(),420);
+    const id=st.card.dataset.carry,wasSelected=carrySelected.has(id);
+    if(!wasSelected)toggleCarryCard(st.card);
+    if(carrySelected.has(id)){
+      toast(wasSelected?'这张底线卡已经在仪表盘里':`「${st.card.querySelector('b').textContent}」已带入实验室`);
+    }
+  }else{
+    const cr=st.card.getBoundingClientRect();
+    ghost.style.transition='transform .3s ease,opacity .3s ease';
+    ghost.style.transform=`translate(${cr.left+cr.width/2-pr.left}px,${cr.top+cr.height/2-pr.top}px) translate(-50%,-50%) scale(.6)`;
+    ghost.style.opacity='0';setTimeout(()=>ghost.remove(),340);
+  }
+  $('#dialPick').textContent=labPick;
+}
+document.querySelectorAll('.carry-card').forEach(card=>card.addEventListener('pointerdown',e=>beginCarryDrag(card,e)));
+document.addEventListener('pointermove',moveCarryDrag,{passive:false});
+document.addEventListener('pointerup',finishCarryDrag);
+document.addEventListener('pointercancel',finishCarryDrag);
+document.getElementById('carryDeck').addEventListener('click',e=>{
+  if(justCarryDragged){e.stopPropagation();e.preventDefault();justCarryDragged=false}
+},true);
+
 function pickChoice(c){
   document.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');
   labPick = c.dataset.name;
   $('#dialPick').textContent = labPick;
+  const section=$('#carrySection');
+  if(!section.classList.contains('reveal')){
+    section.classList.add('reveal');
+    setTimeout(()=>section.scrollIntoView({behavior:'smooth',block:'nearest'}),180);
+  }
   syncLabReady();
 }
-const LOAD_STEPS = ['读取你的动态画像与对话……','装入三张不可割舍的底牌……','用最坏结果逐张施压……'];
+function getLoadSteps(){
+  return carrySelected.size
+    ?['读取你的动态画像与对话……',`装入 ${carrySelected.size} 张不愿交换的底线卡……`,'用最坏结果逐张检验……']
+    :['读取你的动态画像与对话……','沿着这条选择生成未来情境……','比对相似旅人的真实经历……'];
+}
 function runSim(){
   if(!labPick){ toast('先拖一张选择卡进实验室'); return; }
-  if(carrySelected.size!==CARRY_LIMIT){ toast('还要选出三张必须一起带走的底牌'); return; }
+  const LOAD_STEPS=getLoadSteps();
   $('#loadName').textContent = labPick;
   const load = $('#simload');
   load.classList.add('show');
@@ -3753,7 +3869,7 @@ function rsTab(i, btn){
   document.querySelectorAll('#rsSeg button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
   document.querySelectorAll('.rs-panel').forEach((p,idx)=>p.classList.toggle('on', idx===i));
-  if(i===2&&carrySelected.size===CARRY_LIMIT&&$('#floorItems').children.length===0)renderFloorTest();
+  if(i===2&&carrySelected.size>0&&$('#floorItems').children.length===0)renderFloorTest();
 }
 
 /* ================= 社区 ================= */
