@@ -10,16 +10,19 @@
 		0098F21105E2B3AB57773506 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6601CDA7946FD49EA4B43F77 /* Theme.swift */; };
 		08C3004104A0187F349D713B /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9328152F072F3BA2BFC6FE26 /* HomeView.swift */; };
 		09944A0C516BADC2BB3F0F37 /* KaleidoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA783658FA011590BE5DD875 /* KaleidoApp.swift */; };
+		0DAEBEE4279FA5EA5869FE9F /* Config.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = 2CDB8ABE3B90724B7548206D /* Config.xcconfig.example */; };
 		0F70B0402D014B1BDCEC65A0 /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C7355A0EDCA3DE314B49BA /* ContentModels.swift */; };
 		11DA671A2D69BF6B1282A93A /* DemoData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3660B08FD00D66EF348BA7C4 /* DemoData.swift */; };
 		127BE751B39E571755E5511C /* HomeCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAEDFAF80599B4255FCE637B /* HomeCards.swift */; };
 		1629BB006E41C56C5966BC78 /* LabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 739D61962D3ADC97221581C5 /* LabView.swift */; };
 		1BCDAEDD23FACA0061B0E825 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA96B41B185812593121EB1C /* CommunityView.swift */; };
+		29A3FA620C7F315156A0656F /* DiaryDayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C31BDD78C32DBC6B72E09F81 /* DiaryDayView.swift */; };
 		2D77D12F398A31CC9F4AA5AC /* ChatModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 679CF3D490A06F75E784476C /* ChatModel.swift */; };
 		2DB16CFB1C74D1CF305B6B34 /* ProfilePanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0716ADCBC61AC61042560808 /* ProfilePanels.swift */; };
 		31DBA04C18A415B9C765DA72 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D3FB518AA57BD17162B57EB /* AppConfig.swift */; };
 		3288D43E6455032DF89F4297 /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D84C206AB37B19A62B2D0AA3 /* OrbView.swift */; };
 		3B4A2965A4F469FDCACB6E49 /* ProfileModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F693AC915D02F8646EAD01 /* ProfileModel.swift */; };
+		4C6EDC32FE5839073D2CC464 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 07711DD25563DE5209E0D4D8 /* README.md */; };
 		4DB7CA991986E5B3E653695B /* ChatStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6C6B2B78080BAF0FFC349B0 /* ChatStreamClient.swift */; };
 		54EDBABC82F4E94FAF0152F0 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF79D65407D0481759C02B5D /* SupabaseService.swift */; };
 		56D42839AB498A0D7178AF14 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D2532B6AD804F7F532BCFBA /* ProfileView.swift */; };
@@ -31,31 +34,42 @@
 		92785CDFB446800FBE5317FE /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = DD739C2EA27B09B77ED3F8E2 /* Supabase */; };
 		96CF451D388DC89EA66C9990 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B7CE7BA39BBE663E7184330 /* Components.swift */; };
 		991CE8FAF7FD6550257C10A5 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82CB1A89201559FDAD4A647C /* WaveformView.swift */; };
+		9D0DFFA111DEB08EF1BCF163 /* DiaryData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFE6879BB6545A4FB358D8C1 /* DiaryData.swift */; };
+		A1CD82647E88D6085695CC20 /* DiaryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A43B7F7DECF240F637545E /* DiaryModel.swift */; };
 		A313640F35D06A6FE512F3A6 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FEA7F584052536603FBA57F /* HomeModel.swift */; };
+		B12FB8A2265C3D02C9B4CEA2 /* PersonaCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ECAC1E3B539F2232F740173 /* PersonaCanvasView.swift */; };
 		B310CB2752FB5F76F356D156 /* KaleidoscopeDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0446F7339046BBB77C114761 /* KaleidoscopeDrawView.swift */; };
 		BA1A5552D14CED1E55C150AC /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B883F93DB8C80BFB7D2F54E6 /* ResultView.swift */; };
+		BB11CBA5FAFC3585EE48769D /* ChatSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F99A88B3DC25EC29C213025C /* ChatSummaryView.swift */; };
+		C19C772F119C32ED0977247C /* DiarySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71501B93AAC113B6C8C155D6 /* DiarySummaryView.swift */; };
 		C2FA8C0C88470DAF52796B5B /* Navigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E54C3C471DA8D8647A2A94B /* Navigation.swift */; };
-		D2B4BC7FE4F5CB25BBD80ECF /* SkillSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CF6CF05C427D23551490615 /* SkillSheet.swift */; };
+		CE668494FFCC440F077601F0 /* DimensionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 593AF7C44D4C4186379E377C /* DimensionSheet.swift */; };
 		EC340C7B02045D2698D57433 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28C34660D0B3EEDE69AF7645 /* PaywallView.swift */; };
 		F3A04B45C3087417DED29FAE /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53339D3727298130F52E1CB8 /* DialView.swift */; };
 		F5B6A7B60F317E2A3C7028C8 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC0AE554EAB6CBED5F0A5FDB /* ChatView.swift */; };
+		FEBAD17D90307F2D30A81D62 /* DiaryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92CF708741FA70F521AC763 /* DiaryDetailView.swift */; };
+		FFB0B602F85948BE008E9BA1 /* DimensionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD20D70A16C7B47D0A03423C /* DimensionData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0446F7339046BBB77C114761 /* KaleidoscopeDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeDrawView.swift; sourceTree = "<group>"; };
 		0716ADCBC61AC61042560808 /* ProfilePanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePanels.swift; sourceTree = "<group>"; };
+		07711DD25563DE5209E0D4D8 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		269B19ADDBA4DE79089AC91C /* LabModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabModel.swift; sourceTree = "<group>"; };
 		28C34660D0B3EEDE69AF7645 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		2CDB8ABE3B90724B7548206D /* Config.xcconfig.example */ = {isa = PBXFileReference; path = Config.xcconfig.example; sourceTree = "<group>"; };
 		2E54C3C471DA8D8647A2A94B /* Navigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigation.swift; sourceTree = "<group>"; };
 		3660B08FD00D66EF348BA7C4 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
-		4CF6CF05C427D23551490615 /* SkillSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillSheet.swift; sourceTree = "<group>"; };
 		53339D3727298130F52E1CB8 /* DialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialView.swift; sourceTree = "<group>"; };
+		593AF7C44D4C4186379E377C /* DimensionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionSheet.swift; sourceTree = "<group>"; };
 		5B7CE7BA39BBE663E7184330 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		5ECAC1E3B539F2232F740173 /* PersonaCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaCanvasView.swift; sourceTree = "<group>"; };
 		60F693AC915D02F8646EAD01 /* ProfileModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileModel.swift; sourceTree = "<group>"; };
 		6601CDA7946FD49EA4B43F77 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		679CF3D490A06F75E784476C /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
 		6D3FB518AA57BD17162B57EB /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		7135F95F618BE8959B1422D3 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		71501B93AAC113B6C8C155D6 /* DiarySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiarySummaryView.swift; sourceTree = "<group>"; };
 		739D61962D3ADC97221581C5 /* LabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabView.swift; sourceTree = "<group>"; };
 		77192913048F63514F9B76E5 /* UserModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserModels.swift; sourceTree = "<group>"; };
 		82CB1A89201559FDAD4A647C /* WaveformView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformView.swift; sourceTree = "<group>"; };
@@ -63,16 +77,22 @@
 		9328152F072F3BA2BFC6FE26 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		9D2532B6AD804F7F532BCFBA /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		9FEA7F584052536603FBA57F /* HomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeModel.swift; sourceTree = "<group>"; };
+		A7A43B7F7DECF240F637545E /* DiaryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryModel.swift; sourceTree = "<group>"; };
+		AFE6879BB6545A4FB358D8C1 /* DiaryData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryData.swift; sourceTree = "<group>"; };
 		B5C7355A0EDCA3DE314B49BA /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
 		B883F93DB8C80BFB7D2F54E6 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
+		B92CF708741FA70F521AC763 /* DiaryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryDetailView.swift; sourceTree = "<group>"; };
 		BA96B41B185812593121EB1C /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
 		BC0AE554EAB6CBED5F0A5FDB /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		BF79D65407D0481759C02B5D /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		C31BDD78C32DBC6B72E09F81 /* DiaryDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryDayView.swift; sourceTree = "<group>"; };
 		C6C6B2B78080BAF0FFC349B0 /* ChatStreamClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatStreamClient.swift; sourceTree = "<group>"; };
 		CAEDFAF80599B4255FCE637B /* HomeCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCards.swift; sourceTree = "<group>"; };
+		CD20D70A16C7B47D0A03423C /* DimensionData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionData.swift; sourceTree = "<group>"; };
 		D84C206AB37B19A62B2D0AA3 /* OrbView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbView.swift; sourceTree = "<group>"; };
 		DA783658FA011590BE5DD875 /* KaleidoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoApp.swift; sourceTree = "<group>"; };
 		E0BEB6358429EA30A080514E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F99A88B3DC25EC29C213025C /* ChatSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSummaryView.swift; sourceTree = "<group>"; };
 		FA101A71E7F9A8D8613B40C4 /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		FF4A4602BB377626335F4142 /* KaleidoscopeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -94,6 +114,7 @@
 			children = (
 				B5C7355A0EDCA3DE314B49BA /* ContentModels.swift */,
 				3660B08FD00D66EF348BA7C4 /* DemoData.swift */,
+				CD20D70A16C7B47D0A03423C /* DimensionData.swift */,
 				77192913048F63514F9B76E5 /* UserModels.swift */,
 			);
 			path = Models;
@@ -102,7 +123,9 @@
 		2371F7144065BE4E2A9A835E /* KaleidoApp */ = {
 			isa = PBXGroup;
 			children = (
+				2CDB8ABE3B90724B7548206D /* Config.xcconfig.example */,
 				E0BEB6358429EA30A080514E /* Info.plist */,
+				07711DD25563DE5209E0D4D8 /* README.md */,
 				9AC72D668A9CFCFC0846002C /* App */,
 				2D0B78AA95C14363A1033956 /* Core */,
 				5CC0A800FCF40DBE30129DE7 /* Features */,
@@ -125,6 +148,7 @@
 			children = (
 				D183016B4E1F92BED880ACA4 /* Chat */,
 				6CF3C93EDFA1AD9851D84075 /* Community */,
+				C2D626EDE212A185330DDA87 /* Diary */,
 				AF79EC87D7B0F0210F169144 /* Home */,
 				E4150703A0499EC287B7AF52 /* Lab */,
 				853DC4F97118AB9ADB874403 /* Profile */,
@@ -188,12 +212,25 @@
 		AF79EC87D7B0F0210F169144 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				593AF7C44D4C4186379E377C /* DimensionSheet.swift */,
 				CAEDFAF80599B4255FCE637B /* HomeCards.swift */,
 				9FEA7F584052536603FBA57F /* HomeModel.swift */,
 				9328152F072F3BA2BFC6FE26 /* HomeView.swift */,
-				4CF6CF05C427D23551490615 /* SkillSheet.swift */,
+				5ECAC1E3B539F2232F740173 /* PersonaCanvasView.swift */,
 			);
 			path = Home;
+			sourceTree = "<group>";
+		};
+		C2D626EDE212A185330DDA87 /* Diary */ = {
+			isa = PBXGroup;
+			children = (
+				AFE6879BB6545A4FB358D8C1 /* DiaryData.swift */,
+				C31BDD78C32DBC6B72E09F81 /* DiaryDayView.swift */,
+				B92CF708741FA70F521AC763 /* DiaryDetailView.swift */,
+				A7A43B7F7DECF240F637545E /* DiaryModel.swift */,
+				71501B93AAC113B6C8C155D6 /* DiarySummaryView.swift */,
+			);
+			path = Diary;
 			sourceTree = "<group>";
 		};
 		CDF621B04054A8B29BAA0949 /* Network */ = {
@@ -209,6 +246,7 @@
 			isa = PBXGroup;
 			children = (
 				679CF3D490A06F75E784476C /* ChatModel.swift */,
+				F99A88B3DC25EC29C213025C /* ChatSummaryView.swift */,
 				BC0AE554EAB6CBED5F0A5FDB /* ChatView.swift */,
 			);
 			path = Chat;
@@ -240,6 +278,7 @@
 			buildConfigurationList = 850CC8EB03AEDC68C57CC104 /* Build configuration list for PBXNativeTarget "Kaleido" */;
 			buildPhases = (
 				3D59248950A744DFDE949732 /* Sources */,
+				B514DC44615C5336FD194431 /* Resources */,
 				9C62F3323C82083DAA22E260 /* Frameworks */,
 			);
 			buildRules = (
@@ -290,6 +329,18 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		B514DC44615C5336FD194431 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DAEBEE4279FA5EA5869FE9F /* Config.xcconfig.example in Resources */,
+				4C6EDC32FE5839073D2CC464 /* README.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		3D59248950A744DFDE949732 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -298,12 +349,20 @@
 				31DBA04C18A415B9C765DA72 /* AppConfig.swift in Sources */,
 				2D77D12F398A31CC9F4AA5AC /* ChatModel.swift in Sources */,
 				4DB7CA991986E5B3E653695B /* ChatStreamClient.swift in Sources */,
+				BB11CBA5FAFC3585EE48769D /* ChatSummaryView.swift in Sources */,
 				F5B6A7B60F317E2A3C7028C8 /* ChatView.swift in Sources */,
 				1BCDAEDD23FACA0061B0E825 /* CommunityView.swift in Sources */,
 				96CF451D388DC89EA66C9990 /* Components.swift in Sources */,
 				0F70B0402D014B1BDCEC65A0 /* ContentModels.swift in Sources */,
 				11DA671A2D69BF6B1282A93A /* DemoData.swift in Sources */,
 				F3A04B45C3087417DED29FAE /* DialView.swift in Sources */,
+				9D0DFFA111DEB08EF1BCF163 /* DiaryData.swift in Sources */,
+				29A3FA620C7F315156A0656F /* DiaryDayView.swift in Sources */,
+				FEBAD17D90307F2D30A81D62 /* DiaryDetailView.swift in Sources */,
+				A1CD82647E88D6085695CC20 /* DiaryModel.swift in Sources */,
+				C19C772F119C32ED0977247C /* DiarySummaryView.swift in Sources */,
+				FFB0B602F85948BE008E9BA1 /* DimensionData.swift in Sources */,
+				CE668494FFCC440F077601F0 /* DimensionSheet.swift in Sources */,
 				5D96134DD8DB4267DFAC1738 /* FlowLayout.swift in Sources */,
 				127BE751B39E571755E5511C /* HomeCards.swift in Sources */,
 				A313640F35D06A6FE512F3A6 /* HomeModel.swift in Sources */,
@@ -316,12 +375,12 @@
 				C2FA8C0C88470DAF52796B5B /* Navigation.swift in Sources */,
 				3288D43E6455032DF89F4297 /* OrbView.swift in Sources */,
 				EC340C7B02045D2698D57433 /* PaywallView.swift in Sources */,
+				B12FB8A2265C3D02C9B4CEA2 /* PersonaCanvasView.swift in Sources */,
 				3B4A2965A4F469FDCACB6E49 /* ProfileModel.swift in Sources */,
 				2DB16CFB1C74D1CF305B6B34 /* ProfilePanels.swift in Sources */,
 				56D42839AB498A0D7178AF14 /* ProfileView.swift in Sources */,
 				BA1A5552D14CED1E55C150AC /* ResultView.swift in Sources */,
 				6E7486ABF77C56774878EC77 /* Shaders.metal in Sources */,
-				D2B4BC7FE4F5CB25BBD80ECF /* SkillSheet.swift in Sources */,
 				54EDBABC82F4E94FAF0152F0 /* SupabaseService.swift in Sources */,
 				0098F21105E2B3AB57773506 /* Theme.swift in Sources */,
 				6F81196C15849954F29CA9B6 /* UserModels.swift in Sources */,

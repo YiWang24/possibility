@@ -1,4 +1,5 @@
 import SwiftUI
+import Observation
 
 // MARK: - 跨 Feature 导航载荷与复用件
 //
@@ -6,11 +7,28 @@ import SwiftUI
 // 旅人主页可从社区 / 对话 match / 推演结果 / 万花筒抽取四处进入 —— 用 TravelerProfileLink
 // 就地封装 cover（谁触发谁呈现），避免跨层嵌套 cover 的呈现问题。
 
-/// 探索对话启动参数（Home 发问 → ChatView）
+/// 探索对话启动参数（Home 发问 → ChatView）；topic 为 nil = 无话题自由提问
 struct ChatLaunch: Identifiable, Hashable {
     let id = UUID()
-    let topic: ExploreTopic
+    let topic: ExploreTopic?
     let question: String
+}
+
+/// 语音日记详情页启动参数（Home 日记卡 → DiaryDetailView）；date 为 nil = 默认最近一天
+struct DiaryLaunch: Identifiable, Hashable {
+    let id = UUID()
+    let date: String?
+}
+
+// MARK: - 跨 tab 路由（探索对话「去人生实验室 / 看相似经历」）
+
+/// 根部注入的全局路由：切换底部 tab，并可携带待带入实验室的问题
+@Observable
+@MainActor
+final class AppRouter {
+    var tab: AppTab = .home
+    /// 对话「去人生实验室」携带的问题，LabView 出现时消费
+    var pendingLabQuestion: String?
 }
 
 /// 推演结果载荷（Lab 推演完成 → ResultView）
