@@ -88,6 +88,15 @@ struct HomeView: View {
 
 // MARK: - 语音日记卡
 
+/// 录音计时标签：把逐秒变化的 elapsed 隔离在此，避免整卡逐秒重建
+private struct RecorderElapsedLabel: View {
+    var model: HomeModel
+    var body: some View {
+        Text(model.elapsedText)
+            .font(.system(size: 12)).monospacedDigit().foregroundStyle(Theme.lime).frame(width: 38)
+    }
+}
+
 private struct DiaryCard: View {
     @Bindable var model: HomeModel
     @Environment(SupabaseService.self) private var supabase
@@ -103,6 +112,7 @@ private struct DiaryCard: View {
                 Spacer()
                 Button(model.isRecording ? "■ 停止记录" : "◉ 记录今日") {
                     if model.isRecording {
+                        model.finishRecording()   // 同步收起，UI 立即响应；分析异步跟进
                         Task { await model.analyzeDiary(using: supabase) }
                     } else {
                         model.toggleRecording()
@@ -112,6 +122,7 @@ private struct DiaryCard: View {
                 .foregroundStyle(Theme.blue)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Color(hex: 0x5E96FF, alpha: 0.12), in: Capsule())
+                .contentShape(Capsule())
                 .buttonStyle(.plain)
             }
             weekRow
@@ -154,12 +165,17 @@ private struct DiaryCard: View {
     private var recorder: some View {
         HStack(spacing: 12) {
             WaveformView()
-            Text(model.elapsedText)
-                .font(.system(size: 12)).monospacedDigit().foregroundStyle(Theme.lime).frame(width: 38)
-            Button("完成") { Task { await model.analyzeDiary(using: supabase) } }
+            // 计时文字独立成子视图：每秒的 elapsed 更新只重建它，
+            // 不再逐秒重建整张卡（否则「完成」按钮会被重建打断命中，偶发点不动）
+            RecorderElapsedLabel(model: model)
+            Button("完成") {
+                model.finishRecording()           // 同步收起，UI 立即响应；分析异步跟进
+                Task { await model.analyzeDiary(using: supabase) }
+            }
                 .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 7)
                 .background(Theme.buttonGradient, in: Capsule())
+                .contentShape(Capsule())
                 .buttonStyle(.plain)
         }
         .padding(.horizontal, 14).padding(.vertical, 12)

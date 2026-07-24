@@ -95,16 +95,22 @@ struct HomeAskCard: View {
         ZStack(alignment: .topTrailing) {
             LinearGradient(colors: [Color(hex: 0x141A34), Color(hex: 0x1A2350), Color(hex: 0x10132A)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
-            RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.5), .clear],
+            RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.35), .clear],
                            center: .topTrailing, startRadius: 0, endRadius: 200)
-            // 呼吸光球
-            Circle()
-                .fill(RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.6), Color(hex: 0x8F7BFF, alpha: 0.25), .clear],
-                                     center: UnitPoint(x: 0.45, y: 0.45), startRadius: 0, endRadius: 110))
-                .frame(width: 220, height: 220)
-                .blur(radius: 8)
-                .offset(x: 60, y: -70)
-                .modifier(BreatheModifier(enabled: !reduceMotion))
+            // 熔岩灯：metaball 场（蓝顶 → 品红底），blob 竖向慢漂移、相吸融合
+            LavaLampView(
+                specs: [
+                    LavaBlobSpec(baseX: 0.78, baseY: 0.16, ampX: 0.14, ampY: 0.22, periodX: 13, periodY: 17, phase: 1.0, radius: 0.30),
+                    LavaBlobSpec(baseX: 0.18, baseY: 0.80, ampX: 0.16, ampY: 0.30, periodX: 15, periodY: 19, phase: 2.6, radius: 0.26),
+                    LavaBlobSpec(baseX: 0.46, baseY: 0.46, ampX: 0.18, ampY: 0.26, periodX: 11, periodY: 9,  phase: 4.0, radius: 0.18, pulse: 0.35),
+                    LavaBlobSpec(baseX: 0.88, baseY: 0.70, ampX: 0.10, ampY: 0.24, periodX: 8,  periodY: 21, phase: 5.4, radius: 0.15),
+                ],
+                color1: Color(hex: 0x6FA5FF),   // 顶：蓝
+                color2: Color(hex: 0xE35CC1),   // 底：品红
+                threshold: 1.05,
+                softness: 2
+            )
+            .opacity(0.5)
         }
     }
 }

@@ -4,6 +4,9 @@ import SwiftUI
 //
 // 原型 `.wave i`：一排 lime 色 bar，height 在 22%↔95% 之间跳动（wv 1s），
 // 每根错开 animation-delay 形成流动感。reduceMotion 时静置为中间高度。
+//
+// 用 Canvas 单次绘制所有 bar：TimelineView 每帧只重绘位图，不触发行内
+// 布局与视图树 diff（否则 120fps 的逐帧重排会拖垮同行按钮的命中测试）。
 
 struct WaveformView: View {
     var barCount: Int = 12
@@ -16,16 +19,14 @@ struct WaveformView: View {
     var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
-            GeometryReader { geo in
-                HStack(alignment: .center, spacing: 3) {
-                    ForEach(0..<barCount, id: \.self) { i in
-                        Capsule()
-                            .fill(color)
-                            .frame(height: geo.size.height * fraction(t, index: i))
-                    }
+            Canvas { ctx, size in
+                let gap: CGFloat = 3
+                let bw = max(1, (size.width - gap * CGFloat(barCount - 1)) / CGFloat(barCount))
+                for i in 0..<barCount {
+                    let h = size.height * fraction(t, index: i)
+                    let rect = CGRect(x: CGFloat(i) * (bw + gap), y: (size.height - h) / 2, width: bw, height: h)
+                    ctx.fill(Path(roundedRect: rect, cornerRadius: bw / 2), with: .color(color.opacity(0.75)))
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .opacity(0.75)
             }
         }
         .frame(height: 26)

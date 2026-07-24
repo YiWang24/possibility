@@ -97,6 +97,7 @@ struct PrimaryButton: View {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
                 .tracking(wide ? 3 : 0.8)
+                .padding(.leading, wide ? 3 : 0)   // 抵消 tracking 在末字后的空隙，文字视觉居中
                 .foregroundStyle(.white)
                 .frame(maxWidth: wide ? 230 : .infinity)
                 .padding(.vertical, 15)
@@ -106,6 +107,7 @@ struct PrimaryButton: View {
         .buttonStyle(PressScaleStyle())
         .disabled(!enabled)
         .opacity(enabled ? 1 : 0.35)
+        .frame(maxWidth: .infinity)                // 在父容器中水平居中（父级左对齐时也居中）
     }
 }
 
@@ -237,6 +239,66 @@ struct ToastHost: View {
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: message)
         .allowsHitTesting(false)
+    }
+}
+
+// MARK: - 熔岩灯（metaball 场，Metal shader）
+//
+// 参照 lucia-gomez/lava-lamp：逐像素累加 r²/d² 的 metaball 场函数，
+// 超过阈值即为熔岩，颜色沿垂直方向双色渐变。blob 相互靠近时场强叠加，
+// 未接触就先"隆起"相吸，继而粘连、融合、拉丝 —— 真实熔岩灯的物理观感。
+// blob 轨迹用确定性的利萨如参数（竖向为主的慢漂移 + 半径呼吸）。
+
+/// 单个熔岩 blob 的轨迹参数（均为容器尺寸的比例）
+struct LavaBlobSpec {
+    var baseX: Double        // 基准位置（0..1）
+    var baseY: Double
+    var ampX: Double         // 漂移振幅（0..1）
+    var ampY: Double
+    var periodX: Double      // 漂移周期（秒）
+    var periodY: Double
+    var phase: Double
+    var radius: Double       // 半径（相对 min(W,H) 的比例）
+    var pulse: Double = 0.18 // 半径呼吸幅度
+}
+
+struct LavaLampView: View {
+    var specs: [LavaBlobSpec]
+    var color1: Color                 // 顶部色
+    var color2: Color                 // 底部色
+    /// 场阈值：越低越"稠"（blob 显得更大、隔更远就融合）
+    var threshold: Double = 0.9
+    /// 边缘柔化
+    var softness: CGFloat = 1.5
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation(paused: reduceMotion)) { timeline in
+            let t = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            GeometryReader { geo in
+                let w = geo.size.width, h = geo.size.height
+                let base = min(w, h)
+                let data: [Float] = specs.flatMap { s -> [Float] in
+                    let x = s.baseX * w + s.ampX * w * sin(t * 2 * .pi / s.periodX + s.phase)
+                    let y = s.baseY * h + s.ampY * h * sin(t * 2 * .pi / s.periodY + s.phase * 1.7)
+                    let r = s.radius * base * (1 + s.pulse * sin(t * 2 * .pi / (s.periodY * 0.7) + s.phase * 2.3))
+                    return [Float(x), Float(y), Float(r)]
+                }
+                Rectangle()
+                    .fill(.white)
+                    .colorEffect(ShaderLibrary.lavaLamp(
+                        .float2(Float(w), Float(h)),
+                        .floatArray(data),
+                        .color(color1),
+                        .color(color2),
+                        .float(Float(threshold))
+                    ))
+                    .blur(radius: softness)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
