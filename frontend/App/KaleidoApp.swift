@@ -16,7 +16,7 @@ struct KaleidoApp: App {
     }
 }
 
-// MARK: - 根导航：底部四 Tab（认识自己 / 人生实验室 / 万花筒社区 / 我的主页）
+// MARK: - 根导航：底部四 Tab（认识你自己 / 人生实验室 / 万花筒社区 / 我的主页）
 
 enum AppTab: Hashable {
     case home, lab, community, me
@@ -30,7 +30,7 @@ struct RootView: View {
         @Bindable var router = router
         return TabView(selection: $router.tab) {
             HomeView()
-                .tabItem { Label("认识自己", systemImage: "person.crop.circle") }
+                .tabItem { Label("认识你自己", systemImage: "person.crop.circle") }
                 .tag(AppTab.home)
 
             LabView()

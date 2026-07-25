@@ -67,7 +67,7 @@ final class MyProfileStore {
         }
     }
 
-    // MARK: 画像内容（原型 myPersonaSource：读「认识自己」维度 + 人生底牌）
+    // MARK: 画像内容（原型 myPersonaSource：读「认识你自己」维度 + 人生底牌）
 
     struct PersonaItem: Identifiable {
         var id: String { key }
@@ -113,7 +113,7 @@ final class MyProfileStore {
         return PersonaModel.build(values: values, signature: signature)
     }
 
-    // MARK: 与「认识自己」同一份本地存储
+    // MARK: 与「认识你自己」同一份本地存储
 
     private static func loadDims() -> [String: String] {
         var out: [String: String] = [:]

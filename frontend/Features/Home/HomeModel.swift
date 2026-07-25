@@ -3,7 +3,7 @@ import Foundation
 import Observation
 import Speech
 
-// MARK: - 首页「认识自己」视图模型
+// MARK: - 首页「认识你自己」视图模型
 //
 // 客户端 UI 状态（录音计时、输入框、动画阶段）留在此；服务端状态（画像/日记分析）经
 // SupabaseService 拉取（技术设计文档 §8.2）。语音转文字非主线，demo 用预置 transcript + 兜底。
