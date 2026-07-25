@@ -1,6 +1,5 @@
-import { createDeepSeek } from "@ai-sdk/deepseek";
 import { streamText } from "ai";
-import { runtimeConfig } from "./config.ts";
+import { deepseekProvider } from "./deepseek.ts";
 import { streamWithRetry } from "./stream-retry.ts";
 
 // 用 Vercel AI SDK 承接“认识自己”探索对话的流式回复，后端为 DeepSeek v4。
@@ -9,20 +8,9 @@ import { streamWithRetry } from "./stream-retry.ts";
 // 实测正常回复 <35s 完成），超时/报错且“尚未吐出任何 token”时换一条新连接重试，
 // 避免偶发的上游挂起把整个请求卡满导致前端看不到任何回复。
 //
-// 关键：DeepSeek v4（flash/pro）默认开启 reasoning，会占用 max_tokens 预算并延后首字；
-// 这里统一关闭（providerOptions.deepseek.thinking=disabled），换更快首字、更稳正文。
-
-let provider: ReturnType<typeof createDeepSeek> | undefined;
-
-function chatProvider(): ReturnType<typeof createDeepSeek> {
-  provider ??= createDeepSeek({
-    apiKey: runtimeConfig.deepseekApiKey,
-    baseURL: runtimeConfig.deepseekBaseUrl,
-  });
-  return provider;
-}
-
-const NO_THINKING = { deepseek: { thinking: { type: "disabled" } } } as const;
+// 关键：DeepSeek v4 默认开启 reasoning，会占用 max_tokens 预算并延后首字（reasoning 期间
+// textStream 无正文），关不掉会整段超时挂起。关闭由 deepseek.ts 的 provider 在 HTTP 层
+// 强制注入 thinking:disabled（@ai-sdk/deepseek@3.0.13 的 providerOptions 不生效，见 deepseek.ts）。
 
 export interface StreamChatReplyOptions {
   model: string;
@@ -49,12 +37,11 @@ export function streamChatReply(
     onDelta: options.onDelta,
     runAttempt: async (emit, signal) => {
       const result = streamText({
-        model: chatProvider()(options.model),
+        model: deepseekProvider()(options.model),
         system: options.system,
         messages: options.messages,
         maxOutputTokens: options.maxOutputTokens,
         abortSignal: signal,
-        providerOptions: NO_THINKING,
         onError: ({ error }) => console.error("streamText error:", error),
       });
       for await (const delta of result.textStream) {
