@@ -97,6 +97,80 @@ struct DiaryEntry: Codable, Identifiable, Sendable {
     }
 }
 
+/// 人生实验室的离散时间跨度。短期档位使用 `apiYears = 1` 兼容旧接口，
+/// `label` 会作为 time_horizon 传给新版接口，确保实际按天/月推演。
+enum SimulationHorizon: String, CaseIterable, Codable, Hashable, Identifiable {
+    case day7
+    case day30
+    case month3
+    case month6
+    case year1
+    case year2
+    case year3
+    case year4
+    case year5
+    case year6
+    case year7
+    case year8
+    case year9
+    case year10
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .day7: "7天"
+        case .day30: "30天"
+        case .month3: "3个月"
+        case .month6: "6个月"
+        case .year1: "1年"
+        case .year2: "2年"
+        case .year3: "3年"
+        case .year4: "4年"
+        case .year5: "5年"
+        case .year6: "6年"
+        case .year7: "7年"
+        case .year8: "8年"
+        case .year9: "9年"
+        case .year10: "10年"
+        }
+    }
+
+    /// 表盘上的紧凑标签，避免 14 个刻度互相挤压。
+    var dialLabel: String {
+        switch self {
+        case .month3: "3月"
+        case .month6: "6月"
+        case .year1: "1"
+        case .year2: "2"
+        case .year3: "3"
+        case .year4: "4"
+        case .year5: "5"
+        case .year6: "6"
+        case .year7: "7"
+        case .year8: "8"
+        case .year9: "9"
+        case .year10: "10年"
+        default: label
+        }
+    }
+
+    var apiYears: Int {
+        switch self {
+        case .day7, .day30, .month3, .month6, .year1: 1
+        case .year2: 2
+        case .year3: 3
+        case .year4: 4
+        case .year5: 5
+        case .year6: 6
+        case .year7: 7
+        case .year8: 8
+        case .year9: 9
+        case .year10: 10
+        }
+    }
+}
+
 /// 人生实验室推演 —— 对应表 `simulations` 与 POST /simulate 出参
 struct Simulation: Codable, Sendable {
     var question: String
@@ -399,5 +473,11 @@ enum ExploreTopic: String, CaseIterable, Identifiable, Sendable {
         case .study: "26 岁了，还要不要辞职去读研？"
         case .love: "异地三年，要不要为 TA 换一座城市？"
         }
+    }
+
+    /// 首页仅这四条预置问题使用本地 mock 对话；用户自行输入的任何其他内容都走 API。
+    static func isSampleQuestion(_ question: String) -> Bool {
+        let clean = question.trimmingCharacters(in: .whitespacesAndNewlines)
+        return allCases.contains { $0.sampleQuestion == clean }
     }
 }

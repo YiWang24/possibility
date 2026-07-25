@@ -46,7 +46,7 @@ struct SimResultData: Identifiable {
     let id = UUID()
     let question: String
     let choice: String
-    let years: Int
+    let horizon: SimulationHorizon
     let scenarios: Simulation.Scenarios
     /// 类似经验的人
     let people: [Traveler]

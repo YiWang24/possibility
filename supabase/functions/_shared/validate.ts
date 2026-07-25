@@ -254,6 +254,7 @@ export type SimulateInputV2 = {
   question: string;
   choice: string;
   years: number;
+  time_horizon: string;
   carry_cards?: string[];
 };
 
@@ -271,10 +272,24 @@ export function validateSimulateInputV2(value: unknown): SimulateInputV2 {
     6,
     50,
   );
+  const allowedHorizons = new Set([
+    "7天",
+    "30天",
+    "3个月",
+    "6个月",
+    ...Array.from({ length: 10 }, (_, index) => `${index + 1}年`),
+  ]);
+  const timeHorizon = body.time_horizon === undefined
+    ? `${years}年`
+    : string(body.time_horizon, "time_horizon", 8)!;
+  if (!allowedHorizons.has(timeHorizon)) {
+    throw new HttpError(400, "INVALID_INPUT", "time_horizon 不是支持的时间跨度。");
+  }
   return {
     question: string(body.question, "question", LIMITS.question)!,
     choice: string(body.choice, "choice", LIMITS.choice)!,
     years: years as number,
+    time_horizon: timeHorizon,
     carry_cards: carryCards,
   };
 }

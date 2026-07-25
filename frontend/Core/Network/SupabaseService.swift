@@ -260,21 +260,24 @@ final class SupabaseService {
     /// POST /simulate 完整出参：{scenarios, bottom_line_analysis, recommended_traveler_ids}
     /// - Parameter carryCards: 底线卡（最多 6 张，validate.ts validateSimulateInputV2）
     func simulateFull(
-        question: String, choice: String, years: Int, carryCards: [String]? = nil
+        question: String, choice: String, horizon: SimulationHorizon, carryCards: [String]? = nil
     ) async throws -> SimulationResult {
         struct Body: Encodable {
             let question: String
             let choice: String
             let years: Int
+            let timeHorizon: String
             let carryCards: [String]?
             enum CodingKeys: String, CodingKey {
                 case question, choice, years
+                case timeHorizon = "time_horizon"
                 case carryCards = "carry_cards"
             }
         }
         return try await callFunction(
             "simulate",
-            body: Body(question: question, choice: choice, years: years, carryCards: carryCards),
+            body: Body(question: question, choice: choice, years: horizon.apiYears,
+                       timeHorizon: horizon.label, carryCards: carryCards),
             as: SimulationResult.self
         )
     }

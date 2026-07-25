@@ -3,10 +3,9 @@ import Observation
 
 // MARK: - 人生实验室视图模型（技术设计文档 §9.2）
 //
-// POST /lab-choices 按问题生成动态选择卡（内置 4 张为兜底）。
+// POST /lab-choices 按问题生成动态选择卡。
 // 转盘设年限 + 选择卡 (+ 底线卡 carry_cards) → POST /simulate →
 // {general, optimistic, cautionary} 三结局 + bottom_line_analysis + recommended_traveler_ids。
-// 现场抖动回退 canned scenarios（§13）。
 
 @Observable
 @MainActor
@@ -27,34 +26,26 @@ final class LabModel {
     var draft = ""
 
     var pick: String?
-    var year = AppConfig.Threshold.simDefaultYears
+    var horizon: SimulationHorizon = .year5
 
     var loading = false
     var loadStep = 0
     var result: SimResultData?
 
-    /// 内置选择卡（原型 4 张）
-    static let builtinChoices: [Choice] = [
-        .init(emoji: "🎨", name: "继续做设计", desc: "深耕交互，走专家路线"),
-        .init(emoji: "🧭", name: "转 AI 产品", desc: "换赛道，做 AI 产品经理"),
-        .init(emoji: "🌱", name: "边做边尝试", desc: "不辞职，用业余时间试水"),
-        .init(emoji: "🍃", name: "放弃探索", desc: "先安顿好现在的生活"),
-    ]
-
     /// 自定义选择卡（原型 customChoices · UserDefaults 持久化）
     private(set) var customChoices: [Choice] = []
     private static let customStoreKey = "kaleido_custom_choices_v1"
 
-    /// LLM 动态选择卡（POST /lab-choices）；nil = 未生成，回退内置卡组
-    private(set) var remoteChoices: [Choice]?
+    /// LLM 动态选择卡（POST /lab-choices）
+    private(set) var remoteChoices: [Choice] = []
     /// 动态卡请求中（扇形卡区展示加载指示）
     private(set) var choicesLoading = false
-    /// 已成功生成动态卡的问题（避免同一问题重复请求）
-    private var loadedChoicesQuestion: String?
     /// 请求代际：问题更换后丢弃过期响应
     private var choicesRequestID = 0
+    /// API 失败时交给视图展示；绝不以 mock 数据掩盖失败
+    private(set) var errorMessage: String?
 
-    var choices: [Choice] { (remoteChoices ?? Self.builtinChoices) + customChoices }
+    var choices: [Choice] { remoteChoices + customChoices }
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.customStoreKey),
@@ -84,31 +75,27 @@ final class LabModel {
         }
     }
 
-    // MARK: 动态选择卡（POST /lab-choices，真实优先 + 静默兜底）
+    // MARK: 动态选择卡（POST /lab-choices，仅真实 API）
 
-    /// 按当前问题生成动态选择卡；15s 超时或失败时静默保留内置卡组。
+    /// 按当前问题生成动态选择卡；每次调用都重新请求真实 API。
     func loadChoices(supabase: SupabaseService) async {
         let q = question
-        if loadedChoicesQuestion == q, remoteChoices != nil { return }
 
         choicesRequestID += 1
         let requestID = choicesRequestID
         choicesLoading = true
+        errorMessage = nil
+        remoteChoices = []
+        pick = nil
 
         let response = await withTimeout(seconds: 15) { try await supabase.labChoices(question: q) }
 
         // 已有更新的请求在跑：本次结果整体作废（loading 由新请求收尾）
         guard requestID == choicesRequestID else { return }
         choicesLoading = false
-        // 问题已更换或请求失败/超时：静默兜底，不打扰用户
+        // 问题已更换或请求失败/超时：保持空状态，明确提示，不展示 mock
         guard q == question, let cards = response?.cards, !cards.isEmpty else {
-            // 为新问题发起的加载失败：旧问题的 LLM 专属卡不再适用，
-            // 回到内置卡组、清掉失效选中态，并允许 .task(id:) 重试
-            if q != loadedChoicesQuestion {
-                remoteChoices = nil
-                loadedChoicesQuestion = nil
-                if let picked = pick, !choices.contains(where: { $0.name == picked }) { pick = nil }
-            }
+            errorMessage = "选择卡生成失败，请检查网络后重试"
             return
         }
 
@@ -121,20 +108,13 @@ final class LabModel {
             mapped.append(Choice(emoji: card.glyph.isEmpty ? "✦" : card.glyph,
                                  name: name, desc: desc, color: card.color))
         }
-        // 卡片全部被去重/清洗过滤：等同生成失败，同样回退内置卡组
+        // 卡片全部被去重/清洗过滤：等同 API 返回无效
         guard !mapped.isEmpty else {
-            if q != loadedChoicesQuestion {
-                remoteChoices = nil
-                loadedChoicesQuestion = nil
-                if let picked = pick, !choices.contains(where: { $0.name == picked }) { pick = nil }
-            }
+            errorMessage = "选择卡生成结果无效，请重试"
             return
         }
 
         remoteChoices = mapped
-        loadedChoicesQuestion = q
-        // 旧卡被替换后，失效的选中态清空
-        if let picked = pick, !choices.contains(where: { $0.name == picked }) { pick = nil }
     }
 
     static let loadSteps = ["读取你的动态画像……", "匹配 1,842 位相似旅人的经历……", "折出三种可能的未来……"]
@@ -212,37 +192,37 @@ final class LabModel {
         guard let pick, !loading else { return }
         loading = true
         loadStep = 0
+        errorMessage = nil
 
         // 加载步骤动画与网络请求并行；保证最短展示时长，节奏稳
-        async let simulation: SimulationResult? = fetchSimulation(pick: pick, supabase: supabase)
+        async let simulation = fetchSimulation(pick: pick, supabase: supabase)
         async let _: Void = runLoadingSteps()
-        let remote = await simulation
+        do {
+            let remote = try await simulation
 
-        bottomLine = remote?.bottomLineAnalysis
-        let scenarios = remote?.scenarios ?? Self.cannedScenarios(choice: pick, years: year)
+            bottomLine = remote.bottomLineAnalysis
 
-        // 相似旅人：优先用服务端 recommended_traveler_ids，空/无效时回退本地筛选
-        let pool = supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
-        var people: [Traveler] = []
-        if let ids = remote?.recommendedTravelerIds, !ids.isEmpty {
-            people = ids.compactMap { id in pool.first { $0.id == id } }
+            // 只使用 API 返回的推荐 id；不再本地筛选或补 mock 旅人
+            let people = (remote.recommendedTravelerIds ?? []).compactMap { id in
+                supabase.travelers.first { $0.id == id }
+            }
+
+            result = SimResultData(question: question, choice: pick, horizon: horizon,
+                                   scenarios: remote.scenarios, people: people,
+                                   carry: carry)
+        } catch {
+            bottomLine = nil
+            errorMessage = "推演 API 调用失败，请检查网络后重试"
         }
-        if people.isEmpty {
-            people = Array(pool.filter { $0.isSimilar }.prefix(3))
-        }
-        if people.isEmpty { people = Array(pool.prefix(3)) }
-
-        result = SimResultData(question: question, choice: pick, years: year,
-                               scenarios: scenarios, people: people,
-                               carry: carry)
         loading = false
     }
 
-    private func fetchSimulation(pick: String, supabase: SupabaseService) async -> SimulationResult? {
+    private func fetchSimulation(pick: String, supabase: SupabaseService) async throws -> SimulationResult {
         // 底线卡以卡名传给 LLM（服务端直接拼进 prompt）
         let carryNames = carry.compactMap { Self.carryCard($0)?.name }
-        return try? await supabase.simulateFull(question: question, choice: pick, years: year,
-                                                carryCards: carryNames.isEmpty ? nil : carryNames)
+        return try await supabase.simulateFull(question: question, choice: pick,
+                                               horizon: horizon,
+                                               carryCards: carryNames.isEmpty ? nil : carryNames)
     }
 
     private func runLoadingSteps() async {
@@ -252,43 +232,4 @@ final class LabModel {
         }
     }
 
-    // MARK: - 兜底三结局（文案对齐原型 resultPage）
-
-    static func cannedScenarios(choice: String, years: Int) -> Simulation.Scenarios {
-        Simulation.Scenarios(
-            general: Simulation.Scenario(
-                headline: "你可能成为有设计背景的 AI 产品经理，开始独立负责项目。",
-                dimensions: [
-                    .init(label: "职业状态", text: "完成转型，独立负责项目"),
-                    .init(label: "收入趋势", text: "前期持平，后期有增长"),
-                    .init(label: "生活节奏", text: "学习和工作时间明显增加"),
-                    .init(label: "内心感受", text: "成长感增强，压力也更大"),
-                ],
-                gains: ["更大的产品决策权", "AI 行业的一手经验", "设计与产品的复合优势"],
-                costs: ["短期收入和稳定性波动", "私人时间减少", "需要重建专业话语权"],
-                keyCondition: "能在第一年获得至少一个真实的 AI 项目经历。"),
-            optimistic: Simulation.Scenario(
-                headline: "你顺利转型为优秀的 AI 产品经理，在行业中建立起个人的影响力。",
-                dimensions: [
-                    .init(label: "职业状态", text: "负责核心产品方向，影响重要决策"),
-                    .init(label: "收入趋势", text: "显著提升，进入行业中上水平"),
-                    .init(label: "生活节奏", text: "更忙，但成就感和掌控感强"),
-                    .init(label: "内心感受", text: "笃定、自信，对未来更有掌控感"),
-                ],
-                gains: ["快速的职业成长", "更高的收入和回报", "更广的行业资源和人脉"],
-                costs: ["持续学习和深度投入", "获得关键项目和机会", "敢于承担错误和责任"],
-                keyCondition: nil),
-            cautionary: Simulation.Scenario(
-                headline: "转型过程困难，方向反复，最终回到原岗位，信心受挫。",
-                dimensions: [
-                    .init(label: "职业状态", text: "转型未达预期，回到设计岗位"),
-                    .init(label: "收入趋势", text: "短期收入下降，恢复缓慢"),
-                    .init(label: "生活节奏", text: "焦虑、反复尝试，精力消耗大"),
-                    .init(label: "内心感受", text: "失落、自我怀疑，动力下降"),
-                ],
-                gains: ["拓宽了认知边界", "积累了跨领域经验", "更清楚自己真正想要的"],
-                costs: ["缺乏真实项目经验", "学习碎片化，难以落地", "对产品工作兴趣不足"],
-                keyCondition: nil)
-        )
-    }
 }

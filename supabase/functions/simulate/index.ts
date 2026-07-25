@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const validIds = new Set(candidates.map(({ id }) => id));
 
     let base =
-      `问题：${input.question}\n选择：${input.choice}\n推演年限：${input.years} 年`;
+      `问题：${input.question}\n选择：${input.choice}\n推演时间跨度：${input.time_horizon}`;
     if (input.carry_cards && input.carry_cards.length > 0) {
       base += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
     }

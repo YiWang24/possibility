@@ -112,6 +112,30 @@ Deno.test("simulateV2 works without carry_cards", () => {
     years: 5,
   });
   assert(input.carry_cards === undefined);
+  assert(input.time_horizon === "5年");
+});
+
+Deno.test("simulateV2 accepts short time horizons", () => {
+  const input = validateSimulateInputV2({
+    question: "要不要转行",
+    choice: "先做一个副业项目",
+    years: 1,
+    time_horizon: "7天",
+  });
+  assert(input.time_horizon === "7天");
+});
+
+Deno.test("simulateV2 rejects unsupported time horizons", () => {
+  assertHttpError(
+    () =>
+      validateSimulateInputV2({
+        question: "q",
+        choice: "c",
+        years: 1,
+        time_horizon: "2个月",
+      }),
+    "INVALID_INPUT",
+  );
 });
 
 Deno.test("simulateV2 rejects too many carry_cards", () => {

@@ -7,9 +7,8 @@ import Observation
 // （嗯，比较接近 / 还不太对，可循环纠正）→ 信息足够 → 下一步面板
 // （去人生实验室 / 看走过这条路的人 / 分享 / 完整总结）。对照原型 chatState 阶段机。
 //
-// 真实优先：验证 / 纠正回合同样作为消息经 /chat 续轮（带 conversation_id，
-// 服务端自动加载最近历史）；岔路口成形后用 crossroads.match_query 调 /match。
-// 现场网络 / LLM 抖动时回退本地文案（§13），不让页面卡死。
+// 仅首页四条示例问题的首轮使用本地 mock；其他输入以及后续验证 / 纠正回合
+// 都作为消息经 /chat 请求 API。岔路口成形后用 crossroads.match_query 调 /match。
 
 @Observable
 @MainActor
@@ -49,6 +48,8 @@ final class ChatModel {
 
     /// 服务端会话 ID：首轮 done 事件返回，后续追问带回以延续历史
     private var conversationId: UUID?
+    /// 四条示例问题从本地 mock 开场；第一次转真实 API 时需要显式补齐这段上下文。
+    private var startedWithMock = false
     /// 最近一次 done 事件（或历史恢复）携带的岔路口信号
     private(set) var crossroads: Crossroads?
 
@@ -88,6 +89,7 @@ final class ChatModel {
     private static let verificationPhrases: Set<String> = [
         confirmPhrase, confirmAfterCorrectionPhrase, correctionPhrase,
     ]
+    private static let apiFailureMessage = "我好像在接你的路上迷路了，请重试一下。"
 
     /// 顶栏 / 总结页展示的话题（历史恢复后取会话自身的 topic）
     var displayTopic: String? { restoredTopic ?? launch.topic?.rawValue }
@@ -104,7 +106,14 @@ final class ChatModel {
     func start(supabase: SupabaseService) async {
         guard messages.isEmpty else { return }
         messages.append(Message(role: .user, text: launch.question))
-        await runAssistant(userText: launch.question, supabase: supabase)
+        if ExploreTopic.isSampleQuestion(launch.question) {
+            startedWithMock = true
+            await appendLocalReply(Self.goldenReply(for: launch))
+            stage = .review
+            showActionChips = true
+        } else {
+            await runAssistant(userText: launch.question, supabase: supabase)
+        }
     }
 
     // MARK: 继续追问
@@ -117,18 +126,14 @@ final class ChatModel {
         answers.append(clean)
 
         if stage == .correction {
-            // 纠正回合：把用户改写的原话续轮发回 /chat；网络失败回退本地复述。
-            // 无服务端会话上下文（首轮兜底）时不走网络，直接本地复述。
-            let fallback = "明白了。更准确的说法应该是：**\(clean)**\n\n我会保留你的原话，不再把它改写成一个性格结论。"
+            // 纠正回合：用户已经输入新内容，始终续轮请求 /chat。
             Task {
-                if conversationId == nil {
-                    await appendLocalReply(fallback)
-                } else {
-                    _ = await streamAssistant(userText: clean, supabase: supabase, fallback: fallback)
+                let result = await streamAssistant(userText: clean, supabase: supabase)
+                if result.delivered {
+                    hadCorrection = true
+                    stage = .review
+                    showActionChips = true
                 }
-                hadCorrection = true
-                stage = .review
-                showActionChips = true
             }
         } else {
             Task { await runAssistant(userText: clean, supabase: supabase) }
@@ -143,17 +148,9 @@ final class ChatModel {
         showActionChips = false
         let userText = hadCorrection ? Self.confirmAfterCorrectionPhrase : Self.confirmPhrase
         messages.append(Message(role: .user, text: userText))
-        let a0 = answers.first ?? "真正想要的生活"
-        let a1 = answers.count > 1 ? answers[1] : "暂时不能失去的东西"
-        let fallback = "现在的信息已经够了。我的判断是：你并不是没有答案，而是**想靠近「\(a0)」的同时，也在保护「\(a1)」**。\n\n真正需要验证的，不是哪条路绝对正确，而是哪一种代价是你愿意承担、也有能力承担的。"
         Task {
-            if conversationId == nil {
-                // 首轮完全失败走了本地兜底：服务端没有任何上下文，续轮只会让
-                // LLM 凭一句验证短语新建空会话乱答——直接本地演完（保持旧行为）。
-                await appendLocalReply(fallback)
-            } else {
-                _ = await streamAssistant(userText: userText, supabase: supabase, fallback: fallback)
-            }
+            let result = await streamAssistant(userText: userText, supabase: supabase)
+            guard result.delivered else { return }
             try? await Task.sleep(for: .milliseconds(500))
             stage = .ready
             showNextPanel = true
@@ -168,13 +165,8 @@ final class ChatModel {
         let userText = Self.correctionPhrase
         messages.append(Message(role: .user, text: userText))
         stage = .correction
-        let fallback = "谢谢你纠正我。**最不准确的是哪一部分？**你可以直接改写成你自己的话，我会以你的表达为准。"
         Task {
-            if conversationId == nil {
-                await appendLocalReply(fallback)
-            } else {
-                _ = await streamAssistant(userText: userText, supabase: supabase, fallback: fallback)
-            }
+            _ = await streamAssistant(userText: userText, supabase: supabase)
         }
     }
 
@@ -257,13 +249,13 @@ final class ChatModel {
 
     // MARK: 流式请求 + 打字机
 
-    /// 澄清回合：流式请求，失败回退黄金对话，并按信号决定是否出验证 chips
+    /// 澄清回合：流式请求，并按服务端信号决定是否出验证 chips。
     private func runAssistant(userText: String, supabase: SupabaseService) async {
-        let result = await streamAssistant(userText: userText, supabase: supabase,
-                                           fallback: Self.goldenReply(for: launch))
-        // AI 已给出足够的理解（服务端标注岔路口 / 黄金对话兜底 / 已有两轮澄清）→ 出验证 chips
+        let result = await streamAssistant(userText: userText, supabase: supabase)
+        guard result.delivered else { return }
+        // AI 已给出足够的理解（服务端标注岔路口 / 已有两轮澄清）→ 出验证 chips
         let aiCount = messages.filter { $0.role == .ai && !$0.text.isEmpty }.count
-        if stage == .clarify, result.ready || !result.delivered || aiCount >= 2 {
+        if stage == .clarify, result.ready || aiCount >= 2 {
             try? await Task.sleep(for: .milliseconds(850))
             stage = .review
             showActionChips = true
@@ -272,19 +264,19 @@ final class ChatModel {
 
     /// 通用续轮：把 userText 经 /chat 流式发送（带 conversation_id）。
     /// - Returns: delivered = 是否完整拿到真实回复（收到 done 事件；false 表示
-    ///            半途中断或已用 fallback 文案兜底，调用方按未送达推进）；
+    ///            半途中断或 API 失败，调用方不推进状态）；
     ///            ready = 本轮 done 事件是否标注岔路口成形。
     @discardableResult
     private func streamAssistant(
         userText: String,
         supabase: SupabaseService,
-        fallback: @autoclosure () -> String
     ) async -> (delivered: Bool, ready: Bool) {
         isStreaming = true
         defer { isStreaming = false }
 
-        // 服务端按 conversation_id 自取库内历史（validateChatInput 忽略 history），
-        // 已有会话时传空数组省流量；仅首轮附上（当前也只有首条用户消息之前的空集）
+        // 服务端按 conversation_id 自取库内历史（validateChatInput 忽略 history）。
+        // mock 首轮尚无 conversation_id，因此第一次调用 API 时把原问题、mock 理解和
+        // 用户最新反馈合并进 message，确保模型知道用户正在认同或否定什么。
         let history: [ChatRequest.Turn] = conversationId != nil ? [] : messages.dropLast().map {
             ChatRequest.Turn(role: $0.role == .user ? "user" : "assistant", content: $0.text)
         }
@@ -295,9 +287,23 @@ final class ChatModel {
             guard let supabase else { throw URLError(.userAuthenticationRequired) }
             return try await supabase.jwt()
         })
+        let apiMessage: String
+        if startedWithMock, conversationId == nil {
+            apiMessage = """
+            此前的本地示例对话上下文：
+            用户最初的问题：\(launch.question)
+            助手给出的初步理解：\(Self.goldenReply(for: launch))
+
+            用户现在的反馈或补充：\(userText)
+
+            请承接这段上下文继续倾听。如果用户不认同初步理解，不要为原判断辩护，也不要立即换一组新的二者对立。先区分：是对两股拉力的具体理解不准确，还是用户的问题本身就不适合二元框架。如果不适合，停止使用 vs 结构，转而探索多重方向、信息缺口、行动阻力或尚未命名的感受。
+            """
+        } else {
+            apiMessage = userText
+        }
         let request = ChatRequest(conversationId: conversationId,
                                   topic: displayTopic ?? "综合",
-                                  message: userText, history: history)
+                                  message: apiMessage, history: history)
 
         var ready = false
         var receivedDone = false
@@ -316,31 +322,23 @@ final class ChatModel {
                 }
             }
         } catch {
-            // 断网 / 服务抖动：无文本则回退本地文案；有部分文本走下方
-            // 未收到 done 的「未完整送达」路径，保留已流出的内容
-            if messages[aiIndex].text.isEmpty {
-                try? await Task.sleep(for: .milliseconds(700))
-                messages[aiIndex].text = fallback()
-                return (false, ready)
-            }
+            messages[aiIndex].text = Self.apiFailureMessage
+            return (false, ready)
         }
         if messages[aiIndex].text.isEmpty {
-            messages[aiIndex].text = fallback()
+            messages[aiIndex].text = Self.apiFailureMessage
             return (false, ready)
         }
         guard receivedDone else {
-            // 流结束但没有 done 事件（断网截断 / 服务端 event:error 被静默忽略）：
-            // 部分文本照常展示，但按未送达处理，让调用方走 fallback 推进路径
-            //（保证验证 chips / 下一步面板照常出现，不把截断回复当完整结论）
+            // 流结束但没有 done 事件，视为 API 失败，不展示不完整的模型输出。
+            messages[aiIndex].text = Self.apiFailureMessage
             return (false, ready)
         }
         if ready { requestMatch(supabase: supabase) }   // 岔路口成形 → 预取匹配旅人
         return (true, ready)
     }
 
-    /// 无服务端会话上下文时的本地续轮：不 round-trip /chat（服务端会新建一个
-    /// 只有一句验证短语的空上下文让 LLM 乱答），直接以兜底文案入列，
-    /// 保持与流式回复一致的节奏（isStreaming + 短暂思考停顿）。
+    /// 四条首页示例问题首轮使用的本地 mock 回复。
     private func appendLocalReply(_ text: String) async {
         isStreaming = true
         defer { isStreaming = false }
@@ -354,14 +352,18 @@ final class ChatModel {
 
     private static func goldenSummary(for launch: ChatLaunch) -> String {
         switch launch.topic {
-        case .career, nil: return "深耕设计 vs 转型产品"
-        case .study: return "继续工作 vs 辞职读研"
-        case .family: return "留在当前城市 vs 搬回家乡"
-        case .love: return "维持异地 vs 为 TA 换城"
+        case .career, nil:
+            return "想赌一次更高薪、拥有更大影响力的可能 vs 舍不得放下多年深耕的积累，走进一个全新而未知的领域"
+        case .family:
+            return "不想放弃在大城市继续拼搏、证明自己能站稳脚跟的可能 vs 对父母的感恩与牵挂，让你越来越想回家陪伴他们"
+        case .study:
+            return "想用读研突破学历与职业发展的天花板 vs 害怕放下已经拥有的工作节奏，承担收入、时间和机会成本"
+        case .love:
+            return "想守住这段感情，把彼此带向真正共同的生活 vs 害怕为爱换城后失去自己的事业根基与生活主动权"
         }
     }
 
     private static func goldenReply(for launch: ChatLaunch) -> String {
-        "先接住你——会反复盘旋，说明这件事对你不轻。我先试着说一个**暂时的理解**：你卡住的可能不只是「该选哪一个」，而是既想保护「真正重视的东西」，又不想忽略「现实里已经出现的信号」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**\(goldenSummary(for: launch))**。\n\n所以你需要的也许不是别人替你判断，而是把**真实意愿**和**害怕付出的代价**拆开来看。这个理解接近你吗？"
+        "我先试着说一个**暂时的理解**：你卡住的可能不只是「该选哪一个」，而是既想保护「真正重视的东西」，又不想放弃「现实里已经出现的信号」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**\(goldenSummary(for: launch))**。\n\n所以你需要的也许不是别人替你判断，而是把**真实意愿**和**害怕付出的代价**拆开来看。这个理解接近你吗？"
     }
 }

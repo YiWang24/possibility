@@ -61,7 +61,7 @@ struct ResultView: View {
             BackButton { dismiss() }
             VStack(alignment: .leading, spacing: 2) {
                 Text("推演结果").font(.system(size: 16, weight: .semibold)).tracking(0.8)
-                Text("\(data.choice) · \(data.years) 年后").font(.system(size: 11)).foregroundStyle(Theme.faint)
+                Text("\(data.choice) · \(data.horizon.label)后").font(.system(size: 11)).foregroundStyle(Theme.faint)
             }
             Spacer()
         }
@@ -347,19 +347,4 @@ private struct BottomLinePanel: View {
         .padding(13)
         .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
-}
-
-#Preview {
-    ResultView(data: SimResultData(
-        question: "我是否要从交互设计师转为产品经理？",
-        choice: "转 AI 产品", years: 5,
-        scenarios: LabModel.cannedScenarios(choice: "转 AI 产品", years: 5),
-        people: DemoData.travelers.filter(\.isSimilar),
-        carry: ["income", "health"]
-    ), bottomLine: SimulationResult.BottomLineAnalysis(
-        isAcceptable: true,
-        risks: ["转型初期收入下降，可能触及「稳定收入」底线", "高强度学习挤压恢复时间"],
-        protectiveConditions: ["保留 6 个月生活备用金再行动", "每周固定两晚不安排学习"]
-    ))
-    .preferredColorScheme(.dark)
 }

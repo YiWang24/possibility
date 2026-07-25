@@ -32,7 +32,7 @@ struct LabView: View {
                 questionCard.padding(.top, 18)
                 dialArea.padding(.top, 30)
                 presets.padding(.top, 18)
-                Text("拖动旋钮，1 – 10 年任意停留")
+                Text("拖动旋钮，从 7 天到 10 年任意停留")
                     .font(.system(size: 11)).tracking(1).foregroundStyle(Theme.faint)
                     .frame(maxWidth: .infinity).padding(.top, 12)
                 choicesSection.padding(.top, 24)
@@ -56,10 +56,22 @@ struct LabView: View {
         .sensoryFeedback(.success, trigger: model.pick)
         .overlay { if model.loading { SimLoadingOverlay(name: model.pick ?? "", step: model.loadStep) } }
         .fullScreenCover(item: $model.result) { ResultView(data: $0, bottomLine: model.bottomLine) }
-        .onAppear { consumePendingQuestion() }
+        .onAppear {
+            let hasPendingQuestion = router.pendingLabQuestion != nil
+            consumePendingQuestion()
+            // 带入新问题时由下方 onChange 发请求，避免同一时刻重复调用两次。
+            if !hasPendingQuestion {
+                Task { await model.loadChoices(supabase: supabase) }
+            }
+        }
         .onChange(of: router.pendingLabQuestion) { consumePendingQuestion() }
-        // 问题变化（含编辑、对话跳转带入）即按新问题生成动态选择卡；失败静默回退内置卡组
-        .task(id: model.question) { await model.loadChoices(supabase: supabase) }
+        // 问题变化（含编辑、对话跳转带入）即请求真实 API 生成选择卡
+        .onChange(of: model.question) {
+            Task { await model.loadChoices(supabase: supabase) }
+        }
+        .onChange(of: model.errorMessage) {
+            if let message = model.errorMessage { toast.show(message) }
+        }
     }
 
     /// 消费对话「去人生实验室」带来的问题
@@ -115,7 +127,7 @@ struct LabView: View {
     // MARK: 转盘
 
     private var dialArea: some View {
-        DialView(year: $model.year, pick: model.pick, isHot: isHotDial)
+        DialView(horizon: $model.horizon, pick: model.pick, isHot: isHotDial)
             .frame(maxWidth: .infinity)
             .background(
                 GeometryReader { geo in
@@ -125,22 +137,31 @@ struct LabView: View {
     }
 
     private var presets: some View {
-        HStack(spacing: 8) {
-            ForEach([1, 3, 5, 10], id: \.self) { y in
-                Button {
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { model.year = y }
-                } label: {
-                    Text("\(y)年").font(.system(size: 12, weight: model.year == y ? .semibold : .regular))
-                        .monospacedDigit()
-                        .foregroundStyle(model.year == y ? .white : Theme.sub)
-                        .padding(.horizontal, 16).padding(.vertical, 8)
-                        .background(model.year == y ? AnyShapeStyle(Theme.buttonGradient) : AnyShapeStyle(Theme.raised), in: Capsule())
-                        .overlay(Capsule().strokeBorder(model.year == y ? Color(hex: 0x6FA5FF, alpha: 0.6) : Theme.line, lineWidth: 1))
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach([
+                    SimulationHorizon.day7, .day30, .month3, .month6,
+                    .year1, .year3, .year5, .year10,
+                ]) { horizon in
+                    Button {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                            model.horizon = horizon
+                        }
+                    } label: {
+                        Text(horizon.label)
+                            .font(.system(size: 12, weight: model.horizon == horizon ? .semibold : .regular))
+                            .monospacedDigit()
+                            .foregroundStyle(model.horizon == horizon ? .white : Theme.sub)
+                            .padding(.horizontal, 14).padding(.vertical, 8)
+                            .background(model.horizon == horizon ? AnyShapeStyle(Theme.buttonGradient) : AnyShapeStyle(Theme.raised), in: Capsule())
+                            .overlay(Capsule().strokeBorder(model.horizon == horizon ? Color(hex: 0x6FA5FF, alpha: 0.6) : Theme.line, lineWidth: 1))
+                    }
+                    .buttonStyle(PressScaleStyle())
                 }
-                .buttonStyle(PressScaleStyle())
             }
+            .padding(.horizontal, 1)
         }
-        .frame(maxWidth: .infinity)
+        .contentMargins(.horizontal, 0, for: .scrollContent)
     }
 
     // MARK: 选择卡（原型 .choices 扇形牌堆：堆叠 → 展开，带弹性过冲）
@@ -165,7 +186,16 @@ struct LabView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "我的选择卡", trailing: "点选或拖进上方转盘")
             gestureHint
-            if model.choicesLoading { choicesLoadingHint }
+            if model.choicesLoading {
+                choicesLoadingHint
+            } else if model.remoteChoices.isEmpty {
+                Button("重新生成选择卡") {
+                    Task { await model.loadChoices(supabase: supabase) }
+                }
+                .font(.system(size: 11.5, weight: .semibold))
+                .foregroundStyle(Theme.blue)
+                .buttonStyle(.plain)
+            }
             if showCustomEditor { customEditor }
             choiceDeck
         }
@@ -235,7 +265,10 @@ struct LabView: View {
     private func deckZ(_ item: DeckItem, distance: Double) -> Double {
         if case .choice(let c) = item {
             if draggingChoice?.id == c.id { return 30 }
-            if frontCard == c.id { return 28 }
+        }
+        // 「自定义选择」也和普通卡共享置顶规则，点击上浮时不会被牌堆遮挡。
+        if frontCard == item.id { return 28 }
+        if case .choice(let c) = item {
             if model.pick == c.name { return 24 }
         }
         return 20 - abs(distance) * 2
@@ -273,7 +306,10 @@ struct LabView: View {
     /// 原型 .choice-create「自定义选择」卡
     private var createCard: some View {
         Button {
-            withAnimation(.easeOut(duration: 0.22)) { showCustomEditor.toggle() }
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+                frontCard = DeckItem.create.id
+                showCustomEditor.toggle()
+            }
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 Text("✍️").font(.system(size: 14))

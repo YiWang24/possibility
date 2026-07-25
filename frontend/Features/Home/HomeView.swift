@@ -172,7 +172,6 @@ private struct DiaryCard: View {
                 Spacer()
                 Button(model.isRecording ? "■ 停止记录" : "◉ 记录今日") {
                     if model.isRecording {
-                        model.finishRecording()   // 同步收起，UI 立即响应；分析异步跟进
                         Task { await model.analyzeDiary(using: supabase) }
                     } else {
                         model.toggleRecording()
@@ -184,10 +183,13 @@ private struct DiaryCard: View {
                 .background(Color(hex: 0x5E96FF, alpha: 0.12), in: Capsule())
                 .contentShape(Capsule())
                 .buttonStyle(.plain)
+                .disabled(model.analyzing)
             }
             weekRow
             if model.isRecording { recorder }
+            if model.analyzing { analyzingView }
             if let analysis = model.analysis { result(analysis) }
+            if let error = model.analysisError { analysisFailure(error) }
         }
         .padding(.horizontal, 20).padding(.vertical, 17)
         .kaleidoCard()
@@ -249,7 +251,6 @@ private struct DiaryCard: View {
             // 不再逐秒重建整张卡（否则「完成」按钮会被重建打断命中，偶发点不动）
             RecorderElapsedLabel(model: model)
             Button("完成") {
-                model.finishRecording()           // 同步收起，UI 立即响应；分析异步跟进
                 Task { await model.analyzeDiary(using: supabase) }
             }
                 .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.white)
@@ -265,6 +266,32 @@ private struct DiaryCard: View {
             in: RoundedRectangle(cornerRadius: 14, style: .continuous)
         )
         .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private var analyzingView: some View {
+        HStack(spacing: 9) {
+            ProgressView().tint(Theme.blue).controlSize(.small)
+            Text("正在转写并分析这次记录…")
+                .font(.system(size: 11.5))
+                .foregroundStyle(Theme.sub)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 5)
+        .accessibilityLabel("正在分析语音日记")
+    }
+
+    private func analysisFailure(_ message: String) -> some View {
+        HStack {
+            Text(message).font(.system(size: 11.5)).foregroundStyle(Theme.sub)
+            Spacer()
+            Button("重试") {
+                Task { await model.retryDiaryAnalysis(using: supabase) }
+            }
+            .font(.system(size: 11.5, weight: .medium))
+            .foregroundStyle(Theme.blue)
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 5)
     }
 
     private func result(_ analysis: DiaryAnalysis) -> some View {

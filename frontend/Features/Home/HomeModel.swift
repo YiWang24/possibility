@@ -33,7 +33,9 @@ final class HomeModel {
     var elapsed = 0
     var analyzing = false
     var analysis: DiaryAnalysis?
+    var analysisError: String?
     private var timerTask: Task<Void, Never>?
+    private var lastTranscript: String?
 
     /// demo：录音得到的预置 transcript（真实 STT 非主线）
     private let sampleTranscript = "今天又在纠结要不要转产品。会议上帮团队理清了一个乱成一团的需求，那一刻很有成就感，但一想到要放弃做了六年的设计，还是会慌。"
@@ -50,6 +52,7 @@ final class HomeModel {
         isRecording = true
         elapsed = 0
         analysis = nil
+        analysisError = nil
         startTranscriptionIfAvailable()
         timerTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -67,27 +70,43 @@ final class HomeModel {
         stopTranscription()
     }
 
-    /// 完成录音 → 分析情绪与关键词（analyze-diary 真实 LLM，12s 超时才走兜底）
+    /// 完成录音 → 将本次转写提交 analyze-diary，由服务端按既有日记规则分析并落库。
+    ///
+    /// ASR 不可用时仍保留 demo transcript，但本次情绪/关键词绝不由客户端伪造：
+    /// 必须来自 analyze-diary。失败会暴露给 UI，用户可以重试。
     func analyzeDiary(using supabase: SupabaseService) async {
+        guard !analyzing else { return }
         finishRecording()
         analyzing = true
+        analysisError = nil
         defer { analyzing = false }
-        // 端上转写有内容 → 优先真实转写；稍等最终识别结果落地，太短视为无效回退样例
+        // 端上转写有内容 → 优先真实转写；稍等 Speech 交付最终识别结果。
         if sttStarted { try? await Task.sleep(for: .milliseconds(600)) }
         let localText = transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
         let transcript = localText.count >= 4 ? localText : sampleTranscript
-        let remote = await withTimeout(seconds: 12) {
-            try await supabase.analyzeDiary(transcript: transcript)
-        }
-        analysis = remote ?? Self.fallbackAnalysis
+        lastTranscript = transcript
+        await submitDiaryAnalysis(transcript: transcript, using: supabase)
     }
 
-    /// 断网兜底的日记分析（对应 §13 现场抖动缓解）
-    static let fallbackAnalysis = DiaryAnalysis(
-        emotions: ["纠结", "成就感", "焦虑"],
-        keywords: ["转型", "设计", "产品", "身份认同"],
-        dimUpdates: nil
-    )
+    /// 复用同一份转写重试，避免失败后要求用户重新录音。
+    func retryDiaryAnalysis(using supabase: SupabaseService) async {
+        guard !analyzing, let transcript = lastTranscript else { return }
+        analyzing = true
+        analysisError = nil
+        defer { analyzing = false }
+        await submitDiaryAnalysis(transcript: transcript, using: supabase)
+    }
+
+    private func submitDiaryAnalysis(transcript: String, using supabase: SupabaseService) async {
+        do {
+            analysis = try await supabase.analyzeDiary(transcript: transcript)
+            // analyze-diary 已同步写入 diary_entries；刷新周历以与详情页保持一致。
+            await loadDiaryOverview(using: supabase)
+        } catch {
+            analysis = nil
+            analysisError = "刚刚好像没太听清，请再给我一次机会。"
+        }
+    }
 
     // MARK: 端上语音转写（iOS Speech · zh-CN）
     //
