@@ -1,0 +1,83 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:1080px;height:1620px;display:flex;flex-direction:column}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:52px 72px 0}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand .mk{width:40px;height:40px}
+  .brand b{font-size:25px;font-weight:700}
+  .brand .en{font-size:11px;letter-spacing:.32em;color:var(--faint);display:block;margin-top:2px;font-weight:600}
+  .fno{text-align:right}
+  .fno .n{font-size:15px;letter-spacing:.4em;color:var(--muted);font-weight:600}
+  .fno .l{font-size:11px;letter-spacing:.3em;color:var(--faint);margin-top:4px}
+  .title{padding:40px 72px 0;position:relative;z-index:3}
+  .title .eb{font-size:15px;letter-spacing:.5em;color:var(--muted);font-weight:600}
+  .title h1{font-size:66px;font-weight:800;margin-top:16px;line-height:1.2}
+  .title p{font-size:21px;color:var(--muted);margin-top:20px;line-height:1.7;max-width:820px}
+  .title p b{color:#e7e3ff;font-weight:600}
+  /* hero orbit */
+  .orbit{position:relative;height:560px;margin-top:6px;z-index:2}
+  .orbit .bl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;height:520px}
+  .orbit .bl svg{width:100%;height:100%;overflow:visible}
+  .tool{position:absolute;transform:translate(-50%,-50%);padding:11px 20px;font-size:16px;font-weight:600;white-space:nowrap}
+  .tool .s{font-size:11px;color:var(--faint);margin-left:8px;font-weight:400;letter-spacing:.12em}
+  /* bottom flow */
+  .flow{margin-top:auto;padding:0 72px 54px;position:relative;z-index:3}
+  .flow .cols{display:flex;gap:18px;align-items:stretch}
+  .fc{flex:1;padding:24px 22px}
+  .fc .ic{font-size:24px}.fc h3{font-size:20px;font-weight:700;margin:12px 0 8px}
+  .fc p{font-size:14px;color:var(--muted);line-height:1.65}
+  .arrow{display:flex;align-items:center;color:var(--faint);font-size:26px}
+  .result{margin-top:20px;padding:22px 28px;border-radius:20px;display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(100deg,rgba(123,92,255,.25),rgba(255,95,168,.18));border:1px solid rgba(255,255,255,.14)}
+  .result b{font-size:24px;font-weight:700}.result span{font-size:15px;color:var(--muted)}
+  .result .pill{padding:10px 22px;border-radius:999px;background:linear-gradient(100deg,#7b5cff,#ff5fa8);font-size:15px;font-weight:600}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="viz" viewBox="0 0 1080 1620" preserveAspectRatio="none"><g id="mesh"></g></svg>
+  <div class="top content">
+    <div class="brand"><svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg><div><b>我有可能</b><span class="en">KALEIDOSCOPE</span></div></div>
+    <div class="fno"><div class="n">功 能 01</div><div class="l">KNOW YOURSELF</div></div>
+  </div>
+  <div class="title content">
+    <div class="eb">认 识 自 己</div>
+    <h1>一份随你成长的<br><span class="grad-text">动态自我画像</span></h1>
+    <p>把成熟的<b>科学测评</b>与更有趣的<b>探索方式</b>结合，通过 AI 持续分析，<br>看见你擅长什么、喜欢什么，以及在职业、家庭与关系中真正看重什么。</p>
+  </div>
+
+  <div class="orbit">
+    <div class="bl"><svg id="bloom" viewBox="-500 -500 1000 1000"></svg></div>
+    <div class="tool card" style="left:20%;top:16%">MBTI<span class="s">性格类型</span></div>
+    <div class="tool card" style="left:76%;top:12%">荣格八维<span class="s">认知功能</span></div>
+    <div class="tool card" style="left:12%;top:50%">盖洛普优势<span class="s">才干</span></div>
+    <div class="tool card" style="left:87%;top:48%">职业价值观</div>
+    <div class="tool card" style="left:22%;top:84%">星座 · 塔罗</div>
+    <div class="tool card" style="left:74%;top:86%">八字<span class="s">命理趣味</span></div>
+    <div class="tool card" style="left:50%;top:96%">🎙 AI 语音日记</div>
+  </div>
+
+  <div class="flow content">
+    <div class="cols">
+      <div class="fc card"><div class="ic">📊</div><h3>科学测评</h3><p>MBTI、荣格八维、盖洛普优势、职业价值观，建立可靠的自我坐标。</p></div>
+      <div class="arrow">＋</div>
+      <div class="fc card"><div class="ic">🎴</div><h3>趣味探索</h3><p>人生卡牌、星座、塔罗、八字，用更轻松的方式打开自我对话。</p></div>
+      <div class="arrow">＋</div>
+      <div class="fc card"><div class="ic">🎙</div><h3>语音日记</h3><p>每天说出心里盘旋的问题，AI 持续分析、沉淀你的成长轨迹。</p></div>
+    </div>
+    <div class="result">
+      <div><b>= 动态自我画像</b> &nbsp;<span>随用户共同成长，越用越懂你</span></div>
+      <div class="pill">开始认识自己 →</div>
+    </div>
+  </div>
+</div>
+<script src="bloom.js"></script>
+<script>
+  renderBloom(document.getElementById('bloom'),{R:250,seed:11});
+  renderMesh(document.getElementById('mesh'),{w:1080,h:1620,n:48,seed:8});
+  (function(){const s=document.getElementById('logomk');const g=document.createElementNS('http://www.w3.org/2000/svg','defs');
+    g.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';s.appendChild(g);
+    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','url(#lg)');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+</script>
+</body></html>

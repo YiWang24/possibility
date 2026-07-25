@@ -1,0 +1,70 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:800px;height:2000px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .brand{display:flex;align-items:center;gap:16px;margin-top:70px}
+  .brand .mk{width:52px;height:52px}
+  .brand b{font-size:38px;font-weight:800;letter-spacing:.03em}
+  .en{font-size:13px;letter-spacing:.5em;color:var(--muted);margin-top:18px;font-weight:600}
+  .headline{margin-top:34px;position:relative;z-index:3}
+  .headline .eb{font-size:16px;letter-spacing:.46em;color:var(--muted);font-weight:600}
+  .headline h1{font-size:70px;font-weight:800;line-height:1.16;margin-top:18px}
+  .hero{position:relative;width:720px;height:560px;margin-top:6px;z-index:1;display:flex;justify-content:center;align-items:center}
+  .hero svg{width:640px;height:640px;overflow:visible}
+  .lead{position:relative;z-index:3;font-size:19px;color:var(--muted);line-height:1.9;max-width:640px;margin-top:-16px}
+  .lead b{color:#e7e3ff;font-weight:600}
+  .mods{position:relative;z-index:3;margin-top:40px;width:656px;display:flex;flex-direction:column;gap:18px}
+  .mod{display:flex;align-items:center;gap:22px;text-align:left;padding:24px 28px}
+  .mod .ic{font-size:34px;flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
+    background:linear-gradient(140deg,rgba(123,92,255,.28),rgba(255,95,168,.2));border:1px solid var(--stroke)}
+  .mod .tx h3{font-size:26px;font-weight:700}
+  .mod .tx .en2{font-size:10px;letter-spacing:.24em;color:var(--faint);font-weight:600;margin-bottom:4px}
+  .mod .tx p{font-size:15px;color:var(--muted);line-height:1.6;margin-top:6px}
+  .foot{margin-top:auto;width:100%;padding:40px 0 64px;position:relative;z-index:3;
+    background:linear-gradient(0deg,rgba(123,92,255,.14),transparent);display:flex;flex-direction:column;align-items:center}
+  .foot .slg{font-size:30px;font-weight:800;line-height:1.5}
+  .foot .slg .grad-text{display:inline}
+  .foot .cta{margin-top:30px;display:flex;align-items:center;gap:26px}
+  .qr{width:150px;height:150px;border-radius:20px;border:1px solid var(--stroke);background:
+     repeating-linear-gradient(0deg,#12102a 0 8px,#1c1940 8px 16px),
+     repeating-linear-gradient(90deg,rgba(0,0,0,.4) 0 8px,transparent 8px 16px);position:relative}
+  .qr::after{content:"扫码 · 开始探索";position:absolute;inset:0;display:grid;place-items:center;font-size:13px;color:var(--muted)}
+  .cta .info{text-align:left}.cta .info b{font-size:24px;font-weight:700;display:block}
+  .cta .info span{font-size:15px;color:var(--muted);line-height:1.9;display:block;margin-top:6px}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="viz" viewBox="0 0 800 2000" preserveAspectRatio="none"><g id="mesh"></g></svg>
+  <div class="brand content"><svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg><b>我有可能</b></div>
+  <div class="en content">KALEIDOSCOPE · 自我探索与人生决策平台</div>
+
+  <div class="headline content">
+    <div class="eb">在 人 生 的 岔 路 口</div>
+    <h1>看见更多<span class="grad-text">可能</span></h1>
+  </div>
+
+  <div class="hero"><svg id="bloom" viewBox="-500 -500 1000 1000"></svg></div>
+
+  <p class="lead content">科学工具 × 趣味探索 × AI 分析，<br>生成一份随你共同成长的 <b>动态自我画像</b>，<br>更立体地看见自己、理解自己、探索更多可能。</p>
+
+  <div class="mods content">
+    <div class="mod card"><div class="ic">🧭</div><div class="tx"><div class="en2">KNOW YOURSELF</div><h3>认识自己</h3><p>MBTI・荣格八维・盖洛普 与 星座・塔罗・八字 + AI 语音日记</p></div></div>
+    <div class="mod card"><div class="ic">🧪</div><div class="tx"><div class="en2">LIFE LAB</div><h3>人生实验室</h3><p>预演不同选择在 3 / 5 / 10 年后的最好、一般与最坏情形</p></div></div>
+    <div class="mod card"><div class="ic">🔮</div><div class="tx"><div class="en2">KALEIDOSCOPE</div><h3>万花筒社区</h3><p>链接走过相似道路的前辈，获得真实经验、专业咨询与互助</p></div></div>
+  </div>
+
+  <div class="foot content">
+    <div class="slg">不替你给出标准答案，<br>只帮你<span class="grad-text">看见更多可能</span>。</div>
+    <div class="cta"><div class="qr"></div><div class="info"><b>我有可能</b><span>面向 20-35 岁的奥德赛世代<br>科学 · 人文 · 趣味</span></div></div>
+  </div>
+</div>
+<script src="bloom.js"></script>
+<script>
+  renderBloom(document.getElementById('bloom'),{R:340,seed:11});
+  renderMesh(document.getElementById('mesh'),{w:800,h:2000,n:56,seed:9});
+  (function(){const s=document.getElementById('logomk');const g=document.createElementNS('http://www.w3.org/2000/svg','defs');
+    g.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';s.appendChild(g);
+    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','url(#lg)');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+</script>
+</body></html>

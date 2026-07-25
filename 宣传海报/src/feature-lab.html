@@ -1,0 +1,92 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:1080px;height:1620px;display:flex;flex-direction:column}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:52px 72px 0}
+  .brand{display:flex;align-items:center;gap:14px}.brand .mk{width:40px;height:40px}
+  .brand b{font-size:25px;font-weight:700}.brand .en{font-size:11px;letter-spacing:.32em;color:var(--faint);display:block;margin-top:2px;font-weight:600}
+  .fno{text-align:right}.fno .n{font-size:15px;letter-spacing:.4em;color:var(--muted);font-weight:600}.fno .l{font-size:11px;letter-spacing:.3em;color:var(--faint);margin-top:4px}
+  .title{padding:40px 72px 0;position:relative;z-index:3}
+  .title .eb{font-size:15px;letter-spacing:.5em;color:var(--muted);font-weight:600}
+  .title h1{font-size:74px;font-weight:800;margin-top:16px;line-height:1.1}
+  .title p{font-size:21px;color:var(--muted);margin-top:20px;line-height:1.7;max-width:840px}
+  .title p b{color:#e7e3ff;font-weight:600}
+  .dialwrap{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;margin-top:8px;height:480px}
+  .dial{width:470px;height:470px}.dial svg{width:100%;height:100%;overflow:visible}
+  .dcenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:340px}
+  .dcenter .q{font-size:14px;color:var(--faint);letter-spacing:.2em}
+  .dcenter .big{font-size:34px;font-weight:800;margin:10px 0 4px}
+  .dcenter .big em{font-style:normal;font-size:60px;background:linear-gradient(120deg,#4da6ff,#ff5fa8);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 6px}
+  .dcenter .sub{font-size:14px;color:var(--muted)}
+  .years{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:14px}
+  .yr{padding:9px 22px;border-radius:999px;border:1px solid var(--stroke);background:var(--card);font-size:16px;font-weight:600;color:var(--muted)}
+  .yr.on{background:linear-gradient(100deg,#4d6bff,#7b5cff);color:#fff;border-color:transparent;box-shadow:0 8px 30px rgba(93,107,255,.5)}
+  .scen{margin-top:auto;padding:0 72px 56px;position:relative;z-index:3;display:flex;gap:20px}
+  .sc{flex:1;padding:26px 24px 28px;border-radius:22px;border:1px solid var(--stroke);position:relative;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
+  .sc .tag{display:inline-block;font-size:13px;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.06em}
+  .sc h3{font-size:22px;font-weight:700;margin:16px 0 10px}
+  .sc p{font-size:14.5px;color:var(--muted);line-height:1.72}
+  .sc .bar{position:absolute;left:0;top:0;width:100%;height:4px}
+  .best .bar{background:linear-gradient(90deg,#3ee0a0,#4de0ff)}.best .tag{background:rgba(62,224,160,.16);color:#6cf0c0}
+  .mid .bar{background:linear-gradient(90deg,#5d8bff,#7b5cff)}.mid .tag{background:rgba(93,139,255,.18);color:#9db6ff}
+  .worst .bar{background:linear-gradient(90deg,#ff9a5c,#ff5f7a)}.worst .tag{background:rgba(255,120,90,.16);color:#ffb28f}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="viz" viewBox="0 0 1080 1620" preserveAspectRatio="none"><g id="mesh"></g></svg>
+  <div class="top content">
+    <div class="brand"><svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg><div><b>我有可能</b><span class="en">KALEIDOSCOPE</span></div></div>
+    <div class="fno"><div class="n">功 能 02</div><div class="l">LIFE LAB</div></div>
+  </div>
+  <div class="title content">
+    <div class="eb">人 生 实 验 室</div>
+    <h1>把选择<span class="grad-text">推演</span>到<br>3 / 5 / 10 年后</h1>
+    <p>站在人生岔路口，先别急着决定。<b>预演不同选择</b>在未来的<br>最好、一般与最坏情形，更理性、更从容地做出属于自己的选择。</p>
+  </div>
+
+  <div class="dialwrap">
+    <div class="dial"><svg id="dial" viewBox="-250 -250 500 500"></svg></div>
+    <div class="dcenter">
+      <div class="q">时 间 旋 钮 · 年</div>
+      <div class="big">推演 <em>5</em> 年后的你</div>
+      <div class="sub">拖动旋钮，1 – 10 年任意停留</div>
+    </div>
+    <div class="years"><div class="yr">1年</div><div class="yr on">5年</div><div class="yr">10年</div></div>
+  </div>
+
+  <div class="scen content">
+    <div class="sc best"><div class="bar"></div><span class="tag">最好情形 · BEST</span><h3>顺势起飞</h3><p>能力与机遇共振，转型落地。新赛道站稳，收入与成就感同步提升。</p></div>
+    <div class="sc mid"><div class="bar"></div><span class="tag">一般情形 · BASE</span><h3>稳步过渡</h3><p>有阵痛也有收获。用一两年完成切换，节奏放缓但方向清晰。</p></div>
+    <div class="sc worst"><div class="bar"></div><span class="tag">最坏情形 · WORST</span><h3>及时回调</h3><p>即使不顺，也已看清边界。低成本试错，随时可回到更适合的路。</p></div>
+  </div>
+</div>
+<script src="bloom.js"></script>
+<script>
+  renderMesh(document.getElementById('mesh'),{w:1080,h:1620,n:46,seed:14});
+  // 仪表盘
+  (function(){const NS='http://www.w3.org/2000/svg';const s=document.getElementById('dial');
+    const defs=document.createElementNS(NS,'defs');
+    defs.innerHTML='<linearGradient id="ring" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff7a5c"/><stop offset=".5" stop-color="#7b5cff"/><stop offset="1" stop-color="#4da6ff"/></linearGradient>'+
+      '<filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>';
+    s.appendChild(defs);
+    const R=210;
+    // 光晕环
+    const halo=document.createElementNS(NS,'circle');halo.setAttribute('r',R);halo.setAttribute('fill','none');halo.setAttribute('stroke','url(#ring)');halo.setAttribute('stroke-width','14');halo.setAttribute('opacity','.35');halo.setAttribute('filter','url(#g)');s.appendChild(halo);
+    const ring=document.createElementNS(NS,'circle');ring.setAttribute('r',R);ring.setAttribute('fill','none');ring.setAttribute('stroke','url(#ring)');ring.setAttribute('stroke-width','5');s.appendChild(ring);
+    // 刻度 1-10
+    for(let i=0;i<60;i++){const a=(-90+i*6)*Math.PI/180;const big=i%6===0;const r1=R-14,r2=R-(big?30:22);
+      const l=document.createElementNS(NS,'line');l.setAttribute('x1',Math.cos(a)*r1);l.setAttribute('y1',Math.sin(a)*r1);l.setAttribute('x2',Math.cos(a)*r2);l.setAttribute('y2',Math.sin(a)*r2);
+      l.setAttribute('stroke',big?'rgba(220,225,255,.9)':'rgba(160,170,220,.4)');l.setAttribute('stroke-width',big?2.4:1);s.appendChild(l);
+      if(big){const n=i/6+1;const t=document.createElementNS(NS,'text');const rr=R-48;t.setAttribute('x',Math.cos(a)*rr);t.setAttribute('y',Math.sin(a)*rr+6);t.setAttribute('fill','rgba(200,205,240,.75)');t.setAttribute('font-size','17');t.setAttribute('text-anchor','middle');t.setAttribute('font-family','sans-serif');t.textContent=n;s.appendChild(t);}}
+    // 指针到 5 (i=24 -> angle -90+144=54deg? 需指向"5")  5对应 i=4*6=24
+    const pa=(-90+24*6)*Math.PI/180;const kx=Math.cos(pa)*(R-16),ky=Math.sin(pa)*(R-16);
+    const knob=document.createElementNS(NS,'circle');knob.setAttribute('cx',kx);knob.setAttribute('cy',ky);knob.setAttribute('r','13');knob.setAttribute('fill','#fff');knob.setAttribute('filter','url(#g)');s.appendChild(knob);
+    const knob2=document.createElementNS(NS,'circle');knob2.setAttribute('cx',kx);knob2.setAttribute('cy',ky);knob2.setAttribute('r','9');knob2.setAttribute('fill','#c14dff');s.appendChild(knob2);
+  })();
+  (function(){const s=document.getElementById('logomk');const g=document.createElementNS('http://www.w3.org/2000/svg','defs');
+    g.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';s.appendChild(g);
+    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','url(#lg)');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+</script>
+</body></html>

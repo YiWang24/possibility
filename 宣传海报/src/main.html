@@ -1,0 +1,89 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:1080px;height:1620px}
+  /* 顶部 */
+  .top{display:flex;justify-content:space-between;align-items:center;padding:56px 72px 0}
+  .brand{display:flex;align-items:center;gap:16px}
+  .brand .mk{width:46px;height:46px}
+  .brand b{font-size:30px;font-weight:700;letter-spacing:.02em}
+  .brand .en{font-size:12px;letter-spacing:.34em;color:var(--faint);display:block;margin-top:3px;font-weight:600}
+  .top .meta{font-size:13px;letter-spacing:.28em;color:var(--muted);text-align:right;line-height:2}
+  /* hero bloom */
+  .hero{position:absolute;left:50%;top:470px;transform:translate(-50%,-50%);width:820px;height:820px;z-index:1}
+  .hero svg{width:100%;height:100%;overflow:visible}
+  /* 标题 */
+  .head{position:relative;z-index:3;text-align:center;margin-top:772px;padding:0 60px}
+  .head .eb{font-size:15px;letter-spacing:.5em;color:var(--muted);font-weight:600}
+  .head h1{font-size:82px;line-height:1.12;font-weight:800;margin-top:22px;letter-spacing:.01em}
+  .head h1 .p{display:block}
+  .head p.lead{font-size:20px;line-height:1.85;color:var(--muted);margin:26px auto 0;max-width:760px;font-weight:400}
+  .head p.lead b{color:#e7e3ff;font-weight:600}
+  /* 模块卡 */
+  .mods{position:relative;z-index:3;display:flex;gap:20px;padding:44px 72px 0}
+  .mod{flex:1;padding:26px 24px 28px}
+  .mod .ic{font-size:26px}
+  .mod h3{font-size:23px;font-weight:700;margin:14px 0 8px}
+  .mod .en{font-size:10px;letter-spacing:.24em;color:var(--faint);font-weight:600}
+  .mod p{font-size:14.5px;line-height:1.7;color:var(--muted)}
+  /* footer */
+  .foot{position:relative;z-index:3;margin-top:auto;padding:0 72px 60px;display:flex;justify-content:space-between;align-items:flex-end}
+  .foot .slg{font-size:26px;font-weight:700;line-height:1.5}
+  .foot .slg span{color:var(--faint);font-weight:400;font-size:15px;display:block;margin-top:12px;letter-spacing:.04em}
+  .foot .cta{display:flex;align-items:center;gap:16px}
+  .qr{width:96px;height:96px;border-radius:16px;border:1px solid var(--stroke);background:
+     repeating-linear-gradient(0deg,#12102a 0 6px,#1c1940 6px 12px),
+     repeating-linear-gradient(90deg,rgba(0,0,0,.4) 0 6px,transparent 6px 12px);position:relative;overflow:hidden}
+  .qr::after{content:"扫码探索";position:absolute;inset:0;display:grid;place-items:center;font-size:11px;color:var(--muted)}
+  .cta .txt{font-size:14px;color:var(--muted);line-height:1.7}
+  .cta .txt b{color:var(--ink);font-size:17px;display:block}
+  .stage{display:flex;flex-direction:column}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="viz" viewBox="0 0 1080 1620" preserveAspectRatio="none"><g id="mesh"></g></svg>
+
+  <div class="top content">
+    <div class="brand">
+      <svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg>
+      <div><b>我有可能</b><span class="en">KALEIDOSCOPE</span></div>
+    </div>
+    <div class="meta">年轻人的自我探索<br>与人生决策平台</div>
+  </div>
+
+  <div class="hero"><svg id="bloom" viewBox="-500 -500 1000 1000"></svg></div>
+
+  <div class="head content">
+    <div class="eb">在 人 生 的 岔 路 口</div>
+    <h1><span class="p">看见更多<span class="grad-text">可能</span></span></h1>
+    <p class="lead">把 <b>MBTI・荣格八维・盖洛普优势</b> 与 <b>星座・塔罗・八字</b>、AI 语音日记结合，<br>生成一份随你共同成长的<b>动态自我画像</b>——更立体地看见自己、理解自己。</p>
+  </div>
+
+  <div class="mods content">
+    <div class="mod card"><div class="ic">🧭</div><div class="en">KNOW YOURSELF</div><h3>认识自己</h3><p>科学工具 × 趣味探索，持续生成随你成长的动态自我画像。</p></div>
+    <div class="mod card"><div class="ic">🧪</div><div class="en">LIFE LAB</div><h3>人生实验室</h3><p>预演不同选择在 3 / 5 / 10 年后的最好、一般与最坏情形。</p></div>
+    <div class="mod card"><div class="ic">🔮</div><div class="en">KALEIDOSCOPE</div><h3>万花筒社区</h3><p>链接走过相似道路的前辈，获得真实经验与互助支持。</p></div>
+  </div>
+
+  <div class="foot content">
+    <div class="slg">不替你给出标准答案，<br>只帮你看见更多可能。<span>科学 · 人文 · 趣味 —— 面向 20-35 岁的奥德赛世代</span></div>
+    <div class="cta"><div class="txt"><b>我有可能</b>即刻开始探索</div><div class="qr"></div></div>
+  </div>
+</div>
+<script src="bloom.js"></script>
+<script>
+  renderBloom(document.getElementById('bloom'),{R:360,seed:11});
+  renderMesh(document.getElementById('mesh'),{w:1080,h:1620,n:52,seed:5});
+  // logo mark: 6瓣小花
+  (function(){const s=document.getElementById('logomk');
+    const grad=document.createElementNS('http://www.w3.org/2000/svg','defs');
+    grad.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';
+    s.appendChild(grad);
+    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');
+      p.setAttribute('fill','url(#lg)');p.setAttribute('opacity','.9');
+      p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+</script>
+</body></html>
