@@ -7,8 +7,9 @@ import Observation
 // （嗯，比较接近 / 还不太对，可循环纠正）→ 信息足够 → 下一步面板
 // （去人生实验室 / 看走过这条路的人 / 分享 / 完整总结）。对照原型 chatState 阶段机。
 //
-// 仅首页四条示例问题的首轮使用本地 mock；其他输入以及后续验证 / 纠正回合
-// 都作为消息经 /chat 请求 API。岔路口成形后用 crossroads.match_query 调 /match。
+// 首页四条示例问题的首轮、验证后的结论与纠正追问使用本地 mock，保证产品主线
+// 确定可达；用户在纠正追问后给出自己的改写时，再把完整上下文交给 /chat。
+// 岔路口成形后用 crossroads.match_query 调 /match。
 
 @Observable
 @MainActor
@@ -86,6 +87,7 @@ final class ChatModel {
     private static let confirmPhrase = "嗯，这个理解比较接近我。"
     private static let confirmAfterCorrectionPhrase = "这次准确了。"
     private static let correctionPhrase = "还不太对。"
+    private static let correctionPrompt = "谢谢你纠正我。**最不准确的是哪一部分？**你可以直接改写成你自己的话，我会以你的表达为准。"
     private static let verificationPhrases: Set<String> = [
         confirmPhrase, confirmAfterCorrectionPhrase, correctionPhrase,
     ]
@@ -140,33 +142,32 @@ final class ChatModel {
         }
     }
 
-    // MARK: 验证反馈（chips）—— 作为真实消息续轮
+    // MARK: 验证反馈（chips）—— 本地主线，纠正后的用户原话再接 API
 
-    /// 「嗯，比较接近 / 这次准确了」→ 续轮拿 AI 结论 → 下一步面板
+    /// 「嗯，比较接近 / 这次准确了」→ 本地结论 → 下一步面板。
+    /// 这是原型定义的确定性主线，不依赖 API 是否可用。
     func confirmInsight(supabase: SupabaseService) {
         guard !isStreaming else { return }
         showActionChips = false
         let userText = hadCorrection ? Self.confirmAfterCorrectionPhrase : Self.confirmPhrase
         messages.append(Message(role: .user, text: userText))
         Task {
-            let result = await streamAssistant(userText: userText, supabase: supabase)
-            guard result.delivered else { return }
-            try? await Task.sleep(for: .milliseconds(500))
+            await appendLocalReply(Self.confirmedReply(answers: answers))
             stage = .ready
             showNextPanel = true
             requestMatch(supabase: supabase)
         }
     }
 
-    /// 「还不太对 / 我再补充一点」→ 续轮请 AI 追问最不准确的部分
-    func requestCorrection(supabase: SupabaseService) {
+    /// 「还不太对 / 我再补充一点」→ 先展示固定追问，不请求 API。
+    /// 用户下一轮写下自己的改写后，send(_:supabase:) 才会进入 /chat。
+    func requestCorrection() {
         guard !isStreaming else { return }
         showActionChips = false
-        let userText = Self.correctionPhrase
-        messages.append(Message(role: .user, text: userText))
+        messages.append(Message(role: .user, text: Self.correctionPhrase))
         stage = .correction
         Task {
-            _ = await streamAssistant(userText: userText, supabase: supabase)
+            await appendLocalReply(Self.correctionPrompt)
         }
     }
 
@@ -365,5 +366,11 @@ final class ChatModel {
 
     private static func goldenReply(for launch: ChatLaunch) -> String {
         "我先试着说一个**暂时的理解**：你卡住的可能不只是「该选哪一个」，而是既想保护「真正重视的东西」，又不想放弃「现实里已经出现的信号」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**\(goldenSummary(for: launch))**。\n\n所以你需要的也许不是别人替你判断，而是把**真实意愿**和**害怕付出的代价**拆开来看。这个理解接近你吗？"
+    }
+
+    private static func confirmedReply(answers: [String]) -> String {
+        let approaching = answers.first ?? "真正想要的生活"
+        let protecting = answers.count > 1 ? answers[1] : "暂时不能失去的东西"
+        return "现在的信息已经够了。我的判断是：你并不是没有答案，而是**想靠近「\(approaching)」的同时，也在保护「\(protecting)」**。\n\n真正需要验证的，不是哪条路绝对正确，而是哪一种代价是你愿意承担、也有能力承担的。"
     }
 }

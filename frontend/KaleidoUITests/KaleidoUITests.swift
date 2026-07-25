@@ -145,6 +145,7 @@ final class KaleidoUITests: XCTestCase {
 
         // 纠正循环：还不太对 → 追问 → 输入原话 → 复述 → 这次准确了
         waitTap("还不太对")
+        XCTAssertTrue(containing("最不准确的是哪一部分", timeout: 4).exists, "固定纠正追问未出现")
         let input = app.textFields["想到什么，直接问…"]
         XCTAssertTrue(input.waitForExistence(timeout: 8))
         input.tap()

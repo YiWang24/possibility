@@ -60,6 +60,7 @@ struct MeEditView: View {
     @State private var draft: MyProfile
     @State private var tagsText: String
     @State private var ageText: String
+    @FocusState private var inputFocused: Bool
 
     init(store: MyProfileStore, mode: MeEditMode) {
         self.store = store
@@ -85,6 +86,12 @@ struct MeEditView: View {
                 .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 30)
             }
             .scrollIndicators(.hidden)
+            .scrollDismissesKeyboard(.interactively)
+            .background {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { inputFocused = false }
+            }
             saveBar
         }
         .background(Theme.paper.ignoresSafeArea())
@@ -108,13 +115,27 @@ struct MeEditView: View {
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)
         .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
+        .simultaneousGesture(TapGesture().onEnded { inputFocused = false })
     }
 
     private var saveBar: some View {
-        Button(mode.saveLabel) { save() }
-            .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
-            .frame(maxWidth: .infinity).padding(.vertical, 15)
-            .background(Theme.buttonGradient, in: Capsule())
+        Button {
+            // 中文输入法可能仍有未提交的组合文字。先结束编辑，让系统提交文字，
+            // 再在下一轮主线程读取草稿，避免保存到输入前的旧值。
+            inputFocused = false
+            Task { @MainActor in
+                await Task.yield()
+                save()
+            }
+        } label: {
+            Text(mode.saveLabel)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+                .background(Theme.buttonGradient, in: Capsule())
+                .contentShape(Capsule())
+        }
             .buttonStyle(PressScaleStyle())
             .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 14)
             .background(Theme.paper)
@@ -146,6 +167,9 @@ struct MeEditView: View {
             TextField("", text: text, axis: axis)
                 .font(.system(size: 13.5)).foregroundStyle(Theme.ink).tint(Theme.blue)
                 .lineLimit(axis == .vertical ? 3...6 : 1...1)
+                .focused($inputFocused)
+                .submitLabel(.done)
+                .onSubmit { inputFocused = false }
                 .padding(.horizontal, 12).padding(.vertical, 10)
                 .background(Theme.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
