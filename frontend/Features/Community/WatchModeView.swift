@@ -13,15 +13,21 @@ struct WatchModeView: View {
 
     // 世界偏移（原型 st.x / st.y）
     @State private var offset: CGSize = .zero
-    @State private var dragStart: CGSize = .zero
-    @State private var lastDrag: (point: CGPoint, time: Date)?
-    @State private var velocity: CGVector = .zero
+    // 拖拽簿记放引用类型:手势 tick 高频写入不触发视图失效
+    @State private var drag = DragBookkeeping()
     @State private var motionTask: Task<Void, Never>?
+
+    private final class DragBookkeeping {
+        var start: CGSize = .zero
+        var last: (point: CGPoint, time: Date)?
+        var velocity: CGVector = .zero
+    }
 
     private static let dx: Double = 160
     private static let dy: Double = 184
-    private static let cols = 9
-    private static let rows = 7
+    // 渐隐 mask 半径 340pt,超出的气泡不可见:7×5 已完整覆盖可视圆 + 边缘渐隐带
+    private static let cols = 7
+    private static let rows = 5
 
     private static let nameHeads = ["云间", "南岸", "北辰", "晚晴", "松野", "青屿", "白露", "橙湾", "星河", "木槿", "晴川", "远帆", "林深", "小满", "月桥", "山止", "海盐", "春序", "微光", "野渡", "风眠", "竹影", "晨雾", "栖迟"]
     private static let nameTails = ["拾光", "行舟", "折页", "听风", "慢跑", "看海", "造梦", "写信", "观星", "种树", "漫游", "读城", "寻路", "开花", "向晚", "未央", "煮茶", "登山", "停云", "问路", "放映", "织网", "点灯", "候鸟"]
@@ -149,12 +155,13 @@ struct WatchModeView: View {
         let focus = max(0, 1 - dist / 460)
         let hidden = !matches(u, query: query)
         return TravelerProfileLink(travelerId: u.base.id) {
-            bubble(u, isFocus: u.key == focusKey)
+            BubbleCard(user: u, isFocus: u.key == focusKey).equatable()
         }
         .scaleEffect(0.62 + focus * 0.58)
         .opacity(hidden ? 0.06 : 0.28 + focus * 0.72)
         .position(x: center.x + x, y: center.y + y)
-        .zIndex(Double(100 - Int(dist / 10)))
+        // 64pt 分桶:拖动中 z 序基本稳定,避免每帧重排 ZStack
+        .zIndex(Double(100 - Int(dist / 64)))
         .allowsHitTesting(!hidden)
     }
 
@@ -164,84 +171,97 @@ struct WatchModeView: View {
     }
 
     /// 圆形毛玻璃气泡（原型 .watch-user：154×154 · 玻璃渐变 + 高光 + 色相辉光 + 流光 + 星点）
-    private func bubble(_ u: WatchUser, isFocus: Bool) -> some View {
-        let glow = Theme.hue(u.hue).accent
-        return VStack(spacing: 0) {
-            TravelerAvatar(initial: u.name.prefix(1).description, hue: u.hue, size: 43,
-                           imageName: MockAvatar.name(hashing: u.name))
-                .overlay(Circle().strokeBorder(.white.opacity(0.82), lineWidth: 1.5))
-                .shadow(color: .black.opacity(0.4), radius: 7, y: 4)
-                .shadow(color: glow.opacity(0.3), radius: 6)
-            Text(u.name)
-                .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
-                .lineLimit(1)
-                .shadow(color: .black.opacity(0.65), radius: 4, y: 2)
-                .padding(.top, 4)
-            Text(u.base.bio)
-                .font(.system(size: 9)).foregroundStyle(Color(hex: 0xEEF3FF, alpha: 0.82))
-                .lineLimit(2).multilineTextAlignment(.center).lineSpacing(1.5)
-                .shadow(color: .black.opacity(0.7), radius: 2.5, y: 1)
-                .frame(width: 112)
-                .padding(.top, 3)
-            HStack(spacing: 4) {
-                ForEach(u.base.tags.prefix(2), id: \.self) { tag in
-                    Text(tag)
-                        .font(.system(size: 7.5)).foregroundStyle(Color(hex: 0xE1E9FF))
-                        .lineLimit(1)
-                        .padding(.horizontal, 5).padding(.vertical, 2.5)
-                        .background(Color(hex: 0xD6E2FF, alpha: 0.12), in: Capsule())
-                        .overlay(Capsule().strokeBorder(Color(hex: 0xDFE9FF, alpha: 0.1), lineWidth: 1))
+    /// Equatable:拖动时 key/isFocus 不变则跳过整棵重型子树的 diff,
+    /// 外层只动 scale/opacity/position 三个廉价可动画修饰符。
+    private struct BubbleCard: View, Equatable {
+        let user: WatchUser
+        let isFocus: Bool
+
+        static func == (l: Self, r: Self) -> Bool {
+            l.user.key == r.user.key && l.isFocus == r.isFocus
+        }
+
+        var body: some View {
+            let glow = Theme.hue(user.hue).accent
+            VStack(spacing: 0) {
+                TravelerAvatar(initial: user.name.prefix(1).description, hue: user.hue, size: 43,
+                               imageName: MockAvatar.name(hashing: user.name))
+                    .overlay(Circle().strokeBorder(.white.opacity(0.82), lineWidth: 1.5))
+                    .compositingGroup()
+                    .shadow(color: .black.opacity(0.4), radius: 5, y: 3)
+                Text(user.name)
+                    .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
+                    .lineLimit(1)
+                    .shadow(color: .black.opacity(0.65), radius: 4, y: 2)
+                    .padding(.top, 4)
+                Text(user.base.bio)
+                    .font(.system(size: 9)).foregroundStyle(Color(hex: 0xEEF3FF, alpha: 0.82))
+                    .lineLimit(2).multilineTextAlignment(.center).lineSpacing(1.5)
+                    .frame(width: 112)
+                    .padding(.top, 3)
+                HStack(spacing: 4) {
+                    ForEach(user.base.tags.prefix(2), id: \.self) { tag in
+                        Text(tag)
+                            .font(.system(size: 7.5)).foregroundStyle(Color(hex: 0xE1E9FF))
+                            .lineLimit(1)
+                            .padding(.horizontal, 5).padding(.vertical, 2.5)
+                            .background(Color(hex: 0xD6E2FF, alpha: 0.12), in: Capsule())
+                            .overlay(Capsule().strokeBorder(Color(hex: 0xDFE9FF, alpha: 0.1), lineWidth: 1))
+                    }
+                }
+                .frame(maxWidth: 114)
+                .padding(.top, 5)
+            }
+            .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 10)
+            .frame(width: 154, height: 154)
+            .background {
+                ZStack {
+                    // 玻璃底 + 左上白高光 + 右下色相辉光
+                    LinearGradient(colors: [Color(hex: 0x1D2640, alpha: 0.58), Color(hex: 0x080B18, alpha: 0.38)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                    RadialGradient(colors: [Color.white.opacity(0.16), .clear],
+                                   center: UnitPoint(x: 0.25, y: 0.16), startRadius: 0, endRadius: 42)
+                    RadialGradient(colors: [glow.opacity(0.24), .clear],
+                                   center: UnitPoint(x: 0.78, y: 0.76), startRadius: 0, endRadius: 80)
                 }
             }
-            .frame(maxWidth: 114)
-            .padding(.top, 5)
-        }
-        .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 10)
-        .frame(width: 154, height: 154)
-        .background {
-            ZStack {
-                // 玻璃底 + 左上白高光 + 右下色相辉光
-                LinearGradient(colors: [Color(hex: 0x1D2640, alpha: 0.58), Color(hex: 0x080B18, alpha: 0.38)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                RadialGradient(colors: [Color.white.opacity(0.16), .clear],
-                               center: UnitPoint(x: 0.25, y: 0.16), startRadius: 0, endRadius: 42)
-                RadialGradient(colors: [glow.opacity(0.24), .clear],
-                               center: UnitPoint(x: 0.78, y: 0.76), startRadius: 0, endRadius: 80)
+            .clipShape(Circle())
+            // 内圈流光（原型 ::before conic 渐变 + 1px 内描边）
+            .overlay {
+                Circle()
+                    .strokeBorder(
+                        AngularGradient(stops: [
+                            .init(color: .white.opacity(0.16), location: 0),
+                            .init(color: .clear, location: 0.18),
+                            .init(color: .white.opacity(0.06), location: 0.35),
+                            .init(color: .clear, location: 0.58),
+                            .init(color: glow.opacity(0.22), location: 0.78),
+                            .init(color: .clear, location: 1),
+                        ], center: .center, angle: .degrees(30)),
+                        lineWidth: 1.2)
+                    .padding(3)
             }
-        }
-        .clipShape(Circle())
-        // 内圈流光（原型 ::before conic 渐变 + 1px 内描边）
-        .overlay {
-            Circle()
-                .strokeBorder(
-                    AngularGradient(stops: [
-                        .init(color: .white.opacity(0.16), location: 0),
-                        .init(color: .clear, location: 0.18),
-                        .init(color: .white.opacity(0.06), location: 0.35),
-                        .init(color: .clear, location: 0.58),
-                        .init(color: glow.opacity(0.22), location: 0.78),
-                        .init(color: .clear, location: 1),
-                    ], center: .center, angle: .degrees(30)),
-                    lineWidth: 1.2)
-                .padding(3)
-        }
-        // 星点（原型 ::after 四个 radial 亮点）
-        .overlay {
-            GeometryReader { geo in
-                let w = geo.size.width, h = geo.size.height
-                Circle().fill(.white.opacity(0.86)).frame(width: 2, height: 2).position(x: w * 0.23, y: h * 0.35)
-                Circle().fill(.white.opacity(0.55)).frame(width: 1.6, height: 1.6).position(x: w * 0.76, y: h * 0.27)
-                Circle().fill(.white.opacity(0.62)).frame(width: 1.4, height: 1.4).position(x: w * 0.68, y: h * 0.68)
-                Circle().fill(glow.opacity(0.9)).frame(width: 1.6, height: 1.6).position(x: w * 0.35, y: h * 0.78)
+            // 星点（原型 ::after 四个 radial 亮点）
+            .overlay {
+                GeometryReader { geo in
+                    let w = geo.size.width, h = geo.size.height
+                    Circle().fill(.white.opacity(0.86)).frame(width: 2, height: 2).position(x: w * 0.23, y: h * 0.35)
+                    Circle().fill(.white.opacity(0.55)).frame(width: 1.6, height: 1.6).position(x: w * 0.76, y: h * 0.27)
+                    Circle().fill(.white.opacity(0.62)).frame(width: 1.4, height: 1.4).position(x: w * 0.68, y: h * 0.68)
+                    Circle().fill(glow.opacity(0.9)).frame(width: 1.6, height: 1.6).position(x: w * 0.35, y: h * 0.78)
+                }
+                .allowsHitTesting(false)
             }
-            .allowsHitTesting(false)
+            .overlay(Circle().strokeBorder(
+                isFocus ? Color(hex: 0xDEE9FF, alpha: 0.78) : Color(hex: 0xCFE0FF, alpha: 0.23), lineWidth: 1))
+            // 先压成单层再打阴影:否则 shadow 会对气泡内每个绘制原语各模糊一次,
+            // 63 个气泡 × 数十个原语的离屏模糊正是真机拖动掉帧的主因
+            .compositingGroup()
+            .brightness(isFocus ? 0.09 : 0)
+            .saturation(isFocus ? 1.14 : 1)
+            .shadow(color: .black.opacity(0.8), radius: 14, y: 10)
+            .shadow(color: glow.opacity(isFocus ? 0.42 : 0.18), radius: isFocus ? 22 : 13)
         }
-        .overlay(Circle().strokeBorder(
-            isFocus ? Color(hex: 0xDEE9FF, alpha: 0.78) : Color(hex: 0xCFE0FF, alpha: 0.23), lineWidth: 1))
-        .brightness(isFocus ? 0.09 : 0)
-        .saturation(isFocus ? 1.14 : 1)
-        .shadow(color: .black.opacity(0.84), radius: 16, y: 12)
-        .shadow(color: glow.opacity(isFocus ? 0.42 : 0.18), radius: isFocus ? 22 : 13)
     }
 
     // MARK: 背景（原型 .watch-kaleido：双细环上的彩色弧段 · 32s 旋转 · opacity .16）
@@ -300,38 +320,39 @@ struct WatchModeView: View {
         DragGesture(minimumDistance: 4)
             .onChanged { value in
                 motionTask?.cancel()
-                if lastDrag == nil {
-                    dragStart = offset
+                if drag.last == nil {
+                    drag.start = offset
                 }
                 let now = Date()
-                if let last = lastDrag {
-                    let dt = max(0.008, now.timeIntervalSince(last.time))
-                    velocity = CGVector(dx: (value.location.x - last.point.x) / dt,
-                                        dy: (value.location.y - last.point.y) / dt)
+                if let last = drag.last {
+                    let dt = max(0.004, now.timeIntervalSince(last.time))
+                    drag.velocity = CGVector(dx: (value.location.x - last.point.x) / dt,
+                                             dy: (value.location.y - last.point.y) / dt)
                 }
-                lastDrag = (value.location, now)
-                offset = CGSize(width: dragStart.width + value.translation.width,
-                                height: dragStart.height + value.translation.height)
+                drag.last = (value.location, now)
+                offset = CGSize(width: drag.start.width + value.translation.width,
+                                height: drag.start.height + value.translation.height)
             }
             .onEnded { _ in
-                lastDrag = nil
+                drag.last = nil
                 runInertia()
             }
     }
 
     private func runInertia() {
         motionTask?.cancel()
-        // 原型 runWatchInertia：速度衰减 0.88/帧，随后就近吸附
-        var mx = velocity.dx * 0.016
-        var my = velocity.dy * 0.016
-        velocity = .zero
+        // 原型 runWatchInertia:速度按 0.88/16ms 衰减,随后就近吸附。
+        // 步进 8ms(等效衰减 √0.88≈0.94)以贴合 ProMotion 120Hz,总位移不变。
+        var mx = drag.velocity.dx * 0.008
+        var my = drag.velocity.dy * 0.008
+        drag.velocity = .zero
         motionTask = Task { @MainActor in
-            while !Task.isCancelled, abs(mx) + abs(my) > 0.55 {
+            while !Task.isCancelled, abs(mx) + abs(my) > 0.3 {
                 offset.width += mx
                 offset.height += my
-                mx *= 0.88
-                my *= 0.88
-                try? await Task.sleep(for: .milliseconds(16))
+                mx *= 0.94
+                my *= 0.94
+                try? await Task.sleep(for: .milliseconds(8))
             }
             guard !Task.isCancelled else { return }
             await snapToNearest()
@@ -346,9 +367,9 @@ struct WatchModeView: View {
         let tx = -nearest.wx, ty = -nearest.wy
         while !Task.isCancelled,
               abs(tx - offset.width) + abs(ty - offset.height) > 0.7 {
-            offset.width += (tx - offset.width) * 0.18
-            offset.height += (ty - offset.height) * 0.18
-            try? await Task.sleep(for: .milliseconds(16))
+            offset.width += (tx - offset.width) * 0.095
+            offset.height += (ty - offset.height) * 0.095
+            try? await Task.sleep(for: .milliseconds(8))
         }
         if !Task.isCancelled {
             offset = CGSize(width: tx, height: ty)
