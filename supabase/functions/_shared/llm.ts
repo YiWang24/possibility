@@ -1,29 +1,19 @@
-import { createDeepSeek } from "@ai-sdk/deepseek";
 import { APICallError, generateObject, jsonSchema } from "ai";
-import { runtimeConfig } from "./config.ts";
+import { deepseekProvider } from "./deepseek.ts";
 import { HttpError } from "./errors.ts";
 
 /**
  * 结构化输出适配层：走 Vercel AI SDK（`ai` + `@ai-sdk/deepseek`），后端为 DeepSeek v4。
  * 用 `generateObject`（原生结构化 + 客户端 schema 校验）。对话流式见 chat-stream.ts。
  *
- * 关键：DeepSeek v4（flash/pro）默认开启 reasoning（思维链），会占用 max_tokens 预算——
- * 小预算下正文会被思维链吃光而截断。这里对结构化生成统一关闭 reasoning
- * （providerOptions.deepseek.thinking=disabled），换更省 token、更稳的正文，避免截断。
+ * 关键：DeepSeek v4 默认开启 reasoning（思维链），会占用 max_tokens 预算并延后正文。
+ * 关闭 reasoning 由 deepseek.ts 的 provider 在 HTTP 层强制注入 thinking:disabled
+ * （@ai-sdk/deepseek@3.0.13 的 providerOptions.deepseek.thinking 不生效，见 deepseek.ts）。
  */
 
-let provider: ReturnType<typeof createDeepSeek> | undefined;
-
 function deepseek(model: string) {
-  provider ??= createDeepSeek({
-    apiKey: runtimeConfig.deepseekApiKey,
-    baseURL: runtimeConfig.deepseekBaseUrl,
-  });
-  return provider(model);
+  return deepseekProvider()(model);
 }
-
-// 关闭 reasoning，避免思维链吃掉输出预算（等价于旧代码里 thinking:disabled 的意图）。
-const NO_THINKING = { deepseek: { thinking: { type: "disabled" } } } as const;
 
 /** 4xx 配置类错误（凭证/请求非法）重试无意义，直接抛出交给 errorResponse 映射。 */
 function isNonRetryable(status: number | undefined): boolean {
@@ -56,7 +46,6 @@ export async function structuredOutput<T>(
         maxOutputTokens: options.maxTokens,
         maxRetries: 0, // 重试由本函数控制
         abortSignal: controller.signal,
-        providerOptions: NO_THINKING,
       });
       return object as T;
     } catch (error) {
