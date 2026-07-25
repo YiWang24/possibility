@@ -110,7 +110,24 @@ final class KaleidoUITests: XCTestCase {
         XCTAssertTrue(find("嗯，比较接近", timeout: 25) != nil, "「嗯，比较接近」未出现", file: file, line: line)
     }
 
-    // MARK: 00 · 社区默认放映模式
+    // MARK: 00 · 发问框发送 → 探索对话真实回复（回归：会话自愈 + SSE 逐条派发）
+
+    func test00ChatSendGetsReply() throws {
+        let field = app.textViews.firstMatch.exists ? app.textViews.firstMatch : app.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 5), "发问框未找到")
+        field.tap()
+        field.typeText("wo yao bu yao huan gongzuo qu chuangye")
+        waitTap("发送")
+        assertExists("和你的动态画像一起想清楚", timeout: 6)
+        // 发送后应流式出真实 AI 回复，而非兜底报错。
+        // 原 bug：①冷启动会话缺失→sessionMissing；②SSE 靠空行分隔、URLSession.lines
+        // 吞空行导致 token 全丢。二者都会落到这条兜底文案。
+        RunLoop.current.run(until: Date().addingTimeInterval(30))
+        XCTAssertNil(
+            find("我好像在接你的路上迷路了", timeout: 1),
+            "对话报错兜底——发送后没有真实回复（复现用户反馈的 bug）",
+        )
+    }
 
     func test00CommunityWatchModeDefault() throws {
         waitTap("万花筒社区")

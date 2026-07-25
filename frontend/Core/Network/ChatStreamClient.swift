@@ -74,23 +74,24 @@ struct ChatStreamClient: Sendable {
                     let (bytes, response) = try await session.bytes(for: urlRequest)
                     try Self.validate(response)
 
+                    // SSE 解析：不依赖空行分隔。URLSession.AsyncBytes.lines 会把连续换行
+                    // （\n\n）合并、不稳定吐出空行，导致原来「靠空行触发派发」的写法把每个
+                    // token 的 data 行全累积起来、一条都发不出（实测 t=0 done=true）。
+                    // 本后端每个事件是单行 JSON，故每见到一个 data 行即视为一次完整事件派发。
                     var event = "message"
-                    var dataBuffer = ""
-
                     for try await line in bytes.lines {
-                        if line.isEmpty {
-                            try dispatch(event: event, data: dataBuffer, to: continuation)
-                            event = "message"
-                            dataBuffer = ""
-                        } else if let value = line.dropPrefix("event:") {
+                        if let value = line.dropPrefix("event:") {
                             event = value.trimmingCharacters(in: .whitespaces)
                         } else if let value = line.dropPrefix("data:") {
-                            dataBuffer += value.trimmingCharacters(in: .whitespaces)
+                            try dispatch(
+                                event: event,
+                                data: value.trimmingCharacters(in: .whitespaces),
+                                to: continuation,
+                            )
+                            event = "message"
                         }
-                        // 以 `:` 开头的注释行与未知字段忽略
+                        // 空行与以 `:` 开头的注释行忽略
                     }
-                    // 流结束前最后一段未被空行终结的缓冲
-                    try dispatch(event: event, data: dataBuffer, to: continuation)
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
