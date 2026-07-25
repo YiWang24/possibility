@@ -1,4 +1,5 @@
--- 支持人生实验室按天/月推演，同时保留 years 兼容旧客户端与历史数据。
+-- 0012_simulation_time_horizon.sql — 支持人生实验室按天/月推演，
+-- 同时保留 years 兼容旧客户端与历史数据。
 alter table public.simulations
   add column if not exists time_horizon text;
 
