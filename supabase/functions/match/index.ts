@@ -68,6 +68,13 @@ Deno.serve(async (req) => {
         502,
         "MODEL_OUTPUT_INVALID",
         "AI 返回了无效的旅人匹配结果。",
+        // TODO(debug): 区分「代码层计数校验失败」与「structuredOutput 解析失败」，定位后移除
+        {
+          stage: "match_count_validation",
+          returnedCount: result.matches.length,
+          selectedIds,
+          validIdSample: [...validIds].slice(0, 8),
+        },
       );
     }
     return jsonResponse(result);

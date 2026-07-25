@@ -52,6 +52,14 @@ export async function structuredOutput<T>(
       502,
       "MODEL_OUTPUT_INVALID",
       "AI 生成超时或返回了无法解析的结构，请稍后重试。",
+      // TODO(debug): 透出底层失败原因（超时/解析/网关），定位后移除
+      {
+        stage: "parse_throw",
+        model: options.model,
+        maxTokens: options.maxTokens,
+        errName: error instanceof Error ? error.name : typeof error,
+        errMessage: error instanceof Error ? error.message : String(error),
+      },
     );
   }
   if (!message.parsed_output) {
@@ -59,6 +67,15 @@ export async function structuredOutput<T>(
       502,
       "MODEL_OUTPUT_INVALID",
       "AI 返回了无法解析的结构。",
+      // TODO(debug): 模型返回了但无法解析成 schema，透出停止原因与原文片段，定位后移除
+      {
+        stage: "no_parsed_output",
+        model: options.model,
+        stopReason: (message as { stop_reason?: unknown }).stop_reason ?? null,
+        rawTextHead: JSON.stringify(
+          (message as { content?: unknown }).content,
+        )?.slice(0, 600) ?? null,
+      },
     );
   }
   return message.parsed_output as T;
