@@ -74,12 +74,12 @@ struct LabView: View {
     private var questionCard: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("当前探索问题").font(.system(size: 11)).tracking(2.5).foregroundStyle(Theme.faint)
-            Text(model.question).font(.system(size: 16.5, weight: .bold)).lineSpacing(5)
-                .foregroundStyle(Theme.ink).padding(.top, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
             if model.editing {
-                editor.padding(.top, 12)
+                editor.padding(.top, 8)
             } else {
+                Text(model.question).font(.system(size: 16.5, weight: .bold)).lineSpacing(5)
+                    .foregroundStyle(Theme.ink).padding(.top, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 HStack {
                     Spacer()
                     Button("更换问题 ›") { model.beginEdit() }
