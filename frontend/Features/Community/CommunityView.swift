@@ -318,24 +318,48 @@ struct BountyCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 5) {
-                    Text("✦").font(.system(size: 10.5))
-                    Text(bounty.reward).font(.system(size: 10.5, weight: .semibold))
+            VStack(alignment: .leading, spacing: 0) {
+                // 顶部标签（原型 .bounty-tags 蓝色 pill；gap:5px 横竖同值，故行距也取 5）
+                if let tags = bounty.tags, !tags.isEmpty {
+                    FlowLayout(spacing: 5, lineSpacing: 5) {
+                        ForEach(tags.prefix(4), id: \.self) { BountyTagPill(text: $0) }
+                    }
                 }
-                .foregroundStyle(Theme.apricot)
-                .padding(.horizontal, 10).padding(.vertical, 4)
-                .background(Color(hex: 0xFFB067, alpha: 0.14), in: Capsule())
 
-                Text(bounty.question).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink).lineSpacing(4)
+                Text(bounty.question)
+                    .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink).lineSpacing(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(bounty.responses).font(.system(size: 11)).foregroundStyle(Theme.faint)
+                    .padding(.top, (bounty.tags?.isEmpty == false) ? 11 : 0)
+
+                // 底栏：悬赏文案（杏色）在左，回应数右对齐（原型 .bounty-foot）
+                HStack(alignment: .bottom, spacing: 8) {
+                    Text(bounty.reward)
+                        .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.apricot)
+                    Spacer(minLength: 8)
+                    Text(bounty.responses)
+                        .font(.system(size: 10)).foregroundStyle(Theme.faint)
+                        .multilineTextAlignment(.trailing)
+                }
+                .padding(.top, 12)
             }
             .padding(.horizontal, 15).padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .kaleidoCard(radius: 20)
         }
         .buttonStyle(PressScaleStyle())
+    }
+}
+
+// MARK: - 悬赏标签 pill（原型 .bounty-tags span，比通用 TagPill 更小更密）
+
+private struct BountyTagPill: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 9.5, weight: .medium))
+            .foregroundStyle(Color(hex: 0xAFC8FF))
+            .padding(.horizontal, 7).padding(.vertical, 4)
+            .background(Color(hex: 0x5E96FF, alpha: 0.1), in: Capsule())
     }
 }
 
