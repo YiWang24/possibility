@@ -236,6 +236,29 @@ extension View {
     func screenBackground() -> some View {
         background(ScreenBackground())
     }
+
+    /// 键盘上方「收起」工具栏。
+    /// 多行 TextField（axis: .vertical）的回车键用于换行、无法收起键盘，
+    /// 给这类输入框挂上本修饰器即可在键盘上方获得一个统一的收起按钮。
+    func keyboardDismissToolbar() -> some View {
+        toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("收起") { KeyboardHelper.dismiss() }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.blue)
+            }
+        }
+    }
+}
+
+/// 全局收起键盘：resign 当前 first responder，无需为每个字段声明 FocusState。
+enum KeyboardHelper {
+    @MainActor static func dismiss() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
+    }
 }
 
 // MARK: Toast

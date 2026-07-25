@@ -523,6 +523,7 @@ struct CardGameView: View {
                 .padding(11)
                 .background(Theme.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+                .keyboardDismissToolbar()
         }
     }
 

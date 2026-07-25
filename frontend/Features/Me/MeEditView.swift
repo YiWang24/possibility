@@ -173,6 +173,7 @@ struct MeEditView: View {
                 .padding(.horizontal, 12).padding(.vertical, 10)
                 .background(Theme.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+                .keyboardDismissToolbar()
         }
     }
 

@@ -112,6 +112,7 @@ struct LabView: View {
                 .padding(.horizontal, 14).padding(.vertical, 12)
                 .background(Color(hex: 0x060810, alpha: 0.5), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.4), lineWidth: 1))
+                .keyboardDismissToolbar()
             HStack {
                 Spacer()
                 Button("取消") { model.editing = false }
@@ -361,6 +362,7 @@ struct LabView: View {
                 .padding(.horizontal, 11).padding(.vertical, 9)
                 .background(Color(hex: 0x060810, alpha: 0.54), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).strokeBorder(Color.white.opacity(0.1), lineWidth: 1))
+                .keyboardDismissToolbar()
             HStack {
                 Spacer()
                 Button("取消") {

@@ -59,6 +59,7 @@ struct HomeAskCard: View {
                 .lineLimit(2...4)
                 .tint(Theme.blue)
                 .padding(.trailing, model.trimmedQuestion.isEmpty ? 0 : 26)
+                .keyboardDismissToolbar()
 
             HStack {
                 Spacer()
