@@ -123,7 +123,7 @@ struct HomeView: View {
                 onTapDim: handleDimTap
             )
             VStack(alignment: .leading, spacing: 8) {
-                Text("我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：‘离每个人最远的，就是他自己。’——对于我们自己，我们不是‘知者’……")
+                Text("我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：“离每个人最远的，就是他自己。”——对于我们自己，我们不是“知者”……")
                     .font(.system(size: 12, design: .serif))
                     .foregroundStyle(Theme.sub)
                     .lineSpacing(6)
