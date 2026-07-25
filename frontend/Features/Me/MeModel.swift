@@ -22,11 +22,18 @@ final class MyProfileStore {
         if let data = UserDefaults.standard.data(forKey: Self.storeKey),
            let saved = try? JSONDecoder().decode(MyProfile.self, from: data) {
             var merged = saved
+            let migratedLegacyName = merged.name == MyProfile.legacyDefaultName
+            if migratedLegacyName {
+                merged.name = MyProfile.defaultProfile.name
+            }
             // visibility 与默认合并（新 key 补默认）
             for (key, value) in MyProfile.defaultProfile.visibility where merged.visibility[key] == nil {
                 merged.visibility[key] = value
             }
             profile = merged
+            if migratedLegacyName, let migrated = try? JSONEncoder().encode(merged) {
+                UserDefaults.standard.set(migrated, forKey: Self.storeKey)
+            }
         } else {
             profile = MyProfile.defaultProfile
         }
@@ -51,9 +58,13 @@ final class MyProfileStore {
         supabase = service
         guard let remote = try? await service.fetchPublicProfileRemote() else { return }
         let merged = profile.merging(remote: remote)
-        guard merged != profile else { return }
-        profile = merged
-        persistLocally(merged)
+        if merged != profile {
+            profile = merged
+            persistLocally(merged)
+        }
+        if remote.name == MyProfile.legacyDefaultName {
+            try? await service.savePublicProfileRemote(merged)
+        }
     }
 
     /// 防抖 1.5s 后上云；失败静默（本地已保存，下次成功保存时自然同步）。

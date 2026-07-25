@@ -5,6 +5,8 @@ import Foundation
 // 纯本地：UserDefaults JSON 持久化，加载时与默认档案合并（原型 loadMyProfile 语义）。
 
 struct MyProfile: Codable, Equatable, Sendable {
+    static let legacyDefaultName = "屿岸"
+
     var name: String
     /// 头像色相（Theme.hue 0–4）
     var hue: Int
@@ -70,7 +72,7 @@ struct MyProfile: Codable, Equatable, Sendable {
     ]
 
     static let defaultProfile = MyProfile(
-        name: "屿岸", hue: 4,
+        name: "老己", hue: 4,
         quote: "我还没有抵达答案，但已经开始认真记录自己如何选择。",
         tags: ["交互设计", "AI 产品探索", "上海"],
         bio: "交互设计师 → AI 产品探索者",
@@ -173,7 +175,9 @@ extension MyProfile {
     /// 用远端字段覆盖本地模型（远端缺失/空字段保留本地值，不破坏本地持久化语义）
     func merging(remote: RemotePublicProfile) -> MyProfile {
         var merged = self
-        if let v = remote.name, !v.isEmpty { merged.name = v }
+        if let v = remote.name, !v.isEmpty {
+            merged.name = v == Self.legacyDefaultName ? Self.defaultProfile.name : v
+        }
         if let v = remote.quote, !v.isEmpty { merged.quote = v }
         if let v = remote.bio, !v.isEmpty { merged.bio = v }
         if let v = remote.tags, !v.isEmpty { merged.tags = v }

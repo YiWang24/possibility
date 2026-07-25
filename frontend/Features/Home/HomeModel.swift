@@ -456,7 +456,7 @@ final class HomeModel {
     }
 
     // MARK: demo 人物
-    let userName = "屿岸"
+    let userName = "老己"
 }
 
 // MARK: - list-diary 分页扩展（探索天数用）
