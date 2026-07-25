@@ -127,7 +127,7 @@ enum AssessmentData {
         }
         return AssessmentConfig(
             kind: .bigfive,
-            title: "大五人格", sub: "五个维度都是光谱，没有好坏", kicker: "PERSONALITY PROFILE",
+            title: "大五人格", sub: "五个维度都是光谱", kicker: "PERSONALITY PROFILE",
             introTitle: "你通常如何\n感受、思考与行动？",
             intro: "请按照过去一年里大多数时候的真实状态回答，而不是理想中的自己。完成后会看到五个主要维度和三十个细分面向。",
             notices: ["完整版共120题，通常需要15–20分钟", "结果展示五维连续分数，不把你分成固定类型", "答案保存在当前设备，原始答案默认私密"],
