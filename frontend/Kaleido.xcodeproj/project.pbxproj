@@ -16,6 +16,7 @@
 		23B7A988B7AF2D2D384D80C4 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532E27F23B2534639E841CC6 /* AppConfig.swift */; };
 		27155F15BFD4A71DBE6A46D9 /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85892F03C9405FD652ACEC07 /* OrbView.swift */; };
 		2C255E5A5F5B3B0A0EC33C55 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFA48F72764907D168ADEF0 /* Components.swift */; };
+		2CD630BDA5F4578E3C601993 /* AppStoreScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = D482E4EF7B87B6F51D16E5B6 /* AppStoreScreenshots.swift */; };
 		2D2754B98725FCB7456BAC9F /* MyProfileModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7FCEE8F5B14818EEBEFDB2D /* MyProfileModels.swift */; };
 		2FF1987E71491BEDD1976FFE /* DimensionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814B24EB86B72A2BCCCAE261 /* DimensionSheet.swift */; };
 		32077BB2088F3C82AD303251 /* DiaryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E38E509B094F0BCDFF30B7DC /* DiaryDetailView.swift */; };
@@ -133,6 +134,7 @@
 		CF83D27F58F0C7009D52E3CC /* LabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabView.swift; sourceTree = "<group>"; };
 		D43AE52C4D4E99DF9A9F8B9C /* AssessmentResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentResultView.swift; sourceTree = "<group>"; };
 		D44774C273B05FCCD3025E94 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		D482E4EF7B87B6F51D16E5B6 /* AppStoreScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshots.swift; sourceTree = "<group>"; };
 		D7FCEE8F5B14818EEBEFDB2D /* MyProfileModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyProfileModels.swift; sourceTree = "<group>"; };
 		DA1309E632794E30922988B9 /* UserModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserModels.swift; sourceTree = "<group>"; };
 		DCDA23E348ED992E145F234F /* ContextScanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextScanView.swift; sourceTree = "<group>"; };
@@ -259,6 +261,7 @@
 		615F0807AABF42DA1FABFC8B /* KaleidoUITests */ = {
 			isa = PBXGroup;
 			children = (
+				D482E4EF7B87B6F51D16E5B6 /* AppStoreScreenshots.swift */,
 				4A2126600FEF7014A89C09C9 /* KaleidoUITests.swift */,
 			);
 			path = KaleidoUITests;
@@ -532,6 +535,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CD630BDA5F4578E3C601993 /* AppStoreScreenshots.swift in Sources */,
 				3F44FDF235C18B3A609D72DE /* KaleidoUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
