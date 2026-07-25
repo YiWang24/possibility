@@ -13,9 +13,11 @@ struct CommunityView: View {
     @Environment(ToastCenter.self) private var toast
     @State private var tab = 0            // 0 为你推荐 · 1 悬赏贴
     @State private var showDraw = false
-    /// 为你推荐布局：false 卡片瀑布流 / true 放映模式（原型 watch-mode）
-    /// 调试便利：`simctl launch ... -kaleido-watch 1` 直接进入放映模式
-    @State private var watchMode = UserDefaults.standard.bool(forKey: "kaleido-watch")
+    /// 为你推荐布局：默认放映模式（原型 watch-mode）；卡片瀑布流可手动切换。
+    /// 未显式设过 kaleido-watch 时默认放映；调试可用 `simctl launch ... -kaleido-watch 0` 强制进卡片。
+    @State private var watchMode: Bool = UserDefaults.standard.object(forKey: "kaleido-watch") != nil
+        ? UserDefaults.standard.bool(forKey: "kaleido-watch")
+        : true
     @State private var searchText = ""
     @State private var activeBounty: BountySelection?
     /// community Edge Function 返回的真实悬赏（成功后优先展示）
