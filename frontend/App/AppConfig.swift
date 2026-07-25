@@ -56,8 +56,8 @@ enum AppConfig {
     // MARK: - 文案常量
 
     enum Copy {
-        static let appName = "万花筒"
-        static let appNameEN = "KALEIDO"
+        static let appName = "Possibility"
+        static let appNameEN = "POSSIBILITY"
         static let simDisclaimer = "推演不是预言，是一面镜子"
     }
 }

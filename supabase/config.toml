@@ -1,4 +1,4 @@
-# 万花筒 KALEIDO · Supabase 本地/项目配置
+# Possibility · Supabase 本地/项目配置
 project_id = "adx"
 
 [api]
@@ -61,4 +61,3 @@ verify_jwt = true
 
 [functions.persona]
 verify_jwt = true
-

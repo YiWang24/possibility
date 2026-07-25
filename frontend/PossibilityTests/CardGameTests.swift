@@ -1,5 +1,5 @@
 import XCTest
-@testable import Kaleido
+@testable import Possibility
 
 @MainActor
 final class CardGameTests: XCTestCase {

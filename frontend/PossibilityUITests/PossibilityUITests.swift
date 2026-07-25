@@ -1,12 +1,12 @@
 import XCTest
 
-// MARK: - KALEIDO 全流程 UI 测试
+// MARK: - Possibility 全流程 UI 测试
 //
 // 覆盖：首页（录音 / 发问 / 画像维度）· 语音日记详情 · 探索对话（验证反馈 / 下一步 / 总结）·
 // 人生实验室（预设 / 选择卡 / 推演结果）· 社区（tab / 悬赏 / 万花筒抽取）· 旅人主页（tab / 付费）。
 // 每个断点截图到 /tmp/kaleido_snaps 供视觉检查。测试按方法名字典序执行。
 
-final class KaleidoUITests: XCTestCase {
+final class PossibilityUITests: XCTestCase {
 
     var app: XCUIApplication!
 

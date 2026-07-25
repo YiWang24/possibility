@@ -1,4 +1,4 @@
-# Kaleido · 万花筒 KALEIDO iOS 前端
+# Possibility iOS 前端
 
 SwiftUI（iOS 17+，`@Observable`）实现的万花筒前端。源码在 Linux 侧产出，**Xcode 组装 / 构建 / 真机在 macOS 完成**（本仓库不含 `.xcodeproj` / `Package.swift`，由 Mac 侧生成）。
 
@@ -6,7 +6,7 @@ SwiftUI（iOS 17+，`@Observable`）实现的万花筒前端。源码在 Linux �
 
 ```
 frontend/
-├─ App/            入口 KaleidoApp · 配置 AppConfig · 导航 Navigation
+├─ App/            入口 PossibilityApp · 配置 AppConfig · 导航 Navigation
 ├─ Core/
 │  ├─ DesignSystem/  Theme · 组件 · 四个签名动画（Orb/Kaleidoscope/Dial/Waveform）
 │  ├─ Models/        数据模型 · DemoData（断网兜底种子）

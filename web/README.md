@@ -1,4 +1,4 @@
-# 万花筒 KALEIDO · Web Mock(手机版 Web 页面)
+# Possibility · Web Mock（手机版 Web 页面）
 
 灵光赛道演示用的**纯静态、纯 mock** 手机版 Web 应用,由高保真原型 `万花筒-认识自己-原型.html` 改造而来,**完美复刻手机端效果**:
 

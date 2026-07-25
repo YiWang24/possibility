@@ -14,8 +14,8 @@ struct CommunityView: View {
     @State private var tab = 0            // 0 为你推荐 · 1 悬赏贴
     @State private var showDraw = false
     /// 为你推荐默认使用放映模式；用户点击「卡片」后持久化选择。
-    /// 调试便利：`simctl launch ... -kaleido-watch 0/1` 可覆盖启动模式。
-    @AppStorage("kaleido-watch") private var watchMode = true
+    /// 调试便利：`simctl launch ... -possibility-watch 0/1` 可覆盖启动模式。
+    @AppStorage("possibility-watch") private var watchMode = true
     @State private var searchText = ""
     @State private var activeBounty: BountySelection?
     /// community Edge Function 返回的真实悬赏（成功后优先展示）

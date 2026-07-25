@@ -1,4 +1,4 @@
-name: Kaleido
+name: Possibility
 options:
   bundleIdPrefix: com.adventurex
   deploymentTarget:
@@ -14,7 +14,7 @@ packages:
     url: https://github.com/supabase/supabase-swift
     from: 2.0.0
 targets:
-  Kaleido:
+  Possibility:
     type: application
     platform: iOS
     sources:
@@ -40,43 +40,43 @@ targets:
           NSAllowsLocalNetworking: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.kaleido
+        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.possibility
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-  KaleidoUITests:
+  PossibilityUITests:
     type: bundle.ui-testing
     platform: iOS
     sources:
-      - path: KaleidoUITests
+      - path: PossibilityUITests
     dependencies:
-      - target: Kaleido
+      - target: Possibility
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.kaleido.uitests
-        TEST_TARGET_NAME: Kaleido
+        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.possibility.uitests
+        TEST_TARGET_NAME: Possibility
         GENERATE_INFOPLIST_FILE: YES
-  KaleidoTests:
+  PossibilityTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - path: KaleidoTests
+      - path: PossibilityTests
     dependencies:
-      - target: Kaleido
+      - target: Possibility
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.possibility.tests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
-  Kaleido:
+  Possibility:
     build:
       targets:
-        Kaleido: all
-        KaleidoUITests: [test]
+        Possibility: all
+        PossibilityUITests: [test]
     run:
       config: Debug
     test:
       config: Debug
       targets:
-        - KaleidoTests
-        - KaleidoUITests
+        - PossibilityTests
+        - PossibilityUITests

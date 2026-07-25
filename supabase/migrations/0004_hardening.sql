@@ -1,4 +1,4 @@
--- 万花筒 KALEIDO · 权限与数据约束加固
+-- Possibility · 权限与数据约束加固
 -- Supabase 新项目默认不再自动向 Data API roles 暴露新表，因此显式授权。
 
 grant usage on schema public to anon, authenticated, service_role;

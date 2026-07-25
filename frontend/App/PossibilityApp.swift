@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct KaleidoApp: App {
+struct PossibilityApp: App {
     @State private var supabase = SupabaseService()
 
     var body: some Scene {

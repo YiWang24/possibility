@@ -1,4 +1,4 @@
--- 0001_schema.sql — 万花筒 KALEIDO 数据模型（对应技术设计文档 §4.1/§4.2）
+-- 0001_schema.sql — Possibility 数据模型（对应技术设计文档 §4.1/§4.2）
 create extension if not exists pgcrypto;
 
 -- ==================== 内容侧（公开只读） ====================

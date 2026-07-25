@@ -1,4 +1,4 @@
-// KaleidoApp · 构建配置模板
+// Possibility · 构建配置模板
 //
 // 用法（Mac / Xcode 侧）：
 //   1. 复制本文件为同目录下的 `Config.xcconfig`（真实文件已被 .gitignore 忽略，不会提交）

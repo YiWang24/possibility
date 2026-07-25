@@ -31,8 +31,8 @@ final class AppRouter {
     var pendingLabQuestion: String?
 
     init() {
-        // 调试便利：`simctl launch ... -kaleido-tab lab|community|me` 直达指定 tab
-        switch UserDefaults.standard.string(forKey: "kaleido-tab") {
+        // 调试便利：`simctl launch ... -possibility-tab lab|community|me` 直达指定 tab
+        switch UserDefaults.standard.string(forKey: "possibility-tab") {
         case "lab": tab = .lab
         case "community": tab = .community
         case "me": tab = .me

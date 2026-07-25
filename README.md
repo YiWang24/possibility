@@ -1,6 +1,6 @@
 <div align="center">
 
-# 万花筒 KALEIDO
+# Possibility
 
 **AI 决策陪伴 · 青年人生 OS**
 
@@ -182,7 +182,7 @@ npm test
 
 ```bash
 # 前端已配置线上 Supabase 回落，拉取即可直连云端
-open frontend/Kaleido.xcodeproj
+open frontend/Possibility.xcodeproj
 # Xcode → 选择 iOS 17+ 模拟器或真机 → Build & Run
 ```
 
@@ -220,7 +220,7 @@ adx/
 │   │   ├── Diary/               # 语音日记
 │   │   └── Profile/             # 旅人主页 · 付费墙
 │   ├── Assets.xcassets/         # 社区头像资源
-│   └── Kaleido.xcodeproj/       # Xcode 工程
+│   └── Possibility.xcodeproj/   # Xcode 工程
 │
 ├── supabase/                    # 后端 (Supabase)
 │   ├── migrations/              # 10 个 SQL migration
@@ -421,6 +421,6 @@ npx supabase functions deploy list-diary
 
 <div align="center">
 
-**万花筒 KALEIDO** — 不替你做决定，帮你把"要不要做"这个前置问题想清楚。
+**Possibility** — 不替你做决定，帮你把"要不要做"这个前置问题想清楚。
 
 </div>

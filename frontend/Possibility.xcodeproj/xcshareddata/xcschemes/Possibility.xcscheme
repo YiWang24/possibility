@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
-               BuildableName = "Kaleido.app"
-               BlueprintName = "Kaleido"
-               ReferencedContainer = "container:Kaleido.xcodeproj">
+               BuildableName = "Possibility.app"
+               BlueprintName = "Possibility"
+               ReferencedContainer = "container:Possibility.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -30,9 +30,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A90A9BA511D1F3CF9964C592"
-               BuildableName = "KaleidoUITests.xctest"
-               BlueprintName = "KaleidoUITests"
-               ReferencedContainer = "container:Kaleido.xcodeproj">
+               BuildableName = "PossibilityUITests.xctest"
+               BlueprintName = "PossibilityUITests"
+               ReferencedContainer = "container:Possibility.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -47,9 +47,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
-            BuildableName = "Kaleido.app"
-            BlueprintName = "Kaleido"
-            ReferencedContainer = "container:Kaleido.xcodeproj">
+            BuildableName = "Possibility.app"
+            BlueprintName = "Possibility"
+            ReferencedContainer = "container:Possibility.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <Testables>
@@ -59,9 +59,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "66C585762443FA479E949C01"
-               BuildableName = "KaleidoTests.xctest"
-               BlueprintName = "KaleidoTests"
-               ReferencedContainer = "container:Kaleido.xcodeproj">
+               BuildableName = "PossibilityTests.xctest"
+               BlueprintName = "PossibilityTests"
+               ReferencedContainer = "container:Possibility.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -70,9 +70,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A90A9BA511D1F3CF9964C592"
-               BuildableName = "KaleidoUITests.xctest"
-               BlueprintName = "KaleidoUITests"
-               ReferencedContainer = "container:Kaleido.xcodeproj">
+               BuildableName = "PossibilityUITests.xctest"
+               BlueprintName = "PossibilityUITests"
+               ReferencedContainer = "container:Possibility.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -94,9 +94,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
-            BuildableName = "Kaleido.app"
-            BlueprintName = "Kaleido"
-            ReferencedContainer = "container:Kaleido.xcodeproj">
+            BuildableName = "Possibility.app"
+            BlueprintName = "Possibility"
+            ReferencedContainer = "container:Possibility.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
@@ -113,9 +113,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
-            BuildableName = "Kaleido.app"
-            BlueprintName = "Kaleido"
-            ReferencedContainer = "container:Kaleido.xcodeproj">
+            BuildableName = "Possibility.app"
+            BlueprintName = "Possibility"
+            ReferencedContainer = "container:Possibility.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
