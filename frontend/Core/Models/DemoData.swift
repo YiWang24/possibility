@@ -123,11 +123,11 @@ enum DemoData {
     }
 
     static let bounties: [Bounty] = [
-        Bounty(id: 1, question: "有没有人从设计转数据分析？想听第一年最难的是什么", reward: "悬赏 3 个真实故事", responses: "12 人回应",
+        Bounty(id: 1, question: "有没有人从设计转数据分析？想听第一年最难的是什么", reward: "悬赏 3 个真实故事", responses: "2 人回应",
                tags: ["职业转型", "数据分析", "设计背景"]),
-        Bounty(id: 2, question: "26 岁要不要辞职考研？家里催我先稳定下来", reward: "悬赏 5 个亲历者", responses: "31 人回应",
+        Bounty(id: 2, question: "26 岁要不要辞职考研？家里催我先稳定下来", reward: "悬赏 5 个亲历者", responses: "2 人回应",
                tags: ["升学选择", "辞职考研", "家庭沟通"]),
-        Bounty(id: 3, question: "想去小城市生活，又怕后悔，有回不来的人吗？", reward: "悬赏 3 个真实故事", responses: "8 人回应",
+        Bounty(id: 3, question: "想去小城市生活，又怕后悔，有回不来的人吗？", reward: "悬赏 3 个真实故事", responses: "2 人回应",
                tags: ["城市迁移", "生活方式", "小城创业"]),
     ]
 

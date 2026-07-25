@@ -39,7 +39,9 @@ struct BountyDetailView: View {
     }
     private var displayQuestion: String { remote?.bounty.question ?? bounty.question }
     private var responseCountText: String {
-        remote?.bounty.responses ?? bounty.responses
+        if usesDemoData { return "\(detail.replies.count) 人回应" }
+        if let remote { return "\(remote.responses.count) 人回应" }
+        return didFinishRemoteLoad ? "回应加载失败" : "回应加载中"
     }
     private var statusText: String {
         if let status = remote?.bounty.status ?? bounty.status {
@@ -194,11 +196,7 @@ struct BountyDetailView: View {
             }
             if let remote {
                 if remote.responses.isEmpty {
-                    Text("还没有旅人回应，成为第一个分享经历的人吧。")
-                        .font(.system(size: 12)).foregroundStyle(Theme.faint)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(13)
-                        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    emptyReplies
                 } else {
                     ForEach(Array(remote.responses.enumerated()), id: \.element.id) { i, reply in
                         replyRow(name: anonymousName(reply.userId),
@@ -208,9 +206,13 @@ struct BountyDetailView: View {
                     }
                 }
             } else if usesDemoData {
-                ForEach(Array(detail.replies.enumerated()), id: \.offset) { i, reply in
-                    replyRow(name: reply.name, role: reply.role, text: reply.text,
-                             hue: (bounty.id + i + 2) % 5)
+                if detail.replies.isEmpty {
+                    emptyReplies
+                } else {
+                    ForEach(Array(detail.replies.enumerated()), id: \.offset) { i, reply in
+                        replyRow(name: reply.name, role: reply.role, text: reply.text,
+                                 hue: (bounty.id + i + 2) % 5)
+                    }
                 }
             } else {
                 HStack(spacing: 8) {
@@ -225,6 +227,14 @@ struct BountyDetailView: View {
                 .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
+    }
+
+    private var emptyReplies: some View {
+        Text("还没有旅人回应，成为第一个分享经历的人吧。")
+            .font(.system(size: 12)).foregroundStyle(Theme.faint)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(13)
+            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 
     private func replyRow(name: String, role: String, text: String, hue: Int) -> some View {
