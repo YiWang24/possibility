@@ -316,9 +316,9 @@ struct BountyCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 0) {
-                // 顶部标签（原型 .bounty-tags 蓝色 pill）
+                // 顶部标签（原型 .bounty-tags 蓝色 pill；gap:5px 横竖同值，故行距也取 5）
                 if let tags = bounty.tags, !tags.isEmpty {
-                    FlowLayout(spacing: 5) {
+                    FlowLayout(spacing: 5, lineSpacing: 5) {
                         ForEach(tags.prefix(4), id: \.self) { BountyTagPill(text: $0) }
                     }
                 }
