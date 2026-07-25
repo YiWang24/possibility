@@ -42,7 +42,7 @@ struct CommunityView: View {
             VStack(alignment: .leading, spacing: 0) {
                 PageHeader(eyebrow: "KALEIDOSCOPE", title: "万花筒社区")
                     .overlay(alignment: .bottomTrailing) {
-                        Text("人生如逆旅，我亦是行人。")
+                        Text("未来不是被我们预见的，而是被我们亲手促成的。")
                             .font(.system(size: 11.5, design: .serif))
                             .foregroundStyle(Theme.sub)
                             .tracking(0.6)
