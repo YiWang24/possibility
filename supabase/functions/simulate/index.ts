@@ -2,11 +2,7 @@ import { structuredOutput } from "../_shared/llm.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
-import {
-  type InsertedTraveler,
-  insertGeneratedTravelers,
-  insertSimulation,
-} from "../_shared/db.ts";
+import { insertGeneratedTravelers, insertSimulation } from "../_shared/db.ts";
 import { serviceClient } from "../_shared/service.ts";
 import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
 import { simulationPrompt, travelerGenPrompt } from "../_shared/prompts.ts";
@@ -18,6 +14,22 @@ import {
 } from "../_shared/schemas.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { validateSimulateInputV2 } from "../_shared/validate.ts";
+
+// Supabase Edge Functions 的后台任务 API：响应返回后仍保持 isolate 存活，
+// 直到传入的 promise 结束（受 150s 墙钟约束）。类型未随 Deno 内置，故此处声明。
+declare const EdgeRuntime:
+  | { waitUntil(promise: Promise<unknown>): void }
+  | undefined;
+
+// 非关键任务放到响应之后跑：优先用 EdgeRuntime.waitUntil 保活；
+// 运行时不支持时退化为 fire-and-forget（尽力而为，不阻塞、不抛错）。
+function runInBackground(task: Promise<unknown>): void {
+  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
+    EdgeRuntime.waitUntil(task);
+  } else {
+    void task;
+  }
+}
 
 type TravelerCandidate = {
   id: number;
@@ -59,57 +71,17 @@ Deno.serve(async (req) => {
       JSON.stringify(candidates)
     }`;
 
-    // 社区人不够多时，实时按「问题+选择」生成 2～3 位贴合的旅人。生成与情景推演
-    // 都只依赖 question/choice，互不依赖，故并行发起：墙钟 ≈ max(两者) 而非之和，
-    // 不显著拖慢推演。生成失败静默兜底（.catch → null），绝不拖垮主推演结果。
-    const shouldGenerate = candidates.length < TRAVELER_CEILING;
-    let genPrompt =
-      `问题：${input.question}\n选择：${input.choice}\n推演时间跨度：${input.time_horizon}`;
-    if (input.carry_cards && input.carry_cards.length > 0) {
-      genPrompt += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
-    }
-
-    const [result, generated] = await Promise.all([
-      structuredOutput<SimulationOutput>({
-        model: runtimeConfig.structuredModel,
-        maxTokens: 3_000,
-        system: simulationPrompt,
-        prompt,
-        schema: simulationSchema,
-      }),
-      shouldGenerate
-        ? structuredOutput<GeneratedTravelersOutput>({
-          model: runtimeConfig.structuredModel,
-          maxTokens: 4_000,
-          system: travelerGenPrompt,
-          prompt: genPrompt,
-          schema: generatedTravelersSchema,
-        }).catch((error) => {
-          console.error(
-            "traveler generation failed:",
-            (error as Error).message,
-          );
-          return null;
-        })
-        : Promise.resolve(null),
-    ]);
-
-    // 生成成功 → 用 service-role 客户端写入共享表（travelers 无面向用户 insert 策略），
-    // 拿回完整对象直接作为「类似经验的人」返回前端。写库失败同样静默兜底。
-    let recommendedTravelers: InsertedTraveler[] = [];
-    if (generated && generated.travelers.length > 0) {
-      try {
-        recommendedTravelers = await insertGeneratedTravelers(
-          serviceClient(),
-          generated.travelers,
-        );
-      } catch (error) {
-        console.error(
-          "insert generated travelers failed:",
-          (error as Error).message,
-        );
-      }
-    }
+    // 关键路径只等情景推演本身。原先旅人生成与推演并行 await（Promise.all），
+    // 墙钟 = max(两者)，次要的社区扩容生成会拖慢用户拿到结果的时间；实测整体
+    // 40~48s。现改为：推演用低延迟的 chat(flash) 模型单独 await，旅人生成移到
+    // 响应之后的后台任务（见下），不再 gate 结果。
+    const result = await structuredOutput<SimulationOutput>({
+      model: runtimeConfig.chatModel,
+      maxTokens: 3_000,
+      system: simulationPrompt,
+      prompt,
+      schema: simulationSchema,
+    });
 
     // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
     result.recommended_traveler_ids = filterRecommendedTravelerIds(
@@ -118,11 +90,46 @@ Deno.serve(async (req) => {
     );
 
     await insertSimulation(db, user.id, input, result);
-    // recommended_travelers：本次实时生成并入库的完整旅人对象（前端优先展示）；
-    // recommended_traveler_ids 保留做向后兼容与生成失败时的池内兜底。
+
+    // 社区人不够多时，实时按「问题+选择」生成 2～3 位贴合的旅人扩充社区池。
+    // 这属于次要内容，且不影响本次推演结果（前端在 recommended_travelers 为空时
+    // 会用 recommended_traveler_ids 从已有池回退展示），故整段移到响应之后的
+    // 后台任务：生成 + 写库全部失败静默兜底，绝不拖慢或拖垮主推演。
+    if (candidates.length < TRAVELER_CEILING) {
+      let genPrompt =
+        `问题：${input.question}\n选择：${input.choice}\n推演时间跨度：${input.time_horizon}`;
+      if (input.carry_cards && input.carry_cards.length > 0) {
+        genPrompt += `\n底线卡（最不能失去的）：${
+          input.carry_cards.join("、")
+        }`;
+      }
+      runInBackground(
+        structuredOutput<GeneratedTravelersOutput>({
+          model: runtimeConfig.structuredModel,
+          maxTokens: 4_000,
+          system: travelerGenPrompt,
+          prompt: genPrompt,
+          schema: generatedTravelersSchema,
+        })
+          .then((generated) =>
+            generated && generated.travelers.length > 0
+              ? insertGeneratedTravelers(serviceClient(), generated.travelers)
+              : null
+          )
+          .catch((error) => {
+            console.error(
+              "background traveler generation/insert failed:",
+              (error as Error).message,
+            );
+          }),
+      );
+    }
+
+    // recommended_travelers 现固定为空（旅人生成已后台化）：前端据此回退到用
+    // recommended_traveler_ids 从池内解析。保留该字段以兼容旧前端解码。
     return jsonResponse({
       ...result,
-      recommended_travelers: recommendedTravelers,
+      recommended_travelers: [],
     });
   } catch (error) {
     return errorResponse(error);
