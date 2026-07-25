@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - 卡牌游戏数据（迁移自原型 LIFE_BASE_CARDS / LIFE_STAGES / RELATIONSHIP_CARDS / VALUE_CARD_GAMES）
 
-enum CardGameKind: String, CaseIterable, Identifiable, Sendable {
+enum CardGameKind: String, CaseIterable, Identifiable, Hashable, Sendable {
     case life, marriage, family, social
     var id: String { rawValue }
 

@@ -7,6 +7,8 @@ import SwiftUI
 struct CardGameView: View {
     let kind: CardGameKind
     let home: HomeModel
+    /// 嵌入卡牌大厅导航时返回大厅；独立呈现时关闭当前 fullScreenCover。
+    var onExit: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
@@ -20,9 +22,10 @@ struct CardGameView: View {
     @State private var saveError: String?
     @State private var didSyncResult = false
 
-    init(kind: CardGameKind, home: HomeModel) {
+    init(kind: CardGameKind, home: HomeModel, onExit: (() -> Void)? = nil) {
         self.kind = kind
         self.home = home
+        self.onExit = onExit
         _engine = State(initialValue: CardGameEngine(kind: kind))
     }
 
@@ -106,8 +109,16 @@ struct CardGameView: View {
         case .draw:
             engine.saveProgress()
             toast.show("\(cfg.title)进度已为你保留")
+            close()
+        default: close()
+        }
+    }
+
+    private func close() {
+        if let onExit {
+            onExit()
+        } else {
             dismiss()
-        default: dismiss()
         }
     }
 
@@ -573,7 +584,7 @@ struct CardGameView: View {
                         .foregroundStyle(Color(hex: 0xFFB096))
                     Text(saveError)
                         .font(.system(size: 10.5)).lineSpacing(3).foregroundStyle(Theme.sub)
-                    Button("暂时关闭，稍后从“待同步”继续") { dismiss() }
+                    Button("暂时关闭，稍后从“待同步”继续") { close() }
                         .font(.system(size: 11.5, weight: .semibold))
                         .foregroundStyle(Theme.ink)
                         .accessibilityIdentifier("card-game-close-local-result")
@@ -611,7 +622,7 @@ struct CardGameView: View {
                 } else {
                     toast.show("\(cfg.title.prefix(2))中最关心的三点已写入画像：\(tags.joined(separator: " · "))")
                 }
-                dismiss()
+                close()
             } catch {
                 isSaving = false
                 saveError = "请检查网络后重试。你的三张底牌、取舍记录和画像关键词都已安全留在本机。"

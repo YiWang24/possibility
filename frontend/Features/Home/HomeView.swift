@@ -15,9 +15,6 @@ struct HomeView: View {
     @State private var showStudio = false
     @State private var showCardHub = false
     @State private var launchGame: CardGameKind?
-    /// 从卡牌大厅选择游戏时，先让大厅完整退场，再呈现游戏。
-    /// iOS 18 上嵌套 fullScreenCover 会出现详情可见但按钮无法接收触摸。
-    @State private var pendingHubGame: CardGameKind?
     /// 从画像半屏浮层启动卡牌时，等待 sheet 完成退场后再呈现全屏游戏。
     /// 同一轮更新里同时 dismiss sheet / present cover 会被 SwiftUI 丢弃。
     @State private var pendingCardGame: CardGameKind?
@@ -79,15 +76,8 @@ struct HomeView: View {
             AssessmentFlowView(kind: kind, onSaveToProfile: saveAssessment)
                 .environment(toast)
         }
-        .fullScreenCover(isPresented: $showCardHub, onDismiss: {
-            guard let game = pendingHubGame else { return }
-            pendingHubGame = nil
-            launchGame = game
-        }) {
-            CardGameHubView(home: model, onLaunchGame: { game in
-                pendingHubGame = game
-                showCardHub = false
-            })
+        .fullScreenCover(isPresented: $showCardHub) {
+            CardGameHubView(home: model)
                 .environment(toast)
                 .environment(supabase)
         }

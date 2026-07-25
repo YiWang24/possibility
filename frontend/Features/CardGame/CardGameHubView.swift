@@ -5,52 +5,46 @@ import SwiftUI
 struct CardGameHubView: View {
     /// 结果保存需要写入首页画像
     let home: HomeModel
-    /// 由上层统一切换全屏页面，避免在卡牌大厅的 fullScreenCover 中再次嵌套 fullScreenCover。
-    var onLaunchGame: ((CardGameKind) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
     @Environment(SupabaseService.self) private var supabase
-    @State private var activeGame: CardGameKind?
+    /// 大厅与详情共用一个 NavigationStack，避免嵌套 fullScreenCover 的触摸失效和两次升降动画。
+    @State private var gamePath: [CardGameKind] = []
     /// 已完成的卡牌局（本地标记 ∪ 云端回读），驱动“已完成”角标
     @State private var completedKinds: Set<CardGameKind> = []
     @State private var progressKinds: Set<CardGameKind> = []
     @State private var didSyncRemote = false
 
-    init(home: HomeModel, onLaunchGame: ((CardGameKind) -> Void)? = nil) {
-        self.home = home
-        self.onLaunchGame = onLaunchGame
-    }
-
     var body: some View {
-        VStack(spacing: 0) {
-            topBar
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    hero
-                    lifePrimary
-                    Text("关系专题 · 各约 3 分钟")
-                        .font(.system(size: 11)).tracking(1).foregroundStyle(Theme.faint)
-                        .padding(.top, 4)
-                    gameOption(.marriage, sub: "婚姻中，你最后会守住什么？")
-                    gameOption(.family, sub: "家庭里，你最想守住的三点")
-                    gameOption(.social, sub: "人际交往中，你的真实优先级")
+        NavigationStack(path: $gamePath) {
+            VStack(spacing: 0) {
+                topBar
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        hero
+                        lifePrimary
+                        Text("关系专题 · 各约 3 分钟")
+                            .font(.system(size: 11)).tracking(1).foregroundStyle(Theme.faint)
+                            .padding(.top, 4)
+                        gameOption(.marriage, sub: "婚姻中，你最后会守住什么？")
+                        gameOption(.family, sub: "家庭里，你最想守住的三点")
+                        gameOption(.social, sub: "人际交往中，你的真实优先级")
+                    }
+                    .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 34)
                 }
-                .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 34)
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
+            .background(Theme.paper.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .navigationDestination(for: CardGameKind.self) { kind in
+                CardGameView(kind: kind, home: home, onExit: closeGame)
+                    .environment(toast)
+                    .environment(supabase)
+                    .navigationBarBackButtonHidden(true)
+            }
         }
-        .background(Theme.paper.ignoresSafeArea())
         .task { await syncRemoteGames() }
-        .fullScreenCover(item: $activeGame, onDismiss: {
-            // 结算后刷新本地完成标记
-            completedKinds = CardGameLocalRecord.doneKinds
-            progressKinds = CardGameLocalRecord.progressKinds
-        }) { kind in
-            CardGameView(kind: kind, home: home)
-                .environment(toast)
-                .environment(supabase)
-        }
     }
 
     // MARK: 云端回读（真实优先 + 静默兜底）
@@ -239,12 +233,14 @@ struct CardGameHubView: View {
     }
 
     private func launch(_ kind: CardGameKind) {
-        if let onLaunchGame {
-            onLaunchGame(kind)
-        } else {
-            // Preview 或独立复用时仍可在本视图内打开。
-            activeGame = kind
-        }
+        gamePath.append(kind)
+    }
+
+    private func closeGame() {
+        guard !gamePath.isEmpty else { return }
+        gamePath.removeLast()
+        completedKinds = CardGameLocalRecord.doneKinds
+        progressKinds = CardGameLocalRecord.progressKinds
     }
 }
 
