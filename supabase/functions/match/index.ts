@@ -47,9 +47,10 @@ Deno.serve(async (req) => {
 
     const result = await structuredOutput<MatchOutput>({
       model: runtimeConfig.structuredModel,
-      // 3 条精炼匹配理由用不到 1k token；上限过大时网关的约束解码
-      // 曾出现生成到超时（实测 150s 被平台击杀），压小上限规避。
-      maxTokens: 1_024,
+      // 关闭 thinking 后预算全部用于 JSON：3 条含中文理由/不适用说明的匹配
+      // 约需 1.2k token，给 1536 留足余量（此前 1024 是被 thinking 吃光预算的
+      // 错误应对，见 anthropic.ts）。
+      maxTokens: 1_536,
       system: matchPrompt,
       prompt: `用户当前状态：\n${
         JSON.stringify(userState)
