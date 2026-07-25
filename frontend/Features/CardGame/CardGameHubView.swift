@@ -97,10 +97,7 @@ struct CardGameHubView: View {
             }
             .buttonStyle(PressScaleStyle())
             .accessibilityLabel("返回")
-            VStack(alignment: .leading, spacing: 2) {
-                Text("卡牌探索").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
-                Text("四套卡牌 · 在取舍中看见优先级").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-            }
+            Text("卡牌探索").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
             Spacer()
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)
@@ -109,10 +106,7 @@ struct CardGameHubView: View {
 
     private var hero: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("CARD ATELIER · 私密探索")
-                .font(.system(size: 9.5, weight: .semibold)).tracking(2.4)
-                .foregroundStyle(Color(hex: 0x9DBCFF))
-            Text("答案不靠想出来，\n靠一次次取舍显形。")
+            Text("有关于你的注解，或许可以在这里通过取舍现形。")
                 .font(.system(size: 21, weight: .bold)).lineSpacing(6).foregroundStyle(Theme.ink)
             Text("每套卡牌都会让你在有限的底牌里做选择。留下的三张，会成为画像的一部分。")
                 .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)

@@ -375,7 +375,7 @@ final class CardGameFanCheck: XCTestCase {
 
         // 首页 → 卡牌大厅 → 人生卡牌 intro
         tapContaining("人生卡牌：你最后会留下什么？")
-        XCTAssertNotNil(waitFind("答案不靠想出来，\n靠一次次取舍显形。"), "卡牌大厅未出现")
+        XCTAssertNotNil(waitFind("有关于你的注解，或许可以在这里通过取舍现形。"), "卡牌大厅未出现")
         tapContaining("从 18 张底牌带走 9 张")
         XCTAssertNotNil(waitFind("开始这一局"), "intro 未出现")
         app.buttons["开始这一局"].tap()
