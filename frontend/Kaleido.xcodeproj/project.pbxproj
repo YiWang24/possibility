@@ -420,9 +420,11 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					5FC792D4DA3FF0AE9D83A9BB = {
+						DevelopmentTeam = JRHT3J6CWU;
 						ProvisioningStyle = Automatic;
 					};
 					A90A9BA511D1F3CF9964C592 = {
+						DevelopmentTeam = JRHT3J6CWU;
 						ProvisioningStyle = Automatic;
 						TestTargetID = 5FC792D4DA3FF0AE9D83A9BB;
 					};
@@ -558,7 +560,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
+				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.kaleido;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -573,7 +575,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.kaleido.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Kaleido;
@@ -591,7 +593,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
+				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.kaleido;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -633,6 +635,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = JRHT3J6CWU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -663,7 +666,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.kaleido.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Kaleido;
@@ -706,6 +709,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = JRHT3J6CWU;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
