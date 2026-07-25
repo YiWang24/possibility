@@ -62,5 +62,3 @@ verify_jwt = true
 [functions.persona]
 verify_jwt = true
 
-[functions.llm-debug]
-verify_jwt = true
