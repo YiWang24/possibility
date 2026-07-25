@@ -53,9 +53,17 @@ final class SupabaseService {
         }
     }
 
-    /// 当前 JWT（ChatStreamClient 直连 Edge Function 用）
+    /// 当前 JWT（ChatStreamClient / callFunction 用）。
+    /// 会话缺失时（冷启动 bootstrap 尚未完成、失败或会话过期）现场补一次匿名登录，
+    /// 不让「暂时没有会话」直接把 chat / analyze-diary 等打成 sessionMissing 报错。
     func jwt() async throws -> String {
-        try await client.auth.session.accessToken
+        if let session = try? await client.auth.session {
+            return session.accessToken
+        }
+        let session = try await client.auth.signInAnonymously()
+        userId = session.user.id
+        isReady = true
+        return session.accessToken
     }
 
     // MARK: - 公开内容
