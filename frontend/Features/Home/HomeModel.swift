@@ -433,6 +433,10 @@ final class HomeModel {
     func loadDiaryOverview(using supabase: SupabaseService) async {
         guard let page = try? await supabase.listDiaryPage(limit: 50, offset: 0) else { return }
         let rows = page.entries
+        // 云端一条日记都没有（demo / 新账号）：保持 weekCells 为 nil，
+        // 让首页回退到硬编码兜底（mock 情绪图标 + demo 探索天数），
+        // 而非渲染一排空白圆圈。有任意真实记录才聚合真实周历。
+        guard !rows.isEmpty else { return }
 
         // 天 → 当天最新一条的情绪列表（list-diary 按时间倒序，首见即最新）
         var emotionsByDay: [String: [String]] = [:]
