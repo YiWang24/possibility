@@ -34,6 +34,7 @@ struct HomeView: View {
             .padding(.bottom, 40)
         }
         .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
         .screenBackground()
         .onAppear { model.loadPortrait(using: supabase) }
         .task { await model.loadDiaryOverview(using: supabase) }

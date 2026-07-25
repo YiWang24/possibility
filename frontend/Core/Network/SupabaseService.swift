@@ -121,7 +121,7 @@ final class SupabaseService {
     func loadBounties() async {
         do {
             let rows: [Bounty] = try await client.from("bounties")
-                .select().order("id").execute().value
+                .select().order("created_at", ascending: false).execute().value
             bounties = rows.isEmpty ? DemoData.bounties : rows
         } catch {
             lastError = error.localizedDescription
