@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - 社区放映模式（原型 watch-mode：无限平铺 · 拖拽惯性 · 就近吸附）
 //
-// 错位网格（DX=160, DY=184，奇数列下移 DY/2），确定性哈希生成旅人昵称/色相，
-// 点击气泡打开对应 demo 旅人的主页；搜索命中后重定位到最近匹配。
+// 错位网格（DX=160, DY=184，奇数列下移 DY/2），确定性映射到旅人数据，
+// 卡片与点击后的主页共用同一个 Traveler；搜索命中后重定位到最近匹配。
 
 struct WatchModeView: View {
     let travelers: [Traveler]
@@ -29,13 +29,8 @@ struct WatchModeView: View {
     private static let cols = 7
     private static let rows = 5
 
-    private static let nameHeads = ["云间", "南岸", "北辰", "晚晴", "松野", "青屿", "白露", "橙湾", "星河", "木槿", "晴川", "远帆", "林深", "小满", "月桥", "山止", "海盐", "春序", "微光", "野渡", "风眠", "竹影", "晨雾", "栖迟"]
-    private static let nameTails = ["拾光", "行舟", "折页", "听风", "慢跑", "看海", "造梦", "写信", "观星", "种树", "漫游", "读城", "寻路", "开花", "向晚", "未央", "煮茶", "登山", "停云", "问路", "放映", "织网", "点灯", "候鸟"]
-
     struct WatchUser {
         let key: String
-        let name: String
-        let hue: Int
         let base: Traveler
         let wx: Double
         let wy: Double
@@ -104,16 +99,14 @@ struct WatchModeView: View {
     private func user(q: Int, r: Int) -> WatchUser {
         let seed = Self.hash(q, r)
         let base = travelers[Int(seed) % max(travelers.count, 1)]
-        let name = Self.nameHeads[Int(seed) % Self.nameHeads.count]
-            + Self.nameTails[Int(seed >> 8) % Self.nameTails.count]
         let qOffset = Double(abs(q) % 2) * Self.dy / 2
-        return WatchUser(key: "\(q):\(r)", name: name, hue: Int(seed >> 12) % 5, base: base,
+        return WatchUser(key: "\(q):\(r)", base: base,
                          wx: Double(q) * Self.dx, wy: Double(r) * Self.dy + qOffset)
     }
 
     private func matches(_ user: WatchUser, query: String) -> Bool {
         guard !query.isEmpty else { return true }
-        let haystack = ([user.name, user.base.bio, user.base.quote] + user.base.tags)
+        let haystack = ([user.base.name, user.base.bio, user.base.quote] + user.base.tags)
             .joined(separator: " ").lowercased()
         return haystack.contains(query.lowercased())
     }
@@ -182,25 +175,26 @@ struct WatchModeView: View {
         }
 
         var body: some View {
-            let glow = Theme.hue(user.hue).accent
+            let traveler = user.base
+            let glow = Theme.hue(traveler.hue).accent
             VStack(spacing: 0) {
-                TravelerAvatar(initial: user.name.prefix(1).description, hue: user.hue, size: 43,
-                               imageName: MockAvatar.name(hashing: user.name))
+                TravelerAvatar(initial: traveler.initial, hue: traveler.hue, size: 43,
+                               imageName: MockAvatar.name(for: traveler.id))
                     .overlay(Circle().strokeBorder(.white.opacity(0.82), lineWidth: 1.5))
                     .compositingGroup()
                     .shadow(color: .black.opacity(0.4), radius: 5, y: 3)
-                Text(user.name)
+                Text(traveler.name)
                     .font(.system(size: 12.5, weight: .bold)).foregroundStyle(.white)
                     .lineLimit(1)
                     .shadow(color: .black.opacity(0.65), radius: 4, y: 2)
                     .padding(.top, 4)
-                Text(user.base.bio)
+                Text(traveler.bio)
                     .font(.system(size: 9)).foregroundStyle(Color(hex: 0xEEF3FF, alpha: 0.82))
                     .lineLimit(2).multilineTextAlignment(.center).lineSpacing(1.5)
                     .frame(width: 112)
                     .padding(.top, 3)
                 HStack(spacing: 4) {
-                    ForEach(user.base.tags.prefix(2), id: \.self) { tag in
+                    ForEach(traveler.tags.prefix(2), id: \.self) { tag in
                         Text(tag)
                             .font(.system(size: 7.5)).foregroundStyle(Color(hex: 0xE1E9FF))
                             .lineLimit(1)
