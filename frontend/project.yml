@@ -27,7 +27,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: 万花筒
+        CFBundleDisplayName: Possibility
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -42,7 +42,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
   KaleidoUITests:
     type: bundle.ui-testing
     platform: iOS
