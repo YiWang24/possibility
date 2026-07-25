@@ -133,6 +133,7 @@ struct MeView: View {
     private var personaPanel: some View {
         let _ = tick
         let items = store.visibleItems
+        let totalItemCount = store.allPersonaItems.count
         let lifeCards = items.first { $0.key == "life" }?.cards ?? []
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "设置展示", isLink: true) {
@@ -192,11 +193,11 @@ struct MeView: View {
                             Capsule().fill(Theme.raised)
                                 .overlay(alignment: .leading) {
                                     Capsule().fill(Theme.aurora)
-                                        .frame(width: geo.size.width * Double(items.count) / 7)
+                                        .frame(width: geo.size.width * CGFloat(items.count) / CGFloat(max(totalItemCount, 1)))
                                 }
                         }
                         .frame(height: 5)
-                        Text("\(items.count) 项公开").font(.system(size: 11)).foregroundStyle(Theme.sub)
+                        Text("\(items.count)/\(totalItemCount) 已公开").font(.system(size: 11)).foregroundStyle(Theme.sub)
                     }
 
                     VStack(spacing: 9) {

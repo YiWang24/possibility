@@ -255,7 +255,7 @@ struct PortraitCard: View {
                     }
             }
             .frame(height: 5)
-            Text("\(model.completionPct)%")
+            Text("\(model.completedPortraitDimensionCount)/\(model.portraitDimensionCount) · \(model.completionPct)%")
                 .font(.system(size: 11)).monospacedDigit().foregroundStyle(Theme.sub)
                 .contentTransition(.numericText())
         }

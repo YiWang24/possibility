@@ -331,8 +331,21 @@ final class HomeModel {
         return rows
     }
 
-    /// 完成度：已填维度数 / 6（人格底色 + 5 软维度）
-    var completionPct: Int { min(100, Int((Double(filledDims.count) / 6 * 100).rounded())) }
+    /// 完成度只统计首页实际展示的 6 个维度，忽略云端 dims 中的其他业务字段。
+    static func portraitCompletion(for dims: [String: String]) -> (completed: Int, total: Int, percent: Int) {
+        let keys = ["personality"] + DimensionKey.allCases.map(\.rawValue)
+        let completed = keys.reduce(into: 0) { count, key in
+            if let value = dims[key], !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                count += 1
+            }
+        }
+        let percent = Int((Double(completed) / Double(keys.count) * 100).rounded())
+        return (completed, keys.count, percent)
+    }
+
+    var completedPortraitDimensionCount: Int { Self.portraitCompletion(for: filledDims).completed }
+    var portraitDimensionCount: Int { Self.portraitCompletion(for: filledDims).total }
+    var completionPct: Int { Self.portraitCompletion(for: filledDims).percent }
 
     /// 人生底牌签名（人生卡牌完成后 3 张公开底牌；UserDefaults 持久化，卡牌游戏结算写入）
     private(set) var lifeSignatureCards: [LifeSignatureCard] = []

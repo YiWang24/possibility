@@ -141,3 +141,31 @@ final class CardGameTests: XCTestCase {
         XCTAssertFalse(CardGameLocalRecord.hasProgress(.social, store: store))
     }
 }
+
+@MainActor
+final class HomeModelTests: XCTestCase {
+    func testPortraitCompletionCountsOnlyDisplayedDimensions() {
+        let progress = HomeModel.portraitCompletion(for: [
+            "personality": "务实聚焦",
+            "skill": "结构化表达",
+            "like": "产品工作带来的成就感",
+            "life": "创造实感",
+            "marriage": "稳定陪伴",
+            "unknown_remote_field": "不应计入",
+        ])
+
+        XCTAssertEqual(progress.completed, 3)
+        XCTAssertEqual(progress.total, 6)
+        XCTAssertEqual(progress.percent, 50)
+    }
+
+    func testPortraitCompletionIgnoresBlankValues() {
+        let progress = HomeModel.portraitCompletion(for: [
+            "personality": "务实聚焦",
+            "skill": "   ",
+        ])
+
+        XCTAssertEqual(progress.completed, 1)
+        XCTAssertEqual(progress.percent, 17)
+    }
+}
