@@ -1,4 +1,4 @@
-import { structuredOutput } from "../_shared/anthropic.ts";
+import { structuredOutput } from "../_shared/llm.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";

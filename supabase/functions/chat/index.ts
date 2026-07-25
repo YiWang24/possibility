@@ -1,4 +1,4 @@
-import { anthropic, structuredOutput } from "../_shared/anthropic.ts";
+import { streamChatText, structuredOutput } from "../_shared/llm.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
@@ -78,24 +78,24 @@ Deno.serve(async (req) => {
       console.error("chat signal extraction failed:", error);
       return { signal: fallbackSignal, degraded: true };
     });
-    const messageStream = anthropic().messages.stream({
+    const abortController = new AbortController();
+    const result = streamChatText({
       model: runtimeConfig.chatModel,
-      max_tokens: 1_024,
       system: frontDoorPrompt(conversation.topic),
       messages,
+      maxTokens: 1_024,
+      abortSignal: abortController.signal,
     });
 
     let cancelled = false;
     const body = new ReadableStream<Uint8Array>({
       async start(controller) {
         let assistantText = "";
-        messageStream.on("text", (text) => {
-          assistantText += text;
-          if (!cancelled) controller.enqueue(sseEvent({ t: text }));
-        });
-
         try {
-          await messageStream.finalMessage();
+          for await (const delta of result.textStream) {
+            assistantText += delta;
+            if (!cancelled) controller.enqueue(sseEvent({ t: delta }));
+          }
           if (!assistantText.trim()) {
             throw new HttpError(
               502,
@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
       },
       cancel() {
         cancelled = true;
-        messageStream.abort();
+        abortController.abort();
       },
     });
     return sseResponse(body);
