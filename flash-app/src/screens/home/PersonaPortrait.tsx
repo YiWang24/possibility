@@ -40,7 +40,7 @@ export default function PersonaPortrait() {
 
       <div className="card portrait">
         <div className="digital-human-stage">
-          <PersonaCanvas />
+          <PersonaCanvas testId="persona-canvas-home" />
           <span className="digital-human-live">LIVE PROFILE FORM</span>
           <div className="digital-human-caption">
             <b>屿岸 · 动态数字形象</b>

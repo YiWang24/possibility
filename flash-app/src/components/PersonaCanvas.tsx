@@ -10,9 +10,15 @@ import { PERSONA_MODEL, drawPersona } from './personaDraw';
  * built in personaDraw.ts (fixed form / hue / lobes / seed + the three home
  * 人生底牌). Canvas dimensions are computed in JS (never literal attributes);
  * the component takes no props, animates via rAF, honors reduced-motion, and
- * cleans up on unmount.
+ * cleans up on unmount. `testId` is per-instance because the canvas renders on
+ * both the Home and Me tabs (both always mounted) — a shared id/testid would
+ * collide in the DOM.
  */
-export default function PersonaCanvas() {
+interface PersonaCanvasProps {
+  testId?: string;
+}
+
+export default function PersonaCanvas({ testId = 'persona-canvas' }: PersonaCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -46,13 +52,5 @@ export default function PersonaCanvas() {
     };
   }, []);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      id="dynamicPersonaCanvas"
-      role="img"
-      aria-label={`根据当前画像内容生成的抽象数字形象：${PERSONA_MODEL.shape}`}
-      data-testid="persona-canvas"
-    />
-  );
+  return <canvas ref={canvasRef} role="img" aria-label={`根据当前画像内容生成的抽象数字形象：${PERSONA_MODEL.shape}`} data-testid={testId} />;
 }

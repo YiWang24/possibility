@@ -43,7 +43,7 @@ export default function MyPersonaPanel({ profile, mbti, active, onEdit }: MyPers
 
       <div className="card portrait public-profile-portrait">
         <div className="digital-human-stage public-persona-stage">
-          <PersonaCanvas />
+          <PersonaCanvas testId="persona-canvas-me" />
           <span className="digital-human-live">SYNCED LIVE FORM</span>
           <div className="digital-human-caption">
             <b>{profile.name} · 动态画像</b>
