@@ -1,5 +1,4 @@
 import Anthropic from "npm:@anthropic-ai/sdk@0.113.0";
-import { jsonSchemaOutputFormat } from "npm:@anthropic-ai/sdk@0.113.0/helpers/json-schema";
 import { runtimeConfig } from "./config.ts";
 import { HttpError } from "./errors.ts";
 
@@ -17,6 +16,15 @@ export function anthropic(): Anthropic {
   return instance;
 }
 
+/**
+ * 结构化输出：经工具调用产出，而非网关不可靠的 output_config.format。
+ *
+ * 诊断实测（ModelBest 网关的 claude-sonnet-5）：原生结构化输出 output_config.format
+ * 对稍复杂的请求会退化——simulate/match 挂到 100s 超时，数据密集的 lab-choices 返回
+ * 全 placeholder/空串的壳。但网关的工具调用路径工作良好（它甚至会主动注入并调用
+ * AskUserQuestion）。因此把 schema 定义成单个工具并强制调用它，读取 tool_use.input
+ * 作为结构化结果——走网关可靠的工具路径。
+ */
 export async function structuredOutput<T>(
   options: {
     model: string;
@@ -26,45 +34,39 @@ export async function structuredOutput<T>(
     schema: { type: "object"; [key: string]: unknown };
   },
 ): Promise<T> {
+  const TOOL_NAME = "emit_result";
   let message;
   try {
-    // 超时须明显小于 Edge Function 150s 墙钟：SDK 在墙钟内先超时，
-    // 才能返回干净的 JSON 错误；否则 worker 被平台击杀（546 WORKER_RESOURCE_LIMIT）。
-    // 同理不重试：一次 100s 超时后已无重试余量。
-    message = await anthropic().messages.parse({
+    // 超时须明显小于 Edge Function 150s 墙钟，且不重试：SDK 在墙钟内先超时，
+    // 才能返回干净 JSON 错误，否则 worker 被平台击杀（546 WORKER_RESOURCE_LIMIT）。
+    message = await anthropic().messages.create({
       model: options.model,
       max_tokens: options.maxTokens,
-      // 网关的 claude-sonnet-5 默认开启 extended thinking，且 thinking token
-      // 计入 max_tokens。结构化 JSON 输出不需要思考链：thinking 会吃光预算导致
-      // 截断（match 实测 stop_reason=max_tokens 只返回 thinking 块），并显著拉长
-      // 生成时间（simulate 实测 100s 超时）。显式关闭，让预算全部用于 JSON。
+      // 结构化生成不需要思考链（网关的 thinking 会吃光 max_tokens 预算）。
       thinking: { type: "disabled" },
-      // 网关（ModelBest）会向请求注入 agentic 工具（实测 simulate 返回体里
-      // 出现 AskUserQuestion 的 tool_use 块，stop_reason=tool_use，未产出 JSON）。
-      // 结构化 JSON 生成不该调用任何工具：显式禁用工具调用，让模型直接产出结构化输出。
-      // 这也解释 match 的 100s 超时——注入工具 + 结构化输出让网关进入慢路径/循环。
-      tool_choice: { type: "none" },
       system: options.system,
       messages: [{ role: "user", content: options.prompt }],
-      output_config: {
-        format: jsonSchemaOutputFormat(options.schema),
-      },
+      tools: [{
+        name: TOOL_NAME,
+        description: "按给定 schema 返回最终结果。必须调用此工具，且只调用它。",
+        input_schema: options.schema,
+      }],
+      // 强制调用我们的工具，压过网关注入的其它工具（AskUserQuestion 等）。
+      tool_choice: { type: "tool", name: TOOL_NAME },
     }, { timeout: 100_000, maxRetries: 0 });
   } catch (error) {
     // 带 status 的上游 4xx/5xx 交给 errorResponse 统一映射（429/502）
     if (typeof error === "object" && error !== null && "status" in error) {
       throw error;
     }
-    // 无 status 的失败（max_tokens 截断导致 JSON 解析失败、超时等）
-    // 落到通用 500 INTERNAL_ERROR 会掩盖真实原因，这里显式归类为上游输出问题。
     console.error("structuredOutput failed:", error);
     throw new HttpError(
       502,
       "MODEL_OUTPUT_INVALID",
       "AI 生成超时或返回了无法解析的结构，请稍后重试。",
-      // TODO(debug): 透出底层失败原因（超时/解析/网关），定位后移除
+      // TODO(debug): 透出底层失败原因，定位后移除
       {
-        stage: "parse_throw",
+        stage: "create_throw",
         model: options.model,
         maxTokens: options.maxTokens,
         errName: error instanceof Error ? error.name : typeof error,
@@ -72,21 +74,24 @@ export async function structuredOutput<T>(
       },
     );
   }
-  if (!message.parsed_output) {
+
+  const toolUse = message.content.find(
+    (b): b is Anthropic.ToolUseBlock =>
+      b.type === "tool_use" && b.name === TOOL_NAME,
+  );
+  if (!toolUse) {
     throw new HttpError(
       502,
       "MODEL_OUTPUT_INVALID",
-      "AI 返回了无法解析的结构。",
-      // TODO(debug): 模型返回了但无法解析成 schema，透出停止原因与原文片段，定位后移除
+      "AI 未按预期返回结构化结果。",
+      // TODO(debug): 模型没调用 emit_result 工具，透出停止原因与返回片段，定位后移除
       {
-        stage: "no_parsed_output",
+        stage: "no_tool_use",
         model: options.model,
-        stopReason: (message as { stop_reason?: unknown }).stop_reason ?? null,
-        rawTextHead: JSON.stringify(
-          (message as { content?: unknown }).content,
-        )?.slice(0, 600) ?? null,
+        stopReason: message.stop_reason ?? null,
+        rawTextHead: JSON.stringify(message.content)?.slice(0, 600) ?? null,
       },
     );
   }
-  return message.parsed_output as T;
+  return toolUse.input as T;
 }
