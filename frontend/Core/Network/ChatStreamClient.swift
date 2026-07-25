@@ -137,6 +137,15 @@ struct ChatStreamClient: Sendable {
             continuation.yield(.done(done))
             return
         }
+        // 服务端流内失败（LLM 中断等）：event: error + {"error":{code,message}}。
+        // 抛给调用方走统一错误路径，而不是静默吞掉让调用方误判为正常截断。
+        if event == "error" {
+            let err = try? JSONDecoder().decode(ServerErrorPayload.self, from: payload)
+            throw ChatStreamServerError(
+                code: err?.error?.code ?? "STREAM_ERROR",
+                message: err?.error?.message ?? "回复中断，请稍后重试。"
+            )
+        }
         // 常规文本片段：{"t":"..."}
         if let token = try? JSONDecoder().decode(TokenChunk.self, from: payload), !token.t.isEmpty {
             continuation.yield(.token(token.t))
@@ -144,6 +153,21 @@ struct ChatStreamClient: Sendable {
     }
 
     private struct TokenChunk: Decodable { let t: String }
+
+    private struct ServerErrorPayload: Decodable {
+        struct Inner: Decodable {
+            let code: String?
+            let message: String?
+        }
+        let error: Inner?
+    }
+}
+
+/// 服务端 SSE `event: error` 对应的错误（携带后端 code/message）
+struct ChatStreamServerError: LocalizedError, Sendable {
+    let code: String
+    let message: String
+    var errorDescription: String? { message }
 }
 
 // MARK: - SSE 行前缀工具

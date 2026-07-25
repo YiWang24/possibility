@@ -47,7 +47,9 @@ Deno.serve(async (req) => {
 
     const result = await structuredOutput<MatchOutput>({
       model: runtimeConfig.structuredModel,
-      maxTokens: 2_048,
+      // 3 条精炼匹配理由用不到 1k token；上限过大时网关的约束解码
+      // 曾出现生成到超时（实测 150s 被平台击杀），压小上限规避。
+      maxTokens: 1_024,
       system: matchPrompt,
       prompt: `用户当前状态：\n${
         JSON.stringify(userState)
