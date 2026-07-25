@@ -100,27 +100,18 @@ final class DiaryModel {
     /// 远端行 → DiaryNote（真实表无标题 / emoji / 时长等富字段，做合理降级）
     private static func note(from row: SupabaseService.RemoteDiaryEntry) -> DiaryNote? {
         guard let transcript = row.transcript, !transcript.isEmpty else { return nil }
-        // created_at（ISO8601）→ "yyyy-MM-dd" 与 "M月d日 · 周x"
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let date = iso.date(from: row.createdAt)
-            ?? ISO8601DateFormatter().date(from: row.createdAt)
-            ?? Date()
-        let day = DateFormatter()
-        day.locale = Locale(identifier: "zh_CN")
-        day.dateFormat = "yyyy-MM-dd"
-        let label = DateFormatter()
-        label.locale = Locale(identifier: "zh_CN")
-        label.dateFormat = "M月d日 · EEE"
+        // created_at（ISO8601）→ "yyyy-MM-dd" 与 "M月d日 · 周x"（统一走 SupabaseTimestamp）
+        let date = SupabaseTimestamp.parse(row.createdAt) ?? Date()
         // 标题 = 转写首句截断
         let firstSentence = transcript
             .components(separatedBy: CharacterSet(charactersIn: "。！？!?\n"))
             .first { !$0.isEmpty } ?? transcript
         let emotions = row.emotions ?? []
         return DiaryNote(
-            date: day.string(from: date),
-            label: label.string(from: date),
-            emoji: Self.emoji(for: emotions.first),
+            date: SupabaseTimestamp.dayString(from: date),
+            label: SupabaseTimestamp.diaryLabel(from: date),
+            // 与首页周历同一张映射表；情绪缺失时保留「🎙 仅有录音」语义
+            emoji: EmotionEmoji.emoji(for: emotions.first, whenMissing: "🎙"),
             emotion: emotions.isEmpty ? "已记录" : emotions.joined(separator: "，"),
             duration: "--:--",
             title: String(firstSentence.prefix(24)),
@@ -129,15 +120,6 @@ final class DiaryModel {
                 .components(separatedBy: "\n")
                 .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
         )
-    }
-
-    private static func emoji(for emotion: String?) -> String {
-        guard let emotion else { return "🎙" }
-        if emotion.contains("焦虑") || emotion.contains("担") { return "😮‍💨" }
-        if emotion.contains("平静") || emotion.contains("踏实") { return "😌" }
-        if emotion.contains("开心") || emotion.contains("成就") || emotion.contains("被") { return "😊" }
-        if emotion.contains("纠结") || emotion.contains("犹豫") { return "😕" }
-        return "🙂"
     }
 
     /// 全部条目：demo 底座 + 今天刚录（7/23）+ 云端真实条目按日期覆盖 / 插入

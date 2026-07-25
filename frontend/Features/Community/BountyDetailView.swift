@@ -93,10 +93,9 @@ struct BountyDetailView: View {
         "旅人 #\(userId.uuidString.prefix(4).uppercased())"
     }
 
-    /// 回应时间（created_at 取日期部分）
+    /// 回应时间（created_at → 本地时区日期，避免 UTC 裸切在东八区晚间显示成前一天）
     private func replyMeta(_ createdAt: String?) -> String {
-        let day = (createdAt ?? "").prefix(10)
-        return day.isEmpty ? "亲历者" : String(day)
+        SupabaseTimestamp.dayString(fromRaw: createdAt) ?? "亲历者"
     }
 
     private static var sentIds: Set<Int> {
@@ -128,8 +127,8 @@ struct BountyDetailView: View {
         let name = remote == nil ? detail.asker : "匿名旅人"
         let meta: String = {
             if let remote {
-                let day = (remote.bounty.createdAt ?? "").prefix(10)
-                return day.isEmpty ? "已发布" : "\(day) 发布"
+                guard let day = SupabaseTimestamp.dayString(fromRaw: remote.bounty.createdAt) else { return "已发布" }
+                return "\(day) 发布"
             }
             return "\(detail.city) · \(detail.time)发布"
         }()

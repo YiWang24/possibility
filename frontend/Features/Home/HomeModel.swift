@@ -76,12 +76,8 @@ final class HomeModel {
         if sttStarted { try? await Task.sleep(for: .milliseconds(600)) }
         let localText = transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
         let transcript = localText.count >= 4 ? localText : sampleTranscript
-        let remote = await withTaskGroup(of: DiaryAnalysis?.self) { group -> DiaryAnalysis? in
-            group.addTask { try? await supabase.analyzeDiary(transcript: transcript) }
-            group.addTask { try? await Task.sleep(for: .seconds(12)); return nil }
-            let first = await group.next() ?? nil
-            group.cancelAll()
-            return first
+        let remote = await withTimeout(seconds: 12) {
+            try await supabase.analyzeDiary(transcript: transcript)
         }
         analysis = remote ?? Self.fallbackAnalysis
     }
@@ -241,9 +237,10 @@ final class HomeModel {
         store.set(text, forKey: Self.storePrefix + key.rawValue)
         if let supabase {
             Task { [weak self] in
-                // 先落库再重新生成云端形象（/persona 读服务端画像，需等新维度可见）
+                // 先落库再重新生成云端形象（/persona 读服务端画像，需等新维度可见）；
+                // 连续填多个维度时经防抖合并，停止操作 ~2s 后才真正触发一次生成
                 try? await supabase.saveDimensionRemote(key: key, tags: picked)
-                self?.refreshPersona(using: supabase)
+                self?.scheduleRefreshPersona(using: supabase)
             }
         }
     }
@@ -297,6 +294,8 @@ final class HomeModel {
     /// 最近一次云端生成的形象参数；nil = 未生成 / 失败（走本地兜底）
     private(set) var remotePersona: PersonaJob.Persona?
     private var personaTask: Task<Void, Never>?
+    /// refreshPersona 防抖任务（saveDimension 连续触发时合并为一次）
+    private var personaRefreshDebounce: Task<Void, Never>?
     /// 上次成功触发生成时的画像快照（去重：画像没变不重复调 LLM）
     private var lastPersonaSnapshot: String?
 
@@ -313,17 +312,22 @@ final class HomeModel {
         lastPersonaSnapshot = snapshot
         personaTask?.cancel()
         personaTask = Task { [weak self] in
-            let job = await withTaskGroup(of: PersonaJob?.self) { group -> PersonaJob? in
-                group.addTask { try? await supabase.personaGenerate() }
-                group.addTask { try? await Task.sleep(for: .seconds(15)); return nil }
-                let first = await group.next() ?? nil
-                group.cancelAll()
-                return first
-            }
+            let job = await withTimeout(seconds: 15) { try await supabase.personaGenerate() }
             guard let self, !Task.isCancelled,
                   let job, job.status != "failed",
                   let persona = job.persona else { return }
             self.remotePersona = persona
+        }
+    }
+
+    /// refreshPersona 的防抖入口：连续保存多个维度时取消上一个待执行任务，
+    /// 用户停止操作 ~2s 后才真正触发一次 persona 生成（参照 MeModel.scheduleRemoteSave）
+    private func scheduleRefreshPersona(using supabase: SupabaseService) {
+        personaRefreshDebounce?.cancel()
+        personaRefreshDebounce = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled, let self else { return }
+            self.refreshPersona(using: supabase)
         }
     }
 
@@ -377,32 +381,22 @@ final class HomeModel {
 
     /// 今日日期串：周历真实化后用真实日期打开详情；兜底时保持 demo 的 7/23
     var diaryTodayDate: String {
-        weekCells == nil ? "2026-07-23" : Self.dayFormatter.string(from: Date())
+        weekCells == nil ? "2026-07-23" : SupabaseTimestamp.dayString(from: Date())
     }
-
-    private static let dayFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "zh_CN")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
 
     /// 拉取云端日记 → 聚合最近 7 天周历 + 推算探索天数（冷启动调用，失败静默）
     /// 服务端把 limit 钳制到 50，故只取 50 条；总数超窗时另取最早一条修正探索天数。
     func loadDiaryOverview(using supabase: SupabaseService) async {
         guard let page = try? await supabase.listDiaryPage(limit: 50, offset: 0) else { return }
         let rows = page.entries
-        let isoFrac = ISO8601DateFormatter()
-        isoFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let iso = ISO8601DateFormatter()
 
         // 天 → 当天最新一条的情绪列表（list-diary 按时间倒序，首见即最新）
         var emotionsByDay: [String: [String]] = [:]
         var earliest: Date?
         for row in rows {
-            guard let created = isoFrac.date(from: row.createdAt) ?? iso.date(from: row.createdAt) else { continue }
+            guard let created = SupabaseTimestamp.parse(row.createdAt) else { continue }
             if earliest.map({ created < $0 }) ?? true { earliest = created }
-            let key = Self.dayFormatter.string(from: created)
+            let key = SupabaseTimestamp.dayString(from: created)
             if emotionsByDay[key] == nil { emotionsByDay[key] = row.emotions ?? [] }
         }
 
@@ -410,7 +404,7 @@ final class HomeModel {
         // 探索天数不被 50 条窗口截断低估；失败静默沿用窗口内最早值
         if page.total > rows.count,
            let oldest = try? await supabase.listDiaryPage(limit: 1, offset: page.total - 1).entries.first,
-           let created = isoFrac.date(from: oldest.createdAt) ?? iso.date(from: oldest.createdAt) {
+           let created = SupabaseTimestamp.parse(oldest.createdAt) {
             earliest = created
         }
 
@@ -429,34 +423,17 @@ final class HomeModel {
         var cells: [WeekDayCell] = []
         for offset in stride(from: 6, through: 1, by: -1) {
             guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
-            let key = Self.dayFormatter.string(from: day)
+            let key = SupabaseTimestamp.dayString(from: day)
             let emotions = emotionsByDay[key]
             cells.append(WeekDayCell(
                 date: key,
                 label: weekFmt.string(from: day),
-                emoji: emotions.map { Self.emotionEmoji($0.first) } ?? "",
+                emoji: emotions.map { EmotionEmoji.emoji(for: $0.first) } ?? "",
                 filled: emotions != nil
             ))
         }
         weekCells = cells
-        todayEmoji = emotionsByDay[Self.dayFormatter.string(from: today)].map { Self.emotionEmoji($0.first) }
-    }
-
-    /// 情绪词 → emoji 小映射表；未知情绪给中性符号
-    static func emotionEmoji(_ emotion: String?) -> String {
-        guard let emotion, !emotion.isEmpty else { return "😐" }
-        let table: [(String, String)] = [
-            ("焦虑", "😮‍💨"), ("担", "😮‍💨"), ("疲", "😮‍💨"), ("紧张", "😮‍💨"), ("压力", "😮‍💨"),
-            ("平静", "😌"), ("踏实", "😌"), ("安心", "😌"), ("放松", "😌"), ("专注", "😌"), ("释然", "😌"),
-            ("开心", "😊"), ("喜悦", "😊"), ("快乐", "😊"), ("成就", "😊"), ("兴奋", "😊"),
-            ("被支持", "😊"), ("被看见", "😊"), ("感激", "😊"), ("温暖", "😊"),
-            ("纠结", "😕"), ("犹豫", "😕"), ("迷茫", "😕"), ("受挫", "😕"), ("委屈", "😕"), ("怀疑", "😕"),
-            ("难过", "😢"), ("低落", "😢"), ("失落", "😢"), ("孤独", "😢"), ("伤心", "😢"),
-            ("生气", "😠"), ("愤怒", "😠"), ("烦", "😠"),
-            ("好奇", "🙂"), ("期待", "🙂"), ("轻松", "🙂"), ("希望", "🙂"), ("动力", "🙂"),
-        ]
-        for (word, emoji) in table where emotion.contains(word) { return emoji }
-        return "😐"
+        todayEmoji = emotionsByDay[SupabaseTimestamp.dayString(from: today)].map { EmotionEmoji.emoji(for: $0.first) }
     }
 
     // MARK: demo 人物

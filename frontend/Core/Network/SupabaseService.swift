@@ -252,11 +252,6 @@ final class SupabaseService {
         )
     }
 
-    /// POST /simulate：{general, optimistic, cautionary}（兼容旧调用方，只取 scenarios）
-    func simulate(question: String, choice: String, years: Int) async throws -> Simulation.Scenarios {
-        try await simulateFull(question: question, choice: choice, years: years).scenarios
-    }
-
     /// POST /analyze-diary：情绪 + 关键词
     func analyzeDiary(transcript: String) async throws -> DiaryAnalysis {
         struct Body: Encodable { let transcript: String }
@@ -290,6 +285,7 @@ final class SupabaseService {
         }
         struct Response: Decodable { let ok: Bool }
         _ = try await callFunction("save-profile", body: Body(dimension: key.rawValue, tags: tags), as: Response.self)
+        invalidateRemoteProfileCache()
     }
 
     /// GET /get-profile：云端画像全量出参。
@@ -321,7 +317,23 @@ final class SupabaseService {
         }
     }
 
+    // MARK: get-profile 会话缓存（60s TTL；写路径成功后失效）
+    //
+    // HomeModel.loadPortrait / CardGameHubView.syncRemoteGames / MeModel.syncFromRemote
+    // 各自全量拉 get-profile，短时间内重复请求同一份数据 —— 在此做轻量缓存，对调用方透明。
+
+    private var remoteProfileCache: (profile: RemoteProfile, fetchedAt: Date)?
+    private static let remoteProfileCacheTTL: TimeInterval = 60
+
+    private func invalidateRemoteProfileCache() {
+        remoteProfileCache = nil
+    }
+
     func fetchRemoteProfile() async throws -> RemoteProfile {
+        if let cached = remoteProfileCache,
+           Date().timeIntervalSince(cached.fetchedAt) < Self.remoteProfileCacheTTL {
+            return cached.profile
+        }
         var req = URLRequest(url: AppConfig.functionURL("get-profile"))
         req.timeoutInterval = 20
         req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
@@ -330,7 +342,9 @@ final class SupabaseService {
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
         }
-        return try JSONDecoder().decode(RemoteProfile.self, from: data)
+        let profile = try JSONDecoder().decode(RemoteProfile.self, from: data)
+        remoteProfileCache = (profile, Date())
+        return profile
     }
 
     /// POST /list-diary：云端真实日记条目（analyze-diary 落库）
@@ -377,19 +391,6 @@ final class SupabaseService {
             }
         }
         return try await callFunction("persona", body: Body(promptOverride: promptOverride), as: PersonaJob.self)
-    }
-
-    /// POST /persona action=status：按 job_id 查询 {job_id, status, persona, model_version}
-    func personaStatus(jobId: UUID) async throws -> PersonaJob {
-        struct Body: Encodable {
-            let action = "status"
-            let jobId: UUID
-            enum CodingKeys: String, CodingKey {
-                case action
-                case jobId = "job_id"
-            }
-        }
-        return try await callFunction("persona", body: Body(jobId: jobId), as: PersonaJob.self)
     }
 
     /// POST /lab-choices：人生实验室动态选择卡（{cards, rationale}）
@@ -536,6 +537,7 @@ final class SupabaseService {
             body: Body(kind: kind, finalCards: finalCards, rounds: rounds, accepted: accepted, traded: traded),
             as: Response.self
         )
+        invalidateRemoteProfileCache()
         return res.tags ?? []
     }
 
@@ -562,9 +564,10 @@ final class SupabaseService {
         }
         struct Response: Decodable { let ok: Bool }
         _ = try await callFunction("save-profile", body: Body(payload: profile.remotePayload), as: Response.self)
+        invalidateRemoteProfileCache()
     }
 
-    /// GET /get-profile 的 public_profile 字段（未建档为 nil）；Me 主页云端恢复用
+    /// GET /get-profile 的 public_profile 字段（未建档为 nil）；Me 主页云端恢复用（复用缓存）
     func fetchPublicProfileRemote() async throws -> RemotePublicProfile? {
         try await fetchRemoteProfile().publicProfile
     }

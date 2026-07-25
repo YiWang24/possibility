@@ -299,7 +299,7 @@ private struct ChatHistorySheet: View {
                 Spacer()
                 if restoringId == convo.id {
                     ProgressView().controlSize(.mini).tint(Theme.faint)
-                } else if let date = Self.formatCreatedAt(convo.createdAt) {
+                } else if let date = SupabaseTimestamp.timeLabel(fromRaw: convo.createdAt) {
                     Text(date).font(.system(size: 10)).foregroundStyle(Theme.faint)
                 }
             }
@@ -316,22 +316,6 @@ private struct ChatHistorySheet: View {
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
             .strokeBorder(Theme.line, lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    /// "2026-07-25T03:21:11.123456+00:00" / "2026-07-25 03:21:11" → "7月25日 03:21"；解析失败返回 nil（不显示）
-    private static func formatCreatedAt(_ iso: String?) -> String? {
-        guard let iso else { return nil }
-        let normalized = iso.replacingOccurrences(of: " ", with: "T")
-        guard normalized.count >= 16 else { return nil }
-        let parser = DateFormatter()
-        parser.locale = Locale(identifier: "en_US_POSIX")
-        parser.timeZone = TimeZone(identifier: "UTC")
-        parser.dateFormat = "yyyy-MM-dd'T'HH:mm"
-        guard let date = parser.date(from: String(normalized.prefix(16))) else { return nil }
-        let out = DateFormatter()
-        out.locale = Locale(identifier: "zh_CN")
-        out.dateFormat = "M月d日 HH:mm"
-        return out.string(from: date)
     }
 }
 

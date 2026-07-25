@@ -95,13 +95,7 @@ final class LabModel {
         let requestID = choicesRequestID
         choicesLoading = true
 
-        let fetch = Task { try await supabase.labChoices(question: q) }
-        let watchdog = Task {
-            try? await Task.sleep(for: .seconds(15))
-            fetch.cancel()
-        }
-        let response = try? await fetch.value
-        watchdog.cancel()
+        let response = await withTimeout(seconds: 15) { try await supabase.labChoices(question: q) }
 
         // 已有更新的请求在跑：本次结果整体作废（loading 由新请求收尾）
         guard requestID == choicesRequestID else { return }

@@ -1,0 +1,29 @@
+import Foundation
+
+// MARK: - 情绪词 → emoji 共享映射
+//
+// 首页周历（HomeModel）与日记详情（DiaryModel）统一走这一张表，
+// 避免同一条日记在两处 UI 显示出不同的 emoji。
+
+enum EmotionEmoji {
+
+    /// 情绪词命中子串即返回对应 emoji；未知情绪给中性符号。
+    /// - Parameter whenMissing: 情绪缺失（nil / 空串）时的占位符号；
+    ///   日记详情用 "🎙" 表示「仅有录音、未分析出情绪」的语义。
+    static func emoji(for emotion: String?, whenMissing: String = "😐") -> String {
+        guard let emotion, !emotion.isEmpty else { return whenMissing }
+        for (word, emoji) in table where emotion.contains(word) { return emoji }
+        return "😐"
+    }
+
+    private static let table: [(String, String)] = [
+        ("焦虑", "😮‍💨"), ("担", "😮‍💨"), ("疲", "😮‍💨"), ("紧张", "😮‍💨"), ("压力", "😮‍💨"),
+        ("平静", "😌"), ("踏实", "😌"), ("安心", "😌"), ("放松", "😌"), ("专注", "😌"), ("释然", "😌"),
+        ("开心", "😊"), ("喜悦", "😊"), ("快乐", "😊"), ("成就", "😊"), ("兴奋", "😊"),
+        ("被支持", "😊"), ("被看见", "😊"), ("感激", "😊"), ("温暖", "😊"),
+        ("纠结", "😕"), ("犹豫", "😕"), ("迷茫", "😕"), ("受挫", "😕"), ("委屈", "😕"), ("怀疑", "😕"),
+        ("难过", "😢"), ("低落", "😢"), ("失落", "😢"), ("孤独", "😢"), ("伤心", "😢"),
+        ("生气", "😠"), ("愤怒", "😠"), ("烦", "😠"),
+        ("好奇", "🙂"), ("期待", "🙂"), ("轻松", "🙂"), ("希望", "🙂"), ("动力", "🙂"),
+    ]
+}

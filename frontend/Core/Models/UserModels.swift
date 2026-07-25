@@ -262,7 +262,6 @@ struct RemoteConversation: Decodable, Identifiable, Sendable {
 }
 
 /// POST /simulate 完整出参（_shared/schemas.ts simulationSchema）。
-/// 旧调用方仍可经 `SupabaseService.simulate(question:choice:years:)` 只拿 scenarios。
 struct SimulationResult: Decodable, Sendable {
     let scenarios: Simulation.Scenarios
     /// 底线卡守护分析（未传 carry_cards 时也会返回；解码失败置 nil 不影响主结果）
