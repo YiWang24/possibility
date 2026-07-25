@@ -115,21 +115,83 @@ struct HomeAskCard: View {
                            startPoint: .topLeading, endPoint: .bottomTrailing)
             RadialGradient(colors: [Color(hex: 0x6FA5FF, alpha: 0.35), .clear],
                            center: .topTrailing, startRadius: 0, endRadius: 200)
-            // 熔岩灯：metaball 场（蓝顶 → 品红底），blob 竖向慢漂移、相吸融合
-            LavaLampView(
-                specs: [
-                    LavaBlobSpec(baseX: 0.78, baseY: 0.16, ampX: 0.14, ampY: 0.22, periodX: 13, periodY: 17, phase: 1.0, radius: 0.30),
-                    LavaBlobSpec(baseX: 0.18, baseY: 0.80, ampX: 0.16, ampY: 0.30, periodX: 15, periodY: 19, phase: 2.6, radius: 0.26),
-                    LavaBlobSpec(baseX: 0.46, baseY: 0.46, ampX: 0.18, ampY: 0.26, periodX: 11, periodY: 9,  phase: 4.0, radius: 0.18, pulse: 0.35),
-                    LavaBlobSpec(baseX: 0.88, baseY: 0.70, ampX: 0.10, ampY: 0.24, periodX: 8,  periodY: 21, phase: 5.4, radius: 0.15),
-                ],
-                color1: Color(hex: 0x6FA5FF),   // 顶：蓝
-                color2: Color(hex: 0xE35CC1),   // 底：品红
-                threshold: 1.05,
-                softness: 2
-            )
-            .opacity(0.5)
+            // 熔岩灯光斑（原型 .glow/.glow2/.glow3）：三个模糊光球沿各自路径缓慢游走
+            AskGlowLayer(paused: reduceMotion)
         }
+    }
+}
+
+// MARK: - 熔岩灯光斑层（原型 lava1 / lava2 / lava3 keyframes 逐帧复刻）
+
+private struct AskGlowLayer: View {
+    var paused = false
+
+    /// 关键帧：progress(0–1) → (dx, dy, scale, opacity)
+    struct Key { let p, x, y, s, o: Double }
+
+    static let lava1: [Key] = [
+        .init(p: 0, x: 0, y: 0, s: 1, o: 1), .init(p: 0.25, x: -90, y: 60, s: 1.25, o: 1),
+        .init(p: 0.5, x: -150, y: 150, s: 0.85, o: 1), .init(p: 0.75, x: -40, y: 90, s: 1.15, o: 1),
+        .init(p: 1, x: 0, y: 0, s: 1, o: 1),
+    ]
+    static let lava2: [Key] = [
+        .init(p: 0, x: 0, y: 0, s: 1, o: 1), .init(p: 0.3, x: 110, y: -80, s: 1.3, o: 1),
+        .init(p: 0.55, x: 190, y: -160, s: 0.8, o: 1), .init(p: 0.8, x: 60, y: -40, s: 1.1, o: 1),
+        .init(p: 1, x: 0, y: 0, s: 1, o: 1),
+    ]
+    static let lava3: [Key] = [
+        .init(p: 0, x: 0, y: 0, s: 1, o: 0.8), .init(p: 0.33, x: 70, y: 50, s: 1.5, o: 1),
+        .init(p: 0.66, x: -60, y: -40, s: 0.65, o: 0.55), .init(p: 1, x: 0, y: 0, s: 1, o: 0.8),
+    ]
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: paused)) { timeline in
+            let t = paused ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            GeometryReader { geo in
+                let w = geo.size.width, h = geo.size.height
+                blob(size: 230, keys: Self.lava1, period: 13, delay: 0, time: t,
+                     colors: [Color(hex: 0x6FA5FF, alpha: 0.65), Color(hex: 0x8F7BFF, alpha: 0.28), .clear],
+                     locations: [0, 0.52, 0.72], blur: 10)
+                    .position(x: w + 40 - 115, y: -70 + 115)
+                blob(size: 200, keys: Self.lava2, period: 17, delay: 6, time: t,
+                     colors: [Color(hex: 0xE35CC1, alpha: 0.42), Color(hex: 0x8F7BFF, alpha: 0.2), .clear],
+                     locations: [0, 0.55, 0.75], blur: 12)
+                    .position(x: -60 + 100, y: h + 90 - 100)
+                blob(size: 150, keys: Self.lava3, period: 11, delay: 3, time: t,
+                     colors: [Color.white.opacity(0.34), Color(hex: 0x9DBCFF, alpha: 0.16), .clear],
+                     locations: [0, 0.55, 0.72], blur: 14)
+                    .position(x: w * 0.32 + 75, y: h * 0.3 + 75)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func blob(size: Double, keys: [Key], period: Double, delay: Double, time: Double,
+                      colors: [Color], locations: [CGFloat], blur: Double) -> some View {
+        let k = Self.sample(keys, progress: ((time + delay).truncatingRemainder(dividingBy: period)) / period)
+        return Circle()
+            .fill(RadialGradient(
+                stops: zip(colors, locations).map { .init(color: $0, location: $1) },
+                center: .center, startRadius: 0, endRadius: size / 2))
+            .frame(width: size, height: size)
+            .blur(radius: blur)
+            .scaleEffect(k.s)
+            .opacity(k.o)
+            .offset(x: k.x, y: k.y)
+    }
+
+    /// 关键帧分段插值（ease-in-out，对齐 CSS ease-in-out 观感）
+    private static func sample(_ keys: [Key], progress u: Double) -> (x: Double, y: Double, s: Double, o: Double) {
+        guard let next = keys.firstIndex(where: { $0.p >= u }), next > 0 else {
+            let k = keys.first ?? Key(p: 0, x: 0, y: 0, s: 1, o: 1)
+            return (k.x, k.y, k.s, k.o)
+        }
+        let a = keys[next - 1], b = keys[next]
+        let span = max(b.p - a.p, 0.0001)
+        let raw = (u - a.p) / span
+        let e = raw * raw * (3 - 2 * raw)   // smoothstep
+        func mix(_ x: Double, _ y: Double) -> Double { x + (y - x) * e }
+        return (mix(a.x, b.x), mix(a.y, b.y), mix(a.s, b.s), mix(a.o, b.o))
     }
 }
 
@@ -155,11 +217,11 @@ struct PortraitCard: View {
     /// 首页被 cover（对话 / 日记）覆盖时暂停数字形象动画
     var animationPaused = false
     var onTapDim: (HomeModel.PortraitDim) -> Void
-    var onTapLifeGame: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             digitalHumanStage
+            if !model.lifeSignatureCards.isEmpty { lifeSignature.padding(.top, 14) }
             progressBar.padding(.top, 18)
 
             VStack(spacing: 9) {
@@ -168,9 +230,6 @@ struct PortraitCard: View {
                 }
             }
             .padding(.top, 16)
-
-            lifeEntry.padding(.top, 14)
-            if !model.lifeSignature.isEmpty { lifeSignature.padding(.top, 14) }
         }
         .padding(.horizontal, 20).padding(.top, 22).padding(.bottom, 18)
         .kaleidoCard()
@@ -178,7 +237,8 @@ struct PortraitCard: View {
 
     // 数字形象舞台：画像驱动的 Canvas 抽象形态（原型 .digital-human-stage）
     private var digitalHumanStage: some View {
-        PersonaStageView(model: model.personaModel, userName: model.userName, paused: animationPaused)
+        PersonaStageView(model: model.personaModel, userName: model.userName,
+                         summary: model.personaSummary, paused: animationPaused)
             .padding(.horizontal, -20)   // 贴卡横向出血（原型 margin:0 -20px）
             .padding(.top, -22)
     }
@@ -227,16 +287,47 @@ struct PortraitCard: View {
         .buttonStyle(PressScaleStyle())
     }
 
-    // 人生卡牌入口
-    private var lifeEntry: some View {
-        Button(action: onTapLifeGame) {
+    // 人生底牌签名（原型 .portrait-life-signature：紧贴数字形象舞台下方）
+    private var lifeSignature: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("我的人生底牌").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                Spacer()
+                Text("已参与数字形象生成").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
+            }
+            HStack(spacing: 8) {
+                ForEach(model.lifeSignatureCards, id: \.self) { card in
+                    HStack(spacing: 6) {
+                        Text(card.glyph).font(.system(size: 13))
+                        Text(card.name).font(.system(size: 12, weight: .medium)).lineLimit(1)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).padding(.vertical, 12)
+                    .background(Theme.hue(0).gradient.opacity(0.85), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(hex: 0xAEAEFF, alpha: 0.25), lineWidth: 1))
+                }
+            }
+        }
+        .padding(14)
+        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+    }
+}
+
+// MARK: - 人生卡牌入口（原型 .life-entry：独立按钮，位于 ask 卡下方）
+
+struct LifeEntryButton: View {
+    var onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
             HStack(spacing: 12) {
                 miniDeck
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("画像深潜 · 5–8 分钟").font(.system(size: 10)).tracking(1).foregroundStyle(Color(hex: 0x9DBCFF))
+                    Text("四套卡牌探索 · 3–8 分钟").font(.system(size: 10)).tracking(1).foregroundStyle(Color(hex: 0x9DBCFF))
                     Text("人生卡牌：你最后会留下什么？").font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("经历五段人生取舍，生成你的私密深层画像").font(.system(size: 11)).foregroundStyle(Theme.sub)
+                    Text("人生、婚姻、家庭、人际交往 · 选择一套开始").font(.system(size: 11)).foregroundStyle(Theme.sub)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Text("›").font(.system(size: 15)).foregroundStyle(Theme.faint)
@@ -257,26 +348,5 @@ struct PortraitCard: View {
             RoundedRectangle(cornerRadius: 5).fill(Theme.hue(1).gradient).frame(width: 22, height: 30).rotationEffect(.degrees(8)).offset(x: 3)
         }
         .frame(width: 34)
-    }
-
-    // 人生底牌签名
-    private var lifeSignature: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("我的人生底牌").font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                Spacer()
-                Text("来自人生卡牌").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-            }
-            HStack(spacing: 8) {
-                ForEach(model.lifeSignature, id: \.self) { card in
-                    Text(card).font(.system(size: 12, weight: .medium)).foregroundStyle(.white)
-                        .frame(maxWidth: .infinity).padding(.vertical, 14)
-                        .background(Theme.hue(0).gradient, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                }
-            }
-        }
-        .padding(14)
-        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
     }
 }

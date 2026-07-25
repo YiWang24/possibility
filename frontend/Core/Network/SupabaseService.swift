@@ -230,25 +230,342 @@ final class SupabaseService {
         return try await callFunction("match", body: Body(user_state: userState), as: MatchResponse.self)
     }
 
-    /// POST /simulate：{general, optimistic, cautionary}
-    func simulate(question: String, choice: String, years: Int) async throws -> Simulation.Scenarios {
+    /// POST /simulate 完整出参：{scenarios, bottom_line_analysis, recommended_traveler_ids}
+    /// - Parameter carryCards: 底线卡（最多 6 张，validate.ts validateSimulateInputV2）
+    func simulateFull(
+        question: String, choice: String, years: Int, carryCards: [String]? = nil
+    ) async throws -> SimulationResult {
         struct Body: Encodable {
             let question: String
             let choice: String
             let years: Int
+            let carryCards: [String]?
+            enum CodingKeys: String, CodingKey {
+                case question, choice, years
+                case carryCards = "carry_cards"
+            }
         }
-        struct Response: Decodable { let scenarios: Simulation.Scenarios }
-        let res = try await callFunction(
+        return try await callFunction(
             "simulate",
-            body: Body(question: question, choice: choice, years: years),
-            as: Response.self
+            body: Body(question: question, choice: choice, years: years, carryCards: carryCards),
+            as: SimulationResult.self
         )
-        return res.scenarios
+    }
+
+    /// POST /simulate：{general, optimistic, cautionary}（兼容旧调用方，只取 scenarios）
+    func simulate(question: String, choice: String, years: Int) async throws -> Simulation.Scenarios {
+        try await simulateFull(question: question, choice: choice, years: years).scenarios
     }
 
     /// POST /analyze-diary：情绪 + 关键词
     func analyzeDiary(transcript: String) async throws -> DiaryAnalysis {
         struct Body: Encodable { let transcript: String }
         return try await callFunction("analyze-diary", body: Body(transcript: transcript), as: DiaryAnalysis.self)
+    }
+
+    // MARK: - Edge Functions（画像 / 社区 / 日记 —— 真实调用优先，失败由调用方兜底）
+
+    /// POST /community action=kaleidoscope_draw：AI 抽取一位旅人 + 理由
+    func kaleidoscopeDraw(mode: String) async throws -> (travelerId: Int, reason: String) {
+        struct Body: Encodable {
+            let action = "kaleidoscope_draw"
+            let mode: String
+        }
+        struct DrawTraveler: Decodable { let id: Int }
+        struct Response: Decodable {
+            let traveler: DrawTraveler
+            let reason: String
+        }
+        let res = try await callFunction("community", body: Body(mode: mode), as: Response.self)
+        return (res.traveler.id, res.reason)
+    }
+
+    /// POST /save-profile action=save_dimension：维度关键词落库（服务端同步 profiles.dims）
+    func saveDimensionRemote(key: DimensionKey, tags: [String]) async throws {
+        struct Body: Encodable {
+            let action = "save_dimension"
+            let dimension: String
+            let tags: [String]
+            let source = "manual"
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction("save-profile", body: Body(dimension: key.rawValue, tags: tags), as: Response.self)
+    }
+
+    /// GET /get-profile：云端画像全量出参。
+    /// 旧调用方只用 portraitPct/dims 不受影响；新增字段解码失败时降级为空值，不让整体失败。
+    struct RemoteProfile: Decodable {
+        let portraitPct: Int
+        let dims: [String: String]
+        /// profile_dimensions 行：[{dimension, tags, source, updated_at}]
+        let dimensions: [RemoteProfileDimension]
+        /// card_game_results 行：[{kind, final_cards, rounds, accepted, traded}]
+        let cardGames: [RemoteCardGame]
+        /// public_profiles 行（未建档为 nil）
+        let publicProfile: RemotePublicProfile?
+
+        enum CodingKeys: String, CodingKey {
+            case dims, dimensions
+            case portraitPct = "portrait_pct"
+            case cardGames = "card_games"
+            case publicProfile = "public_profile"
+        }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            portraitPct = try c.decode(Int.self, forKey: .portraitPct)
+            dims = try c.decode([String: String].self, forKey: .dims)
+            dimensions = (try? c.decodeIfPresent([RemoteProfileDimension].self, forKey: .dimensions)) ?? []
+            cardGames = (try? c.decodeIfPresent([RemoteCardGame].self, forKey: .cardGames)) ?? []
+            publicProfile = try? c.decodeIfPresent(RemotePublicProfile.self, forKey: .publicProfile)
+        }
+    }
+
+    func fetchRemoteProfile() async throws -> RemoteProfile {
+        var req = URLRequest(url: AppConfig.functionURL("get-profile"))
+        req.timeoutInterval = 20
+        req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
+        req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        return try JSONDecoder().decode(RemoteProfile.self, from: data)
+    }
+
+    /// POST /list-diary：云端真实日记条目（analyze-diary 落库）
+    struct RemoteDiaryEntry: Decodable {
+        let id: Int
+        let transcript: String?
+        let emotions: [String]?
+        let keywords: [String]?
+        let createdAt: String
+        enum CodingKeys: String, CodingKey {
+            case id, transcript, emotions, keywords
+            case createdAt = "created_at"
+        }
+    }
+
+    func listDiary(limit: Int = 50) async throws -> [RemoteDiaryEntry] {
+        struct Body: Encodable { let limit: Int }
+        struct Response: Decodable { let entries: [RemoteDiaryEntry] }
+        return try await callFunction("list-diary", body: Body(limit: limit), as: Response.self).entries
+    }
+
+    /// POST /diary-summary：按月/年聚合日记 + LLM 洞察
+    /// - Parameters:
+    ///   - period: "month" | "year"
+    ///   - ref: 月为 "2026-07"，年为 "2026"
+    func diarySummary(period: String, ref: String) async throws -> DiarySummaryResponse {
+        struct Body: Encodable {
+            let period: String
+            let ref: String
+        }
+        return try await callFunction("diary-summary", body: Body(period: period, ref: ref), as: DiarySummaryResponse.self)
+    }
+
+    // MARK: - Edge Functions（persona / lab-choices / list-conversations）
+
+    /// POST /persona action=generate：按已授权画像生成数字形象（同步落库，status 通常直接 completed）
+    func personaGenerate(promptOverride: String? = nil) async throws -> PersonaJob {
+        struct Body: Encodable {
+            let action = "generate"
+            let promptOverride: String?
+            enum CodingKeys: String, CodingKey {
+                case action
+                case promptOverride = "prompt_override"
+            }
+        }
+        return try await callFunction("persona", body: Body(promptOverride: promptOverride), as: PersonaJob.self)
+    }
+
+    /// POST /persona action=status：按 job_id 查询 {job_id, status, persona, model_version}
+    func personaStatus(jobId: UUID) async throws -> PersonaJob {
+        struct Body: Encodable {
+            let action = "status"
+            let jobId: UUID
+            enum CodingKeys: String, CodingKey {
+                case action
+                case jobId = "job_id"
+            }
+        }
+        return try await callFunction("persona", body: Body(jobId: jobId), as: PersonaJob.self)
+    }
+
+    /// POST /lab-choices：人生实验室动态选择卡（{cards, rationale}）
+    func labChoices(
+        question: String,
+        topic: String? = nil,
+        constraints: [String]? = nil,
+        previousChoices: [String]? = nil
+    ) async throws -> LabChoiceResponse {
+        struct Body: Encodable {
+            let question: String
+            let topic: String?
+            let constraints: [String]?
+            let previousChoices: [String]?
+            enum CodingKeys: String, CodingKey {
+                case question, topic, constraints
+                case previousChoices = "previous_choices"
+            }
+        }
+        return try await callFunction(
+            "lab-choices",
+            body: Body(question: question, topic: topic, constraints: constraints, previousChoices: previousChoices),
+            as: LabChoiceResponse.self
+        )
+    }
+
+    /// POST /list-conversations：历史会话分页（created_at 倒序）
+    func listConversations(limit: Int = 20, offset: Int = 0) async throws -> (conversations: [RemoteConversation], total: Int) {
+        struct Body: Encodable {
+            let limit: Int
+            let offset: Int
+        }
+        struct Response: Decodable {
+            let conversations: [RemoteConversation]
+            let total: Int
+        }
+        let res = try await callFunction("list-conversations", body: Body(limit: limit, offset: offset), as: Response.self)
+        return (res.conversations, res.total)
+    }
+
+    // MARK: - Edge Functions（community 悬赏系列，按 action 分发）
+
+    /// POST /community action=list_bounties：悬赏分页（created_at 倒序，limit 上限 50）
+    func listBountiesRemote(limit: Int = 20, offset: Int = 0) async throws -> (bounties: [Bounty], total: Int) {
+        struct Body: Encodable {
+            let action = "list_bounties"
+            let limit: Int
+            let offset: Int
+        }
+        struct Response: Decodable {
+            let bounties: [Bounty]
+            let total: Int
+        }
+        let res = try await callFunction("community", body: Body(limit: limit, offset: offset), as: Response.self)
+        return (res.bounties, res.total)
+    }
+
+    /// POST /community action=create_bounty：发布悬赏，返回新悬赏 id
+    /// - Parameters:
+    ///   - question: ≤200 字；tags ≤5 项（每项 ≤30 字）；detail ≤2000 字；reward ≤50 字
+    @discardableResult
+    func createBounty(question: String, tags: [String], detail: String, reward: String) async throws -> Int {
+        struct Body: Encodable {
+            let action = "create_bounty"
+            let question: String
+            let tags: [String]
+            let detail: String
+            let reward: String
+        }
+        struct Response: Decodable {
+            let ok: Bool
+            let id: Int
+        }
+        let res = try await callFunction(
+            "community",
+            body: Body(question: question, tags: tags, detail: detail, reward: reward),
+            as: Response.self
+        )
+        return res.id
+    }
+
+    /// POST /community action=respond_bounty：对悬赏发送名片（同一悬赏同一用户 upsert 覆盖）
+    func respondBounty(bountyId: Int, message: String) async throws {
+        struct Body: Encodable {
+            let action = "respond_bounty"
+            let bountyId: Int
+            let message: String
+            enum CodingKeys: String, CodingKey {
+                case action, message
+                case bountyId = "bounty_id"
+            }
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction("community", body: Body(bountyId: bountyId, message: message), as: Response.self)
+    }
+
+    /// POST /community action=get_bounty：悬赏详情 + 回应列表
+    func getBounty(bountyId: Int) async throws -> BountyDetailResponse {
+        struct Body: Encodable {
+            let action = "get_bounty"
+            let bountyId: Int
+            enum CodingKeys: String, CodingKey {
+                case action
+                case bountyId = "bounty_id"
+            }
+        }
+        return try await callFunction("community", body: Body(bountyId: bountyId), as: BountyDetailResponse.self)
+    }
+
+    // MARK: - Edge Functions（save-profile：卡牌局 / 公开主页）
+
+    /// POST /save-profile action=save_card_game：卡牌局结果上云（同 kind upsert 覆盖，
+    /// 服务端同步把 final_cards 名称写入 profiles.dims 对应维度）。
+    /// - Parameters:
+    ///   - kind: "life" | "marriage" | "family" | "social"
+    ///   - finalCards: 1–9 张（id/name 必填）
+    /// - Returns: 服务端写入 dims 的标签（final_cards 名称）
+    @discardableResult
+    func saveCardGameRemote(
+        kind: String,
+        finalCards: [CardGameCardPayload],
+        rounds: Int,
+        accepted: [CardGameAcceptedEvent] = [],
+        traded: [CardGameTradedEvent] = []
+    ) async throws -> [String] {
+        struct Body: Encodable {
+            let action = "save_card_game"
+            let kind: String
+            let finalCards: [CardGameCardPayload]
+            let rounds: Int
+            let accepted: [CardGameAcceptedEvent]
+            let traded: [CardGameTradedEvent]
+            enum CodingKeys: String, CodingKey {
+                case action, kind, rounds, accepted, traded
+                case finalCards = "final_cards"
+            }
+        }
+        struct Response: Decodable {
+            let ok: Bool
+            let tags: [String]?
+        }
+        let res = try await callFunction(
+            "save-profile",
+            body: Body(kind: kind, finalCards: finalCards, rounds: rounds, accepted: accepted, traded: traded),
+            as: Response.self
+        )
+        return res.tags ?? []
+    }
+
+    /// POST /save-profile action=save_public_profile：Me 公开主页上云（public_profiles upsert）
+    func savePublicProfileRemote(_ profile: MyProfile) async throws {
+        struct Body: Encodable {
+            let action = "save_public_profile"
+            let payload: RemotePublicProfile
+
+            func encode(to encoder: Encoder) throws {
+                // 扁平化：action 与 payload 字段同级（后端从顶层读 name/quote/... ）
+                var c = encoder.container(keyedBy: DynamicKey.self)
+                try c.encode(action, forKey: DynamicKey("action"))
+                try payload.encode(to: encoder)
+            }
+
+            struct DynamicKey: CodingKey {
+                let stringValue: String
+                var intValue: Int? { nil }
+                init(_ key: String) { stringValue = key }
+                init?(stringValue: String) { self.stringValue = stringValue }
+                init?(intValue: Int) { return nil }
+            }
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction("save-profile", body: Body(payload: profile.remotePayload), as: Response.self)
+    }
+
+    /// GET /get-profile 的 public_profile 字段（未建档为 nil）；Me 主页云端恢复用
+    func fetchPublicProfileRemote() async throws -> RemotePublicProfile? {
+        try await fetchRemoteProfile().publicProfile
     }
 }

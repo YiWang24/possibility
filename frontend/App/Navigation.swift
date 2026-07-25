@@ -29,6 +29,16 @@ final class AppRouter {
     var tab: AppTab = .home
     /// 对话「去人生实验室」携带的问题，LabView 出现时消费
     var pendingLabQuestion: String?
+
+    init() {
+        // 调试便利：`simctl launch ... -kaleido-tab lab|community|me` 直达指定 tab
+        switch UserDefaults.standard.string(forKey: "kaleido-tab") {
+        case "lab": tab = .lab
+        case "community": tab = .community
+        case "me": tab = .me
+        default: break
+        }
+    }
 }
 
 /// 推演结果载荷（Lab 推演完成 → ResultView）
@@ -40,6 +50,8 @@ struct SimResultData: Identifiable {
     let scenarios: Simulation.Scenarios
     /// 类似经验的人
     let people: [Traveler]
+    /// 一起带走的底线卡 id（原型 carry-deck，供最坏结果的底线压力测试）
+    var carry: [String] = []
 }
 
 // MARK: - 旅人主页入口（就地 cover）
@@ -90,7 +102,8 @@ struct SimCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HueBandHeader(initial: traveler.initial, hue: traveler.hue,
-                          bandHeight: 52, avatarSize: 36)
+                          bandHeight: 52, avatarSize: 36,
+                          imageName: MockAvatar.name(for: traveler.id))
             VStack(alignment: .leading, spacing: 5) {
                 Text(traveler.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(reason ?? traveler.quote)

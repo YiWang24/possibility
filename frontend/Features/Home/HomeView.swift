@@ -6,10 +6,14 @@ import Foundation
 
 struct HomeView: View {
     @Environment(ToastCenter.self) private var toast
+    @Environment(SupabaseService.self) private var supabase
     @State private var model = HomeModel()
     @State private var chatLaunch: ChatLaunch?
     @State private var diaryLaunch: DiaryLaunch?
     @State private var activeDimension: DimensionKey?
+    @State private var showStudio = false
+    @State private var showCardHub = false
+    @State private var launchGame: CardGameKind?
 
     var body: some View {
         ScrollView {
@@ -19,6 +23,8 @@ struct HomeView: View {
                     .padding(.top, 18)
                 HomeAskCard(model: model, onSend: send)
                     .padding(.top, 22)
+                LifeEntryButton { showCardHub = true }
+                    .padding(.top, 14)
                 portraitSection
                     .padding(.top, 24)
             }
@@ -28,7 +34,8 @@ struct HomeView: View {
         }
         .scrollIndicators(.hidden)
         .screenBackground()
-        .onAppear { model.loadPortrait() }
+        .onAppear { model.loadPortrait(using: supabase) }
+        .task { await model.loadDiaryOverview(using: supabase) }
         .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0) }
         .fullScreenCover(item: $diaryLaunch) { launch in
             DiaryDetailView(
@@ -40,12 +47,32 @@ struct HomeView: View {
             )
         }
         .sheet(item: $activeDimension) { key in
-            DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key)) { keywords in
-                model.saveDimension(key, keywords: keywords)
-            }
+            DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key), onSave: { keywords in
+                model.saveDimension(key, keywords: keywords, using: supabase)
+            }, onLaunchCardGame: { game in
+                activeDimension = nil
+                launchGame = CardGameKind(rawValue: game)
+            })
             .presentationDetents([.fraction(0.82)])
             .presentationDragIndicator(.visible)
             .presentationBackground(Color(hex: 0x10131C))
+        }
+        .fullScreenCover(isPresented: $showStudio) {
+            ProfileStudioView(home: model) { key in
+                activeDimension = key
+            }
+            .environment(toast)
+            .environment(supabase)
+        }
+        .fullScreenCover(isPresented: $showCardHub) {
+            CardGameHubView(home: model)
+                .environment(toast)
+                .environment(supabase)
+        }
+        .fullScreenCover(item: $launchGame) { kind in
+            CardGameView(kind: kind, home: model)
+                .environment(toast)
+                .environment(supabase)
         }
     }
 
@@ -85,23 +112,22 @@ struct HomeView: View {
     private var portraitSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "探索更多画像 ›", isLink: true) {
-                toast.show("画像工作室即将上线")
+                showStudio = true
             }
             PortraitCard(
                 model: model,
-                animationPaused: chatLaunch != nil || diaryLaunch != nil,
-                onTapDim: handleDimTap,
-                onTapLifeGame: { toast.show("人生卡牌即将上线") }
+                animationPaused: chatLaunch != nil || diaryLaunch != nil || showStudio,
+                onTapDim: handleDimTap
             )
         }
     }
 
-    /// 维度点击路由：软维度开浮层；人格底色走工作室（暂占位）
+    /// 维度点击路由：软维度开浮层；人格底色进画像工作室
     private func handleDimTap(_ dim: HomeModel.PortraitDim) {
         if let key = dim.dimensionKey {
             activeDimension = key
         } else {
-            toast.show("人格底色测评即将上线")
+            showStudio = true
         }
     }
 }
@@ -122,7 +148,7 @@ private struct DiaryCard: View {
     var onOpenDiary: (String?) -> Void
     @Environment(SupabaseService.self) private var supabase
 
-    /// 对齐原型：7/17–7/22（五~三）+ 今天 7/23
+    /// 兜底周历（对齐原型 7/17–7/22；list-diary 加载失败时展示）
     private static let week: [(String, String, String)] = [
         ("🙂", "五", "2026-07-17"), ("😮‍💨", "六", "2026-07-18"), ("😊", "日", "2026-07-19"),
         ("😐", "一", "2026-07-20"), ("🙂", "二", "2026-07-21"), ("😌", "三", "2026-07-22"),
@@ -169,15 +195,29 @@ private struct DiaryCard: View {
 
     private var weekRow: some View {
         HStack {
-            ForEach(Self.week.indices, id: \.self) { i in
-                Button { onOpenDiary(Self.week[i].2) } label: {
-                    dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
+            // 真实周历（list-diary 聚合最近 7 天）优先；未加载 / 失败走硬编码兜底
+            if let cells = model.weekCells {
+                ForEach(cells) { cell in
+                    Button { onOpenDiary(cell.date) } label: {
+                        dayCell(emoji: cell.emoji, label: cell.label, filled: cell.filled, today: false)
+                    }
+                    .buttonStyle(PressScaleStyle())
+                    Spacer()
                 }
-                .buttonStyle(PressScaleStyle())
-                Spacer()
+            } else {
+                ForEach(Self.week.indices, id: \.self) { i in
+                    Button { onOpenDiary(Self.week[i].2) } label: {
+                        dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
+                    }
+                    .buttonStyle(PressScaleStyle())
+                    Spacer()
+                }
             }
-            Button { onOpenDiary("2026-07-23") } label: {
-                dayCell(emoji: model.analysis != nil ? "🙂" : "", label: "今天", filled: model.analysis != nil, today: true)
+            Button { onOpenDiary(model.diaryTodayDate) } label: {
+                dayCell(emoji: model.analysis != nil ? "🙂" : (model.todayEmoji ?? ""),
+                        label: "今天",
+                        filled: model.analysis != nil || model.todayEmoji != nil,
+                        today: true)
             }
             .buttonStyle(PressScaleStyle())
         }
@@ -232,7 +272,7 @@ private struct DiaryCard: View {
             Divider().overlay(Theme.line)
             Text("这次记录里，我听见了").font(.system(size: 11)).foregroundStyle(Theme.faint)
             FlowChips(items: analysis.emotions.map { .emotion($0) } + analysis.keywords.map { .keyword($0) })
-            Button("查看详情 ›") { onOpenDiary("2026-07-23") }
+            Button("查看详情 ›") { onOpenDiary(model.diaryTodayDate) }
                 .font(.system(size: 11)).foregroundStyle(Theme.blue)
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity, alignment: .trailing)

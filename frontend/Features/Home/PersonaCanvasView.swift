@@ -301,6 +301,8 @@ struct PersonaCanvasView: View {
 struct PersonaStageView: View {
     let model: PersonaModel
     let userName: String
+    /// 云端 persona 的一句话说明；nil 时展示本地推导的 meta 文案
+    var summary: String? = nil
     /// 页面被覆盖时暂停画布重绘
     var paused = false
     /// 3 张人生底牌齐 → 边框高亮（.has-life-cards）
@@ -356,11 +358,15 @@ struct PersonaStageView: View {
                 .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
             Text(metaText)
                 .font(.system(size: 9.5)).foregroundStyle(Theme.faint)
+                .lineLimit(2)
         }
-        .padding(.leading, 16).padding(.bottom, 14)
+        .padding(.leading, 16).padding(.trailing, 16).padding(.bottom, 14)
     }
 
     private var metaText: String {
+        if let summary, !summary.isEmpty {
+            return "\(model.shapeName) · \(summary)"
+        }
         let count = model.filled + model.signature.count
         return count > 0
             ? "\(model.shapeName) · 根据下方 \(count) 组画像内容生成"

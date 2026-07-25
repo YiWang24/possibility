@@ -4,6 +4,8 @@ import SwiftUI
 
 struct ResultView: View {
     let data: SimResultData
+    /// /simulate 返回的底线卡守护分析；nil（服务端未返回/离线兜底）时不展示该区块
+    var bottomLine: SimulationResult.BottomLineAnalysis? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var tab = 1   // 默认「一般情况」
@@ -36,6 +38,12 @@ struct ResultView: View {
                     ScenarioPanel(eyebrow: specs[tab].eyebrow, accent: specs[tab].accent,
                                   bg: specs[tab].bg, scenario: specs[tab].scenario)
                         .padding(.top, 16).id(tab)
+                    if tab == 2 && !data.carry.isEmpty {
+                        FloorTestPanel(carryIds: data.carry).padding(.top, 14)
+                    }
+                    if let bottomLine {
+                        BottomLinePanel(analysis: bottomLine).padding(.top, 14)
+                    }
                     peopleSection.padding(.top, 8)
                     PrimaryButton(title: "重新选择", wide: true) { dismiss() }
                         .padding(.top, 24)
@@ -192,12 +200,166 @@ private struct ScenarioPanel: View {
     }
 }
 
+// MARK: - 底线压力测试（原型 .floor-test / renderFloorTest / answerFloor）
+
+private struct FloorTestPanel: View {
+    let carryIds: [String]
+    @State private var answers: [String: Bool] = [:]   // id → 可承受(true) / 越线(false)
+
+    private var cards: [LabModel.CarryCard] {
+        carryIds.compactMap { LabModel.carryCard($0) }
+    }
+    private var allAnswered: Bool { answers.count == cards.count && !cards.isEmpty }
+    private var rejected: [String] {
+        cards.filter { answers[$0.id] == false }.map(\.name)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Text("FLOOR TEST · 底线压力测试")
+                .font(.system(size: 8.5, weight: .semibold)).tracking(2.2)
+                .foregroundStyle(Color(hex: 0xFF9B77))
+            Text("最坏的结果，会击穿你带进来的底线吗？")
+                .font(.system(size: 15, weight: .bold)).lineSpacing(4).foregroundStyle(Theme.ink)
+            Text("逐张确认：如果这个结局真的发生，这张底线卡还守得住吗？")
+                .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.sub)
+
+            ForEach(cards) { card in
+                VStack(alignment: .leading, spacing: 9) {
+                    HStack(spacing: 8) {
+                        Text(card.glyph).font(.system(size: 13)).foregroundStyle(Color(hex: 0xFF9B77))
+                        Text(card.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                    }
+                    Text(card.risk).font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
+                    HStack(spacing: 9) {
+                        floorButton("最差如此，仍可承受", accept: true, card: card)
+                        floorButton("这已经越过底线", accept: false, card: card)
+                    }
+                }
+                .padding(13)
+                .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+
+            if allAnswered { verdict }
+        }
+        .padding(17)
+        .background(Color(hex: 0x11151D), in: RoundedRectangle(cornerRadius: 21, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 21, style: .continuous)
+            .strokeBorder(Color(hex: 0xFF7A4D, alpha: 0.24), lineWidth: 1))
+        .animation(.easeOut(duration: 0.3), value: allAnswered)
+    }
+
+    private func floorButton(_ title: String, accept: Bool, card: LabModel.CarryCard) -> some View {
+        let on = answers[card.id] == accept
+        let tint: Color = accept ? Theme.teal : Color(hex: 0xFF8A5E)
+        return Button {
+            answers[card.id] = accept
+        } label: {
+            Text(title)
+                .font(.system(size: 10.5, weight: on ? .semibold : .regular))
+                .foregroundStyle(on ? tint : Theme.sub)
+                .frame(maxWidth: .infinity).padding(.vertical, 9)
+                .background(on ? tint.opacity(0.12) : Color.white.opacity(0.05), in: Capsule())
+                .overlay(Capsule().strokeBorder(on ? tint.opacity(0.55) : Theme.line, lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
+    }
+
+    @ViewBuilder
+    private var verdict: some View {
+        let pass = rejected.isEmpty
+        VStack(alignment: .leading, spacing: 7) {
+            Text(pass ? "可以继续转变 · 但不是盲目乐观" : "暂时不要直接跨过去")
+                .font(.system(size: 9, weight: .semibold)).tracking(1.6)
+                .foregroundStyle(pass ? Theme.teal : Color(hex: 0xFF9B77))
+            Text(pass
+                 ? "你看见了最差结果，也确认它没有击穿带入的 \(cards.count) 张底线卡。"
+                 : "最坏结果会击穿：\(rejected.joined(separator: "、"))")
+                .font(.system(size: 13, weight: .bold)).lineSpacing(4).foregroundStyle(Theme.ink)
+            Text(pass
+                 ? "这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这些底线分别保留现实缓冲。"
+                 : "这不等于你不适合改变。先为这些底线建立保护条件，再回来重新测试。")
+                .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background((pass ? Theme.teal : Color(hex: 0xFF7A4D)).opacity(0.08),
+                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .strokeBorder((pass ? Theme.teal : Color(hex: 0xFF7A4D)).opacity(0.3), lineWidth: 1))
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+}
+
+// MARK: - 底线分析（/simulate bottom_line_analysis · 与底线压力测试同一 deep-space 视觉）
+
+private struct BottomLinePanel: View {
+    let analysis: SimulationResult.BottomLineAnalysis
+
+    private var accent: Color { analysis.isAcceptable ? Theme.teal : Color(hex: 0xFF9B77) }
+    private var border: Color {
+        analysis.isAcceptable ? Theme.teal.opacity(0.24) : Color(hex: 0xFF7A4D, alpha: 0.24)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            Text("BOTTOM LINE · 底线分析")
+                .font(.system(size: 8.5, weight: .semibold)).tracking(2.2)
+                .foregroundStyle(accent)
+            Text(analysis.isAcceptable
+                 ? "最坏的结果，仍在你的底线之内"
+                 : "最坏的结果，可能击穿你的底线")
+                .font(.system(size: 15, weight: .bold)).lineSpacing(4).foregroundStyle(Theme.ink)
+            Text(analysis.isAcceptable
+                 ? "结合你带走的底线卡与三种结局推演，这条路的最差情况大概率守得住。"
+                 : "结合你带走的底线卡与三种结局推演，先为下面的风险建立保护条件，再考虑迈出这一步。")
+                .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.sub)
+
+            if !analysis.risks.isEmpty {
+                bulletList(title: "需要警惕的风险", dot: Color(hex: 0xFF8A5E), items: analysis.risks)
+            }
+            if !analysis.protectiveConditions.isEmpty {
+                bulletList(title: "保护条件", dot: Theme.teal, items: analysis.protectiveConditions)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(17)
+        .background(Color(hex: 0x11151D), in: RoundedRectangle(cornerRadius: 21, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 21, style: .continuous)
+            .strokeBorder(border, lineWidth: 1))
+    }
+
+    private func bulletList(title: String, dot: Color, items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Circle().fill(dot).frame(width: 7, height: 7)
+                Text(title).font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.ink)
+            }
+            ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                HStack(alignment: .top, spacing: 8) {
+                    Circle().fill(Theme.faint).frame(width: 4, height: 4).padding(.top, 6)
+                    Text(item).font(.system(size: 11.5)).lineSpacing(4).foregroundStyle(Theme.sub)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(13)
+        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
 #Preview {
     ResultView(data: SimResultData(
         question: "我是否要从交互设计师转为产品经理？",
         choice: "转 AI 产品", years: 5,
         scenarios: LabModel.cannedScenarios(choice: "转 AI 产品", years: 5),
-        people: DemoData.travelers.filter(\.isSimilar)
+        people: DemoData.travelers.filter(\.isSimilar),
+        carry: ["income", "health"]
+    ), bottomLine: SimulationResult.BottomLineAnalysis(
+        isAcceptable: true,
+        risks: ["转型初期收入下降，可能触及「稳定收入」底线", "高强度学习挤压恢复时间"],
+        protectiveConditions: ["保留 6 个月生活备用金再行动", "每周固定两晚不安排学习"]
     ))
     .preferredColorScheme(.dark)
 }

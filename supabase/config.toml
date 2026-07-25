@@ -50,6 +50,9 @@ verify_jwt = true
 [functions.list-diary]
 verify_jwt = true
 
+[functions.diary-summary]
+verify_jwt = true
+
 [functions.community]
 verify_jwt = true
 

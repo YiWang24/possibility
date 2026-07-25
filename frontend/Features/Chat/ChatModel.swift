@@ -5,8 +5,11 @@ import Observation
 //
 // 首页发问 → 流式承接迷茫 / 澄清 → AI 给出「暂时的理解」→ 验证反馈
 // （嗯，比较接近 / 还不太对，可循环纠正）→ 信息足够 → 下一步面板
-// （去人生实验室 / 看相似经历 / 分享 / 完整总结）。对照原型 chatState 阶段机。
-// 现场网络 / LLM 抖动时回退「黄金对话」（§13）。
+// （去人生实验室 / 看走过这条路的人 / 分享 / 完整总结）。对照原型 chatState 阶段机。
+//
+// 真实优先：验证 / 纠正回合同样作为消息经 /chat 续轮（带 conversation_id，
+// 服务端自动加载最近历史）；岔路口成形后用 crossroads.match_query 调 /match。
+// 现场网络 / LLM 抖动时回退本地文案（§13），不让页面卡死。
 
 @Observable
 @MainActor
@@ -46,6 +49,26 @@ final class ChatModel {
 
     /// 服务端会话 ID：首轮 done 事件返回，后续追问带回以延续历史
     private var conversationId: UUID?
+    /// 最近一次 done 事件（或历史恢复）携带的岔路口信号
+    private(set) var crossroads: Crossroads?
+
+    // MARK: 岔路口 → /match（走过这条路的人）
+
+    /// 匹配到的旅人（≤3 位，已按 supabase.travelers 解析出完整信息）
+    private(set) var matchedTravelers: [Traveler] = []
+    /// traveler_id → 推荐理由（可解释）
+    private(set) var matchReasons: [Int: String] = [:]
+    /// 每个岔路口只请求一次；失败静默（面板回退「看相似经历」切 Tab）
+    private var matchAttempted = false
+
+    // MARK: 历史会话
+
+    /// 近期会话（listConversations；失败为空 → 入口不显示）
+    private(set) var history: [RemoteConversation] = []
+    var showHistory = false
+    /// 恢复历史会话后覆盖 launch 的话题 / 问题（顶栏与总结页展示用）
+    private(set) var restoredTopic: String?
+    private(set) var restoredQuestion: String?
 
     init(launch: ChatLaunch) {
         self.launch = launch
@@ -53,6 +76,28 @@ final class ChatModel {
 
     var confirmLabel: String { hadCorrection ? "这次准确了" : "嗯，比较接近" }
     var correctLabel: String { hadCorrection ? "我再补充一点" : "还不太对" }
+
+    // MARK: 验证 chips 发送的固定短语
+    //
+    // confirmInsight / requestCorrection 以这些固定句作为用户消息续轮；
+    // restore 重建 answers 时按此集合过滤，避免污染结论 / 分享文案的插值。
+
+    private static let confirmPhrase = "嗯，这个理解比较接近我。"
+    private static let confirmAfterCorrectionPhrase = "这次准确了。"
+    private static let correctionPhrase = "还不太对。"
+    private static let verificationPhrases: Set<String> = [
+        confirmPhrase, confirmAfterCorrectionPhrase, correctionPhrase,
+    ]
+
+    /// 顶栏 / 总结页展示的话题（历史恢复后取会话自身的 topic）
+    var displayTopic: String? { restoredTopic ?? launch.topic?.rawValue }
+    /// 总结页 / 分享文案的问题（历史恢复后取该会话首条用户消息）
+    var displayQuestion: String { restoredQuestion ?? launch.question }
+
+    /// 历史入口条目（排除当前会话自身）
+    var historyEntries: [RemoteConversation] {
+        history.filter { $0.id != conversationId }
+    }
 
     // MARK: 启动：把首页问题作为第一条用户消息并请求 AI
 
@@ -72,10 +117,15 @@ final class ChatModel {
         answers.append(clean)
 
         if stage == .correction {
-            // 纠正回合：本地复述用户原话（对照原型 sendChat correction 分支），不走流式
+            // 纠正回合：把用户改写的原话续轮发回 /chat；网络失败回退本地复述。
+            // 无服务端会话上下文（首轮兜底）时不走网络，直接本地复述。
+            let fallback = "明白了。更准确的说法应该是：**\(clean)**\n\n我会保留你的原话，不再把它改写成一个性格结论。"
             Task {
-                await localAssistant("明白了。更准确的说法应该是：**\(clean)**\n\n我会保留你的原话，不再把它改写成一个性格结论。", delay: 0.7)
-                try? await Task.sleep(for: .milliseconds(760))
+                if conversationId == nil {
+                    await appendLocalReply(fallback)
+                } else {
+                    _ = await streamAssistant(userText: clean, supabase: supabase, fallback: fallback)
+                }
                 hadCorrection = true
                 stage = .review
                 showActionChips = true
@@ -85,30 +135,116 @@ final class ChatModel {
         }
     }
 
-    // MARK: 验证反馈（chips）
+    // MARK: 验证反馈（chips）—— 作为真实消息续轮
 
-    /// 「嗯，比较接近 / 这次准确了」→ AI 结论 → 下一步面板
-    func confirmInsight() {
+    /// 「嗯，比较接近 / 这次准确了」→ 续轮拿 AI 结论 → 下一步面板
+    func confirmInsight(supabase: SupabaseService) {
+        guard !isStreaming else { return }
         showActionChips = false
-        messages.append(Message(role: .user, text: "嗯，这个理解比较接近我。"))
+        let userText = hadCorrection ? Self.confirmAfterCorrectionPhrase : Self.confirmPhrase
+        messages.append(Message(role: .user, text: userText))
         let a0 = answers.first ?? "真正想要的生活"
         let a1 = answers.count > 1 ? answers[1] : "暂时不能失去的东西"
+        let fallback = "现在的信息已经够了。我的判断是：你并不是没有答案，而是**想靠近「\(a0)」的同时，也在保护「\(a1)」**。\n\n真正需要验证的，不是哪条路绝对正确，而是哪一种代价是你愿意承担、也有能力承担的。"
         Task {
-            await localAssistant("现在的信息已经够了。我的判断是：你并不是没有答案，而是**想靠近「\(a0)」的同时，也在保护「\(a1)」**。\n\n真正需要验证的，不是哪条路绝对正确，而是哪一种代价是你愿意承担、也有能力承担的。", delay: 0.7)
-            try? await Task.sleep(for: .milliseconds(820))
+            if conversationId == nil {
+                // 首轮完全失败走了本地兜底：服务端没有任何上下文，续轮只会让
+                // LLM 凭一句验证短语新建空会话乱答——直接本地演完（保持旧行为）。
+                await appendLocalReply(fallback)
+            } else {
+                _ = await streamAssistant(userText: userText, supabase: supabase, fallback: fallback)
+            }
+            try? await Task.sleep(for: .milliseconds(500))
             stage = .ready
             showNextPanel = true
+            requestMatch(supabase: supabase)
         }
     }
 
-    /// 「还不太对 / 我再补充一点」→ AI 追问最不准确的部分
-    func requestCorrection() {
+    /// 「还不太对 / 我再补充一点」→ 续轮请 AI 追问最不准确的部分
+    func requestCorrection(supabase: SupabaseService) {
+        guard !isStreaming else { return }
         showActionChips = false
-        messages.append(Message(role: .user, text: "还不太对。"))
+        let userText = Self.correctionPhrase
+        messages.append(Message(role: .user, text: userText))
         stage = .correction
+        let fallback = "谢谢你纠正我。**最不准确的是哪一部分？**你可以直接改写成你自己的话，我会以你的表达为准。"
         Task {
-            await localAssistant("谢谢你纠正我。**最不准确的是哪一部分？**你可以直接改写成你自己的话，我会以你的表达为准。", delay: 0.7)
+            if conversationId == nil {
+                await appendLocalReply(fallback)
+            } else {
+                _ = await streamAssistant(userText: userText, supabase: supabase, fallback: fallback)
+            }
         }
+    }
+
+    // MARK: 岔路口 → /match
+
+    /// crossroads.ready 后用 match_query 请求 3 位旅人；失败静默（不打断主线）
+    func requestMatch(supabase: SupabaseService) {
+        guard !matchAttempted, let query = crossroads?.matchQuery, crossroads?.ready == true else { return }
+        matchAttempted = true
+        Task {
+            do {
+                let response = try await supabase.match(userState: query)
+                if supabase.travelers.isEmpty { await supabase.loadTravelers() }
+                var travelers: [Traveler] = []
+                var reasons: [Int: String] = [:]
+                for m in response.matches {
+                    guard let t = supabase.travelers.first(where: { $0.id == m.travelerId }) else { continue }
+                    travelers.append(t)
+                    reasons[t.id] = m.reason
+                }
+                matchedTravelers = travelers
+                matchReasons = reasons
+            } catch {
+                // 静默：下一步面板回退「看相似经历」切 Tab
+            }
+        }
+    }
+
+    // MARK: 历史会话（listConversations + loadMessages）
+
+    func loadHistory(supabase: SupabaseService) async {
+        do {
+            history = try await supabase.listConversations(limit: 20, offset: 0).conversations
+        } catch {
+            history = []   // 静默：入口不显示
+        }
+    }
+
+    /// 恢复一段历史会话：loadMessages 回填消息与 conversation_id，继续对话
+    func restore(_ convo: RemoteConversation, supabase: SupabaseService) async {
+        guard !isStreaming else { return }
+        let remote = await supabase.loadMessages(conversationId: convo.id)
+        guard !remote.isEmpty else { return }   // 拉取失败静默，保持当前对话
+
+        conversationId = convo.id
+        restoredTopic = convo.topic
+        restoredQuestion = remote.first(where: { $0.role == .user })?.content
+        crossroads = convo.crossroads
+        messages = remote.map { Message(role: $0.role == .user ? .user : .ai, text: $0.content) }
+        // answers = 首条问题之后的用户原话；过滤 chips 固定验证短语，
+        // 避免「嗯，这个理解比较接近我。」之类混入结论 / 分享文案插值
+        answers = remote.filter { $0.role == .user }.map(\.content).dropFirst()
+            .filter { !Self.verificationPhrases.contains($0) }
+        hadCorrection = false
+        showNextPanel = false
+        showSummary = false
+        matchedTravelers = []
+        matchReasons = [:]
+        matchAttempted = false
+
+        if convo.crossroads?.ready == true {
+            // 岔路口已成形：直接进入验证态，允许继续确认 / 纠正
+            stage = .review
+            showActionChips = true
+            requestMatch(supabase: supabase)
+        } else {
+            stage = .clarify
+            showActionChips = false
+        }
+        showHistory = false
     }
 
     // MARK: 分享文案（原型 shareChatExploration 模板）
@@ -116,28 +252,40 @@ final class ChatModel {
     var shareText: String {
         let a0 = answers.first ?? "真正想要的生活"
         let a1 = answers.count > 1 ? answers[1] : "暂时不能失去的东西"
-        return "我刚在万花筒探索了一个问题：\(launch.question)\n\n我现在更清楚的是：我既想靠近\(a0)，也在保护\(a1)。"
-    }
-
-    // MARK: 本地 AI 消息（带思考延迟，对照原型 assistantAfter）
-
-    private func localAssistant(_ text: String, delay: Double) async {
-        isStreaming = true
-        messages.append(Message(role: .ai, text: ""))
-        let index = messages.count - 1
-        try? await Task.sleep(for: .seconds(delay))
-        messages[index].text = text
-        isStreaming = false
+        return "我刚在万花筒探索了一个问题：\(displayQuestion)\n\n我现在更清楚的是：我既想靠近\(a0)，也在保护\(a1)。"
     }
 
     // MARK: 流式请求 + 打字机
 
+    /// 澄清回合：流式请求，失败回退黄金对话，并按信号决定是否出验证 chips
     private func runAssistant(userText: String, supabase: SupabaseService) async {
+        let result = await streamAssistant(userText: userText, supabase: supabase,
+                                           fallback: Self.goldenReply(for: launch))
+        // AI 已给出足够的理解（服务端标注岔路口 / 黄金对话兜底 / 已有两轮澄清）→ 出验证 chips
+        let aiCount = messages.filter { $0.role == .ai && !$0.text.isEmpty }.count
+        if stage == .clarify, result.ready || !result.delivered || aiCount >= 2 {
+            try? await Task.sleep(for: .milliseconds(850))
+            stage = .review
+            showActionChips = true
+        }
+    }
+
+    /// 通用续轮：把 userText 经 /chat 流式发送（带 conversation_id）。
+    /// - Returns: delivered = 是否完整拿到真实回复（收到 done 事件；false 表示
+    ///            半途中断或已用 fallback 文案兜底，调用方按未送达推进）；
+    ///            ready = 本轮 done 事件是否标注岔路口成形。
+    @discardableResult
+    private func streamAssistant(
+        userText: String,
+        supabase: SupabaseService,
+        fallback: @autoclosure () -> String
+    ) async -> (delivered: Bool, ready: Bool) {
         isStreaming = true
         defer { isStreaming = false }
 
-        // 历史 = 当前用户消息之前的对话
-        let history = messages.dropLast().map {
+        // 服务端按 conversation_id 自取库内历史（validateChatInput 忽略 history），
+        // 已有会话时传空数组省流量；仅首轮附上（当前也只有首条用户消息之前的空集）
+        let history: [ChatRequest.Turn] = conversationId != nil ? [] : messages.dropLast().map {
             ChatRequest.Turn(role: $0.role == .user ? "user" : "assistant", content: $0.text)
         }
         messages.append(Message(role: .ai, text: ""))
@@ -147,35 +295,59 @@ final class ChatModel {
             guard let supabase else { throw URLError(.userAuthenticationRequired) }
             return try await supabase.jwt()
         })
-        let request = ChatRequest(conversationId: conversationId, topic: launch.topic?.rawValue ?? "综合",
-                                  message: userText, history: Array(history))
+        let request = ChatRequest(conversationId: conversationId,
+                                  topic: displayTopic ?? "综合",
+                                  message: userText, history: history)
 
-        var reachedInsight = false
+        var ready = false
+        var receivedDone = false
         do {
             for try await event in client.stream(request) {
                 switch event {
                 case .token(let t):
                     messages[aiIndex].text += t
                 case .done(let done):
+                    receivedDone = true
                     if let id = done.conversationId { conversationId = id }
-                    if let c = done.crossroads, c.ready { reachedInsight = true }
+                    if let c = done.crossroads {
+                        crossroads = c   // 后端每轮 done 都带 crossroads，持续刷新
+                        if c.ready { ready = true }
+                    }
                 }
             }
         } catch {
-            // 断网兜底：黄金对话（直接给出「暂时的理解」）
+            // 断网 / 服务抖动：无文本则回退本地文案；有部分文本走下方
+            // 未收到 done 的「未完整送达」路径，保留已流出的内容
             if messages[aiIndex].text.isEmpty {
-                messages[aiIndex].text = Self.goldenReply(for: launch)
+                try? await Task.sleep(for: .milliseconds(700))
+                messages[aiIndex].text = fallback()
+                return (false, ready)
             }
-            reachedInsight = true
         }
+        if messages[aiIndex].text.isEmpty {
+            messages[aiIndex].text = fallback()
+            return (false, ready)
+        }
+        guard receivedDone else {
+            // 流结束但没有 done 事件（断网截断 / 服务端 event:error 被静默忽略）：
+            // 部分文本照常展示，但按未送达处理，让调用方走 fallback 推进路径
+            //（保证验证 chips / 下一步面板照常出现，不把截断回复当完整结论）
+            return (false, ready)
+        }
+        if ready { requestMatch(supabase: supabase) }   // 岔路口成形 → 预取匹配旅人
+        return (true, ready)
+    }
 
-        // AI 已给出足够的理解（服务端标注岔路口 / 已有两轮澄清）→ 出验证 chips
-        let aiCount = messages.filter { $0.role == .ai && !$0.text.isEmpty }.count
-        if stage == .clarify, reachedInsight || aiCount >= 2 {
-            try? await Task.sleep(for: .milliseconds(850))
-            stage = .review
-            showActionChips = true
-        }
+    /// 无服务端会话上下文时的本地续轮：不 round-trip /chat（服务端会新建一个
+    /// 只有一句验证短语的空上下文让 LLM 乱答），直接以兜底文案入列，
+    /// 保持与流式回复一致的节奏（isStreaming + 短暂思考停顿）。
+    private func appendLocalReply(_ text: String) async {
+        isStreaming = true
+        defer { isStreaming = false }
+        messages.append(Message(role: .ai, text: ""))
+        let aiIndex = messages.count - 1
+        try? await Task.sleep(for: .milliseconds(700))
+        messages[aiIndex].text = text
     }
 
     // MARK: - 兜底内容

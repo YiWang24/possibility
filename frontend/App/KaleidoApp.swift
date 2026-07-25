@@ -16,10 +16,10 @@ struct KaleidoApp: App {
     }
 }
 
-// MARK: - 根导航：底部三 Tab（认识自己 / 人生实验室 / 万花筒社区）
+// MARK: - 根导航：底部四 Tab（认识自己 / 人生实验室 / 万花筒社区 / 我的主页）
 
 enum AppTab: Hashable {
-    case home, lab, community
+    case home, lab, community, me
 }
 
 struct RootView: View {
@@ -40,6 +40,10 @@ struct RootView: View {
             CommunityView()
                 .tabItem { Label("万花筒社区", systemImage: "circle.hexagongrid") }
                 .tag(AppTab.community)
+
+            MeView()
+                .tabItem { Label("我的主页", systemImage: "person.text.rectangle") }
+                .tag(AppTab.me)
         }
         .tint(Theme.blue)
         .background(Theme.stage.ignoresSafeArea())

@@ -4,6 +4,8 @@ import {
   validateBountyResponseInput,
   validateChatInput,
   validateDiaryInput,
+  validateDiarySummaryInput,
+  validateGetBountyInput,
   validateKaleidoscopeInput,
   validateLabChoiceInput,
   validateListInput,
@@ -250,6 +252,61 @@ Deno.test("bountyResponseInput rejects invalid bounty_id", () => {
   );
   assertHttpError(
     () => validateBountyResponseInput({ bounty_id: -1, message: "hi" }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("getBountyInput accepts a positive integer id", () => {
+  const input = validateGetBountyInput({ bounty_id: 3 });
+  assert(input.bounty_id === 3);
+});
+
+Deno.test("getBountyInput rejects missing or invalid bounty_id", () => {
+  assertHttpError(() => validateGetBountyInput({}), "INVALID_INPUT");
+  assertHttpError(
+    () => validateGetBountyInput({ bounty_id: 0 }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateGetBountyInput({ bounty_id: 1.5 }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateGetBountyInput({ bounty_id: "1" }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("diarySummaryInput accepts month and year refs", () => {
+  const month = validateDiarySummaryInput({ period: "month", ref: "2026-07" });
+  assert(month.period === "month" && month.ref === "2026-07");
+  const year = validateDiarySummaryInput({ period: "year", ref: "2026" });
+  assert(year.period === "year" && year.ref === "2026");
+});
+
+Deno.test("diarySummaryInput rejects invalid period and ref formats", () => {
+  assertHttpError(
+    () => validateDiarySummaryInput({ period: "week", ref: "2026-07" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateDiarySummaryInput({ period: "month", ref: "2026-7" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateDiarySummaryInput({ period: "month", ref: "2026-13" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateDiarySummaryInput({ period: "month", ref: "2026" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateDiarySummaryInput({ period: "year", ref: "2026-07" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateDiarySummaryInput({ period: "year" }),
     "INVALID_INPUT",
   );
 });
