@@ -294,13 +294,13 @@ struct WatchModeView: View {
         .allowsHitTesting(false)
     }
 
-    /// 原型 .watch-center-ring：190pt 虚线环 + 内外辉光 + 上/左两个刻度
+    /// 原型 .watch-center-ring：保留中心微光和刻度，不绘制虚线环
     private func centerRing(center: CGPoint) -> some View {
         ZStack {
             Circle()
-                .strokeBorder(Color(hex: 0x9DBCFF, alpha: 0.34), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
+                .strokeBorder(Color(hex: 0x5E96FF, alpha: 0.12), lineWidth: 2)
+                .blur(radius: 17)
                 .frame(width: 190, height: 190)
-                .shadow(color: Color(hex: 0x5E96FF, alpha: 0.16), radius: 17)
                 .background(
                     Circle().fill(
                         RadialGradient(colors: [.clear, Color(hex: 0x5E96FF, alpha: 0.08)],
