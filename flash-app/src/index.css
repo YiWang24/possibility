@@ -3,10 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --flash-app-safe-area-inset-top: 0px;
-  --flash-app-safe-area-inset-right: 0px;
-  --flash-app-safe-area-inset-bottom: 0px;
-  --flash-app-safe-area-inset-left: 0px;
+  /* 安全区变量必须真实反映 env()：写死 0px 会让任何取用它们的代码在刘海屏上静默失效 */
+  --flash-app-safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --flash-app-safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --flash-app-safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --flash-app-safe-area-inset-left: env(safe-area-inset-left, 0px);
   --flash-app-safe-top: var(--flash-app-safe-area-inset-top, 0px);
 
   --stage: #05070D;

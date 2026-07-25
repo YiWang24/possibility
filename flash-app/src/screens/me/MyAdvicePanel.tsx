@@ -63,7 +63,14 @@ export default function MyAdvicePanel({ profile, active, onEdit }: MyAdvicePanel
               {links.length > 0 ? (
                 <div className="my-advice-links">
                   {links.map((link) => (
-                    <a key={link.id} className="my-advice-link" href={link.safeURL} target="_blank" rel="noopener noreferrer">
+                    <a
+                      key={link.id}
+                      data-testid={`my-advice-link-${link.id}`}
+                      className="my-advice-link"
+                      href={link.safeURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       {link.label !== '' ? link.label : '查看相关链接'}
                     </a>
                   ))}
