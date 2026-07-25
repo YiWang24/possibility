@@ -5274,7 +5274,7 @@ function publicPersonaHTML(u,isMine=false){
             <span class="ar">${hasPersonaResult(item)?'已公开':'待完善'}</span>
           </div>`).join('')}
         </div>
-        <p class="persona-public-note">${isMine?'动态画像与“认识你自己”保持一致；下方展示你在“设置展示”中开启的画像内容。':'这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。'}</p>`
+        ${isMine?'':'<p class="persona-public-note">这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。</p>'}`
         :'<div class="persona-empty" style="margin-top:14px">目前没有开启公开展示的画像内容</div>'}
     </div>`;
 }
