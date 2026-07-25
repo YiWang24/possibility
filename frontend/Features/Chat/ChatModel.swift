@@ -54,6 +54,23 @@ final class ChatModel {
     /// 最近一次 done 事件（或历史恢复）携带的岔路口信号
     private(set) var crossroads: Crossroads?
 
+    // MARK: API 失败重试
+
+    private enum RequestContext {
+        case clarify
+        case correctionFollowUp
+        case confirm
+        case rejection
+    }
+
+    private struct RetryRequest {
+        let userText: String
+        let context: RequestContext
+    }
+
+    private var retryRequest: RetryRequest?
+    var canRetry: Bool { retryRequest != nil && !isStreaming }
+
     // MARK: 岔路口 → /match（走过这条路的人）
 
     /// 匹配到的旅人（对话面板固定展示 2 位，已解析出完整信息）
@@ -113,7 +130,7 @@ final class ChatModel {
             stage = .review
             showActionChips = true
         } else {
-            await runAssistant(userText: launch.question, supabase: supabase)
+            await performAssistant(userText: launch.question, context: .clarify, supabase: supabase)
         }
     }
 
@@ -139,21 +156,10 @@ final class ChatModel {
         if previousStage == .correction {
             // 纠正回合：用户已经输入新内容，始终续轮请求 /chat。
             Task {
-                let result = await streamAssistant(userText: clean, supabase: supabase)
-                if result.delivered {
-                    hadCorrection = true
-                    if shouldOfferVerification(resultReady: result.ready) {
-                        stage = .review
-                        showActionChips = true
-                    } else {
-                        // AI 仍在追问时继续收集，不按“回复轮数”强行进入确认态。
-                        stage = .correction
-                        showActionChips = false
-                    }
-                }
+                await performAssistant(userText: clean, context: .correctionFollowUp, supabase: supabase)
             }
         } else {
-            Task { await runAssistant(userText: clean, supabase: supabase) }
+            Task { await performAssistant(userText: clean, context: .clarify, supabase: supabase) }
         }
     }
 
@@ -167,16 +173,7 @@ final class ChatModel {
         let userText = hadCorrection ? Self.confirmAfterCorrectionPhrase : Self.confirmPhrase
         messages.append(Message(role: .user, text: userText))
         Task {
-            let result = await streamAssistant(userText: userText, supabase: supabase)
-            if result.delivered {
-                stage = .ready
-                showNextPanel = true
-                requestMatch(supabase: supabase)
-            } else {
-                // API 失败时不拿固定模板冒充回答，恢复验证入口让用户重试。
-                stage = .review
-                showActionChips = true
-            }
+            await performAssistant(userText: userText, context: .confirm, supabase: supabase)
         }
     }
 
@@ -187,13 +184,21 @@ final class ChatModel {
         messages.append(Message(role: .user, text: Self.correctionPhrase))
         stage = .correction
         Task {
-            let result = await streamAssistant(userText: Self.correctionPhrase, supabase: supabase)
-            if result.delivered {
-                hadCorrection = true
-            } else {
-                stage = .review
-                showActionChips = true
-            }
+            await performAssistant(userText: Self.correctionPhrase, context: .rejection, supabase: supabase)
+        }
+    }
+
+    /// 失败气泡下的“重新发送”：移除失败占位，原样重放请求，不重复用户消息。
+    func retry(supabase: SupabaseService) {
+        guard let request = retryRequest, !isStreaming else { return }
+        retryRequest = nil
+        if messages.last?.role == .ai, messages.last?.text == Self.apiFailureMessage {
+            messages.removeLast()
+        }
+        Task {
+            await performAssistant(userText: request.userText,
+                                   context: request.context,
+                                   supabase: supabase)
         }
     }
 
@@ -366,6 +371,7 @@ final class ChatModel {
         matchedTravelers = []
         matchReasons = [:]
         matchAttempted = false
+        retryRequest = nil
 
         if shouldOfferVerification(resultReady: convo.crossroads?.ready == true) {
             // 历史会话也必须同时满足“结构已成形 + 最后一轮明确邀请确认”。
@@ -389,16 +395,49 @@ final class ChatModel {
 
     // MARK: 流式请求 + 打字机
 
-    /// 澄清回合：流式请求，并按服务端信号决定是否出验证 chips。
-    private func runAssistant(userText: String, supabase: SupabaseService) async {
+    /// 统一执行 API 请求，并在成功后恢复原本所属的状态分支。
+    /// 失败只记录可重放请求，不再恢复一组可能与失败气泡冲突的旧按钮。
+    private func performAssistant(
+        userText: String,
+        context: RequestContext,
+        supabase: SupabaseService
+    ) async {
         let result = await streamAssistant(userText: userText, supabase: supabase)
-        guard result.delivered else { return }
-        // 只有“结构已清晰 + 本轮明确邀请确认”才进入验证态。
-        // 不能再用对话轮数推断，否则 AI 仍在追问时也会提前出现按钮。
-        if stage == .clarify, shouldOfferVerification(resultReady: result.ready) {
-            try? await Task.sleep(for: .milliseconds(850))
-            stage = .review
-            showActionChips = true
+        guard result.delivered else {
+            retryRequest = RetryRequest(userText: userText, context: context)
+            showActionChips = false
+            return
+        }
+        retryRequest = nil
+
+        switch context {
+        case .clarify:
+            // 只有“结构已清晰 + 本轮明确邀请确认”才进入验证态。
+            if shouldOfferVerification(resultReady: result.ready) {
+                try? await Task.sleep(for: .milliseconds(850))
+                stage = .review
+                showActionChips = true
+            } else {
+                stage = .clarify
+                showActionChips = false
+            }
+        case .correctionFollowUp:
+            hadCorrection = true
+            if shouldOfferVerification(resultReady: result.ready) {
+                stage = .review
+                showActionChips = true
+            } else {
+                stage = .correction
+                showActionChips = false
+            }
+        case .confirm:
+            stage = .ready
+            showNextPanel = true
+            requestMatch(supabase: supabase)
+        case .rejection:
+            hadCorrection = true
+            stage = .correction
+            showActionChips = false
         }
     }
 
