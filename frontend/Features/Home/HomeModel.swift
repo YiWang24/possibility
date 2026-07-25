@@ -420,7 +420,8 @@ final class HomeModel {
     private(set) var weekCells: [WeekDayCell]?
     /// 今天已有云端日记时的主情绪 emoji
     private(set) var todayEmoji: String?
-    /// 已探索天数：最早一条日记距今 +1；无日记 = 第 1 天；未加载/失败保持 demo 值
+    /// 已探索天数：最早一条日记距今 +1；云端无日记 / 未加载 / 失败保持 demo 值
+    /// （仅「有日记但时间戳全部解析失败」这一退化情形才回落到第 1 天）
     private(set) var exploredDays = 47
 
     /// 今日日期串：周历真实化后用真实日期打开详情；兜底时保持 demo 的 7/23
