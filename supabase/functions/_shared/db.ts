@@ -5,8 +5,11 @@ import type {
   ChatSignal,
   DiaryOutput,
   GeneratedTraveler,
+  LabChoiceOutput,
+  MatchOutput,
   SimulationOutput,
 } from "./schemas.ts";
+import type { LabChoiceInput, MatchState } from "./validate.ts";
 
 export type ConversationRow = {
   id: string;
@@ -171,6 +174,38 @@ export async function insertDiaryAnalysis(
     keywords: result.keywords,
   });
   if (error) dbFailure("insert diary", error);
+}
+
+export async function insertMatchResult(
+  db: SupabaseClient,
+  userId: string,
+  userState: MatchState,
+  result: MatchOutput,
+): Promise<void> {
+  const { error } = await db.from("match_results").insert({
+    user_id: userId,
+    user_state: userState,
+    matches: result.matches,
+  });
+  if (error) dbFailure("insert match result", error);
+}
+
+export async function insertLabChoiceSet(
+  db: SupabaseClient,
+  userId: string,
+  input: LabChoiceInput,
+  result: LabChoiceOutput,
+): Promise<void> {
+  const { error } = await db.from("lab_choice_sets").insert({
+    user_id: userId,
+    question: input.question,
+    topic: input.topic ?? null,
+    constraints: input.constraints ?? [],
+    previous_choices: input.previousChoices ?? [],
+    cards: result.cards,
+    rationale: result.rationale,
+  });
+  if (error) dbFailure("insert lab choice set", error);
 }
 
 export async function mergeProfileDimensions(
