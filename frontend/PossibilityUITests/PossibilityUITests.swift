@@ -466,7 +466,9 @@ final class CardGameFanCheck: XCTestCase {
         XCTAssertNotNil(waitFind("每套卡牌都会让你在有限的底牌里做选择。留下的三张，会成为画像的一部分。"), "卡牌大厅未出现")
         tapContaining("从 18 张底牌带走 9 张")
         XCTAssertNotNil(waitFind("开始这一局"), "intro 未出现")
-        app.buttons["开始这一局"].tap()
+        let start = app.buttons["开始这一局"]
+        XCTAssertTrue(start.isHittable, "开始这一局可见但无法接收真实触摸")
+        start.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
 
         // 选 9 张（LazyVGrid 懒加载，边点边上滑）
         let cardQuery = app.buttons.matching(NSPredicate(format: "label CONTAINS 'LIFE · '"))

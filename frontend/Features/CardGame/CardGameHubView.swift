@@ -5,6 +5,8 @@ import SwiftUI
 struct CardGameHubView: View {
     /// 结果保存需要写入首页画像
     let home: HomeModel
+    /// 由上层统一切换全屏页面，避免在卡牌大厅的 fullScreenCover 中再次嵌套 fullScreenCover。
+    var onLaunchGame: ((CardGameKind) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
@@ -14,6 +16,11 @@ struct CardGameHubView: View {
     @State private var completedKinds: Set<CardGameKind> = []
     @State private var progressKinds: Set<CardGameKind> = []
     @State private var didSyncRemote = false
+
+    init(home: HomeModel, onLaunchGame: ((CardGameKind) -> Void)? = nil) {
+        self.home = home
+        self.onLaunchGame = onLaunchGame
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -128,7 +135,7 @@ struct CardGameHubView: View {
 
     private var lifePrimary: some View {
         Button {
-            activeGame = .life
+            launch(.life)
         } label: {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 14) {
@@ -205,7 +212,7 @@ struct CardGameHubView: View {
     private func gameOption(_ kind: CardGameKind, sub: String) -> some View {
         let cfg = CardGameData.config(kind)
         return Button {
-            activeGame = kind
+            launch(kind)
         } label: {
             HStack(spacing: 13) {
                 Text(cfg.glyph).font(.system(size: 17))
@@ -229,6 +236,15 @@ struct CardGameHubView: View {
         }
         .buttonStyle(PressScaleStyle())
         .accessibilityIdentifier("card-game-\(kind.rawValue)")
+    }
+
+    private func launch(_ kind: CardGameKind) {
+        if let onLaunchGame {
+            onLaunchGame(kind)
+        } else {
+            // Preview 或独立复用时仍可在本视图内打开。
+            activeGame = kind
+        }
     }
 }
 
