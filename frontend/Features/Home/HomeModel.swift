@@ -35,6 +35,8 @@ final class HomeModel {
     var analysis: DiaryAnalysis?
     var analysisError: String?
     private var timerTask: Task<Void, Never>?
+    /// 分析任务由模型持有：便于用户中途取消，也避免网关偶发挂起时 UI 卡死
+    private var analyzeTask: Task<Void, Never>?
     private var lastTranscript: String?
 
     /// demo：录音得到的预置 transcript（真实 STT 非主线）
@@ -70,41 +72,64 @@ final class HomeModel {
         stopTranscription()
     }
 
-    /// 完成录音 → 将本次转写提交 analyze-diary，由服务端按既有日记规则分析并落库。
+    /// 完成录音 → 将本次转写提交 analyze-diary（服务端按既有日记规则分析并落库）。
+    /// 模型持有分析任务：便于中途取消，也避免网关偶发挂起时 UI 卡死。
     ///
-    /// ASR 不可用时仍保留 demo transcript，但本次情绪/关键词绝不由客户端伪造：
-    /// 必须来自 analyze-diary。失败会暴露给 UI，用户可以重试。
-    func analyzeDiary(using supabase: SupabaseService) async {
+    /// ASR 不可用时仍保留 demo transcript，但情绪/关键词绝不由客户端伪造：必须来自 analyze-diary。
+    func startAnalyzeDiary(using supabase: SupabaseService) {
         guard !analyzing else { return }
         finishRecording()
         analyzing = true
         analysisError = nil
-        defer { analyzing = false }
-        // 端上转写有内容 → 优先真实转写；稍等 Speech 交付最终识别结果。
-        if sttStarted { try? await Task.sleep(for: .milliseconds(600)) }
-        let localText = transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let transcript = localText.count >= 4 ? localText : sampleTranscript
-        lastTranscript = transcript
-        await submitDiaryAnalysis(transcript: transcript, using: supabase)
+        analyzeTask?.cancel()
+        analyzeTask = Task { [weak self] in
+            guard let self else { return }
+            // 端上转写有内容 → 优先真实转写；稍等 Speech 交付最终识别结果。
+            if self.sttStarted { try? await Task.sleep(for: .milliseconds(600)) }
+            guard !Task.isCancelled else { return }
+            let localText = self.transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let transcript = localText.count >= 4 ? localText : self.sampleTranscript
+            self.lastTranscript = transcript
+            await self.runAnalysis(transcript: transcript, using: supabase)
+        }
     }
 
     /// 复用同一份转写重试，避免失败后要求用户重新录音。
-    func retryDiaryAnalysis(using supabase: SupabaseService) async {
+    func startRetryAnalysis(using supabase: SupabaseService) {
         guard !analyzing, let transcript = lastTranscript else { return }
         analyzing = true
         analysisError = nil
-        defer { analyzing = false }
-        await submitDiaryAnalysis(transcript: transcript, using: supabase)
+        analyzeTask?.cancel()
+        analyzeTask = Task { [weak self] in
+            await self?.runAnalysis(transcript: transcript, using: supabase)
+        }
     }
 
-    private func submitDiaryAnalysis(transcript: String, using supabase: SupabaseService) async {
-        do {
-            analysis = try await supabase.analyzeDiary(transcript: transcript)
+    /// 用户主动取消本次分析：网关偶发会挂起上百秒，取消后可立即重试或重录，不被卡住。
+    func cancelAnalysis() {
+        analyzeTask?.cancel()
+        analyzeTask = nil
+        analyzing = false
+        analysisError = nil
+    }
+
+    /// 单次提交 analyze-diary。最多等 50s —— 网关偶发挂起可达上百秒，超时即当失败
+    /// 让用户快速重试，而不是把语音记录卡在转圈里（原「识别不了 / 点击没反应」的根因）。
+    /// 情绪/关键词绝不由客户端伪造，必须来自 analyze-diary。
+    private func runAnalysis(transcript: String, using supabase: SupabaseService) async {
+        analyzing = true
+        defer { analyzing = false }
+        let result = await withTimeout(seconds: 50) {
+            try await supabase.analyzeDiary(transcript: transcript)
+        }
+        guard !Task.isCancelled else { return }
+        if let result {
+            analysis = result
             // analyze-diary 已同步写入 diary_entries；刷新周历以与详情页保持一致。
             await loadDiaryOverview(using: supabase)
-        } catch {
+        } else {
             analysis = nil
-            analysisError = "刚刚好像没太听清，请再给我一次机会。"
+            analysisError = "这次没能顺利分析，点「重试」再试一次。"
         }
     }
 

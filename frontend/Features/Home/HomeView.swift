@@ -201,7 +201,7 @@ private struct DiaryCard: View {
                 Spacer()
                 Button(model.isRecording ? "■ 停止记录" : "◉ 记录今日") {
                     if model.isRecording {
-                        Task { await model.analyzeDiary(using: supabase) }
+                        model.startAnalyzeDiary(using: supabase)
                     } else {
                         model.toggleRecording()
                     }
@@ -280,7 +280,7 @@ private struct DiaryCard: View {
             // 不再逐秒重建整张卡（否则「完成」按钮会被重建打断命中，偶发点不动）
             RecorderElapsedLabel(model: model)
             Button("完成") {
-                Task { await model.analyzeDiary(using: supabase) }
+                model.startAnalyzeDiary(using: supabase)
             }
                 .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.white)
                 .padding(.horizontal, 14).padding(.vertical, 7)
@@ -303,10 +303,16 @@ private struct DiaryCard: View {
             Text("正在转写并分析这次记录…")
                 .font(.system(size: 11.5))
                 .foregroundStyle(Theme.sub)
+                .accessibilityLabel("正在分析语音日记")
+            Spacer()
+            // 网关偶发挂起时不至于卡死：随时可取消，取消后能立即重录或重试
+            Button("取消") { model.cancelAnalysis() }
+                .font(.system(size: 11.5, weight: .medium))
+                .foregroundStyle(Theme.faint)
+                .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 5)
-        .accessibilityLabel("正在分析语音日记")
     }
 
     private func analysisFailure(_ message: String) -> some View {
@@ -314,7 +320,7 @@ private struct DiaryCard: View {
             Text(message).font(.system(size: 11.5)).foregroundStyle(Theme.sub)
             Spacer()
             Button("重试") {
-                Task { await model.retryDiaryAnalysis(using: supabase) }
+                model.startRetryAnalysis(using: supabase)
             }
             .font(.system(size: 11.5, weight: .medium))
             .foregroundStyle(Theme.blue)
