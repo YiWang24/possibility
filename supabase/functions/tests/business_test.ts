@@ -178,6 +178,16 @@ Deno.test("simulation schema exposes bottom_line + recommendations contract", ()
   assert(bottom.required.includes("protective_conditions"));
 });
 
+Deno.test("chat signal exposes an explicit AI conclusion recommendation", () => {
+  const conclusion = chatSignalSchema.properties.conclusion;
+  assert(chatSignalSchema.required.includes("conclusion"));
+  assert(conclusion.required.includes("ready"));
+  assert(conclusion.required.includes("next_step"));
+  assert(conclusion.required.includes("reason"));
+  assert(conclusion.properties.next_step.enum.includes("match"));
+  assert(conclusion.properties.next_step.enum.includes("lab"));
+});
+
 Deno.test("persona schema bounds match fallback output contract", () => {
   const p = personaSchema.properties;
   assert(p.hue.minimum === 0 && p.hue.maximum === 360);
@@ -215,6 +225,11 @@ Deno.test("chat done payload carries alignment fields", () => {
   const ready = {
     done: true,
     is_enough: true,
+    conclusion: {
+      ready: true,
+      next_step: "match",
+      reason: "需要不同路径的现实证据",
+    },
     next_actions: [{
       type: "match",
       label: "看看走过类似岔路口、结局不同的人",
@@ -225,6 +240,8 @@ Deno.test("chat done payload carries alignment fields", () => {
     frame.slice(frame.indexOf("{"), frame.indexOf("}\n\n") + 1),
   );
   assert(parsed.is_enough === true);
+  assert(parsed.conclusion.ready === true);
+  assert(parsed.conclusion.next_step === "match");
   assert(
     Array.isArray(parsed.next_actions) &&
       parsed.next_actions[0].type === "match",

@@ -367,6 +367,16 @@ export const chatSignalSchema = {
       required: ["ready", "summary", "match_query"],
       additionalProperties: false,
     },
+    conclusion: {
+      type: "object",
+      properties: {
+        ready: { type: "boolean" },
+        next_step: { type: "string", enum: ["match", "lab"] },
+        reason: { type: "string" },
+      },
+      required: ["ready", "next_step", "reason"],
+      additionalProperties: false,
+    },
     profile_updates: {
       type: "array",
       maxItems: 5,
@@ -383,7 +393,13 @@ export const chatSignalSchema = {
     portrait_delta: { type: "integer", minimum: 0, maximum: 10 },
     high_risk: { type: "boolean" },
   },
-  required: ["crossroads", "profile_updates", "portrait_delta", "high_risk"],
+  required: [
+    "crossroads",
+    "conclusion",
+    "profile_updates",
+    "portrait_delta",
+    "high_risk",
+  ],
   additionalProperties: false,
 } as const;
 
@@ -484,6 +500,11 @@ export type ChatSignal = {
       decision_stage: string;
       support_need: string;
     };
+  };
+  conclusion: {
+    ready: boolean;
+    next_step: "match" | "lab";
+    reason: string;
   };
   profile_updates: Array<{ dimension: string; value: string }>;
   portrait_delta: number;

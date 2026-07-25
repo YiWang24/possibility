@@ -15,6 +15,23 @@ enum ChatStreamEvent: Sendable {
     case done(ChatStreamDone)
 }
 
+/// AI 判断本轮已可自然收尾时，只推荐一个不打断对话的后续入口。
+enum ChatRecommendedNextStep: String, Codable, Sendable {
+    case match
+    case lab
+}
+
+struct ChatConclusion: Decodable, Sendable {
+    var ready: Bool
+    var nextStep: ChatRecommendedNextStep
+    var reason: String
+
+    enum CodingKeys: String, CodingKey {
+        case ready, reason
+        case nextStep = "next_step"
+    }
+}
+
 /// SSE `event: done` 的载荷（对应 §6.1 二次结构化 + §7.3 岔路口成形判定）
 struct ChatStreamDone: Decodable, Sendable {
     /// 本轮归属的会话；后续追问带回 `conversation_id`，服务端据此取历史
@@ -23,9 +40,11 @@ struct ChatStreamDone: Decodable, Sendable {
     var crossroads: Crossroads?
     /// 本轮抽取的画像信号（维度名 → 内容），供 Home 动态画像生长
     var profileSignals: [String: String]?
+    /// 与 crossroads.ready 分离：只有 AI 判断下一轮已完成回答时才为 ready。
+    var conclusion: ChatConclusion?
 
     enum CodingKeys: String, CodingKey {
-        case crossroads
+        case crossroads, conclusion
         case conversationId = "conversation_id"
         case profileSignals = "profile_signals"
     }

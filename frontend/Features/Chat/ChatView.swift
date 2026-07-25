@@ -117,6 +117,7 @@ struct ChatView: View {
                     if model.showActionChips { actionChips }
                     if model.showNextPanel {
                         ChatNextPanel(showSummaryLink: true,
+                                      preferredPath: model.recommendedNextStep,
                                       matchedTravelers: model.matchedTravelers,
                                       matchReasons: model.matchReasons,
                                       onGoLab: goLab, onGoSimilar: goSimilar,

@@ -42,6 +42,8 @@ final class ChatModel {
     var hadCorrection = false
     /// 下一步面板（信息已经足够 · 选择下一步）
     var showNextPanel = false
+    /// AI 在收尾时选择的单一后续路径；旧服务端无该字段时保留兼容兜底。
+    var recommendedNextStep: ChatRecommendedNextStep?
     /// 完整总结页
     var showSummary = false
     /// 用户在澄清 / 纠正中的原话（结论、总结与分享文案插值）
@@ -146,10 +148,10 @@ final class ChatModel {
         if previousStage == .review || previousStage == .ready {
             stage = .clarify
             showNextPanel = false
-            matchedTravelers = []
-            matchReasons = [:]
-            matchAttempted = false
+            recommendedNextStep = nil
         }
+        // 任意新补充都可能改变匹配条件，不能沿用上一版理解预取的用户卡。
+        resetMatch()
         messages.append(Message(role: .user, text: clean))
         answers.append(clean)
 
@@ -181,6 +183,7 @@ final class ChatModel {
     func requestCorrection(supabase: SupabaseService) {
         guard !isStreaming else { return }
         showActionChips = false
+        resetMatch()
         messages.append(Message(role: .user, text: Self.correctionPhrase))
         stage = .correction
         Task {
@@ -203,6 +206,12 @@ final class ChatModel {
     }
 
     // MARK: 岔路口 → /match
+
+    private func resetMatch() {
+        matchedTravelers = []
+        matchReasons = [:]
+        matchAttempted = false
+    }
 
     /// 信息足够后请求匹配，并始终为对话面板准备 2 位旅人。
     /// 服务端岔路口缺失时（例如本地示例链路），用当前问题和用户补充生成保守条件。
@@ -367,6 +376,7 @@ final class ChatModel {
             .filter { !Self.verificationPhrases.contains($0) }
         hadCorrection = false
         showNextPanel = false
+        recommendedNextStep = nil
         showSummary = false
         matchedTravelers = []
         matchReasons = [:]
@@ -410,6 +420,17 @@ final class ChatModel {
         }
         retryRequest = nil
 
+        if result.conclusion?.ready == true, context != .rejection {
+            stage = .ready
+            showActionChips = false
+            showNextPanel = true
+            recommendedNextStep = result.conclusion?.nextStep
+            if recommendedNextStep == .match {
+                requestMatch(supabase: supabase)
+            }
+            return
+        }
+
         switch context {
         case .clarify:
             // 只有“结构已清晰 + 本轮明确邀请确认”才进入验证态。
@@ -433,7 +454,10 @@ final class ChatModel {
         case .confirm:
             stage = .ready
             showNextPanel = true
-            requestMatch(supabase: supabase)
+            recommendedNextStep = result.conclusion?.nextStep ?? .match
+            if recommendedNextStep == .match {
+                requestMatch(supabase: supabase)
+            }
         case .rejection:
             hadCorrection = true
             stage = .correction
@@ -466,7 +490,7 @@ final class ChatModel {
     private func streamAssistant(
         userText: String,
         supabase: SupabaseService,
-    ) async -> (delivered: Bool, ready: Bool) {
+    ) async -> (delivered: Bool, ready: Bool, conclusion: ChatConclusion?) {
         isStreaming = true
         defer { isStreaming = false }
 
@@ -517,6 +541,7 @@ final class ChatModel {
 
         var ready = false
         var receivedDone = false
+        var conclusion: ChatConclusion?
         do {
             for try await event in client.stream(request) {
                 switch event {
@@ -529,23 +554,26 @@ final class ChatModel {
                         crossroads = c   // 后端每轮 done 都带 crossroads，持续刷新
                         if c.ready { ready = true }
                     }
+                    conclusion = done.conclusion
                 }
             }
         } catch {
             messages[aiIndex].text = Self.apiFailureMessage
-            return (false, ready)
+            return (false, ready, conclusion)
         }
         if messages[aiIndex].text.isEmpty {
             messages[aiIndex].text = Self.apiFailureMessage
-            return (false, ready)
+            return (false, ready, conclusion)
         }
         guard receivedDone else {
             // 流结束但没有 done 事件，视为 API 失败，不展示不完整的模型输出。
             messages[aiIndex].text = Self.apiFailureMessage
-            return (false, ready)
+            return (false, ready, conclusion)
         }
-        if ready { requestMatch(supabase: supabase) }   // 岔路口成形 → 预取匹配旅人
-        return (true, ready)
+        if ready || conclusion?.nextStep == .match {
+            requestMatch(supabase: supabase)
+        }
+        return (true, ready, conclusion)
     }
 
     /// 四条首页示例问题首轮使用的本地 mock 回复。

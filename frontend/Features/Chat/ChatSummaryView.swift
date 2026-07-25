@@ -8,6 +8,8 @@ import SwiftUI
 
 struct ChatNextPanel: View {
     var showSummaryLink: Bool
+    /// AI 收尾时只推荐一个路径；nil 兼容旧会话，继续展示完整选择面板。
+    var preferredPath: ChatRecommendedNextStep? = nil
     /// /match 命中的旅人；对话场景只展示前 2 位
     var matchedTravelers: [Traveler] = []
     /// traveler_id → 推荐理由
@@ -19,25 +21,43 @@ struct ChatNextPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("信息已经足够 · 选择下一步")
+            Text(panelEyebrow)
                 .font(.system(size: 9)).tracking(1.6).foregroundStyle(Color(hex: 0x91B1FF))
-            Text("把刚才的理解带去哪里？")
+            Text(panelTitle)
                 .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
                 .padding(.top, 5)
 
-            Button(action: onGoLab) {
-                pathLabel(icon: "◉", title: "去人生实验室", note: "带着当前问题，推演几种可能")
-                    .background(
-                        LinearGradient(colors: [Color(hex: 0x3E70E8, alpha: 0.28), Color(hex: 0x6B55D3, alpha: 0.18)],
-                                       startPoint: .topLeading, endPoint: .bottomTrailing),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.34), lineWidth: 1))
+            if preferredPath != .match {
+                Button(action: onGoLab) {
+                    pathLabel(icon: "◉", title: "去人生实验室", note: "带着当前问题，推演几种可能")
+                        .background(
+                            LinearGradient(colors: [Color(hex: 0x3E70E8, alpha: 0.28), Color(hex: 0x6B55D3, alpha: 0.18)],
+                                           startPoint: .topLeading, endPoint: .bottomTrailing),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.34), lineWidth: 1))
+                }
+                .buttonStyle(PressScaleStyle())
+                .padding(.top, 11)
             }
-            .buttonStyle(PressScaleStyle())
-            .padding(.top, 11)
 
-            if matchedTravelers.isEmpty {
+            if preferredPath == .lab {
+                shareCell
+                    .padding(.top, 8)
+            } else if matchedTravelers.isEmpty, preferredPath == .match {
+                HStack(spacing: 9) {
+                    ProgressView().tint(Color(hex: 0x91B1FF))
+                    Text("正在为你找走过相似处境的人…")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.sub)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(13)
+                .background(Color.white.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(Theme.line, lineWidth: 1))
+                .padding(.top, 11)
+            } else if matchedTravelers.isEmpty {
                 HStack(spacing: 8) {
                     Button(action: onGoSimilar) {
                         pathLabel(icon: "⌁", title: "看相似经历", note: "去社区找走过这段路的人")
@@ -92,6 +112,21 @@ struct ChatNextPanel: View {
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
             .strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.2), lineWidth: 1))
         .transition(.opacity)
+    }
+
+    private var panelEyebrow: String {
+        preferredPath == nil ? "信息已经足够 · 选择下一步" : "这轮探索先到这里 · 为你推荐"
+    }
+
+    private var panelTitle: String {
+        switch preferredPath {
+        case .match:
+            return "看看走过相似处境的人"
+        case .lab:
+            return "把现在的判断放进现实里推演"
+        case nil:
+            return "把刚才的理解带去哪里？"
+        }
     }
 
     /// 分享这次探索（系统分享）
@@ -204,6 +239,7 @@ struct ChatSummaryView: View {
                          body: "未来 7 天，做一次成本很低、可以撤回的小尝试。记录行动前后的期待、精力和抗拒，再判断你是\u{201C}不想要\u{201D}，还是\u{201C}暂时承担不起\u{201D}。",
                          accent: Color(hex: 0x3ED9A4, alpha: 0.25))
                     ChatNextPanel(showSummaryLink: false,
+                                  preferredPath: model.recommendedNextStep,
                                   matchedTravelers: model.matchedTravelers,
                                   matchReasons: model.matchReasons,
                                   onGoLab: onGoLab, onGoSimilar: onGoSimilar,

@@ -169,3 +169,23 @@ final class HomeModelTests: XCTestCase {
         XCTAssertEqual(progress.percent, 17)
     }
 }
+
+final class ChatFlowContractTests: XCTestCase {
+    func testDoneEventDecodesAIConclusionRecommendation() throws {
+        let payload = Data("""
+        {
+          "conversation_id": "6A60A8BB-C66A-4B7F-AC19-8D5CF86A1CC1",
+          "conclusion": {
+            "ready": true,
+            "next_step": "match",
+            "reason": "需要不同路径的现实证据"
+          }
+        }
+        """.utf8)
+
+        let done = try JSONDecoder().decode(ChatStreamDone.self, from: payload)
+        XCTAssertEqual(done.conclusion?.ready, true)
+        XCTAssertEqual(done.conclusion?.nextStep, .match)
+        XCTAssertEqual(done.conclusion?.reason, "需要不同路径的现实证据")
+    }
+}
