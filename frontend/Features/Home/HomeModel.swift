@@ -34,6 +34,8 @@ final class HomeModel {
     var analyzing = false
     var analysis: DiaryAnalysis?
     var analysisError: String?
+    /// 录完后展示、可编辑的转写全文（自己输入 = 手动修正后重新分析）
+    var transcript: String = ""
     private var timerTask: Task<Void, Never>?
     /// 分析任务由模型持有：便于用户中途取消，也避免网关偶发挂起时 UI 卡死
     private var analyzeTask: Task<Void, Never>?
@@ -55,6 +57,7 @@ final class HomeModel {
         elapsed = 0
         analysis = nil
         analysisError = nil
+        transcript = ""
         startTranscriptionIfAvailable()
         timerTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -90,7 +93,25 @@ final class HomeModel {
             let localText = self.transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
             let transcript = localText.count >= 4 ? localText : self.sampleTranscript
             self.lastTranscript = transcript
+            // 展示可编辑的转写全文，供用户手动修正后重新分析
+            self.transcript = transcript
             await self.runAnalysis(transcript: transcript, using: supabase)
+        }
+    }
+
+    /// 自己输入：用户在卡片里手改转写全文后，用编辑文本重新提交 analyze-diary。
+    /// 文本为空则忽略（避免把空转写提交分析）。
+    func submitEditedTranscript(using supabase: SupabaseService) {
+        guard !analyzing else { return }
+        let text = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return }
+        transcript = text
+        lastTranscript = text
+        analyzing = true
+        analysisError = nil
+        analyzeTask?.cancel()
+        analyzeTask = Task { [weak self] in
+            await self?.runAnalysis(transcript: text, using: supabase)
         }
     }
 

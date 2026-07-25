@@ -186,6 +186,11 @@ private struct DiaryCard: View {
     var onOpenDiary: (String?) -> Void
     @Environment(SupabaseService.self) private var supabase
 
+    /// 转写全文是否展开（默认折叠为几行）
+    @State private var transcriptExpanded = false
+    /// 是否处于「自己输入」编辑态
+    @State private var editingTranscript = false
+
     /// 首页前 6 天固定使用 demo 心情；只有「今天」读取真实日记。
     private var mockWeek: [(emoji: String, label: String, date: String)] {
         let emojis = ["🙂", "😮‍💨", "😊", "😐", "🙂", "😌"]
@@ -234,12 +239,20 @@ private struct DiaryCard: View {
             }
             weekRow
             if model.isRecording { recorder }
+            if !model.transcript.isEmpty && !model.isRecording { transcriptBlock }
             if model.analyzing { analyzingView }
             if let analysis = model.analysis { result(analysis) }
             if let error = model.analysisError { analysisFailure(error) }
         }
         .padding(.horizontal, 20).padding(.vertical, 17)
         .kaleidoCard()
+        .onChange(of: model.isRecording) {
+            // 重新录音时复位转写块的展开 / 编辑态
+            if model.isRecording {
+                transcriptExpanded = false
+                editingTranscript = false
+            }
+        }
     }
 
     private var weekRow: some View {
@@ -303,6 +316,65 @@ private struct DiaryCard: View {
         )
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
+
+    // MARK: 转写全文（收起 + 自己输入）
+
+    private var transcriptBlock: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                Text("语音转写").font(.system(size: 11)).foregroundStyle(Theme.faint)
+                Spacer()
+                if editingTranscript {
+                    Button("取消") {
+                        withAnimation(.easeOut(duration: 0.2)) { editingTranscript = false }
+                    }
+                    .font(.system(size: 11)).foregroundStyle(Theme.faint).buttonStyle(.plain)
+                    Button("重新分析") {
+                        editingTranscript = false
+                        model.submitEditedTranscript(using: supabase)
+                    }
+                    .font(.system(size: 11, weight: .medium)).foregroundStyle(Theme.blue).buttonStyle(.plain)
+                    .disabled(model.analyzing
+                              || model.transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                } else {
+                    Button("编辑") {
+                        transcriptExpanded = true
+                        withAnimation(.easeOut(duration: 0.2)) { editingTranscript = true }
+                    }
+                    .font(.system(size: 11)).foregroundStyle(Theme.blue).buttonStyle(.plain)
+                    .disabled(model.analyzing)
+                    if transcriptIsLong {
+                        Button(transcriptExpanded ? "收起" : "展开全文") {
+                            withAnimation(.easeOut(duration: 0.2)) { transcriptExpanded.toggle() }
+                        }
+                        .font(.system(size: 11)).foregroundStyle(Theme.blue).buttonStyle(.plain)
+                    }
+                }
+            }
+
+            if editingTranscript {
+                TextEditor(text: $model.transcript)
+                    .font(.system(size: 12.5)).lineSpacing(4).foregroundStyle(Theme.ink)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 96)
+                    .padding(8)
+                    .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+            } else {
+                Text(model.transcript)
+                    .font(.system(size: 12.5)).lineSpacing(6).foregroundStyle(Color(hex: 0xC8CEDA))
+                    .lineLimit(transcriptExpanded || !transcriptIsLong ? nil : 3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(12)
+        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+        .transition(.opacity)
+    }
+
+    /// 转写是否长到需要折叠（短文本不显示展开/收起）
+    private var transcriptIsLong: Bool { model.transcript.count > 48 }
 
     private var analyzingView: some View {
         HStack(spacing: 9) {
