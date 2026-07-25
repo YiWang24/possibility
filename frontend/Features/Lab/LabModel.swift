@@ -88,7 +88,10 @@ final class LabModel {
         remoteChoices = []
         pick = nil
 
-        let response = await withTimeout(seconds: 15) { try await supabase.labChoices(question: q) }
+        // 经网关的 lab-choices 单次成功约 8~12s（真机叠加 TLS/蜂窝网络更高），
+        // 后端对网关偶发挂起还会重试。15s 上限过紧，常把「慢但成功」的生成误判为失败；
+        // 放宽到 30s 覆盖正常波动，真正挂起才落到下方错误态 + 重新生成入口。
+        let response = await withTimeout(seconds: 30) { try await supabase.labChoices(question: q) }
 
         // 已有更新的请求在跑：本次结果整体作废（loading 由新请求收尾）
         guard requestID == choicesRequestID else { return }

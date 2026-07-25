@@ -1,17 +1,15 @@
 import { createDeepSeek } from "@ai-sdk/deepseek";
-import { APICallError, generateObject, jsonSchema, streamText } from "ai";
+import { APICallError, generateObject, jsonSchema } from "ai";
 import { runtimeConfig } from "./config.ts";
 import { HttpError } from "./errors.ts";
 
 /**
- * LLM 适配层：全部走 Vercel AI SDK（`ai` + `@ai-sdk/deepseek`），后端为 DeepSeek v4。
- *
- * 结构化输出用 `generateObject`（原生结构化 + 客户端 schema 校验）；对话用 `streamText`。
+ * 结构化输出适配层：走 Vercel AI SDK（`ai` + `@ai-sdk/deepseek`），后端为 DeepSeek v4。
+ * 用 `generateObject`（原生结构化 + 客户端 schema 校验）。对话流式见 chat-stream.ts。
  *
  * 关键：DeepSeek v4（flash/pro）默认开启 reasoning（思维链），会占用 max_tokens 预算——
- * 小预算下正文会被思维链吃光而截断。这里对所有调用统一关闭 reasoning
- * （providerOptions.deepseek.thinking=disabled），换取更快首字、更省 token、更稳的正文，
- * 避免结构化生成被截断。若日后需要更强推理，可按调用点单独打开。
+ * 小预算下正文会被思维链吃光而截断。这里对结构化生成统一关闭 reasoning
+ * （providerOptions.deepseek.thinking=disabled），换更省 token、更稳的正文，避免截断。
  */
 
 let provider: ReturnType<typeof createDeepSeek> | undefined;
@@ -89,27 +87,4 @@ export async function structuredOutput<T>(
     "MODEL_OUTPUT_INVALID",
     "AI 多次生成均超时或返回了无法解析的结构，请稍后重试。",
   );
-}
-
-/**
- * 流式对话：返回 Vercel AI SDK 的 streamText 结果。
- * 调用方用 `result.textStream` 逐块读取正文，`await result.text` 取完整文本；
- * 传入 abortSignal 可在客户端断开时中止上游生成。
- */
-export function streamChatText(options: {
-  model: string;
-  system: string;
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
-  maxTokens: number;
-  abortSignal?: AbortSignal;
-}) {
-  return streamText({
-    model: deepseek(options.model),
-    system: options.system,
-    messages: options.messages,
-    maxOutputTokens: options.maxTokens,
-    maxRetries: 2,
-    abortSignal: options.abortSignal,
-    providerOptions: NO_THINKING,
-  });
 }
