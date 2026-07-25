@@ -1,4 +1,5 @@
-import { anthropic, structuredOutput } from "../_shared/anthropic.ts";
+import { structuredOutput } from "../_shared/anthropic.ts";
+import { streamChatReply } from "../_shared/chat-stream.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
@@ -41,6 +42,26 @@ const fallbackSignal: ChatSignal = {
   high_risk: false,
 };
 
+// 回复流结束后再等信号抽取的宽限时长；超时即降级为 fallback，避免网关挂起拖住 done。
+const SIGNAL_GRACE_MS = 20_000;
+
+type SignalResult = { signal: ChatSignal; degraded: boolean };
+
+function raceSignal(
+  signalPromise: Promise<SignalResult>,
+): Promise<SignalResult> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const grace = new Promise<SignalResult>((resolve) => {
+    timer = setTimeout(
+      () => resolve({ signal: fallbackSignal, degraded: true }),
+      SIGNAL_GRACE_MS,
+    );
+  });
+  return Promise.race([signalPromise, grace]).finally(() => {
+    if (timer !== undefined) clearTimeout(timer);
+  });
+}
+
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
   if (preflight) return preflight;
@@ -78,24 +99,24 @@ Deno.serve(async (req) => {
       console.error("chat signal extraction failed:", error);
       return { signal: fallbackSignal, degraded: true };
     });
-    const messageStream = anthropic().messages.stream({
-      model: runtimeConfig.chatModel,
-      max_tokens: 1_024,
-      system: frontDoorPrompt(conversation.topic),
-      messages,
-    });
 
+    // 客户端断开时，用它中止仍在挂起的上游流式请求。
+    const cancelController = new AbortController();
     let cancelled = false;
     const body = new ReadableStream<Uint8Array>({
       async start(controller) {
-        let assistantText = "";
-        messageStream.on("text", (text) => {
-          assistantText += text;
-          if (!cancelled) controller.enqueue(sseEvent({ t: text }));
-        });
-
         try {
-          await messageStream.finalMessage();
+          // 用 Vercel AI SDK 流式生成回复：短超时 + 空则重试，避开网关 ~135s 挂起窗口。
+          const assistantText = await streamChatReply({
+            model: runtimeConfig.chatModel,
+            system: frontDoorPrompt(conversation.topic),
+            messages,
+            maxOutputTokens: 1_024,
+            cancelSignal: cancelController.signal,
+            onDelta: (text) => {
+              if (!cancelled) controller.enqueue(sseEvent({ t: text }));
+            },
+          });
           if (!assistantText.trim()) {
             throw new HttpError(
               502,
@@ -104,7 +125,9 @@ Deno.serve(async (req) => {
             );
           }
 
-          const signalResult = await signalPromise;
+          // 岔路口信号抽取走的是网关不可靠的结构化路径，不能让它阻塞回复完成：
+          // 回复流结束后再给它一小段宽限期，超时则降级为 fallback，done 照常下发。
+          const signalResult = await raceSignal(signalPromise);
           let { signal } = signalResult;
           if (signal.high_risk) {
             signal = {
@@ -163,7 +186,7 @@ Deno.serve(async (req) => {
       },
       cancel() {
         cancelled = true;
-        messageStream.abort();
+        cancelController.abort();
       },
     });
     return sseResponse(body);
