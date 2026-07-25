@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --flash-app-safe-area-inset-top: 0px;
+  --flash-app-safe-area-inset-right: 0px;
+  --flash-app-safe-area-inset-bottom: 0px;
+  --flash-app-safe-area-inset-left: 0px;
+  --flash-app-safe-top: var(--flash-app-safe-area-inset-top, 0px);
+
+  --stage: #05070D;
+  --paper: #0A0C12;
+  --card: #13161F;
+  --raised: #1B1F2B;
+  --ink: #F2F4F9;
+  --sub: #98A0B3;
+  --faint: #5A6172;
+  --line: rgba(255, 255, 255, 0.08);
+  --blue: #5E96FF;
+  --blue-deep: #2F63E8;
+  --violet: #5E96FF;
+  --violet-soft: #8F7BFF;
+  --pink: #F06ACD;
+  --magenta: #E35CC1;
+  --orange: #FF7A4D;
+  --apricot: #FFB067;
+  --teal: #3ED9A4;
+  --lime: #D7F464;
+  --aurora: linear-gradient(135deg, #5E96FF 0%, #8F7BFF 40%, #E35CC1 75%, #FF7A4D 100%);
+  --btn-g: linear-gradient(135deg, #6FA5FF, #2F63E8);
+  --shadow-card: 0 2px 16px -4px rgba(0, 0, 0, 0.55);
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body, #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--stage);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  #container {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+@keyframes orblava1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(12%, 18%) scale(1.1); }
+  66% { transform: translate(-8%, -12%) scale(0.95); }
+}
+
+@keyframes orblava2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-15%, 10%) scale(1.08); }
+  70% { transform: translate(10%, -18%) scale(0.92); }
+}
+
+@keyframes wv {
+  0%, 100% { height: 22%; }
+  50% { height: 95%; }
+}
