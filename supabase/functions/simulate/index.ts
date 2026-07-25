@@ -3,8 +3,8 @@ import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
 import {
-  insertGeneratedTravelers,
   type InsertedTraveler,
+  insertGeneratedTravelers,
   insertSimulation,
 } from "../_shared/db.ts";
 import { serviceClient } from "../_shared/service.ts";
@@ -85,7 +85,10 @@ Deno.serve(async (req) => {
           prompt: genPrompt,
           schema: generatedTravelersSchema,
         }).catch((error) => {
-          console.error("traveler generation failed:", (error as Error).message);
+          console.error(
+            "traveler generation failed:",
+            (error as Error).message,
+          );
           return null;
         })
         : Promise.resolve(null),
