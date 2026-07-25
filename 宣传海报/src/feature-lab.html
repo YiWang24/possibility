@@ -1,92 +1,75 @@
 <!doctype html><html lang="zh"><head><meta charset="utf-8">
 <link rel="stylesheet" href="base.css">
 <style>
-  .stage{width:1080px;height:1620px;display:flex;flex-direction:column}
-  .top{display:flex;justify-content:space-between;align-items:center;padding:52px 72px 0}
-  .brand{display:flex;align-items:center;gap:14px}.brand .mk{width:40px;height:40px}
-  .brand b{font-size:25px;font-weight:700}.brand .en{font-size:11px;letter-spacing:.32em;color:var(--faint);display:block;margin-top:2px;font-weight:600}
-  .fno{text-align:right}.fno .n{font-size:15px;letter-spacing:.4em;color:var(--muted);font-weight:600}.fno .l{font-size:11px;letter-spacing:.3em;color:var(--faint);margin-top:4px}
-  .title{padding:40px 72px 0;position:relative;z-index:3}
-  .title .eb{font-size:15px;letter-spacing:.5em;color:var(--muted);font-weight:600}
-  .title h1{font-size:74px;font-weight:800;margin-top:16px;line-height:1.1}
-  .title p{font-size:21px;color:var(--muted);margin-top:20px;line-height:1.7;max-width:840px}
-  .title p b{color:#e7e3ff;font-weight:600}
-  .dialwrap{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;margin-top:8px;height:480px}
-  .dial{width:470px;height:470px}.dial svg{width:100%;height:100%;overflow:visible}
-  .dcenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:340px}
-  .dcenter .q{font-size:14px;color:var(--faint);letter-spacing:.2em}
-  .dcenter .big{font-size:34px;font-weight:800;margin:10px 0 4px}
-  .dcenter .big em{font-style:normal;font-size:60px;background:linear-gradient(120deg,#4da6ff,#ff5fa8);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 6px}
-  .dcenter .sub{font-size:14px;color:var(--muted)}
-  .years{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);display:flex;gap:14px}
-  .yr{padding:9px 22px;border-radius:999px;border:1px solid var(--stroke);background:var(--card);font-size:16px;font-weight:600;color:var(--muted)}
-  .yr.on{background:linear-gradient(100deg,#4d6bff,#7b5cff);color:#fff;border-color:transparent;box-shadow:0 8px 30px rgba(93,107,255,.5)}
-  .scen{margin-top:auto;padding:0 72px 56px;position:relative;z-index:3;display:flex;gap:20px}
-  .sc{flex:1;padding:26px 24px 28px;border-radius:22px;border:1px solid var(--stroke);position:relative;overflow:hidden;
-    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
-  .sc .tag{display:inline-block;font-size:13px;font-weight:700;padding:5px 14px;border-radius:999px;letter-spacing:.06em}
-  .sc h3{font-size:22px;font-weight:700;margin:16px 0 10px}
-  .sc p{font-size:14.5px;color:var(--muted);line-height:1.72}
-  .sc .bar{position:absolute;left:0;top:0;width:100%;height:4px}
-  .best .bar{background:linear-gradient(90deg,#3ee0a0,#4de0ff)}.best .tag{background:rgba(62,224,160,.16);color:#6cf0c0}
-  .mid .bar{background:linear-gradient(90deg,#5d8bff,#7b5cff)}.mid .tag{background:rgba(93,139,255,.18);color:#9db6ff}
-  .worst .bar{background:linear-gradient(90deg,#ff9a5c,#ff5f7a)}.worst .tag{background:rgba(255,120,90,.16);color:#ffb28f}
+  .stage{width:1080px;height:1620px}
+  .destlabel{position:absolute;z-index:4;transform:translate(-50%,-50%);font-family:var(--round);font-weight:800;
+    font-size:22px;padding:8px 18px;border-radius:14px;color:#fff;box-shadow:0 6px 0 rgba(38,38,31,.14)}
+  .tblock{position:absolute;left:64px;top:900px;right:64px}
+  .tblock h1{font-size:62px}
+  .tblock p{font-size:19px;margin-top:14px}
+  .cards{position:absolute;left:64px;right:64px;top:1236px}
+  .fcard .tag{display:inline-block;font-family:var(--round);font-weight:800;font-size:15px;padding:5px 14px;border-radius:10px;margin-bottom:12px}
+  .best .tag{background:#dff4e8;color:#2fa46b}.mid .tag{background:#e3edfb;color:#5a86cf}.worst .tag{background:#fde6dd;color:#e07a4f}
+  .best{box-shadow:0 10px 0 rgba(47,164,107,.18)}.mid{box-shadow:0 10px 0 rgba(90,134,207,.18)}.worst{box-shadow:0 10px 0 rgba(224,122,79,.18)}
+  .resbar{position:absolute;left:64px;right:64px;top:1494px}
 </style></head>
 <body>
 <div class="stage">
-  <svg class="viz" viewBox="0 0 1080 1620" preserveAspectRatio="none"><g id="mesh"></g></svg>
-  <div class="top content">
-    <div class="brand"><svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg><div><b>我有可能</b><span class="en">KALEIDOSCOPE</span></div></div>
-    <div class="fno"><div class="n">功 能 02</div><div class="l">LIFE LAB</div></div>
-  </div>
-  <div class="title content">
-    <div class="eb">人 生 实 验 室</div>
-    <h1>把选择<span class="grad-text">推演</span>到<br>3 / 5 / 10 年后</h1>
-    <p>站在人生岔路口，先别急着决定。<b>预演不同选择</b>在未来的<br>最好、一般与最坏情形，更理性、更从容地做出属于自己的选择。</p>
+  <svg class="scene" id="scene" viewBox="0 0 1080 1620" width="1080" height="1620" preserveAspectRatio="xMidYMid slice"></svg>
+
+  <div class="phead">
+    <div class="bmini"><svg viewBox="-50 -50 100 100" id="bmk"></svg><div><div class="nm">我有可能</div><div class="tg">自我探索 · 人生决策</div></div></div>
+    <div class="ftag">功能 02<small>LIFE LAB</small></div>
   </div>
 
-  <div class="dialwrap">
-    <div class="dial"><svg id="dial" viewBox="-250 -250 500 500"></svg></div>
-    <div class="dcenter">
-      <div class="q">时 间 旋 钮 · 年</div>
-      <div class="big">推演 <em>5</em> 年后的你</div>
-      <div class="sub">拖动旋钮，1 – 10 年任意停留</div>
-    </div>
-    <div class="years"><div class="yr">1年</div><div class="yr on">5年</div><div class="yr">10年</div></div>
+  <div class="destlabel" style="left:225px;top:430px;background:var(--sky-d)">一般</div>
+  <div class="destlabel" style="left:540px;top:300px;background:var(--mustard-d)">最好</div>
+  <div class="destlabel" style="left:855px;top:430px;background:var(--coral)">最坏</div>
+
+  <div class="tblock">
+    <span class="kk">人生实验室</span>
+    <h1>把一个选择，<span class="t">推演</span>到<br><span class="c">3 / 5 / 10 年后</span></h1>
+    <p>站在岔路口先别急着决定。预演不同选择在未来的最好、一般与最坏情形，更从容地选择。</p>
   </div>
 
-  <div class="scen content">
-    <div class="sc best"><div class="bar"></div><span class="tag">最好情形 · BEST</span><h3>顺势起飞</h3><p>能力与机遇共振，转型落地。新赛道站稳，收入与成就感同步提升。</p></div>
-    <div class="sc mid"><div class="bar"></div><span class="tag">一般情形 · BASE</span><h3>稳步过渡</h3><p>有阵痛也有收获。用一两年完成切换，节奏放缓但方向清晰。</p></div>
-    <div class="sc worst"><div class="bar"></div><span class="tag">最坏情形 · WORST</span><h3>及时回调</h3><p>即使不顺，也已看清边界。低成本试错，随时可回到更适合的路。</p></div>
+  <div class="cards">
+    <div class="fcard best"><span class="tag">最好 · BEST</span><h3>顺势起飞</h3><p>能力与机遇共振，转型落地，新赛道站稳，收入与成就感同步提升。</p></div>
+    <div class="fcard mid"><span class="tag">一般 · BASE</span><h3>稳步过渡</h3><p>有阵痛也有收获，用一两年完成切换，节奏放缓但方向清晰。</p></div>
+    <div class="fcard worst"><span class="tag">最坏 · WORST</span><h3>及时回调</h3><p>即使不顺也已看清边界，低成本试错，随时回到更适合的路。</p></div>
   </div>
+  <div class="resbar"><div><b>＝ 更理性的选择</b> &nbsp;<span>看清每条路的三种结局</span></div><div class="go">进入实验室 →</div></div>
 </div>
-<script src="bloom.js"></script>
+<script src="flat.js"></script>
 <script>
-  renderMesh(document.getElementById('mesh'),{w:1080,h:1620,n:46,seed:14});
-  // 仪表盘
-  (function(){const NS='http://www.w3.org/2000/svg';const s=document.getElementById('dial');
-    const defs=document.createElementNS(NS,'defs');
-    defs.innerHTML='<linearGradient id="ring" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#ff7a5c"/><stop offset=".5" stop-color="#7b5cff"/><stop offset="1" stop-color="#4da6ff"/></linearGradient>'+
-      '<filter id="g" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>';
-    s.appendChild(defs);
-    const R=210;
-    // 光晕环
-    const halo=document.createElementNS(NS,'circle');halo.setAttribute('r',R);halo.setAttribute('fill','none');halo.setAttribute('stroke','url(#ring)');halo.setAttribute('stroke-width','14');halo.setAttribute('opacity','.35');halo.setAttribute('filter','url(#g)');s.appendChild(halo);
-    const ring=document.createElementNS(NS,'circle');ring.setAttribute('r',R);ring.setAttribute('fill','none');ring.setAttribute('stroke','url(#ring)');ring.setAttribute('stroke-width','5');s.appendChild(ring);
-    // 刻度 1-10
-    for(let i=0;i<60;i++){const a=(-90+i*6)*Math.PI/180;const big=i%6===0;const r1=R-14,r2=R-(big?30:22);
-      const l=document.createElementNS(NS,'line');l.setAttribute('x1',Math.cos(a)*r1);l.setAttribute('y1',Math.sin(a)*r1);l.setAttribute('x2',Math.cos(a)*r2);l.setAttribute('y2',Math.sin(a)*r2);
-      l.setAttribute('stroke',big?'rgba(220,225,255,.9)':'rgba(160,170,220,.4)');l.setAttribute('stroke-width',big?2.4:1);s.appendChild(l);
-      if(big){const n=i/6+1;const t=document.createElementNS(NS,'text');const rr=R-48;t.setAttribute('x',Math.cos(a)*rr);t.setAttribute('y',Math.sin(a)*rr+6);t.setAttribute('fill','rgba(200,205,240,.75)');t.setAttribute('font-size','17');t.setAttribute('text-anchor','middle');t.setAttribute('font-family','sans-serif');t.textContent=n;s.appendChild(t);}}
-    // 指针到 5 (i=24 -> angle -90+144=54deg? 需指向"5")  5对应 i=4*6=24
-    const pa=(-90+24*6)*Math.PI/180;const kx=Math.cos(pa)*(R-16),ky=Math.sin(pa)*(R-16);
-    const knob=document.createElementNS(NS,'circle');knob.setAttribute('cx',kx);knob.setAttribute('cy',ky);knob.setAttribute('r','13');knob.setAttribute('fill','#fff');knob.setAttribute('filter','url(#g)');s.appendChild(knob);
-    const knob2=document.createElementNS(NS,'circle');knob2.setAttribute('cx',kx);knob2.setAttribute('cy',ky);knob2.setAttribute('r','9');knob2.setAttribute('fill','#c14dff');s.appendChild(knob2);
-  })();
-  (function(){const s=document.getElementById('logomk');const g=document.createElementNS('http://www.w3.org/2000/svg','defs');
-    g.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';s.appendChild(g);
-    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','url(#lg)');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
-    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  svg.appendChild(FLAT.rays(540,320,1150,28,[C.cream2,"#FBE9B8"]));
+  // 三条通往不同未来的路（从底部岔口发散）
+  const roads=[["M540,905 Q380,640 225,395",C.sky],["M540,905 L540,335",C.mustard],["M540,905 Q700,640 855,395",C.coral]];
+  roads.forEach(r=>{
+    svg.appendChild(E("path",{d:r[0],fill:"none",stroke:C.cream,"stroke-width":46,"stroke-linecap":"round",filter:"url(#stickerThin)"}));
+  });
+  roads.forEach(r=>svg.appendChild(E("path",{d:r[0],fill:"none",stroke:C.ink,"stroke-width":5,"stroke-dasharray":"4 22","stroke-linecap":"round",opacity:.3})));
+  // 三个目的地：小平台 + 天气图标
+  [[225,395,"cloud"],[540,335,"sun"],[855,395,"rain"]].forEach(d=>{
+    svg.appendChild(E("ellipse",{cx:d[0],cy:d[1]+30,rx:64,ry:20,fill:C.tealD,filter:"url(#stickerThin)"}));
+    const ic=FLAT.icon(d[2]);ic.setAttribute("transform",`translate(${d[0]},${d[1]-14}) scale(1.25)`);svg.appendChild(ic);
+  });
+  // 岔口处的小人
+  (function(){const g=E("g",{transform:"translate(540,950) scale(1.4)",filter:"url(#sticker)"});
+    g.appendChild(E("rect",{x:-20,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:4,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:-23,y:-9,width:21,height:11,rx:5,fill:C.coralD}));
+    g.appendChild(E("rect",{x:2,y:-9,width:21,height:11,rx:5,fill:C.coralD}));
+    g.appendChild(E("path",{d:"M-25,-116 Q-27,-62 -21,-56 L21,-56 Q27,-62 25,-116 Q0,-130 -25,-116 Z",fill:C.mustard}));
+    g.appendChild(E("rect",{x:-34,y:-114,width:13,height:50,rx:6,fill:C.mustard}));
+    g.appendChild(E("rect",{x:21,y:-114,width:13,height:50,rx:6,fill:C.mustard}));
+    g.appendChild(E("circle",{cx:-28,cy:-62,r:7,fill:C.skin}));g.appendChild(E("circle",{cx:28,cy:-62,r:7,fill:C.skin}));
+    g.appendChild(E("circle",{cx:0,cy:-138,r:22,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-22,-146 Q-19,-168 2,-166 Q22,-168 22,-144 Q13,-156 0,-154 Q-11,-156 -22,-146 Z",fill:C.ink}));
+    g.appendChild(E("circle",{cx:-9,cy:-140,r:2.6,fill:C.ink}));g.appendChild(E("circle",{cx:9,cy:-140,r:2.6,fill:C.ink}));
+    g.appendChild(E("path",{d:"M-8,-129 Q0,-123 8,-129",stroke:C.ink,"stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+    svg.appendChild(g);})();
+  FLAT.defs(document.getElementById('bmk'));document.getElementById('bmk').appendChild(FLAT.flower(0,0,36,C.coral,C.teal,C.mustard));
 </script>
+<div class="grain"></div><div class="grain2"></div>
 </body></html>

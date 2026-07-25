@@ -2,88 +2,103 @@
 <link rel="stylesheet" href="base.css">
 <style>
   .stage{width:1080px;height:1620px}
-  /* 顶部 */
-  .top{display:flex;justify-content:space-between;align-items:center;padding:56px 72px 0}
-  .brand{display:flex;align-items:center;gap:16px}
-  .brand .mk{width:46px;height:46px}
-  .brand b{font-size:30px;font-weight:700;letter-spacing:.02em}
-  .brand .en{font-size:12px;letter-spacing:.34em;color:var(--faint);display:block;margin-top:3px;font-weight:600}
-  .top .meta{font-size:13px;letter-spacing:.28em;color:var(--muted);text-align:right;line-height:2}
-  /* hero bloom */
-  .hero{position:absolute;left:50%;top:470px;transform:translate(-50%,-50%);width:820px;height:820px;z-index:1}
-  .hero svg{width:100%;height:100%;overflow:visible}
-  /* 标题 */
-  .head{position:relative;z-index:3;text-align:center;margin-top:772px;padding:0 60px}
-  .head .eb{font-size:15px;letter-spacing:.5em;color:var(--muted);font-weight:600}
-  .head h1{font-size:82px;line-height:1.12;font-weight:800;margin-top:22px;letter-spacing:.01em}
-  .head h1 .p{display:block}
-  .head p.lead{font-size:20px;line-height:1.85;color:var(--muted);margin:26px auto 0;max-width:760px;font-weight:400}
-  .head p.lead b{color:#e7e3ff;font-weight:600}
-  /* 模块卡 */
-  .mods{position:relative;z-index:3;display:flex;gap:20px;padding:44px 72px 0}
-  .mod{flex:1;padding:26px 24px 28px}
-  .mod .ic{font-size:26px}
-  .mod h3{font-size:23px;font-weight:700;margin:14px 0 8px}
-  .mod .en{font-size:10px;letter-spacing:.24em;color:var(--faint);font-weight:600}
-  .mod p{font-size:14.5px;line-height:1.7;color:var(--muted)}
-  /* footer */
-  .foot{position:relative;z-index:3;margin-top:auto;padding:0 72px 60px;display:flex;justify-content:space-between;align-items:flex-end}
-  .foot .slg{font-size:26px;font-weight:700;line-height:1.5}
-  .foot .slg span{color:var(--faint);font-weight:400;font-size:15px;display:block;margin-top:12px;letter-spacing:.04em}
-  .foot .cta{display:flex;align-items:center;gap:16px}
-  .qr{width:96px;height:96px;border-radius:16px;border:1px solid var(--stroke);background:
-     repeating-linear-gradient(0deg,#12102a 0 6px,#1c1940 6px 12px),
-     repeating-linear-gradient(90deg,rgba(0,0,0,.4) 0 6px,transparent 6px 12px);position:relative;overflow:hidden}
-  .qr::after{content:"扫码探索";position:absolute;inset:0;display:grid;place-items:center;font-size:11px;color:var(--muted)}
-  .cta .txt{font-size:14px;color:var(--muted);line-height:1.7}
-  .cta .txt b{color:var(--ink);font-size:17px;display:block}
-  .stage{display:flex;flex-direction:column}
+  /* 顶部品牌 */
+  .brand{position:absolute;left:64px;top:56px;z-index:4;display:flex;align-items:center;gap:16px}
+  .brand svg{width:58px;height:58px}
+  .brand .nm{font-family:var(--round);font-weight:800;font-size:34px;color:var(--ink);line-height:1}
+  .brand .tag{font-size:14px;color:var(--tealD,#2A9E97);font-weight:700;margin-top:6px;letter-spacing:.02em}
+  .kmark{position:absolute;right:60px;top:56px;z-index:4;text-align:center;transform:rotate(6deg)}
+  .kmark .n{font-family:var(--round);font-weight:800;font-size:96px;color:var(--coral);line-height:.9;
+    -webkit-text-stroke:6px var(--paper);paint-order:stroke}
+  .kmark .m{font-family:var(--round);font-weight:800;font-size:26px;color:var(--teal);letter-spacing:.16em;
+    -webkit-text-stroke:4px var(--paper);paint-order:stroke;margin-top:2px}
+  /* 标题徽标簇 */
+  .titlewrap{position:absolute;right:56px;bottom:70px;z-index:4;width:560px}
+  .row{display:flex;gap:14px;align-items:stretch;justify-content:flex-end}
+  .infobar{background:var(--sky);border-radius:20px;padding:16px 26px;color:#fff;font-family:var(--round);
+    font-weight:800;font-size:26px;line-height:1.15;box-shadow:0 8px 0 rgba(38,38,31,.12)}
+  .sq{width:88px;background:var(--mint);border-radius:20px;display:grid;place-items:center;box-shadow:0 8px 0 rgba(38,38,31,.12)}
+  .sq svg{width:52px;height:52px}
+  .maintitle{margin-top:16px;background:var(--paper);border-radius:26px;padding:28px 36px 34px;
+    box-shadow:0 12px 0 rgba(38,38,31,.10)}
+  .maintitle .pre{font-family:var(--round);font-weight:800;font-size:29px;color:var(--coral);letter-spacing:.02em}
+  .maintitle .mid{font-family:var(--round);font-weight:800;font-size:60px;color:var(--teal);line-height:1;margin-top:8px;letter-spacing:.06em}
+  .maintitle .big{font-family:var(--round);font-weight:800;font-size:150px;color:var(--coral);line-height:.94;margin-top:4px;letter-spacing:.08em}
+  .maintitle .sub{font-size:18px;color:var(--ink);opacity:.66;font-weight:600;margin-top:16px;letter-spacing:.01em}
 </style></head>
 <body>
 <div class="stage">
-  <svg class="viz" viewBox="0 0 1080 1620" preserveAspectRatio="none"><g id="mesh"></g></svg>
+  <svg class="scene" id="scene" viewBox="0 0 1080 1620" width="1080" height="1620" preserveAspectRatio="xMidYMid slice"></svg>
 
-  <div class="top content">
-    <div class="brand">
-      <svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg>
-      <div><b>我有可能</b><span class="en">KALEIDOSCOPE</span></div>
+  <div class="brand">
+    <svg viewBox="-50 -50 100 100" id="brandmk"></svg>
+    <div><div class="nm">我有可能</div><div class="tag">自我探索 · 人生决策</div></div>
+  </div>
+  <div class="kmark"><div class="n">∞</div><div class="m">POSSIBILITY</div></div>
+
+  <div class="titlewrap">
+    <div class="row">
+      <div class="infobar">20–35岁<br>奥德赛世代</div>
+      <div class="sq"><svg viewBox="-50 -50 100 100" id="sqmk"></svg></div>
     </div>
-    <div class="meta">年轻人的自我探索<br>与人生决策平台</div>
-  </div>
-
-  <div class="hero"><svg id="bloom" viewBox="-500 -500 1000 1000"></svg></div>
-
-  <div class="head content">
-    <div class="eb">在 人 生 的 岔 路 口</div>
-    <h1><span class="p">看见更多<span class="grad-text">可能</span></span></h1>
-    <p class="lead">把 <b>MBTI・荣格八维・盖洛普优势</b> 与 <b>星座・塔罗・八字</b>、AI 语音日记结合，<br>生成一份随你共同成长的<b>动态自我画像</b>——更立体地看见自己、理解自己。</p>
-  </div>
-
-  <div class="mods content">
-    <div class="mod card"><div class="ic">🧭</div><div class="en">KNOW YOURSELF</div><h3>认识自己</h3><p>科学工具 × 趣味探索，持续生成随你成长的动态自我画像。</p></div>
-    <div class="mod card"><div class="ic">🧪</div><div class="en">LIFE LAB</div><h3>人生实验室</h3><p>预演不同选择在 3 / 5 / 10 年后的最好、一般与最坏情形。</p></div>
-    <div class="mod card"><div class="ic">🔮</div><div class="en">KALEIDOSCOPE</div><h3>万花筒社区</h3><p>链接走过相似道路的前辈，获得真实经验与互助支持。</p></div>
-  </div>
-
-  <div class="foot content">
-    <div class="slg">不替你给出标准答案，<br>只帮你看见更多可能。<span>科学 · 人文 · 趣味 —— 面向 20-35 岁的奥德赛世代</span></div>
-    <div class="cta"><div class="txt"><b>我有可能</b>即刻开始探索</div><div class="qr"></div></div>
+    <div class="maintitle">
+      <div class="pre">在人生的岔路口，</div>
+      <div class="mid">看见更多</div>
+      <div class="big">可能</div>
+      <div class="sub">科学 · 人文 · 趣味　带你更立体地看见自己</div>
+    </div>
   </div>
 </div>
-<script src="bloom.js"></script>
+<script src="flat.js"></script>
 <script>
-  renderBloom(document.getElementById('bloom'),{R:360,seed:11});
-  renderMesh(document.getElementById('mesh'),{w:1080,h:1620,n:52,seed:5});
-  // logo mark: 6瓣小花
-  (function(){const s=document.getElementById('logomk');
-    const grad=document.createElementNS('http://www.w3.org/2000/svg','defs');
-    grad.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';
-    s.appendChild(grad);
-    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');
-      p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');
-      p.setAttribute('fill','url(#lg)');p.setAttribute('opacity','.9');
-      p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
-    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  // 天空放射线
+  svg.appendChild(FLAT.rays(720,300,1300,26,[C.cream2,"#FBE9B8"]));
+  // 太阳
+  svg.appendChild(E("circle",{cx:720,cy:300,r:120,fill:C.mustard,filter:"url(#sticker)"}));
+  // 远山
+  svg.appendChild(E("path",{d:"M-20,1120 Q220,980 520,1080 Q820,1180 1100,1010 L1100,1640 L-20,1640 Z",fill:C.tealL}));
+  svg.appendChild(E("path",{d:"M-20,1230 Q260,1090 540,1180 Q860,1280 1100,1150 L1100,1640 L-20,1640 Z",fill:C.teal}));
+  // 前景草坡
+  svg.appendChild(E("path",{d:"M-20,1360 Q300,1250 560,1330 Q840,1410 1100,1300 L1100,1640 L-20,1640 Z",fill:C.tealD}));
+  // 小路（分岔）
+  svg.appendChild(E("path",{d:"M250,1640 L410,1640 Q360,1460 340,1392 L320,1392 Q300,1460 250,1640 Z",fill:C.cream,filter:"url(#stickerThin)"}));
+  svg.appendChild(E("path",{d:"M330,1400 Q240,1356 130,1334 Q175,1380 235,1404 Z",fill:C.cream,filter:"url(#stickerThin)"}));
+  svg.appendChild(E("path",{d:"M330,1400 Q425,1358 540,1344 Q492,1388 425,1408 Z",fill:C.cream,filter:"url(#stickerThin)"}));
+  // 虚线
+  for(let i=0;i<4;i++){svg.appendChild(E("rect",{x:326,y:1600-i*54,width:9,height:28,rx:4,fill:C.ink,opacity:.32}));}
+  // 主角：抬头望向太阳/花的小人
+  (function(){const g=E("g",{transform:"translate(300,1500) scale(1.95)",filter:"url(#sticker)"});
+    g.appendChild(E("rect",{x:-20,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:4,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:-23,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("rect",{x:2,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("path",{d:"M-25,-116 Q-27,-62 -21,-56 L21,-56 Q27,-62 25,-116 Q0,-130 -25,-116 Z",fill:C.coral}));
+    g.appendChild(E("rect",{x:-33,y:-114,width:13,height:50,rx:6,fill:C.coral}));
+    g.appendChild(E("circle",{cx:-27,cy:-62,r:7,fill:C.skin}));
+    g.appendChild(E("path",{d:"M20,-116 Q40,-130 52,-158 L64,-150 Q54,-118 34,-104 Z",fill:C.coral}));
+    g.appendChild(E("circle",{cx:58,cy:-156,r:7.5,fill:C.skin}));
+    g.appendChild(E("circle",{cx:2,cy:-138,r:22,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-20,-146 Q-17,-168 4,-166 Q24,-168 24,-144 Q15,-156 2,-154 Q-9,-156 -20,-146 Z",fill:C.ink}));
+    g.appendChild(E("circle",{cx:12,cy:-140,r:2.6,fill:C.ink}));
+    g.appendChild(E("path",{d:"M8,-129 Q14,-125 20,-129",stroke:C.ink,"stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+    svg.appendChild(g);})();
+  // 天空漂浮元素
+  svg.appendChild(FLAT.flower(300,470,120,C.coral,C.mustard,C.tealD));
+  svg.appendChild(FLAT.star(150,760,34,C.mustard));
+  svg.appendChild(FLAT.star(940,620,26,C.coral));
+  svg.appendChild(FLAT.star(560,240,20,C.paper));
+  svg.appendChild(FLAT.cloud(910,360,1.05,C.paper));
+  svg.appendChild(FLAT.cloud(180,300,0.8,C.paper));
+  // 小圆点
+  [[430,180,C.coral],[820,760,C.mustard],[260,900,C.paper],[980,860,C.tealD]].forEach(p=>
+    svg.appendChild(E("circle",{cx:p[0],cy:p[1],r:9,fill:p[2],filter:"url(#stickerThin)"})));
+
+  // 品牌小花标
+  FLAT.defs(document.getElementById('brandmk'));
+  document.getElementById('brandmk').appendChild(FLAT.flower(0,0,38,C.coral,C.teal,C.mustard));
+  FLAT.defs(document.getElementById('sqmk'));
+  document.getElementById('sqmk').appendChild(FLAT.flower(0,0,36,C.paper,C.paper,C.mint));
 </script>
+<div class="grain"></div><div class="grain2"></div>
 </body></html>

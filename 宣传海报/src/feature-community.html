@@ -1,82 +1,60 @@
 <!doctype html><html lang="zh"><head><meta charset="utf-8">
 <link rel="stylesheet" href="base.css">
 <style>
-  .stage{width:1080px;height:1620px;display:flex;flex-direction:column}
-  .top{display:flex;justify-content:space-between;align-items:center;padding:52px 72px 0}
-  .brand{display:flex;align-items:center;gap:14px}.brand .mk{width:40px;height:40px}
-  .brand b{font-size:25px;font-weight:700}.brand .en{font-size:11px;letter-spacing:.32em;color:var(--faint);display:block;margin-top:2px;font-weight:600}
-  .fno{text-align:right}.fno .n{font-size:15px;letter-spacing:.4em;color:var(--muted);font-weight:600}.fno .l{font-size:11px;letter-spacing:.3em;color:var(--faint);margin-top:4px}
-  .title{padding:40px 72px 0;position:relative;z-index:3}
-  .title .eb{font-size:15px;letter-spacing:.5em;color:var(--muted);font-weight:600}
-  .title h1{font-size:74px;font-weight:800;margin-top:16px;line-height:1.1}
-  .title p{font-size:21px;color:var(--muted);margin-top:20px;line-height:1.7;max-width:840px}
-  .title p b{color:#e7e3ff;font-weight:600}
-  .net{position:relative;z-index:2;height:600px;margin-top:4px}
-  .net .lines{position:absolute;inset:0}
-  .node{position:absolute;transform:translate(-50%,-50%);text-align:center;width:190px}
-  .node .av{width:74px;height:74px;border-radius:50%;margin:0 auto;border:2px solid rgba(255,255,255,.25);
-    display:grid;place-items:center;font-size:30px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
-  .node .nm{font-size:16px;font-weight:700;margin-top:10px}
-  .node .pt{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
-  .node.me .av{width:118px;height:118px;font-size:46px;border:2px solid rgba(180,160,255,.8);
-    box-shadow:0 0 0 8px rgba(123,92,255,.12),0 0 60px rgba(123,92,255,.6)}
-  .node.me .nm{font-size:20px;margin-top:14px}
-  .val{margin-top:auto;padding:0 72px 30px;position:relative;z-index:3;display:flex;gap:18px}
-  .vc{flex:1;padding:24px 22px}.vc .ic{font-size:24px}.vc h3{font-size:20px;font-weight:700;margin:12px 0 8px}
-  .vc p{font-size:14px;color:var(--muted);line-height:1.65}
-  .cta2{position:relative;z-index:3;padding:0 72px 54px;display:flex;justify-content:space-between;align-items:center}
-  .cta2 .t{font-size:17px;color:var(--muted)}.cta2 .t b{color:var(--ink);font-size:22px;font-weight:700;display:block;margin-bottom:6px}
-  .cta2 .btn{display:flex;align-items:center;gap:12px;padding:16px 30px;border-radius:999px;font-size:18px;font-weight:700;
-    background:linear-gradient(100deg,#4d6bff,#7b5cff);box-shadow:0 12px 40px rgba(93,107,255,.5)}
+  .stage{width:1080px;height:1620px}
+  .nmchip{position:absolute;z-index:4;transform:translate(-50%,-50%);background:var(--paper);border-radius:12px;
+    padding:6px 14px;font-family:var(--round);font-weight:800;font-size:17px;box-shadow:0 5px 0 rgba(38,38,31,.1);white-space:nowrap}
+  .nmchip small{font-weight:600;font-size:12px;color:var(--teal-d);display:block;margin-top:1px}
+  .tblock{position:absolute;left:64px;top:900px;right:64px}
+  .tblock h1{font-size:62px}
+  .tblock p{font-size:19px;margin-top:14px}
+  .cards{position:absolute;left:64px;right:64px;top:1236px}
+  .resbar{position:absolute;left:64px;right:64px;top:1494px}
 </style></head>
 <body>
 <div class="stage">
-  <svg class="viz" viewBox="0 0 1080 1620" preserveAspectRatio="none"><g id="mesh"></g></svg>
-  <div class="top content">
-    <div class="brand"><svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg><div><b>我有可能</b><span class="en">KALEIDOSCOPE</span></div></div>
-    <div class="fno"><div class="n">功 能 03</div><div class="l">KALEIDOSCOPE</div></div>
-  </div>
-  <div class="title content">
-    <div class="eb">万 花 筒 社 区</div>
-    <h1>链接走过<span class="grad-text">相似路</span>的前辈</h1>
-    <p>当你站在选择面前，总有人走过相似的岔路口。<b>真实经验</b>、专业咨询与互助支持，<br>让你不再一个人面对迷茫。</p>
+  <svg class="scene" id="scene" viewBox="0 0 1080 1620" width="1080" height="1620" preserveAspectRatio="xMidYMid slice"></svg>
+
+  <div class="phead">
+    <div class="bmini"><svg viewBox="-50 -50 100 100" id="bmk"></svg><div><div class="nm">我有可能</div><div class="tg">自我探索 · 人生决策</div></div></div>
+    <div class="ftag">功能 03<small>KALEIDOSCOPE</small></div>
   </div>
 
-  <div class="net">
-    <svg class="lines" id="lines" viewBox="0 0 1080 600" preserveAspectRatio="none"></svg>
-    <div class="node me" style="left:50%;top:50%"><div class="av" style="background:linear-gradient(135deg,#7b5cff,#ff5fa8)">🧑‍🚀</div><div class="nm">你</div><div class="pt">正在探索的岔路口</div></div>
-    <div class="node" style="left:20%;top:18%"><div class="av" style="background:linear-gradient(135deg,#4da6ff,#4de0ff)">👩‍💻</div><div class="nm">春序听风</div><div class="pt">交互设计 → AI 产品经理</div></div>
-    <div class="node" style="left:80%;top:20%"><div class="av" style="background:linear-gradient(135deg,#ff8f5c,#ff5f7a)">🧗</div><div class="nm">木槿慢跑</div><div class="pt">前运营 · 重读本科</div></div>
-    <div class="node" style="left:11%;top:64%"><div class="av" style="background:linear-gradient(135deg,#3ee0a0,#4da6ff)">🧑‍🎨</div><div class="nm">晴川寻路</div><div class="pt">设计转独立开发</div></div>
-    <div class="node" style="left:89%;top:66%"><div class="av" style="background:linear-gradient(135deg,#c14dff,#7b5cff)">🚴</div><div class="nm">晨雾观星</div><div class="pt">大厂裸辞 · gap 一年</div></div>
-    <div class="node" style="left:50%;top:90%"><div class="av" style="background:linear-gradient(135deg,#ffd15c,#ff8f5c)">✍️</div><div class="nm">星河问路</div><div class="pt">环岛骑行中</div></div>
+  <div class="nmchip" style="left:180px;top:556px">晴川寻路<small>设计转独立开发</small></div>
+  <div class="nmchip" style="left:905px;top:556px">木槿慢跑<small>前运营 · 重读本科</small></div>
+  <div class="nmchip" style="left:540px;top:818px">你<small>正在探索的岔路口</small></div>
+
+  <div class="tblock">
+    <span class="kk">万花筒社区</span>
+    <h1>链接走过<span class="c">相似路</span>的<br><span class="t">前辈与同行者</span></h1>
+    <p>当你站在选择面前，总有人走过相似的岔路口。真实经验、专业咨询与互助支持，让你不再独自面对迷茫。</p>
   </div>
 
-  <div class="val content">
-    <div class="vc card"><div class="ic">💬</div><h3>真实经验</h3><p>相关但结局不同的真实故事，帮你校准对未来的判断。</p></div>
-    <div class="vc card"><div class="ic">🎓</div><h3>专业咨询</h3><p>需要更深入时，链接可信赖的顾问，获得专业视角。</p></div>
-    <div class="vc card"><div class="ic">🤝</div><h3>互助支持</h3><p>走同一段路的人彼此陪伴，让选择的时刻不再孤单。</p></div>
+  <div class="cards">
+    <div class="fcard"><svg class="ic" viewBox="-40 -40 80 80" id="i1"></svg><h3>真实经验</h3><p>相关但结局不同的真实故事，帮你校准对未来的判断。</p></div>
+    <div class="fcard"><svg class="ic" viewBox="-40 -40 80 80" id="i2"></svg><h3>专业咨询</h3><p>需要更深入时，链接可信赖的顾问，获得专业视角。</p></div>
+    <div class="fcard"><svg class="ic" viewBox="-40 -40 80 80" id="i3"></svg><h3>互助支持</h3><p>走同一段路的人彼此陪伴，让选择的时刻不再孤单。</p></div>
   </div>
-  <div class="cta2 content">
-    <div class="t"><b>无限滑动，遇见更多旅人</b>点击卡片，查看 TA 的故事与经验建议</div>
-    <div class="btn"><svg width="20" height="20" viewBox="-50 -50 100 100"><g id="btnmk"></g></svg>万花筒抽一位旅人</div>
-  </div>
+  <div class="resbar"><div><b>＝ 不再独自迷茫</b> &nbsp;<span>万花筒，抽一位走过相似路的旅人</span></div><div class="go">进入社区 →</div></div>
 </div>
-<script src="bloom.js"></script>
+<script src="flat.js"></script>
 <script>
-  renderMesh(document.getElementById('mesh'),{w:1080,h:1620,n:42,seed:21});
-  // 连线：中心到各节点
-  (function(){const NS='http://www.w3.org/2000/svg';const s=document.getElementById('lines');
-    const c=[540,300];const nodes=[[216,108],[864,120],[119,384],[961,396],[540,540]];
-    nodes.forEach(n=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',c[0]);l.setAttribute('y1',c[1]);l.setAttribute('x2',n[0]);l.setAttribute('y2',n[1]);
-      l.setAttribute('stroke','rgba(150,160,240,.35)');l.setAttribute('stroke-width','1.4');l.setAttribute('stroke-dasharray','2 8');s.appendChild(l);
-      const g=document.createElementNS(NS,'circle');g.setAttribute('cx',(c[0]+n[0])/2);g.setAttribute('cy',(c[1]+n[1])/2);g.setAttribute('r','3');g.setAttribute('fill','#8fb0ff');g.setAttribute('opacity','.7');s.appendChild(g);});})();
-  function mkFlower(id){const s=document.getElementById(id);const g=document.createElementNS('http://www.w3.org/2000/svg','defs');
-    g.innerHTML='<linearGradient id="lg'+id+'" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';s.appendChild(g);
-    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','url(#lg'+id+')');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
-    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);}
-  mkFlower('logomk');
-  (function(){const s=document.getElementById('btnmk');for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','#fff');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
-    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  svg.appendChild(FLAT.rays(540,420,1100,28,[C.cream2,"#FBE9B8"]));
+  // 中心花
+  svg.appendChild(FLAT.flower(540,410,128,C.coral,C.mustard,C.tealD));
+  // 连线：中心到旅人
+  const me=[540,720];[[190,700],[360,650],[720,650],[895,700]].forEach(p=>{
+    svg.appendChild(E("path",{d:`M${me[0]},${me[1]} L${p[0]},${p[1]}`,stroke:C.ink,"stroke-width":4,"stroke-dasharray":"3 16","stroke-linecap":"round",opacity:.28}));});
+  // 落地阴影 + 旅人们
+  const ppl=[[190,760,1.15,C.sky],[360,712,1.3,C.mustard],[720,712,1.3,C.mint],[895,760,1.15,C.coral]];
+  ppl.forEach(p=>svg.appendChild(E("ellipse",{cx:p[0],cy:p[1]+4,rx:34*p[2],ry:9,fill:C.tealD,opacity:.14})));
+  svg.appendChild(E("ellipse",{cx:540,cy:776,rx:56,ry:12,fill:C.tealD,opacity:.16}));
+  ppl.forEach(p=>svg.appendChild(FLAT.person(p[0],p[1],p[2],{shirt:p[3],pants:C.skyD,shoe:C.coralD})));
+  // 中心“你”（大一点，珊瑚衣）
+  svg.appendChild(FLAT.person(540,772,1.6,{shirt:C.coral,pants:C.skyD,shoe:C.mustard}));
+  FLAT.defs(document.getElementById('bmk'));document.getElementById('bmk').appendChild(FLAT.flower(0,0,36,C.coral,C.teal,C.mustard));
+  ["i1","i2","i3"].forEach((id,k)=>{const s=document.getElementById(id);FLAT.defs(s);s.appendChild(FLAT.icon(["chat","cap","heart"][k]));});
 </script>
+<div class="grain"></div><div class="grain2"></div>
 </body></html>

@@ -1,70 +1,101 @@
 <!doctype html><html lang="zh"><head><meta charset="utf-8">
 <link rel="stylesheet" href="base.css">
 <style>
-  .stage{width:800px;height:2000px;display:flex;flex-direction:column;align-items:center;text-align:center}
-  .brand{display:flex;align-items:center;gap:16px;margin-top:70px}
-  .brand .mk{width:52px;height:52px}
-  .brand b{font-size:38px;font-weight:800;letter-spacing:.03em}
-  .en{font-size:13px;letter-spacing:.5em;color:var(--muted);margin-top:18px;font-weight:600}
-  .headline{margin-top:34px;position:relative;z-index:3}
-  .headline .eb{font-size:16px;letter-spacing:.46em;color:var(--muted);font-weight:600}
-  .headline h1{font-size:70px;font-weight:800;line-height:1.16;margin-top:18px}
-  .hero{position:relative;width:720px;height:560px;margin-top:6px;z-index:1;display:flex;justify-content:center;align-items:center}
-  .hero svg{width:640px;height:640px;overflow:visible}
-  .lead{position:relative;z-index:3;font-size:19px;color:var(--muted);line-height:1.9;max-width:640px;margin-top:-16px}
-  .lead b{color:#e7e3ff;font-weight:600}
-  .mods{position:relative;z-index:3;margin-top:40px;width:656px;display:flex;flex-direction:column;gap:18px}
-  .mod{display:flex;align-items:center;gap:22px;text-align:left;padding:24px 28px}
-  .mod .ic{font-size:34px;flex:none;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;
-    background:linear-gradient(140deg,rgba(123,92,255,.28),rgba(255,95,168,.2));border:1px solid var(--stroke)}
-  .mod .tx h3{font-size:26px;font-weight:700}
-  .mod .tx .en2{font-size:10px;letter-spacing:.24em;color:var(--faint);font-weight:600;margin-bottom:4px}
-  .mod .tx p{font-size:15px;color:var(--muted);line-height:1.6;margin-top:6px}
-  .foot{margin-top:auto;width:100%;padding:40px 0 64px;position:relative;z-index:3;
-    background:linear-gradient(0deg,rgba(123,92,255,.14),transparent);display:flex;flex-direction:column;align-items:center}
-  .foot .slg{font-size:30px;font-weight:800;line-height:1.5}
-  .foot .slg .grad-text{display:inline}
-  .foot .cta{margin-top:30px;display:flex;align-items:center;gap:26px}
-  .qr{width:150px;height:150px;border-radius:20px;border:1px solid var(--stroke);background:
-     repeating-linear-gradient(0deg,#12102a 0 8px,#1c1940 8px 16px),
-     repeating-linear-gradient(90deg,rgba(0,0,0,.4) 0 8px,transparent 8px 16px);position:relative}
-  .qr::after{content:"扫码 · 开始探索";position:absolute;inset:0;display:grid;place-items:center;font-size:13px;color:var(--muted)}
-  .cta .info{text-align:left}.cta .info b{font-size:24px;font-weight:700;display:block}
-  .cta .info span{font-size:15px;color:var(--muted);line-height:1.9;display:block;margin-top:6px}
+  .stage{width:800px;height:2000px}
+  .brand{position:absolute;left:0;right:0;top:70px;z-index:4;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .brand .top{display:flex;align-items:center;gap:16px}
+  .brand svg{width:56px;height:56px}
+  .brand .nm{font-family:var(--round);font-weight:800;font-size:44px;line-height:1}
+  .brand .tg{font-size:16px;color:var(--teal-d);font-weight:700;letter-spacing:.16em}
+  .title{position:absolute;left:0;right:0;top:236px;z-index:4;text-align:center}
+  .title .pre{display:inline-block;background:var(--coral);color:#fff;border-radius:14px;padding:9px 22px;
+    font-family:var(--round);font-weight:800;font-size:24px;box-shadow:0 6px 0 rgba(38,38,31,.14)}
+  .title .big{font-family:var(--round);font-weight:800;font-size:110px;color:var(--teal-d);line-height:1;margin-top:18px}
+  .title .big em{font-style:normal;color:var(--coral)}
+  .mods{position:absolute;left:60px;right:60px;top:1140px;z-index:4;display:flex;flex-direction:column;gap:20px}
+  .mod{background:var(--paper);border-radius:24px;padding:24px 28px;display:flex;align-items:center;gap:22px;
+    box-shadow:0 10px 0 rgba(38,38,31,.08)}
+  .mod svg{width:66px;height:66px;flex:none}
+  .mod .en{font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.2em;color:var(--teal-d)}
+  .mod h3{font-family:var(--round);font-weight:800;font-size:30px;margin:2px 0 6px}
+  .mod p{font-size:16px;color:var(--ink);opacity:.7;font-weight:500;line-height:1.5}
+  .foot{position:absolute;left:0;right:0;bottom:0;height:392px;z-index:4;padding:52px 60px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .foot .slg{font-family:var(--round);font-weight:800;font-size:42px;color:#fff;text-align:center;line-height:1.4}
+  .foot .slg em{font-style:normal;color:var(--mustard)}
+  .foot .cta{margin-top:30px;display:flex;align-items:center;gap:24px}
+  .foot .qr{width:132px;height:132px;border-radius:18px;background:#fff;padding:12px}
+  .foot .qr .q{width:100%;height:100%;border-radius:8px;background:
+    repeating-linear-gradient(0deg,#26261f 0 8px,#fff 8px 16px),repeating-linear-gradient(90deg,#26261f 0 8px,transparent 8px 16px);
+    background-blend-mode:multiply}
+  .foot .info{color:#fff;text-align:left}
+  .foot .info b{font-family:var(--round);font-weight:800;font-size:26px;display:block}
+  .foot .info span{font-size:16px;opacity:.85;line-height:1.7;display:block;margin-top:6px}
 </style></head>
 <body>
 <div class="stage">
-  <svg class="viz" viewBox="0 0 800 2000" preserveAspectRatio="none"><g id="mesh"></g></svg>
-  <div class="brand content"><svg class="mk" viewBox="-50 -50 100 100"><g id="logomk"></g></svg><b>我有可能</b></div>
-  <div class="en content">KALEIDOSCOPE · 自我探索与人生决策平台</div>
+  <svg class="scene" id="scene" viewBox="0 0 800 2000" width="800" height="2000" preserveAspectRatio="xMidYMid slice"></svg>
 
-  <div class="headline content">
-    <div class="eb">在 人 生 的 岔 路 口</div>
-    <h1>看见更多<span class="grad-text">可能</span></h1>
+  <div class="brand">
+    <div class="top"><svg viewBox="-50 -50 100 100" id="bmk"></svg><div class="nm">我有可能</div></div>
+    <div class="tg">自我探索 · 人生决策平台</div>
+  </div>
+  <div class="title">
+    <span class="pre">在人生的岔路口</span>
+    <div class="big">看见更多<br><em>可能</em></div>
   </div>
 
-  <div class="hero"><svg id="bloom" viewBox="-500 -500 1000 1000"></svg></div>
-
-  <p class="lead content">科学工具 × 趣味探索 × AI 分析，<br>生成一份随你共同成长的 <b>动态自我画像</b>，<br>更立体地看见自己、理解自己、探索更多可能。</p>
-
-  <div class="mods content">
-    <div class="mod card"><div class="ic">🧭</div><div class="tx"><div class="en2">KNOW YOURSELF</div><h3>认识自己</h3><p>MBTI・荣格八维・盖洛普 与 星座・塔罗・八字 + AI 语音日记</p></div></div>
-    <div class="mod card"><div class="ic">🧪</div><div class="tx"><div class="en2">LIFE LAB</div><h3>人生实验室</h3><p>预演不同选择在 3 / 5 / 10 年后的最好、一般与最坏情形</p></div></div>
-    <div class="mod card"><div class="ic">🔮</div><div class="tx"><div class="en2">KALEIDOSCOPE</div><h3>万花筒社区</h3><p>链接走过相似道路的前辈，获得真实经验、专业咨询与互助</p></div></div>
+  <div class="mods">
+    <div class="mod"><svg viewBox="-40 -40 80 80" id="m1"></svg><div><div class="en">KNOW YOURSELF</div><h3>认识自己</h3><p>科学测评 × 趣味探索 × AI 语音日记，生成动态自我画像</p></div></div>
+    <div class="mod"><svg viewBox="-40 -40 80 80" id="m2"></svg><div><div class="en">LIFE LAB</div><h3>人生实验室</h3><p>预演选择在 3 / 5 / 10 年后的最好、一般与最坏情形</p></div></div>
+    <div class="mod"><svg viewBox="-40 -40 80 80" id="m3"></svg><div><div class="en">KALEIDOSCOPE</div><h3>万花筒社区</h3><p>链接走过相似路的前辈，获得真实经验与互助支持</p></div></div>
   </div>
 
-  <div class="foot content">
-    <div class="slg">不替你给出标准答案，<br>只帮你<span class="grad-text">看见更多可能</span>。</div>
-    <div class="cta"><div class="qr"></div><div class="info"><b>我有可能</b><span>面向 20-35 岁的奥德赛世代<br>科学 · 人文 · 趣味</span></div></div>
+  <div class="foot">
+    <div class="slg">不替你给出标准答案，<br>只帮你<em>看见更多可能</em>。</div>
+    <div class="cta">
+      <div class="qr"><div class="q"></div></div>
+      <div class="info"><b>我有可能</b><span>面向 20-35 岁的奥德赛世代<br>科学 · 人文 · 趣味</span></div>
+    </div>
   </div>
 </div>
-<script src="bloom.js"></script>
+<script src="flat.js"></script>
 <script>
-  renderBloom(document.getElementById('bloom'),{R:340,seed:11});
-  renderMesh(document.getElementById('mesh'),{w:800,h:2000,n:56,seed:9});
-  (function(){const s=document.getElementById('logomk');const g=document.createElementNS('http://www.w3.org/2000/svg','defs');
-    g.innerHTML='<linearGradient id="lg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7b5cff"/><stop offset="1" stop-color="#ff5fa8"/></linearGradient>';s.appendChild(g);
-    for(let i=0;i<6;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d','M0,0 C7,-9 7,-30 0,-40 C-7,-30 -7,-9 0,0 Z');p.setAttribute('fill','url(#lg)');p.setAttribute('transform','rotate('+(i*60)+')');s.appendChild(p);}
-    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('r','7');c.setAttribute('fill','#fff');s.appendChild(c);})();
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  svg.appendChild(FLAT.rays(400,480,1400,30,[C.cream2,"#FBE9B8"]));
+  // 太阳
+  svg.appendChild(E("circle",{cx:610,cy:520,r:78,fill:C.mustard,filter:"url(#sticker)"}));
+  // 底部青色带
+  svg.appendChild(E("rect",{x:-20,y:1608,width:840,height:420,fill:C.tealD}));
+  svg.appendChild(E("path",{d:"M-20,1636 Q200,1585 400,1620 Q600,1652 820,1600 L820,1660 L-20,1660 Z",fill:C.teal}));
+  // 山丘（模块区上方，托住主角）
+  svg.appendChild(E("path",{d:"M-20,1010 Q220,950 440,985 Q640,1015 820,965 L820,1130 L-20,1130 Z",fill:C.tealL}));
+  svg.appendChild(E("path",{d:"M-20,1066 Q240,1015 460,1046 Q650,1072 820,1030 L820,1130 L-20,1130 Z",fill:C.teal}));
+  // 中心花
+  svg.appendChild(FLAT.flower(360,640,132,C.coral,C.mustard,C.tealD));
+  // 主角：站在山丘上举手
+  (function(){const g=E("g",{transform:"translate(560,1050) scale(1.5)",filter:"url(#sticker)"});
+    g.appendChild(E("rect",{x:-20,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:4,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:-23,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("rect",{x:2,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("path",{d:"M-25,-116 Q-27,-62 -21,-56 L21,-56 Q27,-62 25,-116 Q0,-130 -25,-116 Z",fill:C.coral}));
+    g.appendChild(E("rect",{x:21,y:-114,width:13,height:50,rx:6,fill:C.coral}));
+    g.appendChild(E("circle",{cx:28,cy:-62,r:7,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-24,-116 Q-46,-132 -58,-160 L-46,-168 Q-34,-140 -14,-104 Z",fill:C.coral}));
+    g.appendChild(E("circle",{cx:-52,cy:-158,r:7.5,fill:C.skin}));
+    g.appendChild(E("circle",{cx:0,cy:-138,r:22,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-22,-146 Q-19,-168 2,-166 Q22,-168 22,-144 Q13,-156 0,-154 Q-11,-156 -22,-146 Z",fill:C.ink}));
+    g.appendChild(E("circle",{cx:-11,cy:-140,r:2.6,fill:C.ink}));
+    g.appendChild(E("path",{d:"M-16,-129 Q-9,-124 -2,-129",stroke:C.ink,"stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+    svg.appendChild(g);})();
+  // 点缀
+  svg.appendChild(FLAT.star(150,470,30,C.coral));
+  svg.appendChild(FLAT.star(680,760,24,C.teal));
+  svg.appendChild(FLAT.cloud(180,700,0.7,C.paper));
+  [[540,410,C.mustard],[120,880,C.tealD],[700,940,C.coral]].forEach(p=>svg.appendChild(E("circle",{cx:p[0],cy:p[1],r:8,fill:p[2],filter:"url(#stickerThin)"})));
+
+  FLAT.defs(document.getElementById('bmk'));document.getElementById('bmk').appendChild(FLAT.flower(0,0,38,C.coral,C.teal,C.mustard));
+  ["m1","m2","m3"].forEach((id,k)=>{const s=document.getElementById(id);FLAT.defs(s);s.appendChild(FLAT.icon(["compass","sun","heart"][k]));});
 </script>
+<div class="grain"></div><div class="grain2"></div>
 </body></html>
