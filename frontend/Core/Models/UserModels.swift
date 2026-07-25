@@ -342,6 +342,9 @@ struct SimulationResult: Decodable, Sendable {
     let bottomLineAnalysis: BottomLineAnalysis?
     /// 相似旅人推荐（服务端已过滤为真实 traveler id，最多 3 个）
     let recommendedTravelerIds: [Int]?
+    /// 本次推演实时生成并入库的完整旅人对象（社区人不够多时补充；前端优先展示）。
+    /// 解码失败置 nil 不影响主结果。
+    let recommendedTravelers: [Traveler]?
 
     struct BottomLineAnalysis: Decodable, Sendable {
         let isAcceptable: Bool
@@ -359,6 +362,7 @@ struct SimulationResult: Decodable, Sendable {
         case scenarios
         case bottomLineAnalysis = "bottom_line_analysis"
         case recommendedTravelerIds = "recommended_traveler_ids"
+        case recommendedTravelers = "recommended_travelers"
     }
 
     init(from decoder: Decoder) throws {
@@ -366,6 +370,7 @@ struct SimulationResult: Decodable, Sendable {
         scenarios = try c.decode(Simulation.Scenarios.self, forKey: .scenarios)
         bottomLineAnalysis = try? c.decodeIfPresent(BottomLineAnalysis.self, forKey: .bottomLineAnalysis)
         recommendedTravelerIds = try? c.decodeIfPresent([Int].self, forKey: .recommendedTravelerIds)
+        recommendedTravelers = try? c.decodeIfPresent([Traveler].self, forKey: .recommendedTravelers)
     }
 }
 

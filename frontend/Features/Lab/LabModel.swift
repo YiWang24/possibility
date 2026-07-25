@@ -212,10 +212,16 @@ final class LabModel {
 
             bottomLine = remote.bottomLineAnalysis
 
-            // 只使用 API 返回的推荐 id；不再本地筛选或补 mock 旅人
-            let people = (remote.recommendedTravelerIds ?? []).compactMap { id in
-                supabase.travelers.first { $0.id == id }
-            }
+            // 社区人不够多时，服务端会按本次问题实时生成并入库几位旅人，
+            // 直接回传完整对象——优先展示它们（并入缓存，便于点开卡片进主页）。
+            // 无生成时回退到按推荐 id 从缓存解析（旧行为）。
+            let generated = remote.recommendedTravelers ?? []
+            if !generated.isEmpty { supabase.mergeTravelers(generated) }
+            let people = generated.isEmpty
+                ? (remote.recommendedTravelerIds ?? []).compactMap { id in
+                    supabase.travelers.first { $0.id == id }
+                }
+                : generated
 
             result = SimResultData(question: question, choice: pick, horizon: horizon,
                                    scenarios: remote.scenarios, people: people,

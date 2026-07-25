@@ -79,6 +79,15 @@ final class SupabaseService {
         }
     }
 
+    /// 把实时生成/新拉取的旅人按 id 去重合并进缓存，并按 id 排序。
+    /// 推演实时生成的旅人需并入 `travelers`，ProfileView 才能按 id 命中（见 ProfileModel）。
+    func mergeTravelers(_ incoming: [Traveler]) {
+        guard !incoming.isEmpty else { return }
+        var byId = Dictionary(travelers.map { ($0.id, $0) }, uniquingKeysWith: { current, _ in current })
+        for t in incoming { byId[t.id] = t }
+        travelers = byId.values.sorted { $0.id < $1.id }
+    }
+
     func loadTravelerDetail(id: Int) async -> TravelerDetail? {
         if let cached = travelerDetails[id] { return cached }
         do {

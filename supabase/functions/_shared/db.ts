@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.110.0";
 import { LIMITS } from "./config.ts";
 import { HttpError } from "./errors.ts";
-import type { ChatSignal, DiaryOutput, SimulationOutput } from "./schemas.ts";
+import type {
+  ChatSignal,
+  DiaryOutput,
+  GeneratedTraveler,
+  SimulationOutput,
+} from "./schemas.ts";
 
 export type ConversationRow = {
   id: string;
@@ -177,4 +182,70 @@ export async function mergeProfileDimensions(
     updates.map(({ dimension, value }) => [dimension, value]),
   );
   await applyProfileUpdate(db, dims, 0);
+}
+
+// 响应回传给前端的旅人对象（对齐 iOS Traveler 模型：is_similar snake_case）。
+export type InsertedTraveler = {
+  id: number;
+  name: string;
+  initial: string;
+  hue: number;
+  is_similar: boolean;
+  quote: string;
+  bio: string;
+  tags: string[];
+  dims: string[][];
+  trajectory: Array<{ age: string; t: string; d: string }>;
+};
+
+// 把 LLM 实时生成的旅人写入共享表 travelers + traveler_details，返回完整对象。
+// 必须传入 service-role 客户端（serviceClient()）——travelers 无面向用户的 insert 策略。
+//
+// id：travelers.id 是普通 bigint 主键（无自增）。用毫秒时间戳基 `Date.now()*10+i`
+// 避免「读 max→+1」的读改写竞态，且远离种子 id 1–12；单用户同毫秒并发概率极低。
+// 结果保持在 Number.MAX_SAFE_INTEGER 内（~1.7e13），前端按 Int 精确解码。
+export async function insertGeneratedTravelers(
+  serviceDb: SupabaseClient,
+  generated: GeneratedTraveler[],
+): Promise<InsertedTraveler[]> {
+  if (generated.length === 0) return [];
+
+  const base = Date.now();
+  const rows: InsertedTraveler[] = generated.map((t, i) => ({
+    id: base * 10 + i,
+    name: t.name,
+    initial: t.initial,
+    hue: t.hue,
+    is_similar: true,
+    quote: t.quote,
+    bio: t.bio,
+    tags: t.tags,
+    dims: t.dims,
+    trajectory: t.trajectory,
+  }));
+
+  const { error: travelerError } = await serviceDb.from("travelers").insert(
+    rows,
+  );
+  if (travelerError) dbFailure("insert travelers", travelerError);
+
+  const detailRows = generated.map((t, i) => ({
+    traveler_id: rows[i].id,
+    age: t.detail.age,
+    city: t.detail.city,
+    from_role: t.detail.from_role,
+    to_role: t.detail.to_role,
+    years: t.detail.years,
+    intro: t.detail.intro,
+    full_text: t.detail.full_text,
+    advice: t.detail.advice,
+    result: t.detail.result,
+    consulted: t.detail.consulted,
+    response_time: t.detail.response_time,
+  }));
+  const { error: detailError } = await serviceDb.from("traveler_details")
+    .insert(detailRows);
+  if (detailError) dbFailure("insert traveler_details", detailError);
+
+  return rows;
 }

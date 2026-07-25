@@ -125,6 +125,130 @@ export const labChoiceSchema = {
   additionalProperties: false,
 } as const;
 
+// 实时生成的旅人（写入 travelers + traveler_details，扩充社区）。
+// 精确计数会拖垮部分网关的约束解码（见 matchSchema 注释），故用 2..3 区间，
+// 实际条数由 simulate/index.ts 代码层容纳。
+export const generatedTravelersSchema = {
+  type: "object",
+  properties: {
+    travelers: {
+      type: "array",
+      minItems: 2,
+      maxItems: 3,
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string", minLength: 1 },
+          initial: { type: "string", minLength: 1, maxLength: 2 },
+          hue: { type: "integer", minimum: 0, maximum: 4 },
+          quote: { type: "string", minLength: 1 },
+          bio: { type: "string", minLength: 1 },
+          tags: {
+            type: "array",
+            minItems: 2,
+            maxItems: 4,
+            items: { type: "string", minLength: 1 },
+          },
+          dims: {
+            type: "array",
+            minItems: 2,
+            maxItems: 3,
+            items: {
+              type: "array",
+              minItems: 2,
+              maxItems: 2,
+              items: { type: "string", minLength: 1 },
+            },
+          },
+          trajectory: {
+            type: "array",
+            minItems: 3,
+            maxItems: 5,
+            items: {
+              type: "object",
+              properties: {
+                age: { type: "string", minLength: 1 },
+                t: { type: "string", minLength: 1 },
+                d: { type: "string", minLength: 1 },
+              },
+              required: ["age", "t", "d"],
+              additionalProperties: false,
+            },
+          },
+          detail: {
+            type: "object",
+            properties: {
+              age: { type: "integer", minimum: 16, maximum: 90 },
+              city: { type: "string", minLength: 1 },
+              from_role: { type: "string", minLength: 1 },
+              to_role: { type: "string", minLength: 1 },
+              years: { type: "string", minLength: 1 },
+              intro: { type: "string", minLength: 1 },
+              full_text: { type: "string", minLength: 1 },
+              advice: {
+                type: "object",
+                properties: {
+                  decision: {
+                    type: "array",
+                    minItems: 1,
+                    maxItems: 5,
+                    items: { type: "string", minLength: 1 },
+                  },
+                  ability: {
+                    type: "array",
+                    minItems: 1,
+                    maxItems: 5,
+                    items: { type: "string", minLength: 1 },
+                  },
+                  interview: {
+                    type: "array",
+                    minItems: 1,
+                    maxItems: 5,
+                    items: { type: "string", minLength: 1 },
+                  },
+                },
+                required: ["decision", "ability", "interview"],
+                additionalProperties: false,
+              },
+              result: { type: "string", minLength: 1 },
+              consulted: { type: "integer", minimum: 0, maximum: 9999 },
+              response_time: { type: "string", minLength: 1 },
+            },
+            required: [
+              "age",
+              "city",
+              "from_role",
+              "to_role",
+              "years",
+              "intro",
+              "full_text",
+              "advice",
+              "result",
+              "consulted",
+              "response_time",
+            ],
+            additionalProperties: false,
+          },
+        },
+        required: [
+          "name",
+          "initial",
+          "hue",
+          "quote",
+          "bio",
+          "tags",
+          "dims",
+          "trajectory",
+          "detail",
+        ],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["travelers"],
+  additionalProperties: false,
+} as const;
+
 export const personaSchema = {
   type: "object",
   properties: {
@@ -298,6 +422,36 @@ export type LabChoiceOutput = {
     color: string;
   }>;
   rationale: string;
+};
+
+export type GeneratedTravelerDetail = {
+  age: number;
+  city: string;
+  from_role: string;
+  to_role: string;
+  years: string;
+  intro: string;
+  full_text: string;
+  advice: { decision: string[]; ability: string[]; interview: string[] };
+  result: string;
+  consulted: number;
+  response_time: string;
+};
+
+export type GeneratedTraveler = {
+  name: string;
+  initial: string;
+  hue: number;
+  quote: string;
+  bio: string;
+  tags: string[];
+  dims: string[][];
+  trajectory: Array<{ age: string; t: string; d: string }>;
+  detail: GeneratedTravelerDetail;
+};
+
+export type GeneratedTravelersOutput = {
+  travelers: GeneratedTraveler[];
 };
 
 export type PersonaOutput = {

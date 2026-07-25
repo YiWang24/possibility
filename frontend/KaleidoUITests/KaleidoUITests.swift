@@ -373,6 +373,10 @@ final class KaleidoUITests: XCTestCase {
         waitTap("最坏的结果")
         snap("27-result-worst")
         assertExists("可能获得", timeout: 3)
+        // 「类似经验的人」区块应随推演结果出现（服务端会实时生成并入库几位旅人补充社区）。
+        // 生成内容是动态的，这里断言区块渲染 + 截图供视觉核对；深度核对见 curl / 手测。
+        assertExists("类似经验的人", timeout: 3)
+        snap("27b-result-people")
         waitTap("重新选择")
         assertExists("当前探索问题", timeout: 6)
     }
