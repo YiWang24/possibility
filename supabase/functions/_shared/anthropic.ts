@@ -45,10 +45,10 @@ ${JSON.stringify(options.schema)}
 
 不要输出 markdown 代码块标记，不要输出任何解释、前言或结尾文字。直接以 { 开头、以 } 结尾。`;
 
-  // 网关存在间歇性 ~100s 超时（单请求偶发；simulate 的多次调用会放大失败率）。
-  // 重试可覆盖这类偶发超时：每次 60s，两次共 120s，留在 Edge Function 150s 墙钟内。
-  const maxAttempts = 2;
-  const perAttemptTimeout = 60_000;
+  // 网关存在间歇性超时/中断（同一请求偶发；单请求成功通常 <40s）。重试可覆盖这类
+  // 偶发失败：3 次每次 45s，共 135s，留在 Edge Function 150s 墙钟内。
+  const maxAttempts = 3;
+  const perAttemptTimeout = 45_000;
   let lastDebug: Record<string, unknown> | undefined;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -63,11 +63,14 @@ ${JSON.stringify(options.schema)}
         // 关键：不带 tools、不带 output_config —— 走网关唯一可靠的纯文本生成路径。
       }, { timeout: perAttemptTimeout, maxRetries: 0 });
     } catch (error) {
-      // 带 status 的上游 4xx/5xx 不重试，交给 errorResponse 统一映射（429/502）
-      if (typeof error === "object" && error !== null && "status" in error) {
+      // 只有带「数值」status 的才是真正的上游 HTTP 错误（429/4xx/5xx），直接抛出交给
+      // errorResponse 映射。注意 SDK 的 APIConnectionTimeoutError 也带 status 属性但值为
+      // undefined——不能用 `"status" in error` 判断，否则超时会被误当上游错误而不重试。
+      const status = (error as { status?: unknown } | null)?.status;
+      if (typeof status === "number") {
         throw error;
       }
-      // 无 status（超时/连接中断）：记录后重试
+      // 超时/连接中断（status 非数值）：记录后重试
       console.error(`structuredOutput attempt ${attempt} failed:`, error);
       lastDebug = {
         stage: "create_throw",

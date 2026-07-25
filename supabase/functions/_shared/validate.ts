@@ -283,7 +283,11 @@ export function validateSimulateInputV2(value: unknown): SimulateInputV2 {
     ? `${years}年`
     : string(body.time_horizon, "time_horizon", 8)!;
   if (!allowedHorizons.has(timeHorizon)) {
-    throw new HttpError(400, "INVALID_INPUT", "time_horizon 不是支持的时间跨度。");
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "time_horizon 不是支持的时间跨度。",
+    );
   }
   return {
     question: string(body.question, "question", LIMITS.question)!,
