@@ -34,6 +34,11 @@ export async function structuredOutput<T>(
     message = await anthropic().messages.parse({
       model: options.model,
       max_tokens: options.maxTokens,
+      // 网关的 claude-sonnet-5 默认开启 extended thinking，且 thinking token
+      // 计入 max_tokens。结构化 JSON 输出不需要思考链：thinking 会吃光预算导致
+      // 截断（match 实测 stop_reason=max_tokens 只返回 thinking 块），并显著拉长
+      // 生成时间（simulate 实测 100s 超时）。显式关闭，让预算全部用于 JSON。
+      thinking: { type: "disabled" },
       system: options.system,
       messages: [{ role: "user", content: options.prompt }],
       output_config: {

@@ -50,8 +50,9 @@ Deno.serve(async (req) => {
       base += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
     }
 
-    // 单次全量生成（3 情景 + 底线 ≈ 3000 token）经网关经常超时或被截断，
-    // 拆为三个并行的单情景生成，墙钟时间 ≈ 一次小生成。
+    // 拆为三个并行的单情景生成，各自输出小、易稳定返回；底线分析串行第二段。
+    // （根因是网关模型的 thinking 吃预算导致超时，已在 anthropic.ts 关闭；
+    // 拆分同时降低单请求体量，作为纵深冗余保留。）
     const [general, optimistic, cautionary] = await Promise.all(
       tones.map((tone) =>
         structuredOutput<ScenarioOutput>({
