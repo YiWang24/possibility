@@ -91,11 +91,17 @@ struct TravelerSimRow: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 4)
         }
+        // 明确高度，防止横滑行在嵌套滚动视图中塌陷（卡片高度 + 上下各 4 的内边距）
+        .frame(height: SimCard.cardHeight + 8)
     }
 }
 
 /// 单张 sim 卡片（原型 .simcard）
 struct SimCard: View {
+    /// 固定卡片高度：横滑行嵌套在外层竖向 ScrollView 中时，仅靠内容内在高度会在部分 iOS 版本塌陷为 0，
+    /// 给卡片一个明确高度即可保证横滑行有可见高度（内容自然高度约 163，留出余量避免裁切）。
+    static let cardHeight: CGFloat = 172
+
     let traveler: Traveler
     var reason: String? = nil
 
@@ -120,7 +126,7 @@ struct SimCard: View {
             .padding(.horizontal, 14)
             .padding(.top, 20).padding(.bottom, 14)
         }
-        .frame(width: 168, alignment: .leading)
+        .frame(width: 168, height: SimCard.cardHeight, alignment: .topLeading)
         .kaleidoCard(radius: 18)
     }
 }

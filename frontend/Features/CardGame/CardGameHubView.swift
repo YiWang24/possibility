@@ -105,24 +105,20 @@ struct CardGameHubView: View {
     }
 
     private var hero: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("有关于你的注解，或许可以在这里通过取舍现形。")
-                .font(.system(size: 21, weight: .bold)).lineSpacing(6).foregroundStyle(Theme.ink)
-            Text("每套卡牌都会让你在有限的底牌里做选择。留下的三张，会成为画像的一部分。")
-                .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background {
-            ZStack(alignment: .topTrailing) {
-                LinearGradient(colors: [Color(hex: 0x141A34), Color(hex: 0x241A3E), Color(hex: 0x10132A)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                RadialGradient(colors: [Color(hex: 0x8F7BFF, alpha: 0.28), .clear],
-                               center: .topTrailing, startRadius: 0, endRadius: 190)
+        Text("每套卡牌都会让你在有限的底牌里做选择。留下的三张，会成为画像的一部分。")
+            .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+            .background {
+                ZStack(alignment: .topTrailing) {
+                    LinearGradient(colors: [Color(hex: 0x141A34), Color(hex: 0x241A3E), Color(hex: 0x10132A)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing)
+                    RadialGradient(colors: [Color(hex: 0x8F7BFF, alpha: 0.28), .clear],
+                                   center: .topTrailing, startRadius: 0, endRadius: 190)
+                }
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color(hex: 0x8F7BFF, alpha: 0.28), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color(hex: 0x8F7BFF, alpha: 0.28), lineWidth: 1))
     }
 
     // MARK: 人生卡牌主卡（含规则条）

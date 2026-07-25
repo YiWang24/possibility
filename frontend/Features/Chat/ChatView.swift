@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - 探索对话（原型 chatPage · 付费漏斗主线）
 
@@ -112,6 +113,7 @@ struct ChatView: View {
                     if model.isStreaming, model.messages.last?.text.isEmpty == true {
                         thinking
                     }
+                    if model.canRetry { retryButton }
                     if model.showActionChips { actionChips }
                     if model.showNextPanel {
                         ChatNextPanel(showSummaryLink: true,
@@ -158,6 +160,14 @@ struct ChatView: View {
                     }
                 }
                 .frame(maxWidth: 300, alignment: msg.role == .user ? .trailing : .leading)
+                .contextMenu {
+                    Button {
+                        UIPasteboard.general.string = msg.text
+                        toast.show("已复制")
+                    } label: {
+                        Label("复制", systemImage: "doc.on.doc")
+                    }
+                }
             if msg.role == .ai { Spacer(minLength: 40) }
         }
         .padding(.top, 14)
@@ -180,6 +190,25 @@ struct ChatView: View {
         }
         .padding(.top, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var retryButton: some View {
+        Button {
+            inputFocused = false
+            model.retry(supabase: supabase)
+        } label: {
+            Label("重新发送", systemImage: "arrow.clockwise")
+                .font(.system(size: 12.5, weight: .semibold))
+                .foregroundStyle(Color(hex: 0xAFC7FF))
+                .padding(.horizontal, 15)
+                .padding(.vertical, 9)
+                .background(Color(hex: 0x5E96FF, alpha: 0.1), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.3), lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
+        .padding(.top, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .transition(.opacity)
     }
 
     // MARK: 验证反馈 chips（原型 .chat-actions）

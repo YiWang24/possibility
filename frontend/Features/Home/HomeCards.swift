@@ -58,7 +58,7 @@ struct HomeAskCard: View {
                 .focused($focused)
                 .lineLimit(2...4)
                 .tint(Theme.blue)
-                .padding(.trailing, model.trimmedQuestion.isEmpty ? 0 : 26)
+                .padding(.trailing, 26)
                 .keyboardDismissToolbar()
 
             HStack {
@@ -78,20 +78,20 @@ struct HomeAskCard: View {
         .background(Color(hex: 0x060810, alpha: 0.45), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(.white.opacity(0.12), lineWidth: 1))
         .overlay(alignment: .topTrailing) {
-            // 清空按钮（原型 .ask-clear）：仅有文本时显示
-            if !model.trimmedQuestion.isEmpty {
-                Button {
-                    model.question = ""
-                    focused = true
-                } label: {
-                    Text("×").font(.system(size: 18)).foregroundStyle(Color(hex: 0xAEB7CC))
-                        .frame(width: 24, height: 24)
-                        .background(Color.white.opacity(0.08), in: Circle())
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 11).padding(.trailing, 13)
-                .accessibilityLabel("清空输入")
+            // 清空按钮（原型 .ask-clear）：始终占位，仅按内容显隐，避免插拔 view 打乱焦点
+            let empty = model.trimmedQuestion.isEmpty
+            Button {
+                model.question = ""
+            } label: {
+                Text("×").font(.system(size: 18)).foregroundStyle(Color(hex: 0xAEB7CC))
+                    .frame(width: 24, height: 24)
+                    .background(Color.white.opacity(0.08), in: Circle())
             }
+            .buttonStyle(.plain)
+            .padding(.top, 11).padding(.trailing, 13)
+            .accessibilityLabel("清空输入")
+            .opacity(empty ? 0 : 1)
+            .disabled(empty)
         }
     }
 

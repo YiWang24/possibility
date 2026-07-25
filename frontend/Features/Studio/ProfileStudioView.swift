@@ -12,13 +12,27 @@ struct ProfileStudioView: View {
     @Environment(ToastCenter.self) private var toast
     @Environment(SupabaseService.self) private var supabase
 
-    @State private var assessmentKind: AssessmentKind?
     @State private var activeDimension: DimensionKey?
-    @State private var launchGame: CardGameKind?
+    /// 单一 fullScreenCover 呈现源：测评浮层与卡牌浮层若各挂一个 .fullScreenCover 会互相抢占
+    /// 同一呈现槽（后声明者胜出），导致「大五人格 · 进入测试」点击无反应。合并为一个源即可。
+    @State private var cover: StudioCover?
     @State private var mbtiOpen = false
     @State private var mbti = MBTIStore.current
     /// 测评浮层关闭后触发状态刷新
     @State private var tick = 0
+
+    /// 大五 / 生活画像测评浮层与人生卡牌浮层的统一呈现源（避免多个 .fullScreenCover 互相抢占）
+    private enum StudioCover: Identifiable {
+        case assessment(AssessmentKind)
+        case cardGame(CardGameKind)
+
+        var id: String {
+            switch self {
+            case .assessment(let kind): return "assessment-\(kind.rawValue)"
+            case .cardGame(let kind): return "game-\(kind.rawValue)"
+            }
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,9 +49,16 @@ struct ProfileStudioView: View {
             .scrollIndicators(.hidden)
         }
         .background(Theme.paper.ignoresSafeArea())
-        .fullScreenCover(item: $assessmentKind, onDismiss: { tick += 1 }) { kind in
-            AssessmentFlowView(kind: kind, onSaveToProfile: saveAssessment)
-                .environment(toast)
+        .fullScreenCover(item: $cover, onDismiss: { tick += 1 }) { cover in
+            switch cover {
+            case .assessment(let kind):
+                AssessmentFlowView(kind: kind, onSaveToProfile: saveAssessment)
+                    .environment(toast)
+            case .cardGame(let kind):
+                CardGameView(kind: kind, home: home)
+                    .environment(toast)
+                    .environment(supabase)
+            }
         }
         .sheet(item: $activeDimension) { key in
             DimensionSheet(
@@ -48,17 +69,14 @@ struct ProfileStudioView: View {
                 },
                 onLaunchCardGame: { game in
                     activeDimension = nil
-                    launchGame = CardGameKind(rawValue: game)
+                    if let kind = CardGameKind(rawValue: game) {
+                        cover = .cardGame(kind)
+                    }
                 }
             )
             .presentationDetents([.fraction(0.82)])
             .presentationDragIndicator(.visible)
             .presentationBackground(Color(hex: 0x10131C))
-        }
-        .fullScreenCover(item: $launchGame) { kind in
-            CardGameView(kind: kind, home: home)
-                .environment(toast)
-                .environment(supabase)
         }
     }
 
@@ -116,7 +134,7 @@ struct ProfileStudioView: View {
                         .background(Color.white.opacity(0.07), in: Capsule())
                 }
             }
-            Button(state.action) { assessmentKind = .bigfive }
+            Button(state.action) { cover = .assessment(.bigfive) }
                 .font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 12)
                 .background(Theme.buttonGradient, in: Capsule())
