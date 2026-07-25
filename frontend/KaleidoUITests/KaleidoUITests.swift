@@ -56,6 +56,35 @@ final class KaleidoUITests: XCTestCase {
         XCTAssertTrue(find(label, timeout: timeout) != nil, "「\(label)」未出现", file: file, line: line)
     }
 
+    /// 等待两个标签中先出现的一个（避免为等某一个白白耗满 timeout）；都没出现返回 nil
+    private func waitForEither(_ a: String, _ b: String, timeout: TimeInterval) -> String? {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if app.buttons[a].exists || app.staticTexts[a].exists { return a }
+            if app.buttons[b].exists || app.staticTexts[b].exists { return b }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        } while Date() < deadline
+        return nil
+    }
+
+    /// 首次录音会弹出语音识别 / 麦克风权限系统弹窗（springboard）；点「允许」放行，
+    /// 否则弹窗会盖住录音条导致点不到「完成」。授权后同一 sim 后续录音不再弹。
+    private func allowPermissionAlerts() {
+        let sb = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let allowLabels = ["允许", "好", "允许使用", "确定", "OK", "Allow", "Allow While Using App"]
+        let deadline = Date().addingTimeInterval(6)
+        repeat {
+            let alert = sb.alerts.firstMatch
+            if alert.exists {
+                for label in allowLabels where alert.buttons[label].exists {
+                    alert.buttons[label].tap()
+                    break
+                }
+            }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        } while Date() < deadline && sb.alerts.firstMatch.exists
+    }
+
     private func containing(_ text: String, timeout: TimeInterval = 4) -> XCUIElement {
         let p = NSPredicate(format: "label CONTAINS %@", text)
         let deadline = Date().addingTimeInterval(timeout)
@@ -82,6 +111,29 @@ final class KaleidoUITests: XCTestCase {
     }
 
     // MARK: 01 · 首页：问候 + 语音日记录音 → 分析
+
+    func test00VoiceDiaryResilient() throws {
+        assertExists("我的语音日记")
+
+        // 录音 → 完成 → 有限时间内必出「结果」或「重试」，绝不无限卡在转圈
+        //（修复「输入完识别不了」：网关偶发挂起时不再无限等待，50s 内必给结论）
+        waitTap("◉ 记录今日")
+        allowPermissionAlerts()   // 首次录音的语音/麦克风权限弹窗
+        assertExists("完成", timeout: 5)
+        waitTap("完成")
+        let r1 = waitForEither("这次记录里，我听见了", "重试", timeout: 55)
+        XCTAssertNotNil(r1, "55s 内既无结果也无重试——语音分析卡死了")
+        snap("v01-resolved")
+
+        // 分析失败 → 点「重试」应再次触发分析并再次给出结果/重试
+        //（修复「无法重试点击没反应」）
+        if r1 == "重试" {
+            waitTap("重试")
+            let r2 = waitForEither("这次记录里，我听见了", "重试", timeout: 55)
+            XCTAssertNotNil(r2, "点「重试」后毫无响应——重试按钮没生效")
+            snap("v02-retry-responsive")
+        }
+    }
 
     func test01HomeDiaryRecording() throws {
         assertExists("晚上好，老己")
