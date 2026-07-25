@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我有可能 · 扑克牌拼卡工具（贴 AI 单人物图）</title>
+<style>
+  :root{ --ink:#1c3f94; --red:#d21f2b; --gold:#f3c518; --black:#16181d; --cream:#fdfbf3; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0e1116;color:#e8e8ea;
+    font-family:"PingFang SC","Noto Sans SC",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  header{text-align:center;padding:36px 20px 4px}
+  header h1{margin:0;font-size:24px;letter-spacing:2px}
+  header p{margin:8px auto 0;color:#9aa0aa;font-size:13px;max-width:680px;line-height:1.6}
+  .deck{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;padding:26px 24px 40px;max-width:1240px;margin:0 auto}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px;width:300px}
+  .col svg{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  .drop{
+    width:100%;border:1.5px dashed #3a4356;border-radius:10px;padding:10px;text-align:center;
+    font-size:12px;color:#9aa0aa;cursor:pointer;transition:.15s;background:#151a22;
+  }
+  .drop:hover,.drop.over{border-color:var(--gold);color:#e8e8ea;background:#1b2230}
+  .drop b{color:#fff}
+  .row{display:flex;gap:8px;width:100%}
+  .row .drop{flex:1}
+  .fit{display:flex;align-items:center;gap:6px;font-size:11px;color:#9aa0aa;width:100%;justify-content:center}
+  .fit input{width:120px}
+  .toolbar{text-align:center;padding:6px 0 50px}
+  .toolbar button{background:#1c3f94;color:#fff;border:0;border-radius:8px;padding:11px 20px;font-size:14px;cursor:pointer;margin:0 6px}
+  .toolbar .ghost{background:#2a3242}
+  footer{text-align:center;color:#5b616b;font-size:11px;padding:0 20px 50px;line-height:1.7}
+  @media print{body{background:#fff}header,.drop,.row,.fit,.toolbar,footer{display:none}
+    .deck{gap:10px}.col{width:2.5in}.col svg{box-shadow:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>我有可能 · 扑克牌拼卡工具</h1>
+  <p>把 AI 出的「单个直立国王 + 场景道具」图拖进对应花色框，自动
+  <b>上下镜像 + 补四角 K/花色 + 场景牌</b>。调「上半区留白」对齐镜像接缝，再「打印/导出 PDF」。</p>
+</header>
+
+<div class="deck" id="deck"></div>
+
+<div class="toolbar">
+  <button onclick="window.print()">打印 / 导出 PDF</button>
+  <button class="ghost" onclick="location.reload()">清空重来</button>
+</div>
+<footer>
+  贴图后所有绘制在浏览器本地完成，图片不外传。<br>
+  出图提示词见同目录「出图提示词.md」。建议单人物图为白底/去背、半身居中，效果最佳。
+</footer>
+
+<script>
+const C={ink:"#1c3f94",red:"#d21f2b",gold:"#f3c518",black:"#16181d",cream:"#fdfbf3"};
+function suitPath(k){return{
+  spade:"M0,-22 C14,-6 24,2 24,12 C24,22 14,24 6,18 C8,24 10,26 14,28 L-14,28 C-10,26 -8,24 -6,18 C-14,24 -24,22 -24,12 C-24,2 -14,-6 0,-22 Z",
+  heart:"M0,26 C-4,20 -24,8 -24,-8 C-24,-20 -12,-24 -4,-16 C-2,-13 0,-9 0,-9 C0,-9 2,-13 4,-16 C12,-24 24,-20 24,-8 C24,8 4,20 0,26 Z",
+  club:"M-4,28 C-4,20 -2,16 0,14 C-8,20 -20,16 -20,4 C-20,-6 -10,-10 -3,-6 C-8,-12 -8,-24 0,-24 C8,-24 8,-12 3,-6 C10,-10 20,-6 20,4 C20,16 8,20 0,14 C2,16 4,20 4,28 Z",
+  diamond:"M0,-26 L20,0 L0,26 L-20,0 Z"}[k];}
+const suitColor=k=>(k==="heart"||k==="diamond")?C.red:C.black;
+
+const cards=[
+  {suit:"spade",  zh:"35岁 · 辞职留学",  en:"QUIT & STUDY ABROAD", img:null, top:70},
+  {suit:"diamond",zh:"30岁 · 转行创业",  en:"CAREER PIVOT",        img:null, top:70},
+  {suit:"heart",  zh:"28岁 · 异地恋结婚",en:"MARRY ACROSS MILES", img:null, top:70},
+  {suit:"club",   zh:"33岁 · 要不要生小孩",en:"TO HAVE A CHILD",   img:null, top:70},
+];
+
+function cardSVG(c,i){
+  const s=suitPath(c.suit), col=suitColor(c.suit);
+  const idx=`<g fill="${col}" font-family="Georgia,serif" font-weight="700">
+      <text x="0" y="0" font-size="46" text-anchor="middle">K</text>
+      <g transform="translate(0,34) scale(0.42)"><path d="${s}" fill="${col}"/></g></g>`;
+  // 人物图：上半区 y=[c.top,345]，居中；下半区镜像
+  const imgTop = c.img ? `<image href="${c.img}" x="70" y="${c.top}" width="360" height="${345-c.top}"
+       preserveAspectRatio="xMidYMax meet"/>` :
+       `<text x="250" y="230" text-anchor="middle" fill="#c9ccd2" font-size="15">拖入 ${c.suit} 单人物图</text>`;
+  const figure = c.img ? `
+     <g clip-path="url(#clipTop${i})">${imgTop}</g>
+     <g transform="rotate(180 250 350)" clip-path="url(#clipTop${i})">${imgTop}</g>` :
+     imgTop;
+  return `
+  <svg viewBox="0 0 500 700" xmlns="http://www.w3.org/2000/svg">
+    <defs><clipPath id="clipTop${i}"><rect x="26" y="26" width="448" height="322"/></clipPath></defs>
+    <rect width="500" height="700" rx="24" fill="${C.cream}"/>
+    <rect x="14" y="14" width="472" height="672" rx="16" fill="none" stroke="${C.ink}" stroke-width="4"/>
+    <rect x="24" y="24" width="452" height="652" rx="12" fill="none" stroke="${C.ink}" stroke-width="1.5"/>
+    ${figure}
+    <line x1="70" y1="350" x2="430" y2="350" stroke="${C.ink}" stroke-width="2"/>
+    <g transform="translate(56,66)">${idx}</g>
+    <g transform="translate(444,634) rotate(180)">${idx}</g>
+    <g transform="translate(250,350)">
+      <rect x="-140" y="-19" width="280" height="38" rx="19" fill="${C.ink}"/>
+      <text x="0" y="-1" text-anchor="middle" fill="#fff" font-size="19" font-weight="700"
+            font-family="'PingFang SC','Noto Sans SC',sans-serif">${c.zh}</text>
+      <text x="0" y="13" text-anchor="middle" fill="${C.gold}" font-size="9" letter-spacing="3"
+            font-family="Georgia,serif">${c.en}</text>
+    </g>
+    <text x="250" y="690" text-anchor="middle" fill="${C.ink}" font-size="9" letter-spacing="4"
+          font-family="Georgia,serif" opacity="0.7">我有可能 · POSSIBILITY</text>
+  </svg>`;
+}
+
+function render(){
+  deck.innerHTML = cards.map((c,i)=>`
+    <div class="col">
+      ${cardSVG(c,i)}
+      <div class="drop" data-i="${i}">拖入 / 点击选择 <b>${c.suit}</b> 单人物图</div>
+      <div class="fit">上半区留白 <input type="range" min="30" max="150" value="${c.top}" data-top="${i}"></div>
+    </div>`).join("");
+  bind();
+}
+function bind(){
+  document.querySelectorAll(".drop").forEach(el=>{
+    const i=+el.dataset.i;
+    el.onclick=()=>pick(i);
+    el.ondragover=e=>{e.preventDefault();el.classList.add("over")};
+    el.ondragleave=()=>el.classList.remove("over");
+    el.ondrop=e=>{e.preventDefault();el.classList.remove("over");
+      const f=e.dataTransfer.files[0]; if(f) load(f,i);};
+  });
+  document.querySelectorAll("[data-top]").forEach(r=>{
+    r.oninput=()=>{cards[+r.dataset.top].top=+r.value; render();};
+  });
+}
+function pick(i){const inp=document.createElement("input");inp.type="file";inp.accept="image/*";
+  inp.onchange=()=>{if(inp.files[0])load(inp.files[0],i)};inp.click();}
+function load(f,i){const r=new FileReader();r.onload=()=>{cards[i].img=r.result;render();};r.readAsDataURL(f);}
+
+const deck=document.getElementById("deck");
+render();
+</script>
+</body>
+</html>
