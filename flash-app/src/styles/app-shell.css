@@ -1,0 +1,35 @@
+/* ============================================================
+   App-shell adaptation — loaded AFTER prototype.css so these win.
+   The prototype ran inside a 390x844 .phone frame; in the flash-app
+   the WebView itself is the phone, so #container plays the role of
+   .phone and hosts the absolutely-positioned .screen/.push/.tabbar.
+   Safe-area insets are handled here in CSS per platform rules
+   (never inline / in JS strings).
+   ============================================================ */
+
+#container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+/* Keep content clear of the bottom tab bar + home indicator inset. */
+.screen {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 108px);
+}
+
+/* Push-page header: keep the back button out of the top safe-area inset. */
+.push .top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+}
+
+/* Bottom nav respects the home-indicator inset. */
+.tabbar {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+}
+
+.toast {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 118px);
+}
