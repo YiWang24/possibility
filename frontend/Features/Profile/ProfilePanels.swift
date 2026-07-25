@@ -89,7 +89,7 @@ struct AdvicePanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            SectionHeader(title: "把踩过的坑留给后来人", trailing: model.unlocked ? "全部可见" : "部分可见")
+            SectionHeader(title: "把踩过的坑留给后来人", trailing: "全部可见")
             HStack(spacing: 7) {
                 ForEach(AdviceKind.allCases) { kind in
                     ChipToggle(label: kind.label, isOn: model.adviceKind == kind) {
@@ -107,9 +107,8 @@ struct AdvicePanel: View {
             Text(model.adviceTitle).font(.system(size: 15, weight: .semibold)).lineSpacing(3).foregroundStyle(Theme.ink).padding(.top, 7)
 
             let tips = model.adviceTips
-            let visible = model.unlocked ? tips : Array(tips.prefix(1))
             VStack(alignment: .leading, spacing: 9) {
-                ForEach(Array(visible.enumerated()), id: \.offset) { i, tip in
+                ForEach(Array(tips.enumerated()), id: \.offset) { i, tip in
                     HStack(alignment: .top, spacing: 10) {
                         Text("\(i + 1)").font(.system(size: 10)).foregroundStyle(Theme.teal)
                             .frame(width: 20, height: 20).background(Color(hex: 0x3ED9A4, alpha: 0.12), in: RoundedRectangle(cornerRadius: 7))
@@ -119,13 +118,6 @@ struct AdvicePanel: View {
                 }
             }
             .padding(.top, 14)
-
-            if !model.unlocked, tips.count > 1 {
-                LockedBlock(title: "还有 \(tips.count - 1) 条具体建议", hint: "解锁完整经验后可见全部踩坑建议") {
-                    model.checkout = .unlock
-                }
-                .padding(.top, 12)
-            }
         }
         .padding(19).frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
@@ -282,12 +274,6 @@ struct PayBar: View {
 
     var body: some View {
         HStack(spacing: 9) {
-            Button { if !model.unlocked { model.checkout = .unlock } } label: {
-                unlockLabel
-            }
-            .buttonStyle(PressScaleStyle())
-            .disabled(model.unlocked)
-
             Button { openConsult() } label: {
                 HStack(spacing: 8) {
                     Text("向 TA 咨询")
@@ -303,23 +289,6 @@ struct PayBar: View {
         .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 8)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 1) }
-    }
-
-    private var unlockLabel: some View {
-        HStack(spacing: 8) {
-            if model.unlocked {
-                Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.teal)
-                Text("已解锁完整经验").font(.system(size: 12.5, weight: .semibold))
-            } else {
-                Text("解锁完整经验")
-                Text("¥\(NSDecimalNumber(decimal: AppConfig.Price.unlockProfile).stringValue)").font(.system(size: 15, weight: .bold))
-            }
-        }
-        .font(.system(size: 12.5, weight: .semibold))
-        .foregroundStyle(model.unlocked ? Theme.sub : Color(hex: 0xD8E3FF))
-        .frame(maxWidth: .infinity).frame(minHeight: 50)
-        .background(Color(hex: 0x5E96FF, alpha: 0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.35), lineWidth: 1))
     }
 
     private func openConsult() {
