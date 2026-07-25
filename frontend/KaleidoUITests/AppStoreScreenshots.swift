@@ -48,7 +48,7 @@ final class AppStoreScreenshots: XCTestCase {
     }
 
     func testAppStoreTabScreenshots() throws {
-        // Tab 1 · 认识自己
+        // Tab 1 · 认识你自己
         waitFor("我的语音日记")
         settle(3.5)
         snap("appstore-01-home")

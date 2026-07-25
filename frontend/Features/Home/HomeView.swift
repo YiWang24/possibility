@@ -1,7 +1,7 @@
 import SwiftUI
 import Foundation
 
-// MARK: - 01 认识自己（首页）
+// MARK: - 01 认识你自己（首页）
 // 原型 scr-home：问候 · 语音日记 · AI 发问 · 动态画像。
 
 struct HomeView: View {
@@ -122,6 +122,24 @@ struct HomeView: View {
                 animationPaused: chatLaunch != nil || diaryLaunch != nil || showStudio,
                 onTapDim: handleDimTap
             )
+            VStack(alignment: .leading, spacing: 8) {
+                Text("我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：‘离每个人最远的，就是他自己。’——对于我们自己，我们不是‘知者’……")
+                    .font(.system(size: 12, design: .serif))
+                    .foregroundStyle(Theme.sub)
+                    .lineSpacing(6)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("——尼采《道德的系谱》")
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.faint)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(.top, 4)
+            .padding(.leading, 14)
+            .overlay(alignment: .leading) {
+                Rectangle()
+                    .fill(Theme.sub.opacity(0.34))
+                    .frame(width: 1)
+            }
         }
     }
 
