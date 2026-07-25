@@ -160,6 +160,16 @@ values (
   '{"seed":123,"shape":"星轨旅者","hue":248,"lobes":5}'::jsonb
 );
 
+-- 日记回顾缓存（0011）：A 写入自己的月度缓存。
+insert into public.diary_summary_cache (user_id, period, ref, entry_count, summary)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  'month',
+  '2026-07',
+  1,
+  '{"top_emotions":["平静"],"top_keywords":["转型"],"insight":"测试洞察","highlights":[]}'::jsonb
+);
+
 -- 用户 A 创建自己的悬赏（0007 起 authenticated 可写、RLS 锁 user_id）。
 insert into public.bounties (question, reward, responses, user_id)
 values ('转行第一年最难的是什么', '感谢', '0', '11111111-1111-4111-8111-111111111111');
@@ -349,6 +359,9 @@ begin
   if (select count(*) from public.persona_jobs) <> 0 then
     raise exception 'cross-user persona_jobs leaked';
   end if;
+  if (select count(*) from public.diary_summary_cache) <> 0 then
+    raise exception 'cross-user diary_summary_cache leaked';
+  end if;
   if (
     select count(*) from public.profiles
     where id = '11111111-1111-4111-8111-111111111111'
@@ -400,6 +413,12 @@ begin
     insert into public.persona_jobs (user_id)
     values ('11111111-1111-4111-8111-111111111111');
     raise exception 'cross-user persona_job write unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  begin
+    insert into public.diary_summary_cache (user_id, period, ref)
+    values ('11111111-1111-4111-8111-111111111111', 'year', '2026');
+    raise exception 'cross-user diary_summary_cache write unexpectedly succeeded';
   exception when insufficient_privilege then null; end;
 
   -- B 无法修改 A 的公开资料 / 悬赏（策略过滤为 0 行，found=false）。

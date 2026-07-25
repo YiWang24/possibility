@@ -16,6 +16,41 @@ import {
 import { validateDiarySummaryInput } from "../_shared/validate.ts";
 
 const MAX_TRANSCRIPT_CHARS = 12_000;
+// 送入 LLM 的原文只取最近 N 条：年度场景不再全量拉取数百条完整转写。
+const MAX_TRANSCRIPT_ENTRIES = 60;
+// 统计聚合（情绪/关键词）最多参与的条数，与原实现保持一致。
+const MAX_STATS_ENTRIES = 500;
+
+type CachedSummary = {
+  top_emotions: string[];
+  top_keywords: string[];
+  insight: string;
+  highlights: string[];
+};
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((v) => typeof v === "string");
+}
+
+/** 校验缓存 jsonb 形状；不符合契约的脏数据按缓存未命中处理。 */
+function asCachedSummary(value: unknown): CachedSummary | null {
+  if (typeof value !== "object" || value === null) return null;
+  const v = value as Record<string, unknown>;
+  if (
+    typeof v.insight !== "string" ||
+    !isStringArray(v.top_emotions) ||
+    !isStringArray(v.top_keywords) ||
+    !isStringArray(v.highlights)
+  ) {
+    return null;
+  }
+  return {
+    top_emotions: v.top_emotions,
+    top_keywords: v.top_keywords,
+    insight: v.insight,
+    highlights: v.highlights,
+  };
+}
 
 function periodRange(period: "month" | "year", ref: string): {
   start: string;
@@ -51,6 +86,8 @@ function topFrequent(values: string[], max: number): string[] {
 /**
  * POST /diary-summary
  * 按月/年聚合日记：统计在代码中完成，洞察与高光由 LLM 生成（失败降级）。
+ * 结果按 (user_id, period, ref) 缓存；entry_count 未变化时直接命中缓存，
+ * 不重复调用 LLM。降级结果不写缓存，避免把兜底文案固化。
  * Body: { period: "month" | "year", ref: "2026-07" | "2026" }
  * Resp: { period, ref, entry_count, top_emotions, top_keywords, insight, highlights }
  */
@@ -63,21 +100,29 @@ Deno.serve(async (req) => {
     const { user, db } = await requireUser(req);
 
     const range = periodRange(input.period, input.ref);
-    const { data, error, count } = await db
-      .from("diary_entries")
-      .select("transcript,emotions,keywords", { count: "exact" })
-      .eq("user_id", user.id)
-      .gte("created_at", range.start)
-      .lt("created_at", range.end)
-      .order("created_at", { ascending: true })
-      .limit(500);
-    if (error) {
-      console.error("diary summary query failed:", error.message);
+
+    // 条数统计（head 不传数据）与缓存查询并行，命中即免去后续查询与 LLM 调用。
+    const [countRes, cacheRes] = await Promise.all([
+      db
+        .from("diary_entries")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", range.start)
+        .lt("created_at", range.end),
+      db
+        .from("diary_summary_cache")
+        .select("entry_count,summary")
+        .eq("user_id", user.id)
+        .eq("period", input.period)
+        .eq("ref", input.ref)
+        .maybeSingle(),
+    ]);
+    if (countRes.error) {
+      console.error("diary summary count failed:", countRes.error.message);
       throw new HttpError(500, "DATABASE_ERROR", "读取日记失败。");
     }
 
-    const entries = data ?? [];
-    const entryCount = count ?? entries.length;
+    const entryCount = countRes.count ?? 0;
     const periodLabel = input.period === "month" ? "本月" : "今年";
 
     if (entryCount === 0) {
@@ -93,6 +138,49 @@ Deno.serve(async (req) => {
       });
     }
 
+    // 缓存不可用只记录日志，不影响主流程。
+    if (cacheRes.error) {
+      console.error("diary summary cache read failed:", cacheRes.error.message);
+    } else if (cacheRes.data?.entry_count === entryCount) {
+      const cached = asCachedSummary(cacheRes.data.summary);
+      if (cached) {
+        return jsonResponse({
+          period: input.period,
+          ref: input.ref,
+          entry_count: entryCount,
+          ...cached,
+        });
+      }
+    }
+
+    // 未命中：统计聚合不拉 transcript；LLM 原文单独取最近 N 条，避免全量传输。
+    const [statsRes, transcriptRes] = await Promise.all([
+      db
+        .from("diary_entries")
+        .select("emotions,keywords,created_at")
+        .eq("user_id", user.id)
+        .gte("created_at", range.start)
+        .lt("created_at", range.end)
+        .order("created_at", { ascending: true })
+        .limit(MAX_STATS_ENTRIES),
+      db
+        .from("diary_entries")
+        .select("transcript")
+        .eq("user_id", user.id)
+        .gte("created_at", range.start)
+        .lt("created_at", range.end)
+        .order("created_at", { ascending: false })
+        .limit(MAX_TRANSCRIPT_ENTRIES),
+    ]);
+    if (statsRes.error || transcriptRes.error) {
+      console.error(
+        "diary summary query failed:",
+        (statsRes.error ?? transcriptRes.error)?.message,
+      );
+      throw new HttpError(500, "DATABASE_ERROR", "读取日记失败。");
+    }
+
+    const entries = statsRes.data ?? [];
     const topEmotions = topFrequent(
       entries.flatMap((e) => e.emotions ?? []),
       5,
@@ -111,11 +199,14 @@ Deno.serve(async (req) => {
         : "") +
       "。坚持记录本身就是在认真对待自己的生活。";
     let highlights: string[] = [];
+    let llmOk = false;
 
     try {
-      const transcripts = entries
+      // 查询按时间倒序取最近 N 条，此处还原为时间正序后拼接、再截断。
+      const transcripts = (transcriptRes.data ?? [])
         .map((e) => (e.transcript ?? "").trim())
         .filter((t) => t.length > 0)
+        .reverse()
         .join("\n---\n")
         .slice(0, MAX_TRANSCRIPT_CHARS);
       const result = await structuredOutput<DiarySummaryOutput>({
@@ -133,8 +224,33 @@ Deno.serve(async (req) => {
       });
       insight = result.insight;
       highlights = result.highlights.slice(0, 5);
+      llmOk = true;
     } catch (llmError) {
       console.error("diary summary llm failed:", llmError);
+    }
+
+    // 仅缓存 LLM 成功的结果；写入失败不影响响应。
+    if (llmOk) {
+      const { error: cacheWriteError } = await db
+        .from("diary_summary_cache")
+        .upsert({
+          user_id: user.id,
+          period: input.period,
+          ref: input.ref,
+          entry_count: entryCount,
+          summary: {
+            top_emotions: topEmotions,
+            top_keywords: topKeywords,
+            insight,
+            highlights,
+          },
+        });
+      if (cacheWriteError) {
+        console.error(
+          "diary summary cache write failed:",
+          cacheWriteError.message,
+        );
+      }
     }
 
     return jsonResponse({
