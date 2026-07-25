@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - 画像工坊（原型 #profileStudio）
 //
-// 大五主卡（进入 / 继续 n/120 / 查看结果）· 处境扫描 CTA · 生活画像五维网格 ·
-// MBTI 面板 · 来源图例。从首页「探索更多画像」进入（fullScreenCover）。
+// 大五主卡（进入 / 继续 n/120 / 查看结果）· 生活画像五维网格 · MBTI 面板 ·
+// 来源图例。从首页「探索更多画像」进入（fullScreenCover）。
 
 struct ProfileStudioView: View {
     let home: HomeModel
@@ -13,7 +13,6 @@ struct ProfileStudioView: View {
     @Environment(SupabaseService.self) private var supabase
 
     @State private var assessmentKind: AssessmentKind?
-    @State private var showContextScan = false
     @State private var activeDimension: DimensionKey?
     @State private var launchGame: CardGameKind?
     @State private var mbtiOpen = false
@@ -27,7 +26,6 @@ struct ProfileStudioView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     section(title: "人格底色") { bigFiveCard }
-                    section(title: "此刻的处境") { contextCard }
                     section(title: "生活画像") { assessmentGrid }
                     section(title: "MBTI") { mbtiPanel }
                     sourceKey
@@ -40,9 +38,6 @@ struct ProfileStudioView: View {
         .fullScreenCover(item: $assessmentKind, onDismiss: { tick += 1 }) { kind in
             AssessmentFlowView(kind: kind, onSaveToProfile: saveAssessment)
                 .environment(toast)
-        }
-        .fullScreenCover(isPresented: $showContextScan) {
-            ContextScanView().environment(toast)
         }
         .sheet(item: $activeDimension) { key in
             DimensionSheet(
@@ -139,32 +134,6 @@ struct ProfileStudioView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color(hex: 0x8F7BFF, alpha: 0.3), lineWidth: 1))
-    }
-
-    // MARK: 处境扫描 CTA（原型 .context-scan-card）
-
-    private var contextCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("CONTEXT CHECK-IN · 约 2 分钟")
-                .font(.system(size: 9, weight: .semibold)).tracking(2.2)
-                .foregroundStyle(Color(hex: 0x8EE7C8))
-            Text("最近，什么正在作用于你？").font(.system(size: 16.5, weight: .bold)).foregroundStyle(Theme.ink)
-            Text("不测你是哪类人。只把精力、现实压力、支持与选择空间分开看，避免把一时的处境写成永久的性格。")
-                .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
-            Button("开始处境扫描") { showContextScan = true }
-                .font(.system(size: 13, weight: .semibold)).foregroundStyle(Color(hex: 0x0B241C))
-                .frame(maxWidth: .infinity).padding(.vertical, 12)
-                .background(Color(hex: 0x3ED9A4), in: Capsule())
-                .buttonStyle(PressScaleStyle())
-                .padding(.top, 4)
-        }
-        .padding(18)
-        .background(
-            LinearGradient(colors: [Color(hex: 0x11241F), Color(hex: 0x122031), Color(hex: 0x0E1420)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing),
-            in: RoundedRectangle(cornerRadius: 20, style: .continuous)
-        )
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color(hex: 0x3ED9A4, alpha: 0.26), lineWidth: 1))
     }
 
     // MARK: 生活画像网格（原型 .assessment-grid + syncStudioDimensionCards）

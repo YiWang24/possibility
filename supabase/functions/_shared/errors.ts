@@ -5,8 +5,6 @@ export class HttpError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
-    // TODO(debug): 临时诊断字段，定位 simulate/match 失败后移除
-    public readonly debug?: unknown,
   ) {
     super(message);
     this.name = "HttpError";
@@ -27,14 +25,7 @@ export function jsonResponse(data: unknown, status = 200): Response {
 export function errorResponse(error: unknown): Response {
   if (error instanceof HttpError) {
     return jsonResponse(
-      {
-        error: {
-          code: error.code,
-          message: error.message,
-          // TODO(debug): 临时透出诊断上下文，定位后移除
-          ...(error.debug === undefined ? {} : { debug: error.debug }),
-        },
-      },
+      { error: { code: error.code, message: error.message } },
       error.status,
     );
   }
@@ -76,14 +67,6 @@ export function errorResponse(error: unknown): Response {
         code: "INTERNAL_ERROR",
         message: "服务暂时不可用，请稍后重试。",
         request_id: requestId,
-        // TODO(debug): 透出未分类错误的类型/消息，定位后移除
-        debug: error instanceof Error
-          ? {
-            name: error.name,
-            message: error.message,
-            status: (error as { status?: unknown }).status ?? null,
-          }
-          : { raw: String(error) },
       },
     },
     500,

@@ -84,7 +84,7 @@ final class KaleidoUITests: XCTestCase {
     // MARK: 01 · 首页：问候 + 语音日记录音 → 分析
 
     func test01HomeDiaryRecording() throws {
-        assertExists("晚上好，屿岸")
+        assertExists("晚上好，老己")
         assertExists("我的语音日记")
         assertExists("说出那个\n在心里盘旋的问题", timeout: 3)
         snap("01-home")
@@ -172,7 +172,7 @@ final class KaleidoUITests: XCTestCase {
 
         // 完成本次探索 → 回到首页 + toast
         waitTap("完成本次探索")
-        assertExists("晚上好，屿岸", timeout: 6)
+        assertExists("晚上好，老己", timeout: 6)
         snap("12-chat-finished")
     }
 

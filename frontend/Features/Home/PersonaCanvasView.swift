@@ -20,7 +20,7 @@ struct PersonaModel: Equatable {
     /// 由画像内容构建（对照原型 currentPersonaSnapshot + refreshDynamicPersona）
     static func build(values: [String], signature: [String]) -> PersonaModel {
         let text = (values + signature).joined(separator: "|")
-        let seed = fnv1a(text.isEmpty ? "屿岸·持续探索" : text)
+        let seed = fnv1a(text.isEmpty ? "老己·持续探索" : text)
         let content = (values + signature).joined(separator: " ")
 
         func score(_ words: [String]) -> Int {

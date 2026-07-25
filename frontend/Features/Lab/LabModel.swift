@@ -146,7 +146,7 @@ final class LabModel {
                   risk: "最差情况下，新岗位没有站稳，原有专业身份也因中断而需要重新证明。"),
         CarryCard(id: "creation", glyph: "◇", name: "创造实感", source: "动态画像",
                   risk: "你可能进入一个更偏协调和推进的岗位，却发现真正动手创造的时刻反而更少。"),
-        CarryCard(id: "exit", glyph: "↩", name: "保留退路", source: "处境扫描",
+        CarryCard(id: "exit", glyph: "↩", name: "保留退路", source: "风险预案",
                   risk: "如果投入过深、现金流下降或履历断裂，回到原路径的成本会明显升高。"),
     ]
 
