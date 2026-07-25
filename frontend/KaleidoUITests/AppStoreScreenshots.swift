@@ -5,6 +5,11 @@ import XCTest
 // 只做一件事：打开四个导航 tab，等内容加载完成后各截一张高清图。
 // 运行前用 simctl status_bar override 统一状态栏（9:41 / 满电 / 满格）。
 // 输出:/tmp/appstore_shots/*.png(模拟器原生分辨率,iPhone 17 Pro Max = 1320×2868,对应 App Store 6.9")。
+//
+// 注:appstore-03b-community-watch(社区放映模式)不在本测试内 —— 放映舞台的常驻动画
+// 让 XCUITest 等待 app idle 超时。改用调试直达参数冷启动后直接截屏:
+//   xcrun simctl launch <udid> com.adventurex.kaleido -kaleido-tab community -kaleido-watch 1
+//   xcrun simctl io <udid> screenshot assets/appstore/appstore-03b-community-watch.png
 
 final class AppStoreScreenshots: XCTestCase {
 
