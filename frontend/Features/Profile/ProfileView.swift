@@ -207,22 +207,15 @@ struct ProfileView: View {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
     }
 
-    @ViewBuilder
     private func completeStory(_ d: TravelerDetail) -> some View {
-        if model.unlocked {
-            VStack(alignment: .leading, spacing: 9) {
-                Text("完整故事 · 最难的一关").font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Color(hex: 0xB9CCFF))
-                Text(d.fullText).font(.system(size: 13)).lineSpacing(7).foregroundStyle(Theme.sub)
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
-        } else {
-            LockedBlock(title: "完整故事 · 最难的一关", hint: "解锁后可见 TA 亲述的关键一关") {
-                model.checkout = .unlock
-            }
+        VStack(alignment: .leading, spacing: 9) {
+            Text("完整故事 · 最难的一关").font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Color(hex: 0xB9CCFF))
+            Text(d.fullText).font(.system(size: 13)).lineSpacing(7).foregroundStyle(Theme.sub)
         }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
     }
 }
 
