@@ -1,9 +1,5 @@
-import type { TabId } from '@/App';
-
-interface TabBarProps {
-  activeTab: TabId;
-  onTabChange: (tab: TabId) => void;
-}
+import type { JSX } from 'react';
+import { useAppStore, type TabId } from '@/store/appStore';
 
 function IconHome() {
   return (
@@ -39,40 +35,36 @@ function IconMe() {
   );
 }
 
-const tabs: { id: TabId; label: string; Icon: () => JSX.Element }[] = [
+const TABS: { id: TabId; label: string; Icon: () => JSX.Element }[] = [
   { id: 'home', label: '认识自己', Icon: IconHome },
   { id: 'lab', label: '人生实验室', Icon: IconLab },
   { id: 'comm', label: '万花筒社区', Icon: IconComm },
   { id: 'me', label: '我的', Icon: IconMe },
 ];
 
-export default function TabBar({ activeTab, onTabChange }: TabBarProps) {
+export default function TabBar() {
+  const tab = useAppStore((s) => s.tab);
+  const setTab = useAppStore((s) => s.setTab);
+
   return (
-    <nav
-      className="tab-bar flex-none flex items-center justify-around"
-      data-testid="tab-bar"
-    >
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        return (
-          <button
-            key={tab.id}
-            data-testid={`tab-${tab.id}`}
-            onClick={() => { onTabChange(tab.id); }}
-            className="flex flex-col items-center gap-[2px] px-2 py-1 transition-colors"
-            style={{ color: isActive ? 'var(--ink)' : 'var(--faint)' }}
-          >
-            <tab.Icon />
-            <span className="text-[10.5px] tracking-[0.12em]" style={{ fontWeight: isActive ? 600 : 400 }}>
-              {tab.label}
-            </span>
-            <span
-              className="w-1 h-1 rounded-full mt-[2px] transition-opacity"
-              style={{ background: 'var(--blue)', opacity: isActive ? 1 : 0 }}
-            />
-          </button>
-        );
-      })}
+    <nav className="tabbar" data-testid="tab-bar">
+      {TABS.map(({ id, label, Icon }) => (
+        <button
+          key={id}
+          type="button"
+          className={`tab${tab === id ? ' on' : ''}`}
+          data-tab={id}
+          data-testid={`tab-${id}`}
+          aria-current={tab === id ? 'page' : undefined}
+          onClick={() => {
+            setTab(id);
+          }}
+        >
+          <Icon />
+          <span>{label}</span>
+          <span className="ind" />
+        </button>
+      ))}
     </nav>
   );
 }
