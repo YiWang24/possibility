@@ -21,19 +21,22 @@ export const runtimeConfig = {
   get supabaseAnonKey(): string {
     return env("SUPABASE_ANON_KEY");
   },
-  get anthropicApiKey(): string {
-    return env("ANTHROPIC_API_KEY");
+  get deepseekApiKey(): string {
+    return env("DEEPSEEK_API_KEY");
   },
-  get anthropicBaseUrl(): string {
-    return env("ANTHROPIC_BASE_URL", "https://api.anthropic.com");
+  get deepseekBaseUrl(): string {
+    return env("DEEPSEEK_BASE_URL", "https://api.deepseek.com");
   },
+  // 对话流式：低延迟优先，默认 flash。
   get chatModel(): string {
-    return env("ANTHROPIC_CHAT_MODEL");
+    return env("DEEPSEEK_CHAT_MODEL", "deepseek-v4-flash");
   },
+  // 结构化生成（simulate/match/persona/community/lab-choices）：质量优先，默认 pro。
   get structuredModel(): string {
-    return env("ANTHROPIC_STRUCTURED_MODEL");
+    return env("DEEPSEEK_STRUCTURED_MODEL", "deepseek-v4-pro");
   },
+  // 日记/信号抽取（analyze-diary/diary-summary/chat signal）：质量优先，默认 pro。
   get diaryModel(): string {
-    return env("ANTHROPIC_DIARY_MODEL");
+    return env("DEEPSEEK_DIARY_MODEL", "deepseek-v4-pro");
   },
 } as const;
