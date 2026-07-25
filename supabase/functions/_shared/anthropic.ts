@@ -39,6 +39,11 @@ export async function structuredOutput<T>(
       // 截断（match 实测 stop_reason=max_tokens 只返回 thinking 块），并显著拉长
       // 生成时间（simulate 实测 100s 超时）。显式关闭，让预算全部用于 JSON。
       thinking: { type: "disabled" },
+      // 网关（ModelBest）会向请求注入 agentic 工具（实测 simulate 返回体里
+      // 出现 AskUserQuestion 的 tool_use 块，stop_reason=tool_use，未产出 JSON）。
+      // 结构化 JSON 生成不该调用任何工具：显式禁用工具调用，让模型直接产出结构化输出。
+      // 这也解释 match 的 100s 超时——注入工具 + 结构化输出让网关进入慢路径/循环。
+      tool_choice: { type: "none" },
       system: options.system,
       messages: [{ role: "user", content: options.prompt }],
       output_config: {
