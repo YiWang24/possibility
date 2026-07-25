@@ -191,7 +191,10 @@ struct ChatView: View {
                 .padding(.horizontal, 16).padding(.vertical, 9)
                 .background(Theme.buttonGradient, in: Capsule())
                 .buttonStyle(PressScaleStyle())
-            Button(model.correctLabel) { model.requestCorrection() }
+            Button(model.correctLabel) {
+                inputFocused = false
+                model.requestCorrection(supabase: supabase)
+            }
                 .font(.system(size: 12.5)).foregroundStyle(Theme.sub)
                 .padding(.horizontal, 16).padding(.vertical, 9)
                 .background(Theme.raised, in: Capsule())

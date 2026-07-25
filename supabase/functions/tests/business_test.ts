@@ -3,6 +3,7 @@
 // 这些逻辑一旦出错会直接破坏 AI 集成的真实业务表现，故独立于校验器单测。
 
 import { fallbackPersona, FORM_DEFS, hashSeed } from "../_shared/persona.ts";
+import { frontDoorPrompt } from "../_shared/prompts.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { sseEvent } from "../_shared/sse.ts";
 import {
@@ -21,6 +22,18 @@ function assert(
 ): asserts condition {
   if (!condition) throw new Error(message);
 }
+
+// ==================== Chatbot 回答契约 ====================
+
+Deno.test("front-door prompt requires an answer before product routing", () => {
+  const prompt = frontDoorPrompt("职业");
+  assert(prompt.includes("必须先真正回答用户的问题"), "must provide a real answer");
+  assert(prompt.includes("低成本、可撤回"), "must give a reversible next step");
+  assert(prompt.includes("功能引导只能放在解答之后"), "routing must follow the answer");
+  assert(prompt.includes("不要替用户拍板"), "advice must remain tentative");
+  assert(prompt.includes("这个理解接近你吗？"), "verification state needs an explicit cue");
+  assert(prompt.includes("仍在收集事实"), "clarifying replies must not request verification");
+});
 
 // ==================== Persona 离线兜底 ====================
 

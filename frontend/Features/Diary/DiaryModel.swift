@@ -38,20 +38,20 @@ final class DiaryModel {
 
     init(launch: DiaryLaunch, hasRecordedToday: Bool) {
         self.hasRecordedToday = hasRecordedToday
-        // 对照原型 openVoiceDiary：指定日期 > 今天已录 > 最近一篇
+        // 指定日期 > 今天已录 > 最近一篇 mock
         if let date = launch.date {
             selectedDate = date
         } else if hasRecordedToday {
-            selectedDate = "2026-07-23"
+            selectedDate = Self.todayDate
         } else {
-            selectedDate = DiaryData.entries.last?.date ?? "2026-07-23"
+            selectedDate = DiaryData.entries.last?.date ?? Self.todayDate
         }
     }
 
-    /// 拉取云端真实条目（analyze-diary 落库的记录），失败静默保持 demo 底座
+    /// 只拉取并使用今天的真实条目；历史日期始终保留 demo 数据。
     func loadRemote(using supabase: SupabaseService) async {
         guard let rows = try? await supabase.listDiary() else { return }
-        remoteNotes = rows.compactMap(Self.note(from:))
+        remoteNotes = rows.compactMap(Self.note(from:)).filter { $0.date == Self.todayDate }
     }
 
     // MARK: 月/年总结（diary-summary 真实聚合，失败回退硬编码 demo）
@@ -122,16 +122,10 @@ final class DiaryModel {
         )
     }
 
-    /// 全部条目：demo 底座 + 今天刚录（7/23）+ 云端真实条目按日期覆盖 / 插入
+    /// 全部条目：历史 demo 底座 + 今天的云端真实条目；不再用 mock todayEntry。
     var entries: [DiaryNote] {
-        var base = hasRecordedToday ? DiaryData.entries + [DiaryData.todayEntry] : DiaryData.entries
-        for note in remoteNotes {
-            if let i = base.firstIndex(where: { $0.date == note.date }) {
-                base[i] = note
-            } else {
-                base.append(note)
-            }
-        }
+        var base = DiaryData.entries
+        base.append(contentsOf: remoteNotes)
         return base.sorted { $0.date < $1.date }
     }
 
@@ -144,13 +138,19 @@ final class DiaryModel {
         max(0, entries.firstIndex { $0.date == selectedDate } ?? 0)
     }
 
-    /// 日期轨：全部条目日期 + 今天（若无 7/23 条目则补空位）
+    /// 日期轨：历史 mock 日期 + 真实今天（没有记录时补空位）
     var railDates: [(date: String, day: Int, week: String, emoji: String?)] {
-        var rail = entries.map { ($0.date, $0.dayNumber, $0.weekday, Optional($0.emoji)) }
-        if !rail.contains(where: { $0.0 == "2026-07-23" }) {
-            rail.append(("2026-07-23", 23, "今天", nil))
+        var rail = entries.map {
+            ($0.date, $0.dayNumber, $0.date == Self.todayDate ? "今天" : $0.weekday, Optional($0.emoji))
+        }
+        if !rail.contains(where: { $0.0 == Self.todayDate }) {
+            rail.append((Self.todayDate, Calendar.current.component(.day, from: Date()), "今天", nil))
         }
         return rail.sorted { $0.0 < $1.0 }
+    }
+
+    private static var todayDate: String {
+        SupabaseTimestamp.dayString(from: Date())
     }
 
     func select(_ date: String) {

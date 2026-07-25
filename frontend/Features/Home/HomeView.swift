@@ -41,7 +41,7 @@ struct HomeView: View {
         .fullScreenCover(item: $diaryLaunch) { launch in
             DiaryDetailView(
                 launch: launch,
-                hasRecordedToday: model.analysis != nil,
+                hasRecordedToday: model.hasRecordedToday,
                 onStartRecording: {
                     if !model.isRecording { model.toggleRecording() }
                 }
@@ -177,11 +177,20 @@ private struct DiaryCard: View {
     var onOpenDiary: (String?) -> Void
     @Environment(SupabaseService.self) private var supabase
 
-    /// 兜底周历（对齐原型 7/17–7/22；list-diary 加载失败时展示）
-    private static let week: [(String, String, String)] = [
-        ("🙂", "五", "2026-07-17"), ("😮‍💨", "六", "2026-07-18"), ("😊", "日", "2026-07-19"),
-        ("😐", "一", "2026-07-20"), ("🙂", "二", "2026-07-21"), ("😌", "三", "2026-07-22"),
-    ]
+    /// 首页前 6 天固定使用 demo 心情；只有「今天」读取真实日记。
+    private var mockWeek: [(emoji: String, label: String, date: String)] {
+        let emojis = ["🙂", "😮‍💨", "😊", "😐", "🙂", "😌"]
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let weekday = DateFormatter()
+        weekday.locale = Locale(identifier: "zh_CN")
+        weekday.dateFormat = "EEEEE"
+
+        return zip((-6 ... -1), emojis).compactMap { offset, emoji in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: today) else { return nil }
+            return (emoji, weekday.string(from: date), SupabaseTimestamp.dayString(from: date))
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -226,28 +235,17 @@ private struct DiaryCard: View {
 
     private var weekRow: some View {
         HStack {
-            // 真实周历（list-diary 聚合最近 7 天）优先；未加载 / 失败走硬编码兜底
-            if let cells = model.weekCells {
-                ForEach(cells) { cell in
-                    Button { onOpenDiary(cell.date) } label: {
-                        dayCell(emoji: cell.emoji, label: cell.label, filled: cell.filled, today: false)
-                    }
-                    .buttonStyle(PressScaleStyle())
-                    Spacer()
+            ForEach(Array(mockWeek.enumerated()), id: \.offset) { _, day in
+                Button { onOpenDiary(day.date) } label: {
+                    dayCell(emoji: day.emoji, label: day.label, filled: true, today: false)
                 }
-            } else {
-                ForEach(Self.week.indices, id: \.self) { i in
-                    Button { onOpenDiary(Self.week[i].2) } label: {
-                        dayCell(emoji: Self.week[i].0, label: Self.week[i].1, filled: true, today: false)
-                    }
-                    .buttonStyle(PressScaleStyle())
-                    Spacer()
-                }
+                .buttonStyle(PressScaleStyle())
+                Spacer()
             }
             Button { onOpenDiary(model.diaryTodayDate) } label: {
-                dayCell(emoji: model.analysis != nil ? "🙂" : (model.todayEmoji ?? ""),
+                dayCell(emoji: model.todayDisplayEmoji,
                         label: "今天",
-                        filled: model.analysis != nil || model.todayEmoji != nil,
+                        filled: model.hasRecordedToday,
                         today: true)
             }
             .buttonStyle(PressScaleStyle())

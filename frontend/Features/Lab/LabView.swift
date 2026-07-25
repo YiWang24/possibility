@@ -285,6 +285,7 @@ struct LabView: View {
                 .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .onTapGesture {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+                        showCustomEditor = false
                         model.pickChoice(choice.name)
                         frontCard = choice.id
                     }
@@ -306,10 +307,12 @@ struct LabView: View {
 
     /// 原型 .choice-create「自定义选择」卡
     private var createCard: some View {
-        Button {
+        let isOn = showCustomEditor && frontCard == DeckItem.create.id
+        return Button {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+                model.clearChoice()
                 frontCard = DeckItem.create.id
-                showCustomEditor.toggle()
+                showCustomEditor = true
             }
         } label: {
             VStack(alignment: .leading, spacing: 0) {
@@ -331,12 +334,48 @@ struct LabView: View {
                     Color(hex: 0x131720)
                     RadialGradient(colors: [Color(hex: 0xE35CC1, alpha: 0.15), .clear],
                                    center: UnitPoint(x: 0.82, y: -0.12), startRadius: 0, endRadius: 120)
+                    if isOn {
+                        LinearGradient(
+                            colors: [Color(hex: 0xE35CC1, alpha: 0.24), Color(hex: 0x8F7BFF, alpha: 0.14)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    }
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.13), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-            .shadow(color: .black.opacity(0.5), radius: 6, y: 3)
+            .overlay {
+                if isOn {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Color(hex: 0xE784D3, alpha: 0.82), lineWidth: 1.5)
+                } else {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.13), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if isOn {
+                    Text("✓")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 20, height: 20)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: 0xE35CC1), Color(hex: 0x8F7BFF)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            in: Circle()
+                        )
+                        .padding(.top, 10)
+                        .padding(.trailing, 12)
+                }
+            }
+            .shadow(
+                color: isOn ? Color(hex: 0xD75AC2, alpha: 0.48) : .black.opacity(0.5),
+                radius: isOn ? 12 : 6,
+                y: isOn ? 8 : 3
+            )
         }
         .buttonStyle(.plain)
     }
@@ -366,14 +405,20 @@ struct LabView: View {
             HStack {
                 Spacer()
                 Button("取消") {
-                    withAnimation(.easeOut(duration: 0.2)) { showCustomEditor = false }
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showCustomEditor = false
+                        if frontCard == DeckItem.create.id { frontCard = nil }
+                    }
                 }
                 .font(.system(size: 11.5)).foregroundStyle(Theme.faint).buttonStyle(.plain)
                 Button("加入牌堆") {
-                    if model.addCustomChoice(name: customName, desc: customDesc) {
+                    if let choice = model.addCustomChoice(name: customName, desc: customDesc) {
                         customName = ""; customDesc = ""
-                        withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) { showCustomEditor = false }
-                        toast.show("已加入你的选择卡")
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.65)) {
+                            showCustomEditor = false
+                            frontCard = choice.id
+                        }
+                        toast.show("已选中「\(choice.name)」")
                     } else {
                         toast.show("名称和描述都要填，且不能重名")
                     }
@@ -405,7 +450,11 @@ struct LabView: View {
             .onEnded { value in
                 let hit = overDial(value.location)
                 if hit {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) { model.pickChoice(choice.name) }
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                        showCustomEditor = false
+                        model.pickChoice(choice.name)
+                        frontCard = choice.id
+                    }
                     toast.show("「\(choice.name)」已放入实验室")
                 }
                 draggingChoice = nil

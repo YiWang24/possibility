@@ -3,12 +3,12 @@ import SwiftUI
 // MARK: - 下一步面板（原型 .chat-next-panel）
 //
 // 「信息已经足够 · 选择下一步」：去人生实验室（primary 跨两列）/ 看走过这条路的人
-// （/match 命中时展示 3 位旅人卡，点击进主页；失败回退「看相似经历」切 Tab）/
+// （/match 命中时固定展示 2 张方形旅人卡，点击进主页；本地数据负责网络兜底）/
 // 分享这次探索（系统分享）+ 可选「先查看完整总结 →」链接。
 
 struct ChatNextPanel: View {
     var showSummaryLink: Bool
-    /// /match 命中的旅人（空 = 未命中/失败 → 回退「看相似经历」按钮）
+    /// /match 命中的旅人；对话场景只展示前 2 位
     var matchedTravelers: [Traveler] = []
     /// traveler_id → 推荐理由
     var matchReasons: [Int: String] = [:]
@@ -55,17 +55,22 @@ struct ChatNextPanel: View {
                 Text("看看走过这条路的人")
                     .font(.system(size: 9)).tracking(1.6).foregroundStyle(Color(hex: 0x91B1FF))
                     .padding(.top, 13)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(matchedTravelers) { t in
+                HStack(spacing: 10) {
+                    ForEach(Array(matchedTravelers.prefix(2))) { t in
+                        if t.id > 0 {
                             TravelerProfileLink(travelerId: t.id) {
-                                SimCard(traveler: t, reason: matchReasons[t.id])
+                                ChatTravelerCard(traveler: t, reason: matchReasons[t.id])
                             }
+                        } else {
+                            Button(action: onGoSimilar) {
+                                ChatTravelerCard(traveler: t, reason: matchReasons[t.id])
+                            }
+                            .buttonStyle(PressScaleStyle())
                         }
                     }
-                    .padding(.vertical, 4)
                 }
-                .padding(.top, 7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 9)
 
                 shareCell
                     .padding(.top, 8)
@@ -109,6 +114,61 @@ struct ChatNextPanel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(11)
         .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+/// 对话中的经验入口是明确的“卡片”，固定方形并一行展示两张。
+private struct ChatTravelerCard: View {
+    let traveler: Traveler
+    var reason: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                TravelerAvatar(initial: traveler.initial,
+                               hue: traveler.hue,
+                               size: 32,
+                               imageName: MockAvatar.name(for: traveler.id))
+                Text(traveler.name)
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .lineLimit(1)
+            }
+
+            Text(reason ?? traveler.quote)
+                .font(.system(size: 10))
+                .lineSpacing(3)
+                .foregroundStyle(Theme.sub)
+                .lineLimit(3)
+                .padding(.top, 10)
+
+            Spacer(minLength: 5)
+
+            if let tag = traveler.tags.first {
+                Text(tag)
+                    .font(.system(size: 9.5))
+                    .foregroundStyle(Color(hex: 0xB8CDFF))
+                    .lineLimit(1)
+            }
+        }
+        .padding(12)
+        .frame(width: 136, height: 136, alignment: .topLeading)
+        .background {
+            ZStack(alignment: .topTrailing) {
+                Theme.card
+                Circle()
+                    .fill(Theme.hue(traveler.hue).accent.opacity(0.22))
+                    .frame(width: 88, height: 88)
+                    .blur(radius: 22)
+                    .offset(x: 28, y: -30)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                .strokeBorder(Theme.hue(traveler.hue).accent.opacity(0.32), lineWidth: 1)
+        )
+        .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
     }
 }
 

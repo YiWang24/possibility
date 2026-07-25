@@ -54,13 +54,16 @@ final class LabModel {
         }
     }
 
-    func addCustomChoice(name: String, desc: String) -> Bool {
+    @discardableResult
+    func addCustomChoice(name: String, desc: String) -> Choice? {
         let n = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(18))
         let d = String(desc.trimmingCharacters(in: .whitespacesAndNewlines).prefix(42))
-        guard !n.isEmpty, !d.isEmpty, !choices.contains(where: { $0.name == n }) else { return false }
-        customChoices.append(Choice(emoji: "✍️", name: n, desc: d, isCustom: true))
+        guard !n.isEmpty, !d.isEmpty, !choices.contains(where: { $0.name == n }) else { return nil }
+        let choice = Choice(emoji: "✍️", name: n, desc: d, isCustom: true)
+        customChoices.append(choice)
+        pick = choice.name
         persistCustom()
-        return true
+        return choice
     }
 
     func removeCustomChoice(_ name: String) {
@@ -173,6 +176,10 @@ final class LabModel {
 
     func pickChoice(_ name: String) {
         pick = name
+    }
+
+    func clearChoice() {
+        pick = nil
     }
 
     func beginEdit() {

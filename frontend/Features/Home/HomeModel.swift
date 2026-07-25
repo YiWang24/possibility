@@ -125,7 +125,7 @@ final class HomeModel {
         guard !Task.isCancelled else { return }
         if let result {
             analysis = result
-            // analyze-diary 已同步写入 diary_entries；刷新周历以与详情页保持一致。
+            // analyze-diary 已同步写入 diary_entries；刷新今天的真实状态。
             await loadDiaryOverview(using: supabase)
         } else {
             analysis = nil
@@ -403,32 +403,29 @@ final class HomeModel {
         )
     }
 
-    // MARK: 周历 / 探索天数（list-diary 真实聚合 · 失败保持硬编码兜底）
+    // MARK: 今日语音日记 / 探索天数
 
-    struct WeekDayCell: Identifiable {
-        /// "2026-07-19"
-        let date: String
-        /// 窄格式周几："五" / "六"
-        let label: String
-        /// 空串 = 当天无记录（空态圆点）
-        let emoji: String
-        let filled: Bool
-        var id: String { date }
-    }
-
-    /// 今天之前 6 天的真实周历；nil = 尚未加载 / 加载失败（HomeView 用硬编码兜底）
-    private(set) var weekCells: [WeekDayCell]?
     /// 今天已有云端日记时的主情绪 emoji
     private(set) var todayEmoji: String?
+    /// 区分「今天没有日记」与「今天有日记但没有提取到情绪」。
+    private(set) var hasRemoteDiaryToday = false
+    var hasRecordedToday: Bool { analysis != nil || hasRemoteDiaryToday }
+    /// 刚录完优先使用分析结果；云端已有记录则使用拉取到的真实情绪。
+    var todayDisplayEmoji: String {
+        if let emotion = analysis?.emotions.first {
+            return EmotionEmoji.emoji(for: emotion)
+        }
+        return todayEmoji ?? ""
+    }
     /// 已探索天数：最早一条日记距今 +1；无日记 = 第 1 天；未加载/失败保持 demo 值
     private(set) var exploredDays = 47
 
-    /// 今日日期串：周历真实化后用真实日期打开详情；兜底时保持 demo 的 7/23
+    /// 「今天」始终对应真实日期；只有今天的数据来自云端。
     var diaryTodayDate: String {
-        weekCells == nil ? "2026-07-23" : SupabaseTimestamp.dayString(from: Date())
+        SupabaseTimestamp.dayString(from: Date())
     }
 
-    /// 拉取云端日记 → 聚合最近 7 天周历 + 推算探索天数（冷启动调用，失败静默）
+    /// 拉取云端日记 → 读取今天的真实状态 + 推算探索天数（冷启动调用，失败静默）
     /// 服务端把 limit 钳制到 50，故只取 50 条；总数超窗时另取最早一条修正探索天数。
     func loadDiaryOverview(using supabase: SupabaseService) async {
         guard let page = try? await supabase.listDiaryPage(limit: 50, offset: 0) else { return }
@@ -461,23 +458,9 @@ final class HomeModel {
             exploredDays = 1
         }
 
-        let weekFmt = DateFormatter()
-        weekFmt.locale = Locale(identifier: "zh_CN")
-        weekFmt.dateFormat = "EEEEE"
-        var cells: [WeekDayCell] = []
-        for offset in stride(from: 6, through: 1, by: -1) {
-            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { continue }
-            let key = SupabaseTimestamp.dayString(from: day)
-            let emotions = emotionsByDay[key]
-            cells.append(WeekDayCell(
-                date: key,
-                label: weekFmt.string(from: day),
-                emoji: emotions.map { EmotionEmoji.emoji(for: $0.first) } ?? "",
-                filled: emotions != nil
-            ))
-        }
-        weekCells = cells
-        todayEmoji = emotionsByDay[SupabaseTimestamp.dayString(from: today)].map { EmotionEmoji.emoji(for: $0.first) }
+        let todayKey = SupabaseTimestamp.dayString(from: today)
+        hasRemoteDiaryToday = emotionsByDay[todayKey] != nil
+        todayEmoji = emotionsByDay[todayKey].map { EmotionEmoji.emoji(for: $0.first) }
     }
 
     // MARK: demo 人物
