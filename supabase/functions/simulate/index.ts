@@ -4,18 +4,8 @@ import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
 import { insertSimulation } from "../_shared/db.ts";
 import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
-import {
-  bottomLinePrompt,
-  scenarioPrompt,
-  type ScenarioTone,
-} from "../_shared/prompts.ts";
-import {
-  type BottomLineOutput,
-  bottomLineSchema,
-  type ScenarioOutput,
-  scenarioSchema,
-  type SimulationOutput,
-} from "../_shared/schemas.ts";
+import { simulationPrompt } from "../_shared/prompts.ts";
+import { type SimulationOutput, simulationSchema } from "../_shared/schemas.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { validateSimulateInputV2 } from "../_shared/validate.ts";
 
@@ -25,8 +15,6 @@ type TravelerCandidate = {
   quote: string;
   tags: string[];
 };
-
-const tones: ScenarioTone[] = ["general", "optimistic", "cautionary"];
 
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
@@ -44,57 +32,32 @@ Deno.serve(async (req) => {
     const candidates = (travelerRows ?? []) as TravelerCandidate[];
     const validIds = new Set(candidates.map(({ id }) => id));
 
-    let base =
+    // 单次生成三套情景 + 底线分析。此前误拆成多次并行调用是基于错误的
+    // 「大生成超时」假设——真因是网关不支持 output_config.format（见 anthropic.ts）。
+    // 改用纯文本生成后单次调用即可稳定返回，多次调用反而放大网关偶发超时的失败率，
+    // 且并行+串行两段各自重试会超出 Edge Function 150s 墙钟。
+    let prompt =
       `问题：${input.question}\n选择：${input.choice}\n推演时间跨度：${input.time_horizon}`;
     if (input.carry_cards && input.carry_cards.length > 0) {
-      base += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
+      prompt += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
     }
+    prompt += `\n\n候选旅人（recommended_traveler_ids 只能取这些 id）：\n${
+      JSON.stringify(candidates)
+    }`;
 
-    // 拆为三个并行的单情景生成，各自输出小、易稳定返回；底线分析串行第二段。
-    // （根因是网关模型的 thinking 吃预算导致超时，已在 anthropic.ts 关闭；
-    // 拆分同时降低单请求体量，作为纵深冗余保留。）
-    const [general, optimistic, cautionary] = await Promise.all(
-      tones.map((tone) =>
-        structuredOutput<ScenarioOutput>({
-          model: runtimeConfig.structuredModel,
-          maxTokens: 1_200,
-          system: scenarioPrompt(tone),
-          prompt: base,
-          schema: scenarioSchema,
-        })
-      ),
-    );
-    const scenarios = { general, optimistic, cautionary };
-
-    // 底线分析要综合三种情景，串行第二段：只带情景摘要，保持小请求。
-    const digest = tones
-      .map((tone) => {
-        const s = scenarios[tone];
-        return `【${tone}】${s.headline}｜代价：${
-          s.costs.join("；")
-        }｜前提：${s.key_condition}`;
-      })
-      .join("\n");
-    const bottom = await structuredOutput<BottomLineOutput>({
+    const result = await structuredOutput<SimulationOutput>({
       model: runtimeConfig.structuredModel,
-      maxTokens: 800,
-      system: bottomLinePrompt,
-      prompt:
-        `${base}\n\n三种情景摘要：\n${digest}\n\n候选旅人（recommended_traveler_ids 只能取这些 id）：\n${
-          JSON.stringify(candidates)
-        }`,
-      schema: bottomLineSchema,
+      maxTokens: 3_000,
+      system: simulationPrompt,
+      prompt,
+      schema: simulationSchema,
     });
 
-    const result: SimulationOutput = {
-      scenarios,
-      bottom_line_analysis: bottom.bottom_line_analysis,
-      // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
-      recommended_traveler_ids: filterRecommendedTravelerIds(
-        bottom.recommended_traveler_ids,
-        validIds,
-      ),
-    };
+    // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
+    result.recommended_traveler_ids = filterRecommendedTravelerIds(
+      result.recommended_traveler_ids,
+      validIds,
+    );
 
     await insertSimulation(db, user.id, input, result);
     return jsonResponse(result);

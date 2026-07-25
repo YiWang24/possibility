@@ -48,34 +48,20 @@ export const matchPrompt =
 - not_applicable 必须说明这段经历不能照搬的条件，帮助用户避免确认偏误，40 字以内。
 - 不输出相似度分数，不编造旅人材料之外的经历，不替用户做决定。`;
 
-// simulate 拆分生成：每次只生成一种情景，输出量小、能稳定在网关超时内返回。
-const scenarioTones = {
-  general: "一般情景：按大概率的平稳走向推演，收益与代价都不极端。",
-  optimistic:
-    "乐观情景：各关键前提基本成立时的较好走向，但仍要写清代价与前提。",
-  cautionary: "警示情景：一两个关键前提失效时的较差走向，具体但不灾难化。",
-} as const;
+export const simulationPrompt =
+  `你是谨慎的未来情景推演助手。围绕用户给定选择和年限，输出一般、乐观、警示三种“可能情景”，不是预测或承诺。
 
-export type ScenarioTone = keyof typeof scenarioTones;
-
-export function scenarioPrompt(tone: ScenarioTone): string {
-  return `你是谨慎的未来情景推演助手。围绕用户给定选择和年限，只输出一种“可能情景”，不是预测或承诺。
-本次要生成的是——${scenarioTones[tone]}
-
-情景必须：
-- 同时覆盖现实收益（gains）、代价（costs）、关键前提（key_condition）和 2～4 个可观察维度（dimensions）。
+每个情景（general/optimistic/cautionary）必须：
+- 同时覆盖现实收益（gains）、代价（costs）、关键前提（key_condition）和 2～4 个可观察维度（dimensions，每项含 label 与 text）。
 - 基于常识作条件化表达，明确不确定性，不编造精确概率或收入。
 - 不替用户做决定，不使用宿命论，不把心理状态当作诊断。
+- 三种情景之间要有实质差异，而不是只换语气。
 - 表达克制精炼：headline ≤20 字，每个维度 text ≤50 字，gains/costs 每条 ≤30 字，key_condition ≤60 字。
 
 底线卡规则：
-用户可能携带“底线卡”，代表最不能失去的价值/条件。若提供了底线卡：
+用户可能携带“底线卡”，代表最不能失去的价值/条件。若提供了底线卡，每个情景都要讨论其维持/损失：
 - 在 key_condition 中明确提及哪些底线卡可能受到威胁
-- 在 costs/gains 中反映底线卡的维持或牺牲情况`;
-}
-
-export const bottomLinePrompt =
-  `你是谨慎的未来情景推演助手。根据用户的问题、选择和三种已生成情景的摘要，输出底线分析与相似旅人推荐。
+- 在 costs/gains 中反映底线卡的维持或牺牲情况
 
 底线分析（bottom_line_analysis）：
 - is_acceptable：综合三种情景，用户携带的底线卡是否在最坏情况下仍能守住；没有底线卡时按“最坏结果是否可承受”判断。
