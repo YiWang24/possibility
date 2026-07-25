@@ -6,6 +6,7 @@ import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
 import { labChoicePrompt } from "../_shared/prompts.ts";
 import { type LabChoiceOutput, labChoiceSchema } from "../_shared/schemas.ts";
 import { validateLabChoiceInput } from "../_shared/validate.ts";
+import { insertLabChoiceSet } from "../_shared/db.ts";
 
 /**
  * POST /lab-choices
@@ -47,6 +48,7 @@ Deno.serve(async (req) => {
       prompt,
       schema: labChoiceSchema,
     });
+    await insertLabChoiceSet(db, user.id, input, result);
     return jsonResponse(result);
   } catch (error) {
     return errorResponse(error);

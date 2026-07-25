@@ -11,6 +11,7 @@ import {
 import { matchPrompt } from "../_shared/prompts.ts";
 import { type MatchOutput, matchSchema } from "../_shared/schemas.ts";
 import { validateMatchInput } from "../_shared/validate.ts";
+import { insertMatchResult } from "../_shared/db.ts";
 
 type TravelerForMatch = {
   id: number;
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
 
   try {
     const userState = validateMatchInput(await readJson(req));
-    const { db } = await requireUser(req);
+    const { user, db } = await requireUser(req);
     const { data, error } = await db.from("travelers")
       .select("id,name,quote,bio,tags,dims,trajectory")
       .order("id");
@@ -71,6 +72,7 @@ Deno.serve(async (req) => {
         "AI 返回了无效的旅人匹配结果。",
       );
     }
+    await insertMatchResult(db, user.id, userState, result);
     return jsonResponse(result);
   } catch (error) {
     return errorResponse(error);
