@@ -426,6 +426,7 @@ struct BountyComposeView: View {
             .padding(12)
             .background(Theme.raised, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+            .keyboardDismissToolbar()
     }
 
     private func hint(_ text: String) -> some View {
