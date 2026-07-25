@@ -40,8 +40,8 @@ struct KaleidoscopeDrawView: View {
     private var background: some View {
         ZStack {
             Color(hex: 0x06080E, alpha: 0.97)
-            RadialGradient(colors: [Color(hex: 0x406EFF, alpha: 0.28), .clear], center: UnitPoint(x: 0.5, y: 0.28), startRadius: 0, endRadius: 320)
-            RadialGradient(colors: [Color(hex: 0xE35CC1, alpha: 0.16), .clear], center: UnitPoint(x: 0.5, y: 0.92), startRadius: 0, endRadius: 260)
+            RadialGradient(colors: [Color(hex: 0x5E96FF, alpha: 0.075), .clear], center: UnitPoint(x: 0.5, y: 0.30), startRadius: 0, endRadius: 300)
+            RadialGradient(colors: [Color(hex: 0xE35CC1, alpha: 0.035), .clear], center: UnitPoint(x: 0.5, y: 0.90), startRadius: 0, endRadius: 240)
         }
         .background(.ultraThinMaterial)
     }
@@ -187,14 +187,27 @@ struct KaleidoscopeDrawView: View {
     private func spin() {
         withAnimation(.easeInOut(duration: 0.3)) { phase = .spinning }
         spinTrigger += 1
-        let delay: Duration = reduceMotion ? .milliseconds(500) : .milliseconds(2750)
+        let delay: Duration = reduceMotion ? .milliseconds(400) : .milliseconds(1450)
         let modeParam = mode == .similar ? "similar" : "different"
         Task {
-            // 转盘动画与后端 AI 抽取并行；转完取结果，失败回落本地随机
+            // 动画和远程抽取并行，接口最多占用一个动画周期；
+            // 超时立即回落本地候选，避免网络延迟把转盘停在中间态。
             async let spinWait: Void? = try? await Task.sleep(for: delay)
-            async let remote = try? await supabase.kaleidoscopeDraw(mode: modeParam)
+            let picked = await withTaskGroup(
+                of: (travelerId: Int, reason: String)?.self
+            ) { group in
+                group.addTask {
+                    try? await supabase.kaleidoscopeDraw(mode: modeParam)
+                }
+                group.addTask {
+                    try? await Task.sleep(for: delay)
+                    return nil
+                }
+                let first = await group.next() ?? nil
+                group.cancelAll()
+                return first
+            }
             _ = await spinWait
-            let picked = await remote
 
             let chosen: Traveler?
             if let picked, let t = pool.first(where: { $0.id == picked.travelerId }) {
