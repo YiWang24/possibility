@@ -153,6 +153,29 @@ values ('11111111-1111-4111-8111-111111111111', '测试用户A', '人生如棋')
 insert into public.kaleidoscope_draws (user_id, mode, traveler_id)
 values ('11111111-1111-4111-8111-111111111111', 'similar', 1);
 
+-- 旅人匹配记录（0013）：payload 形状对齐 db.ts:insertMatchResult
+-- （user_state 快照 jsonb + matches 数组 jsonb）。
+insert into public.match_results (user_id, user_state, matches)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  '{"life_stage":"职业转型期","tension":"稳定与热爱冲突"}'::jsonb,
+  '[{"traveler_id":1,"reason":"同样从大厂转型","not_applicable":"行业不同"}]'::jsonb
+);
+
+-- 人生实验室选择卡（0013）：payload 形状对齐 db.ts:insertLabChoiceSet
+-- （question/topic/constraints/previous_choices + cards jsonb + rationale）。
+insert into public.lab_choice_sets
+  (user_id, question, topic, constraints, previous_choices, cards, rationale)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  '要不要辞职创业',
+  '职业',
+  '{"半年储备","家人支持"}',
+  '{"继续打工"}',
+  '[{"id":"a","glyph":"◆","title":"稳中求进","description":"边工作边试","color":"#4A90D9"}]'::jsonb,
+  '基于你的画像给出三条差异化路径'
+);
+
 insert into public.persona_jobs (user_id, status, persona)
 values (
   '11111111-1111-4111-8111-111111111111',
@@ -355,6 +378,12 @@ begin
   end if;
   if (select count(*) from public.kaleidoscope_draws) <> 0 then
     raise exception 'cross-user kaleidoscope_draws leaked';
+  end if;
+  if (select count(*) from public.match_results) <> 0 then
+    raise exception 'cross-user match_results leaked';
+  end if;
+  if (select count(*) from public.lab_choice_sets) <> 0 then
+    raise exception 'cross-user lab_choice_sets leaked';
   end if;
   if (select count(*) from public.persona_jobs) <> 0 then
     raise exception 'cross-user persona_jobs leaked';
