@@ -3,6 +3,12 @@ import SwiftUI
 // MARK: - 03 万花筒社区（原型 scr-comm）
 
 struct CommunityView: View {
+    private struct BountySelection: Identifiable {
+        let bounty: Bounty
+        let usesDemoData: Bool
+        var id: Int { bounty.id }
+    }
+
     @Environment(SupabaseService.self) private var supabase
     @Environment(ToastCenter.self) private var toast
     @State private var tab = 0            // 0 为你推荐 · 1 悬赏贴
@@ -11,7 +17,7 @@ struct CommunityView: View {
     /// 调试便利：`simctl launch ... -kaleido-watch 1` 直接进入放映模式
     @State private var watchMode = UserDefaults.standard.bool(forKey: "kaleido-watch")
     @State private var searchText = ""
-    @State private var activeBounty: Bounty?
+    @State private var activeBounty: BountySelection?
     /// community Edge Function 返回的真实悬赏（成功后优先展示）
     @State private var remoteBounties: [Bounty]?
     @State private var showCompose = false
@@ -24,11 +30,24 @@ struct CommunityView: View {
         if let remoteBounties, !remoteBounties.isEmpty { return remoteBounties }
         return supabase.bounties.isEmpty ? DemoData.bounties : supabase.bounties
     }
+    /// 本地演示列表和远端列表必须成套使用，避免详情页先展示同 ID 的 DemoData，
+    /// 随后又被远端内容覆盖。
+    private var isShowingDemoBounties: Bool {
+        if let remoteBounties, !remoteBounties.isEmpty { return false }
+        return supabase.bounties.isEmpty || supabase.bounties == DemoData.bounties
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 PageHeader(eyebrow: "KALEIDOSCOPE", title: "万花筒社区")
+                    .overlay(alignment: .bottomTrailing) {
+                        Text("人生如逆旅，我亦是行人。")
+                            .font(.system(size: 11.5, design: .serif))
+                            .foregroundStyle(Theme.sub)
+                            .tracking(0.6)
+                            .padding(.bottom, 4)
+                    }
                 tabs.padding(.top, 16)
                 Group {
                     if tab == 0 {
@@ -56,8 +75,8 @@ struct CommunityView: View {
         .overlay(alignment: .bottomTrailing) { tab == 0 ? AnyView(drawFab) : AnyView(composeFab) }
         .task { await refreshBounties() }
         .fullScreenCover(isPresented: $showDraw) { KaleidoscopeDrawView() }
-        .fullScreenCover(item: $activeBounty) { bounty in
-            BountyDetailView(bounty: bounty)
+        .fullScreenCover(item: $activeBounty) { selection in
+            BountyDetailView(bounty: selection.bounty, usesDemoData: selection.usesDemoData)
                 .environment(supabase)
                 .environment(toast)
         }
@@ -185,7 +204,12 @@ struct CommunityView: View {
     private var bountyFeed: some View {
         VStack(spacing: 11) {
             ForEach(bounties) { b in
-                BountyCard(bounty: b) { activeBounty = b }
+                BountyCard(bounty: b) {
+                    activeBounty = BountySelection(
+                        bounty: b,
+                        usesDemoData: isShowingDemoBounties
+                    )
+                }
             }
         }
     }
