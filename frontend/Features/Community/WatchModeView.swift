@@ -11,16 +11,72 @@ struct WatchModeView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    // 世界偏移（原型 st.x / st.y）
+    // 已提交的世界偏移（原型 st.x / st.y）；手指按住期间的瞬时位移由
+    // GestureState 单独承载，避免 position 同时被手势和动画 transaction 驱动。
     @State private var offset: CGSize = .zero
-    // 拖拽簿记放引用类型:手势 tick 高频写入不触发视图失效
+    @GestureState private var liveDrag = LiveDrag()
+    // 拖拽簿记放引用类型：手势 tick 高频写入不触发额外的视图失效。
     @State private var drag = DragBookkeeping()
+    @State private var motion: WatchMotion?
     @State private var motionTask: Task<Void, Never>?
+    @State private var activeProfile: ProfileSelection?
+    @State private var suppressProfileOpenUntil = Date.distantPast
+
+    private struct LiveDrag {
+        var translation: CGSize = .zero
+        var isActive = false
+    }
 
     private final class DragBookkeeping {
-        var start: CGSize = .zero
-        var last: (point: CGPoint, time: Date)?
+        var last: (translation: CGSize, time: Date)?
         var velocity: CGVector = .zero
+    }
+
+    private struct ProfileSelection: Identifiable {
+        let id: Int
+    }
+
+    /// 惯性和吸附只保存运动参数；实际位置由 TimelineView 在同一显示帧中采样。
+    /// 这避免 8ms Task 写 @State 与 SwiftUI 的渲染 transaction 不同相。
+    private enum WatchMotion {
+        case inertia(start: CGSize, velocity: CGVector, startedAt: Date, duration: TimeInterval)
+        case snap(start: CGSize, target: CGSize, startedAt: Date, duration: TimeInterval)
+
+        var duration: TimeInterval {
+            switch self {
+            case let .inertia(_, _, _, duration), let .snap(_, _, _, duration):
+                return duration
+            }
+        }
+
+        var startedAt: Date {
+            switch self {
+            case let .inertia(_, _, startedAt, _), let .snap(_, _, startedAt, _):
+                return startedAt
+            }
+        }
+
+        func value(at date: Date) -> CGSize {
+            let elapsed = max(0, min(duration, date.timeIntervalSince(startedAt)))
+            switch self {
+            case let .inertia(start, velocity, _, _):
+                // 等价于原型每 1/60 秒乘 0.88 的连续衰减。
+                let decay = -log(0.88) * 60
+                let travel = (1 - exp(-decay * elapsed)) / decay
+                return CGSize(
+                    width: start.width + velocity.dx * travel,
+                    height: start.height + velocity.dy * travel
+                )
+            case let .snap(start, target, _, duration):
+                let progress = duration > 0 ? elapsed / duration : 1
+                // 原型逐帧靠近目标的平滑、无过冲版本。
+                let eased = 1 - pow(1 - progress, 3)
+                return CGSize(
+                    width: start.width + (target.width - start.width) * eased,
+                    height: start.height + (target.height - start.height) * eased
+                )
+            }
+        }
     }
 
     private static let dx: Double = 160
@@ -42,22 +98,30 @@ struct WatchModeView: View {
     }
 
     var body: some View {
-        GeometryReader { geo in
-            let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
-            ZStack {
-                stageBackground
-                kaleidoBackdrop(center: center)
-                centerRing(center: center)
-                bubbles(center: center)
-                VStack {
-                    Spacer()
-                    Text("无限滑动浏览 · 点击卡片查看主页")
-                        .font(.system(size: 9.5)).foregroundStyle(Color(hex: 0x9AA4BC, alpha: 0.62))
-                        .padding(.bottom, 9)
+        TimelineView(.animation(minimumInterval: 1.0 / 120, paused: motion == nil)) { timeline in
+            GeometryReader { geo in
+                let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
+                let displayedOffset = displayedOffset(at: timeline.date)
+                ZStack {
+                    stageBackground
+                    kaleidoBackdrop(center: center)
+                    centerRing(center: center)
+                    bubbles(center: center, offset: displayedOffset)
+                    VStack {
+                        Spacer()
+                        Text("无限滑动浏览 · 点击卡片查看主页")
+                            .font(.system(size: 9.5)).foregroundStyle(Color(hex: 0x9AA4BC, alpha: 0.62))
+                            .padding(.bottom, 9)
+                    }
                 }
+                .contentShape(Rectangle())
+                .coordinateSpace(name: "watch-stage")
+                // 圆圈本身是 Button；舞台拖动必须先于子按钮识别，否则从圆圈
+                // 起手的拖动会被 Button 吞掉并在松手时误开主页。
+                .highPriorityGesture(dragGesture, including: .all)
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("community-watch-stage")
             }
-            .contentShape(Rectangle())
-            .gesture(dragGesture)
         }
         .frame(height: 548)
         // 原型 .masonry.watch-mode 的 mask-image：椭圆渐隐 vignette
@@ -72,7 +136,18 @@ struct WatchModeView: View {
         .onChange(of: searchQuery) { _, query in
             recenterOnSearch(query)
         }
-        .onDisappear { motionTask?.cancel() }
+        .onChange(of: liveDrag.isActive) { wasActive, isActive in
+            // 系统手势取消没有 onEnded 回调；避免点击抑制永久停在 distantFuture。
+            if wasActive, !isActive, suppressProfileOpenUntil == .distantFuture {
+                drag.last = nil
+                drag.velocity = .zero
+                suppressProfileOpenUntil = Date().addingTimeInterval(0.12)
+            }
+        }
+        .onDisappear { stopMotion() }
+        .fullScreenCover(item: $activeProfile) { selection in
+            ProfileView(travelerId: selection.id)
+        }
     }
 
     /// 原型 watch-mode 舞台背景：三个弱径向光斑
@@ -120,7 +195,7 @@ struct WatchModeView: View {
 
     // MARK: 可见气泡
 
-    private var visibleUsers: [WatchUser] {
+    private func visibleUsers(at offset: CGSize) -> [WatchUser] {
         let centerQ = Int((-offset.width / Self.dx).rounded())
         var users: [WatchUser] = []
         for dq in -(Self.cols / 2)...(Self.cols / 2) {
@@ -134,40 +209,76 @@ struct WatchModeView: View {
         return users
     }
 
-    private func bubbles(center: CGPoint) -> some View {
+    private func bubbles(center: CGPoint, offset: CGSize) -> some View {
         let query = searchQuery.trimmingCharacters(in: .whitespaces)
-        let users = visibleUsers
+        let users = visibleUsers(at: offset)
         // 焦点：距中心最近的匹配气泡
         let focusKey = users
             .filter { matches($0, query: query) }
-            .min { distance($0) < distance($1) }?.key
+            .min { distance($0, at: offset) < distance($1, at: offset) }?.key
         return ZStack {
             ForEach(users, id: \.key) { u in
-                bubbleItem(u, center: center, query: query, focusKey: focusKey)
+                bubbleItem(u, center: center, offset: offset, query: query, focusKey: focusKey)
+            }
+        }
+        // 手势位移永远是无动画的直接呈现；按压反馈的 transaction 不得把世界
+        // position、边框/阴影/光效分别插值。
+        .transaction { transaction in
+            if liveDrag.isActive {
+                transaction.animation = nil
+                transaction.disablesAnimations = true
             }
         }
     }
 
-    private func bubbleItem(_ u: WatchUser, center: CGPoint, query: String, focusKey: String?) -> some View {
+    private func bubbleItem(
+        _ u: WatchUser,
+        center: CGPoint,
+        offset: CGSize,
+        query: String,
+        focusKey: String?
+    ) -> some View {
         let x = u.wx + offset.width
         let y = u.wy + offset.height
         let dist = (x * x + y * y).squareRoot()
         let focus = max(0, 1 - dist / 460)
         let hidden = !matches(u, query: query)
-        return TravelerProfileLink(travelerId: u.base.id) {
+        return Button {
+            guard Date() >= suppressProfileOpenUntil else { return }
+            activeProfile = ProfileSelection(id: u.base.id)
+        } label: {
             BubbleCard(user: u, isFocus: u.key == focusKey).equatable()
         }
+        .buttonStyle(WatchBubbleButtonStyle(isDragging: liveDrag.isActive))
         .scaleEffect(0.62 + focus * 0.58)
         .opacity(hidden ? 0.06 : 0.28 + focus * 0.72)
         .position(x: center.x + x, y: center.y + y)
         // 64pt 分桶:拖动中 z 序基本稳定,避免每帧重排 ZStack
         .zIndex(Double(100 - Int(dist / 64)))
         .allowsHitTesting(!hidden)
+        .accessibilityIdentifier("community-watch-bubble-\(u.key)")
     }
 
-    private func distance(_ u: WatchUser) -> Double {
+    private func distance(_ u: WatchUser, at offset: CGSize) -> Double {
         let x = u.wx + offset.width, y = u.wy + offset.height
         return (x * x + y * y).squareRoot()
+    }
+
+    /// 圆圈保留点击反馈，但拖动一旦成立就立即回到 1×，不让 Button 的 150ms
+    /// 按压动画叠加到世界位移上。
+    private struct WatchBubbleButtonStyle: ButtonStyle {
+        let isDragging: Bool
+
+        func makeBody(configuration: Configuration) -> some View {
+            let isPressed = configuration.isPressed && !isDragging
+            configuration.label
+                .scaleEffect(isPressed ? 0.97 : 1)
+                .brightness(isPressed ? 0.12 : 0)
+                .animation(
+                    isDragging ? nil : .easeOut(duration: 0.15),
+                    value: isPressed
+                )
+        }
     }
 
     /// 圆形毛玻璃气泡（原型 .watch-user：154×154 · 玻璃渐变 + 高光 + 色相辉光 + 流光 + 星点）
@@ -317,62 +428,115 @@ struct WatchModeView: View {
     // MARK: 拖拽 + 惯性 + 吸附
 
     private var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 4)
+        DragGesture(minimumDistance: 4, coordinateSpace: .named("watch-stage"))
+            .updating($liveDrag) { value, state, transaction in
+                transaction.animation = nil
+                transaction.disablesAnimations = true
+                state = LiveDrag(translation: value.translation, isActive: true)
+            }
             .onChanged { value in
-                motionTask?.cancel()
-                if drag.last == nil {
-                    drag.start = offset
-                }
                 let now = Date()
+                if drag.last == nil {
+                    stopMotion(at: now)
+                    drag.velocity = .zero
+                    // SwiftUI 的子 Button 可能在父 DragGesture 结束后仍发送 action；
+                    // 拖动一成立就关闭主页 action，onEnded 后再留一帧安全窗口。
+                    suppressProfileOpenUntil = .distantFuture
+                }
                 if let last = drag.last {
                     let dt = max(0.004, now.timeIntervalSince(last.time))
-                    drag.velocity = CGVector(dx: (value.location.x - last.point.x) / dt,
-                                             dy: (value.location.y - last.point.y) / dt)
+                    let instantaneous = CGVector(
+                        dx: (value.translation.width - last.translation.width) / dt,
+                        dy: (value.translation.height - last.translation.height) / dt
+                    )
+                    // 轻度低通抑制最后一个触摸采样的速度尖峰。
+                    drag.velocity = CGVector(
+                        dx: drag.velocity.dx * 0.25 + instantaneous.dx * 0.75,
+                        dy: drag.velocity.dy * 0.25 + instantaneous.dy * 0.75
+                    )
                 }
-                drag.last = (value.location, now)
-                offset = CGSize(width: drag.start.width + value.translation.width,
-                                height: drag.start.height + value.translation.height)
+                drag.last = (value.translation, now)
             }
-            .onEnded { _ in
+            .onEnded { value in
+                var transaction = Transaction(animation: nil)
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    offset.width += value.translation.width
+                    offset.height += value.translation.height
+                }
                 drag.last = nil
+                suppressProfileOpenUntil = Date().addingTimeInterval(0.12)
                 runInertia()
             }
     }
 
-    private func runInertia() {
+    private func displayedOffset(at date: Date) -> CGSize {
+        let base = motion?.value(at: date) ?? offset
+        return CGSize(
+            width: base.width + liveDrag.translation.width,
+            height: base.height + liveDrag.translation.height
+        )
+    }
+
+    private func stopMotion(at date: Date = Date()) {
         motionTask?.cancel()
-        // 原型 runWatchInertia:速度按 0.88/16ms 衰减,随后就近吸附。
-        // 步进 8ms(等效衰减 √0.88≈0.94)以贴合 ProMotion 120Hz,总位移不变。
-        var mx = drag.velocity.dx * 0.008
-        var my = drag.velocity.dy * 0.008
-        drag.velocity = .zero
-        motionTask = Task { @MainActor in
-            while !Task.isCancelled, abs(mx) + abs(my) > 0.3 {
-                offset.width += mx
-                offset.height += my
-                mx *= 0.94
-                my *= 0.94
-                try? await Task.sleep(for: .milliseconds(8))
-            }
-            guard !Task.isCancelled else { return }
-            await snapToNearest()
+        guard let motion else { return }
+        var transaction = Transaction(animation: nil)
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            offset = motion.value(at: date)
+            self.motion = nil
         }
     }
 
-    private func snapToNearest() async {
-        let query = searchQuery.trimmingCharacters(in: .whitespaces)
-        guard let nearest = visibleUsers
-            .filter({ matches($0, query: query) })
-            .min(by: { distance($0) < distance($1) }) else { return }
-        let tx = -nearest.wx, ty = -nearest.wy
-        while !Task.isCancelled,
-              abs(tx - offset.width) + abs(ty - offset.height) > 0.7 {
-            offset.width += (tx - offset.width) * 0.095
-            offset.height += (ty - offset.height) * 0.095
-            try? await Task.sleep(for: .milliseconds(8))
+    private func runInertia() {
+        motionTask?.cancel()
+        let velocity = drag.velocity
+        drag.velocity = .zero
+        if reduceMotion || abs(velocity.dx) + abs(velocity.dy) < 30 {
+            beginSnap(from: offset)
+            return
         }
-        if !Task.isCancelled {
-            offset = CGSize(width: tx, height: ty)
+
+        // 原型 0.88/帧衰减到 0.55pt/帧；这里只安排阶段结束，
+        // 中间每一帧都由 TimelineView 直接从解析曲线采样。
+        let speed = max(abs(velocity.dx), abs(velocity.dy))
+        let decay = -log(0.88) * 60
+        let duration = min(1.1, max(0.18, log(max(speed / 34, 1)) / decay))
+        let start = offset
+        let startedAt = Date()
+        motion = .inertia(start: start, velocity: velocity, startedAt: startedAt, duration: duration)
+        motionTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(duration))
+            guard !Task.isCancelled else { return }
+            let end = self.motion?.value(at: Date()) ?? self.offset
+            self.offset = end
+            self.motion = nil
+            self.beginSnap(from: end)
+        }
+    }
+
+    private func beginSnap(from start: CGSize) {
+        let query = searchQuery.trimmingCharacters(in: .whitespaces)
+        guard let nearest = visibleUsers(at: start)
+            .filter({ matches($0, query: query) })
+            .min(by: { distance($0, at: start) < distance($1, at: start) }) else { return }
+        let tx = -nearest.wx, ty = -nearest.wy
+        let target = CGSize(width: tx, height: ty)
+        if reduceMotion {
+            offset = target
+            motion = nil
+            return
+        }
+        let duration = 0.42
+        let startedAt = Date()
+        offset = start
+        motion = .snap(start: start, target: target, startedAt: startedAt, duration: duration)
+        motionTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(duration))
+            guard !Task.isCancelled else { return }
+            self.offset = target
+            self.motion = nil
         }
     }
 
@@ -380,7 +544,7 @@ struct WatchModeView: View {
     private func recenterOnSearch(_ rawQuery: String) {
         let query = rawQuery.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return }
-        motionTask?.cancel()
+        stopMotion()
         let centerQ = Int((-offset.width / Self.dx).rounded())
         let centerR = Int((-offset.height / Self.dy).rounded())
         for radius in 0...10 {
@@ -389,8 +553,19 @@ struct WatchModeView: View {
                     if radius > 0 && abs(q - centerQ) != radius && abs(r - centerR) != radius { continue }
                     let candidate = user(q: q, r: r)
                     if matches(candidate, query: query) {
-                        withAnimation(.spring(response: 0.55, dampingFraction: 0.85)) {
-                            offset = CGSize(width: -candidate.wx, height: -candidate.wy)
+                        let target = CGSize(width: -candidate.wx, height: -candidate.wy)
+                        if reduceMotion {
+                            offset = target
+                        } else {
+                            let duration = 0.55
+                            let startedAt = Date()
+                            motion = .snap(start: offset, target: target, startedAt: startedAt, duration: duration)
+                            motionTask = Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(duration))
+                                guard !Task.isCancelled else { return }
+                                self.offset = target
+                                self.motion = nil
+                            }
                         }
                         return
                     }

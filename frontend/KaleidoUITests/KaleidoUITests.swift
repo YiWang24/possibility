@@ -141,6 +141,41 @@ final class KaleidoUITests: XCTestCase {
         snap("w00-community-watchmode-default")
     }
 
+    /// 回归：按住圆圈拖动必须由舞台接管，不能触发主页；惯性/吸附结束后，
+    /// 中心圆圈仍可点击，搜索框也仍能过滤。
+    func test00CommunityWatchModeDragKeepsClickAndSearchWorking() throws {
+        app.terminate()
+        app.launchArguments = ["-kaleido-tab", "community", "-kaleido-watch", "1"]
+        app.launch()
+
+        let stage = app.descendants(matching: .any)["community-watch-stage"]
+        XCTAssertTrue(stage.waitForExistence(timeout: 8), "社区放映舞台未出现")
+
+        let center = stage.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.48))
+        center.press(
+            forDuration: 0.2,
+            thenDragTo: center.withOffset(CGVector(dx: 92, dy: -68)),
+            withVelocity: .slow,
+            thenHoldForDuration: 0.15
+        )
+
+        XCTAssertTrue(stage.exists, "拖动圆圈被误识别为点击，意外离开放映舞台")
+        XCTAssertFalse(app.staticTexts["真实经历 · 已验证"].exists, "拖动圆圈误打开了旅人主页")
+
+        // 等惯性和就近吸附完成；中心必有焦点圆圈，点击应正常进入主页。
+        RunLoop.current.run(until: Date().addingTimeInterval(1.7))
+        center.tap()
+        assertExists("真实经历 · 已验证", timeout: 6)
+        waitTap("返回")
+
+        let search = app.textFields["搜索旅人、介绍或标签"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5), "从主页返回后社区搜索框不可用")
+        search.tap()
+        search.typeText("AI")
+        XCTAssertTrue(stage.exists, "搜索过滤后放映舞台消失")
+        snap("w01-community-watch-drag-click-search")
+    }
+
     // MARK: 01 · 首页：问候 + 语音日记录音 → 分析
 
     func test00VoiceDiaryResilient() throws {

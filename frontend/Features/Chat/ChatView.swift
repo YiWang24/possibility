@@ -379,6 +379,7 @@ struct BackButton: View {
                 .background(Theme.raised, in: Circle())
                 .overlay(Circle().strokeBorder(Theme.line, lineWidth: 1))
         }
+        .accessibilityLabel("返回")
         .buttonStyle(PressScaleStyle())
     }
 }
