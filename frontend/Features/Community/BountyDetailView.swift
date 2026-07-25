@@ -6,6 +6,9 @@ import SwiftUI
 
 struct BountyDetailView: View {
     let bounty: Bounty
+    /// 列表是否来自本地演示数据。演示列表使用配套演示详情，不再按相同 ID
+    /// 请求并混入另一套远端内容。
+    let usesDemoData: Bool
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SupabaseService.self) private var supabase
@@ -14,8 +17,9 @@ struct BountyDetailView: View {
     @State private var showCardModal = false
     @State private var message = ""
     @State private var sent = false
-    /// get_bounty 拉到的真实详情（成功后优先展示，失败保持 nil 走 DemoData 兜底）
+    /// get_bounty 拉到的远端详情；帖子主体在列表数据中已经可用，这里主要补充回应。
     @State private var remote: BountyDetailResponse?
+    @State private var didFinishRemoteLoad = false
     @State private var sending = false
 
     private static let sentKey = "kaleido_bounty_sent_v1"
@@ -25,22 +29,23 @@ struct BountyDetailView: View {
 
     private var displayTags: [String] {
         if let tags = remote?.bounty.tags, !tags.isEmpty { return tags }
-        return detail.tags
+        if let tags = bounty.tags, !tags.isEmpty { return tags }
+        return usesDemoData ? detail.tags : []
     }
     private var displayDetail: String {
         if let text = remote?.bounty.detail, !text.isEmpty { return text }
-        return detail.detail
+        if let text = bounty.detail, !text.isEmpty { return text }
+        return usesDemoData ? detail.detail : "详情暂未填写。"
     }
     private var displayQuestion: String { remote?.bounty.question ?? bounty.question }
     private var responseCountText: String {
-        if let remote { return "\(remote.responses.count) 人回应" }
-        return bounty.responses
+        remote?.bounty.responses ?? bounty.responses
     }
     private var statusText: String {
-        if let remote {
-            return remote.bounty.status == "closed" ? "已结束" : "征集中"
+        if let status = remote?.bounty.status ?? bounty.status {
+            return status == "closed" ? "已结束" : "征集中"
         }
-        return detail.goal
+        return usesDemoData ? detail.goal : "征集中"
     }
 
     var body: some View {
@@ -83,8 +88,10 @@ struct BountyDetailView: View {
         }
     }
 
-    /// 真实优先：get_bounty 失败时静默保持 DemoData 兜底
+    /// 远端列表只补拉回应；本地演示列表保持使用同一套演示详情。
     private func loadRemote() async {
+        guard !usesDemoData else { return }
+        defer { didFinishRemoteLoad = true }
         remote = try? await supabase.getBounty(bountyId: bounty.id)
     }
 
@@ -124,10 +131,11 @@ struct BountyDetailView: View {
     }
 
     private var publisher: some View {
-        let name = remote == nil ? detail.asker : "匿名旅人"
+        let name = usesDemoData ? detail.asker : "匿名旅人"
         let meta: String = {
-            if let remote {
-                guard let day = SupabaseTimestamp.dayString(fromRaw: remote.bounty.createdAt) else { return "已发布" }
+            if !usesDemoData {
+                let createdAt = remote?.bounty.createdAt ?? bounty.createdAt
+                guard let day = SupabaseTimestamp.dayString(fromRaw: createdAt) else { return "已发布" }
                 return "\(day) 发布"
             }
             return "\(detail.city) · \(detail.time)发布"
@@ -148,11 +156,11 @@ struct BountyDetailView: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("本帖悬赏").font(.system(size: 10.5)).foregroundStyle(Color(hex: 0x2B1A08, alpha: 0.75))
-                if let remote {
-                    Text(remote.bounty.reward)
-                        .font(.system(size: 17, weight: .heavy)).foregroundStyle(Color(hex: 0x2B1A08))
-                } else {
+                if usesDemoData {
                     Text("¥\(detail.amount)").font(.system(size: 24, weight: .heavy)).foregroundStyle(Color(hex: 0x2B1A08))
+                } else {
+                    Text(remote?.bounty.reward ?? bounty.reward)
+                        .font(.system(size: 17, weight: .heavy)).foregroundStyle(Color(hex: 0x2B1A08))
                 }
             }
             Spacer()
@@ -199,11 +207,22 @@ struct BountyDetailView: View {
                                  hue: (bounty.id + i + 2) % 5)
                     }
                 }
-            } else {
+            } else if usesDemoData {
                 ForEach(Array(detail.replies.enumerated()), id: \.offset) { i, reply in
                     replyRow(name: reply.name, role: reply.role, text: reply.text,
                              hue: (bounty.id + i + 2) % 5)
                 }
+            } else {
+                HStack(spacing: 8) {
+                    if !didFinishRemoteLoad {
+                        ProgressView().controlSize(.small).tint(Theme.faint)
+                    }
+                    Text(didFinishRemoteLoad ? "回应暂时加载失败，请稍后再试。" : "正在加载回应…")
+                        .font(.system(size: 12)).foregroundStyle(Theme.faint)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(13)
+                .background(Theme.raised, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
     }
@@ -316,7 +335,7 @@ struct BountyDetailView: View {
 }
 
 #Preview {
-    BountyDetailView(bounty: DemoData.bounties[0])
+    BountyDetailView(bounty: DemoData.bounties[0], usesDemoData: true)
         .environment(SupabaseService())
         .environment(ToastCenter())
         .preferredColorScheme(.dark)

@@ -24,6 +24,12 @@ struct ChatView: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .overlay(ToastHost(message: toast.message))
+        .onChange(of: model.isStreaming) {
+            // 发送后立即让输入框失焦，避免键盘遮住正在生成的回复。
+            if model.isStreaming {
+                inputFocused = false
+            }
+        }
         .task { await model.start(supabase: supabase) }
         .task { await model.loadHistory(supabase: supabase) }
         .sheet(isPresented: $model.showHistory) {
@@ -84,6 +90,7 @@ struct ChatView: View {
         .foregroundStyle(Theme.ink)
         .padding(.horizontal, 22).padding(.top, 12).padding(.bottom, 12)
         .background(.ultraThinMaterial)
+        .simultaneousGesture(TapGesture().onEnded { inputFocused = false })
     }
 
     // MARK: 消息流
@@ -96,7 +103,11 @@ struct ChatView: View {
                 // 见 XCUITest test03 采样栈 LazySubviewPlacements）。
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(model.messages) { msg in
-                        bubble(msg).id(msg.id)
+                        // 流开始时模型会先插入一条空 AI 消息作为 token 容器。
+                        // 在首个 token 到达前只显示「正在想」，不要渲染空气泡。
+                        if !msg.text.isEmpty {
+                            bubble(msg).id(msg.id)
+                        }
                     }
                     if model.isStreaming, model.messages.last?.text.isEmpty == true {
                         thinking
@@ -117,6 +128,8 @@ struct ChatView: View {
             }
             .scrollIndicators(.hidden)
             .scrollDismissesKeyboard(.interactively)
+            .contentShape(Rectangle())
+            .simultaneousGesture(TapGesture().onEnded { inputFocused = false })
             .onChange(of: model.messages.last?.text) { scrollToBottom(proxy) }
             .onChange(of: model.showActionChips) { scrollToBottom(proxy) }
             .onChange(of: model.showNextPanel) { scrollToBottom(proxy) }
@@ -202,7 +215,10 @@ struct ChatView: View {
                 .overlay(Capsule().strokeBorder(Theme.line, lineWidth: 1))
                 .submitLabel(.send)
                 .focused($inputFocused)
-                .onSubmit { model.send(model.input, supabase: supabase) }
+                .onSubmit {
+                    inputFocused = false
+                    model.send(model.input, supabase: supabase)
+                }
             Button {
                 inputFocused = false
                 model.send(model.input, supabase: supabase)

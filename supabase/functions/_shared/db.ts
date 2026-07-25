@@ -135,6 +135,7 @@ export async function insertSimulation(
     question: string;
     choice: string;
     years: number;
+    time_horizon: string;
     carry_cards?: string[];
   },
   result: SimulationOutput,
@@ -144,6 +145,7 @@ export async function insertSimulation(
     question: input.question,
     choice: input.choice,
     years: input.years,
+    time_horizon: input.time_horizon,
     carry_cards: input.carry_cards ?? [],
     scenarios: result.scenarios,
     bottom_line: result.bottom_line_analysis,

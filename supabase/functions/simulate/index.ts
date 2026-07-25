@@ -34,9 +34,10 @@ Deno.serve(async (req) => {
 
     // 单次生成三套情景 + 底线分析。此前误拆成多次并行调用是基于错误的
     // 「大生成超时」假设——真因是网关不支持 output_config.format（见 anthropic.ts）。
-    // 改用纯文本生成后单次调用即可稳定返回，多次调用反而放大网关偶发超时的失败率。
+    // 改用纯文本生成后单次调用即可稳定返回，多次调用反而放大网关偶发超时的失败率，
+    // 且并行+串行两段各自重试会超出 Edge Function 150s 墙钟。
     let prompt =
-      `问题：${input.question}\n选择：${input.choice}\n推演年限：${input.years} 年`;
+      `问题：${input.question}\n选择：${input.choice}\n推演时间跨度：${input.time_horizon}`;
     if (input.carry_cards && input.carry_cards.length > 0) {
       prompt += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
     }

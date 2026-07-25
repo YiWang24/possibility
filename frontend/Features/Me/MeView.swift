@@ -218,8 +218,6 @@ struct MeView: View {
                         }
                     }
 
-                    Text("动态画像与“认识自己”保持一致；这里展示你在“设置展示”中开启的画像内容。")
-                        .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint)
                 }
             }
             .padding(14)

@@ -2,8 +2,16 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>万花筒 KALEIDO · 高保真交互原型</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#05070D">
+<meta name="description" content="万花筒 KALEIDO — 认识自己 · 人生推演 · 真人参照社区。灵光赛道演示 Demo。">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="万花筒 KALEIDO">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235E96FF'/%3E%3Cstop offset='.5' stop-color='%23E35CC1'/%3E%3Cstop offset='1' stop-color='%23FF7A4D'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%2305070D'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='url(%23g)' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.6' fill='url(%23g)'/%3E%3C/svg%3E">
+<title>万花筒 KALEIDO</title>
 <style>
 :root{
   color-scheme: dark;
@@ -187,7 +195,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   .orb::before,.orb::after,.orb-halo::before,.kal-disc,.wave i,.ask .glow,.ask .glow2,.ask .glow3{animation:none !important}
 }
 
-/* ============ 01 认识你自己 ============ */
+/* ============ 01 认识自己 ============ */
 .greet{display:flex;justify-content:space-between;align-items:flex-end}
 .greet .r{text-align:right;font-size:12px;color:var(--sub);line-height:1.7}
 .greet .r b{font-size:16px;font-weight:700;background:var(--aurora);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -424,7 +432,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .dim.todo{border-style:dashed;border-color:rgba(94,150,255,.4);background:rgba(94,150,255,.06)}
 .dim.todo .tx p{color:var(--blue)}
 
-/* 认识你自己 · 首屏露出动态画像 */
+/* 认识自己 · 首屏露出动态画像 */
 #scr-home{padding-top:64px}
 #scr-home .greet h1.page{font-size:24px;margin-top:3px}
 #scr-home .diary{margin-top:12px;padding:14px 17px 12px}
@@ -444,15 +452,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 #scr-home .ask .chip{padding:6px 13px;font-size:11.5px}
 #scr-home>.sec-t{margin:16px 2px 9px}
 #scr-home .portrait{margin-top:0}
-.self-knowledge-quote{
-  margin:18px 8px 4px;padding-left:14px;border-left:1px solid rgba(174,187,219,.34);
-  color:var(--sub);font-family:var(--serif);font-size:11.5px;line-height:1.85;
-  letter-spacing:.02em;text-align:justify
-}
-.self-knowledge-quote cite{
-  display:block;margin-top:8px;color:var(--faint);font-family:var(--sans);
-  font-size:10.5px;font-style:normal;text-align:right
-}
 @media (max-height:760px) and (max-width:460px){
   #scr-home{padding-top:56px}
   #scr-home .diary{margin-top:9px;padding-top:11px;padding-bottom:10px}
@@ -1853,39 +1852,42 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .tab.on .ind{opacity:1}
 
 @media (max-width:1100px){body{gap:0}.spec{display:none}}
-@media (max-width:460px){
+
+/* ================================================================
+   WEB 手机版适配 · 灵光赛道 mock
+   桌面: 极光背景全幅铺满 + 居中一列手机宽度 (无 iPhone 物理边框/刘海)
+   手机: 真·全屏 App (100dvh + 安全区)
+   ================================================================ */
+.spec{display:none!important}                 /* 开发脚手架彻底移除 */
+body{gap:0;padding:24px}
+.phone{
+  height:min(844px, calc(100dvh - 48px));
+  max-height:calc(100dvh - 48px);
+  border-radius:34px;
+  box-shadow:0 30px 90px -34px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.06);
+}
+.notch{display:none}                          /* 无物理边框时刘海无意义 */
+
+@media (max-width:520px){
   body{padding:0}
-  .phone{width:100vw;height:100vh;border-radius:0;box-shadow:none}
+  .phone{
+    width:100vw;
+    height:100vh;            /* 老浏览器回退 */
+    height:100dvh;           /* 动态视口: 随浏览器栏收缩铺满 */
+    max-height:none;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .statusbar{display:none}   /* 真机自带状态栏, 隐藏 App 内假状态栏免"双时钟" */
+  .homebar{display:none}
+  .screen{padding-top:calc(env(safe-area-inset-top, 0px) + 20px)}
+  .push{padding-top:env(safe-area-inset-top, 0px)}
+  .tabbar{padding-bottom:calc(26px + env(safe-area-inset-bottom, 0px))}
 }
 </style>
 </head>
 <body>
 
-<!-- ================= 左侧规格栏 ================= -->
-<aside class="spec">
-  <div class="logo">万花筒<em>·</em></div>
-  <div class="en">KALEIDO · Prototype</div>
-  <p class="desc">一款「认识你自己 + 人生推演 + 真人参照社区」App 的高保真交互原型。一束光，折出千万种人生 —— 把重大人生选择，先在万花筒里转一转。</p>
-
-  <h4>页面导航</h4>
-  <div class="jump" id="jumpNav">
-    <button data-go="home" class="on"><i>01</i>认识你自己 · 探索与画像</button>
-    <button data-go="lab"><i>02</i>人生实验室 · 时间旋钮</button>
-    <button data-go="comm"><i>03</i>万花筒社区 · 真人参照</button>
-  </div>
-
-  <h4>色板</h4>
-  <div class="sw">
-    <span style="background:#0A0C12"></span>
-    <span style="background:#13161F"></span>
-    <span style="background:#5E96FF"></span>
-    <span style="background:#E35CC1"></span>
-    <span style="background:#FF7A4D"></span>
-    <span style="background:#D7F464"></span>
-  </div>
-
-  <p class="note">可交互：语音日记提取情绪与关键词 · 探索标签进输入框 · 对话可继续提问 · 实验室拖入选择卡 + 1–10 年连续旋钮 · 更换问题 · 万花筒抽取 · 用户主页四 Tab、经历解锁与咨询流程。</p>
-</aside>
 
 <!-- ================= 手机 ================= -->
 <div class="stage">
@@ -1899,7 +1901,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
     </span>
   </div>
 
-  <!-- ============ 01 认识你自己 ============ -->
+  <!-- ============ 01 认识自己 ============ -->
   <section class="screen on" id="scr-home">
     <div class="greet">
       <div>
@@ -2021,10 +2023,6 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
         </button>
       </div>
     </div>
-    <blockquote class="self-knowledge-quote">
-      我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：“离每个人最远的，就是他自己。”——对于我们自己，我们不是“知者”……
-      <cite>——尼采《道德的系谱》</cite>
-    </blockquote>
   </section>
 
   <!-- ============ 02 人生实验室 ============ -->
@@ -2170,7 +2168,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   <!-- ============ 语音日记详情 push ============ -->
   <section class="push diary-page" id="diaryPage">
     <div class="top">
-      <button class="backbtn" onclick="returnFromVoiceDiary()" aria-label="返回认识你自己首页">
+      <button class="backbtn" onclick="returnFromVoiceDiary()" aria-label="返回认识自己首页">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
       <div>
@@ -2547,7 +2545,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   <!-- ============ 卡牌游戏大厅 ============ -->
   <section class="push card-game-hub" id="cardGameHub">
     <div class="top">
-      <button class="backbtn" onclick="closePush('cardGameHub')" aria-label="返回认识你自己">
+      <button class="backbtn" onclick="closePush('cardGameHub')" aria-label="返回认识自己">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>
       </button>
       <div><h2>卡牌探索</h2><div class="sub2">选择一套卡牌，看看最后会留下什么</div></div>
@@ -2667,7 +2665,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   <nav class="tabbar">
     <button class="tab on" data-tab="home">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="8.6" r="3.6"/><path d="M5 20.2c1.1-3.5 3.8-5.3 7-5.3s5.9 1.8 7 5.3"/></svg>
-      <span>认识你自己</span><span class="ind"></span>
+      <span>认识自己</span><span class="ind"></span>
     </button>
     <button class="tab" data-tab="lab">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3h5M10.5 3v5.2L5.4 17a2.4 2.4 0 0 0 2.1 3.6h9a2.4 2.4 0 0 0 2.1-3.6l-5.1-8.8V3"/><path d="M7.5 14.5h9"/></svg>
@@ -5258,7 +5256,7 @@ function publicPersonaHTML(u,isMine=false){
       <div class="digital-human-stage public-persona-stage">
         <canvas class="public-dynamic-persona-canvas" role="img" aria-label="${escapeHTML(u.name)}根据画像结果生成的动态画像"></canvas>
         <span class="digital-human-live">${isMine?'SYNCED LIVE FORM':'PUBLIC PROFILE FORM'}</span>
-        <div class="digital-human-caption"><b>${escapeHTML(u.name)}${isMine?' · 动态画像':''}</b><span>${isMine?'与“认识你自己”页面实时同步':'动态数字形象 · 由下方公开画像结果生成'}</span></div>
+        <div class="digital-human-caption"><b>${escapeHTML(u.name)}${isMine?' · 动态画像':''}</b><span>${isMine?'与“认识自己”页面实时同步':'动态数字形象 · 由下方公开画像结果生成'}</span></div>
       </div>
       ${lifeItem&&lifeItem.cards?.length?`
         <div class="portrait-life-signature show">
@@ -5274,7 +5272,7 @@ function publicPersonaHTML(u,isMine=false){
             <span class="ar">${hasPersonaResult(item)?'已公开':'待完善'}</span>
           </div>`).join('')}
         </div>
-        ${isMine?'':'<p class="persona-public-note">这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。</p>'}`
+        <p class="persona-public-note">${isMine?'动态画像与“认识自己”保持一致；下方展示你在“设置展示”中开启的画像内容。':'这里只展示对方主动公开的画像结果，未公开内容不会出现在主页。'}</p>`
         :'<div class="persona-empty" style="margin-top:14px">目前没有开启公开展示的画像内容</div>'}
     </div>`;
 }
@@ -5285,7 +5283,7 @@ function drawPublicPersona(u,rootSelector){
   if(u===myProfile||u?.id==='me'){
     refreshDynamicPersona();
     drawDynamicPersona(performance.now(),canvas,dynamicPersonaModel);
-    canvas.setAttribute('aria-label',`与认识你自己页面同步的动态画像：${dynamicPersonaModel?.shape||'持续生长'}`);
+    canvas.setAttribute('aria-label',`与认识自己页面同步的动态画像：${dynamicPersonaModel?.shape||'持续生长'}`);
     return;
   }
   const items=profilePersonaItems(u);
@@ -5873,7 +5871,7 @@ function updateMyVisibilitySummary(){
   if(!summary||!myEditDraft)return;
   const selected=myPersonaSource().filter(item=>myEditDraft.visibility?.[item.key]);
   const completed=selected.filter(hasPersonaResult);
-  summary.textContent=`已选择 ${selected.length} 项，其中 ${completed.length} 项已有结果；保存后全部展示，待完善内容会标注状态。动态画像始终与“认识你自己”保持同步。`;
+  summary.textContent=`已选择 ${selected.length} 项，其中 ${completed.length} 项已有结果；保存后全部展示，待完善内容会标注状态。动态画像始终与“认识自己”保持同步。`;
 }
 function renderMyServiceEditor(){
   const root=$('#myServiceEditor');

@@ -273,8 +273,10 @@ final class KaleidoUITests: XCTestCase {
         assertExists("取消", timeout: 4)
         waitTap("取消")
 
-        // 预设年限 + 选择卡
-        waitTap("3年", timeout: 4)
+        // 短期预设 + 选择卡
+        assertExists("7天", timeout: 4)
+        assertExists("30天", timeout: 4)
+        waitTap("3个月", timeout: 4)
         waitTap("转 AI 产品")
         snap("24-lab-picked")
 
