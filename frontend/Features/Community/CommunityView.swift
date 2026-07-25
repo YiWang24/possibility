@@ -40,14 +40,7 @@ struct CommunityView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                PageHeader(eyebrow: "KALEIDOSCOPE", title: "万花筒社区")
-                    .overlay(alignment: .bottomTrailing) {
-                        Text("未来不是被我们预见的，而是被我们亲手促成的。")
-                            .font(.system(size: 11.5, design: .serif))
-                            .foregroundStyle(Theme.sub)
-                            .tracking(0.6)
-                            .padding(.bottom, 4)
-                    }
+                communityHeader
                 tabs.padding(.top, 16)
                 Group {
                     if tab == 0 {
@@ -88,6 +81,43 @@ struct CommunityView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: 0x10131C))
         }
+    }
+
+    private var communityHeader: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("KALEIDOSCOPE")
+                .font(.system(size: 11))
+                .tracking(3.5)
+                .foregroundStyle(Theme.faint)
+
+            HStack(alignment: .bottom, spacing: 12) {
+                Text("万花筒社区")
+                    .font(.system(size: 27, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(Theme.ink)
+                    .fixedSize()
+
+                Spacer(minLength: 4)
+
+                Group {
+                    if tab == 0 {
+                        Text("人生如逆旅，我亦是行人。")
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+                    } else {
+                        Text("未来不是被我们预见的，\n而是被我们亲手促成的。")
+                            .lineLimit(2)
+                    }
+                }
+                .font(.system(size: 10.5, design: .serif))
+                .foregroundStyle(Theme.sub)
+                .tracking(0.35)
+                .lineSpacing(3)
+                .multilineTextAlignment(.trailing)
+                .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// 真实优先：Edge Function 列表拉取成功才覆盖，失败静默走兜底链
