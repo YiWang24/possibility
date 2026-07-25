@@ -102,7 +102,8 @@ struct SimCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HueBandHeader(initial: traveler.initial, hue: traveler.hue,
-                          bandHeight: 52, avatarSize: 36)
+                          bandHeight: 52, avatarSize: 36,
+                          imageName: MockAvatar.name(for: traveler.id))
             VStack(alignment: .leading, spacing: 5) {
                 Text(traveler.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(reason ?? traveler.quote)

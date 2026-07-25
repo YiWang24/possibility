@@ -134,7 +134,8 @@ struct BountyDetailView: View {
             return "\(detail.city) · \(detail.time)发布"
         }()
         return HStack(spacing: 11) {
-            TravelerAvatar(initial: String(name.prefix(1)), hue: bounty.id % 5, size: 40)
+            TravelerAvatar(initial: String(name.prefix(1)), hue: bounty.id % 5, size: 40,
+                           imageName: MockAvatar.name(hashing: name))
             VStack(alignment: .leading, spacing: 2) {
                 Text(name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(meta).font(.system(size: 11)).foregroundStyle(Theme.faint)
@@ -210,7 +211,8 @@ struct BountyDetailView: View {
 
     private func replyRow(name: String, role: String, text: String, hue: Int) -> some View {
         HStack(alignment: .top, spacing: 11) {
-            TravelerAvatar(initial: String(name.prefix(1)), hue: hue, size: 34)
+            TravelerAvatar(initial: String(name.prefix(1)), hue: hue, size: 34,
+                           imageName: MockAvatar.name(hashing: name))
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
                     Text(name).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)

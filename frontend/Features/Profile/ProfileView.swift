@@ -84,7 +84,8 @@ struct ProfileView: View {
     private func hero(_ t: Traveler) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 16) {
-                TravelerAvatar(initial: t.initial, hue: t.hue, size: 74, cornerRadius: 26)
+                TravelerAvatar(initial: t.initial, hue: t.hue, size: 74, cornerRadius: 26,
+                               imageName: MockAvatar.name(for: t.id))
                     .overlay(alignment: .bottomTrailing) {
                         Circle().fill(Theme.teal).frame(width: 17, height: 17)
                             .overlay(Circle().strokeBorder(Color(hex: 0x10131D), lineWidth: 3)).offset(x: 2, y: 2)

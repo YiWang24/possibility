@@ -137,7 +137,8 @@ struct KaleidoscopeDrawView: View {
 
     private func resultCard(_ t: Traveler) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HueBandHeader(initial: t.initial, hue: t.hue, bandHeight: 74, avatarSize: 52)
+            HueBandHeader(initial: t.initial, hue: t.hue, bandHeight: 74, avatarSize: 52,
+                          imageName: MockAvatar.name(for: t.id))
             VStack(alignment: .leading, spacing: 8) {
                 Text(t.name).font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text("「\(t.quote)」").font(.system(size: 13)).foregroundStyle(Theme.sub).lineSpacing(5)

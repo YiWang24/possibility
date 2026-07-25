@@ -232,7 +232,8 @@ struct UserCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HueBandHeader(initial: traveler.initial, hue: traveler.hue)
+            HueBandHeader(initial: traveler.initial, hue: traveler.hue,
+                          imageName: MockAvatar.name(for: traveler.id))
             VStack(alignment: .leading, spacing: 6) {
                 Text(traveler.name).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(traveler.quote).font(.system(size: 11.5)).foregroundStyle(Theme.sub).lineSpacing(3)

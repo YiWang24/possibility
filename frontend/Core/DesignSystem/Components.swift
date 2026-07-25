@@ -5,25 +5,53 @@ import SwiftUI
 // MARK: 头像
 
 /// 旅人头像（gradient 填充圆角方 / 圆）—— 主页 hero、抽取结果
+/// imageName 指定资产头像时优先渲染图片，缺失回退 initial + hue 渐变
 struct TravelerAvatar: View {
     let initial: String
     let hue: Int
     var size: CGFloat = 52
     var cornerRadius: CGFloat = 999   // 999 = 圆
+    var imageName: String? = nil
+
+    private var shape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: min(cornerRadius, size / 2), style: .continuous)
+    }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: min(cornerRadius, size / 2), style: .continuous)
-            .fill(Theme.hue(hue).gradient)
-            .frame(width: size, height: size)
-            .overlay(
-                Text(initial)
-                    .font(.system(size: size * 0.36, weight: .semibold))
-                    .foregroundStyle(.white)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: min(cornerRadius, size / 2), style: .continuous)
-                    .strokeBorder(.white.opacity(0.18), lineWidth: 1)
-            )
+        Group {
+            if let imageName, UIImage(named: imageName) != nil {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(shape)
+            } else {
+                shape
+                    .fill(Theme.hue(hue).gradient)
+                    .frame(width: size, height: size)
+                    .overlay(
+                        Text(initial)
+                            .font(.system(size: size * 0.36, weight: .semibold))
+                            .foregroundStyle(.white)
+                    )
+            }
+        }
+        .overlay(
+            shape.strokeBorder(.white.opacity(0.18), lineWidth: 1)
+        )
+    }
+}
+
+/// mock 数据头像:按 id 稳定映射到 assets 的 avatar-01...16
+enum MockAvatar {
+    static let count = 16
+    static func name(for id: Int) -> String {
+        let index = (abs(id) - 1) % count + 1
+        return String(format: "avatar-%02d", index)
+    }
+    static func name(hashing text: String) -> String {
+        let index = abs(text.unicodeScalars.reduce(0) { $0 &* 31 &+ Int($1.value) }) % count + 1
+        return String(format: "avatar-%02d", index)
     }
 }
 
@@ -34,17 +62,28 @@ struct HueBandHeader: View {
     var bandHeight: CGFloat = 64
     var avatarSize: CGFloat = 40
     var cardColor: Color = Theme.card
+    var imageName: String? = nil
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Theme.hue(hue).gradient
                 .frame(height: bandHeight)
-            Circle()
-                .fill(Theme.hue(hue).accent)
-                .frame(width: avatarSize, height: avatarSize)
-                .overlay(Text(initial).font(.system(size: avatarSize * 0.38, weight: .semibold)).foregroundStyle(.white))
-                .overlay(Circle().strokeBorder(cardColor, lineWidth: 3))
-                .offset(x: 14, y: avatarSize * 0.4)
+            Group {
+                if let imageName, UIImage(named: imageName) != nil {
+                    Image(imageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: avatarSize, height: avatarSize)
+                        .clipShape(Circle())
+                } else {
+                    Circle()
+                        .fill(Theme.hue(hue).accent)
+                        .frame(width: avatarSize, height: avatarSize)
+                        .overlay(Text(initial).font(.system(size: avatarSize * 0.38, weight: .semibold)).foregroundStyle(.white))
+                }
+            }
+            .overlay(Circle().strokeBorder(cardColor, lineWidth: 3))
+            .offset(x: 14, y: avatarSize * 0.4)
         }
     }
 }

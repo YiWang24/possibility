@@ -23,6 +23,7 @@ targets:
       - path: App
       - path: Core
       - path: Features
+      - path: Assets.xcassets
     dependencies:
       - package: Supabase
         product: Supabase
@@ -35,6 +36,8 @@ targets:
           - UIInterfaceOrientationPortrait
         SUPABASE_URL: "$(SUPABASE_URL)"
         SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
+        NSMicrophoneUsageDescription: 录制语音日记需要使用麦克风。
+        NSSpeechRecognitionUsageDescription: 将语音日记转写为文字需要使用语音识别。
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     settings:
@@ -42,6 +45,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
   KaleidoUITests:
     type: bundle.ui-testing
     platform: iOS

@@ -167,7 +167,8 @@ struct WatchModeView: View {
     private func bubble(_ u: WatchUser, isFocus: Bool) -> some View {
         let glow = Theme.hue(u.hue).accent
         return VStack(spacing: 0) {
-            TravelerAvatar(initial: u.name.prefix(1).description, hue: u.hue, size: 43)
+            TravelerAvatar(initial: u.name.prefix(1).description, hue: u.hue, size: 43,
+                           imageName: MockAvatar.name(hashing: u.name))
                 .overlay(Circle().strokeBorder(.white.opacity(0.82), lineWidth: 1.5))
                 .shadow(color: .black.opacity(0.4), radius: 7, y: 4)
                 .shadow(color: glow.opacity(0.3), radius: 6)

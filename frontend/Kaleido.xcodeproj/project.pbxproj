@@ -11,6 +11,7 @@
 		071377A28E38B4D8EF5656D7 /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D22800859201F0E11C56A73 /* ResultView.swift */; };
 		0AC803A082D17E4F56E3DA97 /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1078112F8AC0F032905A464D /* ContentModels.swift */; };
 		0D1B3BF73D7E8B6F082EDEB5 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A6A84A9FB277691562B262 /* HomeModel.swift */; };
+		17FC3A7E77D2BF36A857F915 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 23887859D711455111E9D998 /* Assets.xcassets */; };
 		23B7A988B7AF2D2D384D80C4 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532E27F23B2534639E841CC6 /* AppConfig.swift */; };
 		27155F15BFD4A71DBE6A46D9 /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85892F03C9405FD652ACEC07 /* OrbView.swift */; };
 		2C255E5A5F5B3B0A0EC33C55 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFA48F72764907D168ADEF0 /* Components.swift */; };
@@ -80,6 +81,7 @@
 		04A0CC91C99BB6912F16D8B0 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
 		1078112F8AC0F032905A464D /* ContentModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentModels.swift; sourceTree = "<group>"; };
 		133A9BC3F4CF13BA46760B9C /* DiaryData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryData.swift; sourceTree = "<group>"; };
+		23887859D711455111E9D998 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		331B4E070A571A50CC0606E0 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KaleidoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		435DA523A552218489E11A82 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -258,6 +260,7 @@
 		704BB56852DCA52CE1E77917 = {
 			isa = PBXGroup;
 			children = (
+				23887859D711455111E9D998 /* Assets.xcassets */,
 				3CE034D8B7BD130C4FA84ED7 /* App */,
 				5098F5273F1009AEFE928C9A /* Core */,
 				DCAC9633E88440311FD38A0C /* Features */,
@@ -357,6 +360,7 @@
 			buildConfigurationList = 850CC8EB03AEDC68C57CC104 /* Build configuration list for PBXNativeTarget "Kaleido" */;
 			buildPhases = (
 				3D59248950A744DFDE949732 /* Sources */,
+				B514DC44615C5336FD194431 /* Resources */,
 				9C62F3323C82083DAA22E260 /* Frameworks */,
 			);
 			buildRules = (
@@ -429,6 +433,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B514DC44615C5336FD194431 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17FC3A7E77D2BF36A857F915 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		3D59248950A744DFDE949732 /* Sources */ = {
@@ -515,7 +530,7 @@
 		02078F14663ADD954B93E74A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
@@ -548,7 +563,7 @@
 		66505603BC270F75550C720C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
