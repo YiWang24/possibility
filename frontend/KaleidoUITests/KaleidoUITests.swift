@@ -110,6 +110,20 @@ final class KaleidoUITests: XCTestCase {
         XCTAssertTrue(find("嗯，比较接近", timeout: 25) != nil, "「嗯，比较接近」未出现", file: file, line: line)
     }
 
+    // MARK: 00 · 社区默认放映模式
+
+    func test00CommunityWatchModeDefault() throws {
+        waitTap("万花筒社区")
+        // 放映模式下右上角切换入口显示「卡片」（用于切回卡片流）；
+        // 若默认放映：应出现「卡片」入口，且不出现「放映」入口。
+        assertExists("卡片", timeout: 6)
+        XCTAssertNil(
+            find("放映", timeout: 1),
+            "社区没有默认放映模式（出现了「放映」切换入口，说明当前是卡片流）",
+        )
+        snap("w00-community-watchmode-default")
+    }
+
     // MARK: 01 · 首页：问候 + 语音日记录音 → 分析
 
     func test00VoiceDiaryResilient() throws {
