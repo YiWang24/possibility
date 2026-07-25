@@ -294,27 +294,10 @@ struct CardGameView: View {
                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(pressureColor.opacity(0.3), lineWidth: 1))
 
-                // 扇形背面牌
-                ZStack {
-                    ForEach(Array(options.enumerated()), id: \.offset) { i, scenario in
-                        Button {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                engine.draw(scenario)
-                            }
-                        } label: {
-                            faceDownCard
-                                .rotationEffect(.degrees(Double(i - 2) * 9))
-                                .offset(x: Double(i - 2) * 44, y: abs(Double(i - 2)) * 10)
-                        }
-                        .buttonStyle(PressScaleStyle(scale: 0.94))
-                        .accessibilityLabel("抽第 \(i + 1) 张牌")
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 190)
-                .padding(.top, 10)
+                // 可滑动扇形牌弧（原型 .stamp-scroll / .stamp-arc）
+                fanArc(options)
 
-                Text("点击其中一张")
+                Text("左右滑动牌弧 · 点击其中一张")
                     .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
                     .frame(maxWidth: .infinity)
             }
@@ -326,17 +309,57 @@ struct CardGameView: View {
         [Color(hex: 0x7CABFF), Color(hex: 0xD9B563), Color(hex: 0xFF9A6B), Color(hex: 0xF06A6A)][engine.pressure - 1]
     }
 
+    // MARK: 扇形牌弧
+    //
+    // 牌位用 .position 真实布局（而非 offset/rotation 纯视觉变换），
+    // 保证任意 iOS 版本上命中区域与牌面位置一致 —— 修复真机上扇形牌点不中的问题。
+    // 牌弧宽于屏幕，放在横向 ScrollView 中左右滑动浏览（原型「左右滑动牌弧」）。
+
+    /// 牌弧几何（原型 .stamp-arc：460 宽、牌 120×165、扇形 ±146px / ±25°、中间牌最高最上层）
+    private static let arcW: CGFloat = 460
+    private static let arcH: CGFloat = 214
+
+    private func fanArc(_ options: [GameScenario]) -> some View {
+        let mid = CGFloat(options.count - 1) / 2
+        return ScrollView(.horizontal, showsIndicators: false) {
+            ZStack {
+                ForEach(Array(options.enumerated()), id: \.offset) { i, scenario in
+                    let d = CGFloat(i) - mid
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            engine.draw(scenario)
+                        }
+                    } label: {
+                        faceDownCard
+                            .rotationEffect(.degrees(Double(d) * 12.5))
+                    }
+                    .buttonStyle(PressScaleStyle(scale: 0.94))
+                    // 弧线：中间高、两侧低（原型 y = -10 / 7 / 28）
+                    .position(x: Self.arcW / 2 + d * 73,
+                              y: Self.arcH / 2 - 8 + (2 * d * d + 15 * abs(d) - 10))
+                    .zIndex(-abs(Double(d)))   // 中间牌在最上层（原型 z 金字塔）
+                    .accessibilityLabel("抽第 \(i + 1) 张牌")
+                }
+            }
+            .frame(width: Self.arcW, height: Self.arcH)
+        }
+        .defaultScrollAnchor(.center)
+        .scrollClipDisabled()
+        .frame(height: Self.arcH)
+        .padding(.top, 10)
+    }
+
     private var faceDownCard: some View {
-        RoundedRectangle(cornerRadius: 13, style: .continuous)
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
             .fill(LinearGradient(colors: [Color(hex: 0x232948), Color(hex: 0x161A30)],
                                  startPoint: .topLeading, endPoint: .bottomTrailing))
             .overlay(
                 Text("✦")
-                    .font(.system(size: 19)).foregroundStyle(accent.opacity(0.5))
+                    .font(.system(size: 21)).foregroundStyle(accent.opacity(0.5))
             )
-            .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous)
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(accent.opacity(0.35), lineWidth: 1))
-            .frame(width: 96, height: 140)
+            .frame(width: 120, height: 165)
             .shadow(color: .black.opacity(0.45), radius: 10, y: 6)
     }
 

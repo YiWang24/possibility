@@ -336,3 +336,113 @@ final class KaleidoUITests: XCTestCase {
         assertExists("真实经历 · 已验证", timeout: 4)
     }
 }
+
+// MARK: - 卡牌抽牌扇形命中区域检查
+//
+// 复现：抽牌页扇形背面牌在真机上点不中。
+// 用坐标点击模拟真实手指落点（元素 .tap() 走可访问性中心，不能复现手指位置）。
+
+final class CardGameFanCheck: XCTestCase {
+
+    func testFanCardTapAtVisualPosition() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        func waitFind(_ label: String, _ timeout: TimeInterval = 8) -> XCUIElement? {
+            let deadline = Date().addingTimeInterval(timeout)
+            repeat {
+                if app.buttons[label].exists { return app.buttons[label] }
+                if app.staticTexts[label].exists { return app.staticTexts[label] }
+                RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+            } while Date() < deadline
+            return nil
+        }
+        func tapContaining(_ text: String, _ timeout: TimeInterval = 8) {
+            let p = NSPredicate(format: "label CONTAINS %@", text)
+            let b = app.buttons.matching(p).firstMatch
+            XCTAssertTrue(b.waitForExistence(timeout: timeout), "找不到含「\(text)」的按钮")
+            b.tap()
+        }
+        func snap(_ name: String) {
+            let dir = URL(fileURLWithPath: "/tmp/kaleido_snaps")
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            try? XCUIScreen.main.screenshot().pngRepresentation
+                .write(to: dir.appendingPathComponent("\(name).png"))
+        }
+
+        // 首页 → 卡牌大厅 → 人生卡牌 intro
+        tapContaining("人生卡牌：你最后会留下什么？")
+        XCTAssertNotNil(waitFind("答案不靠想出来，\n靠一次次取舍显形。"), "卡牌大厅未出现")
+        tapContaining("从 18 张底牌带走 9 张")
+        XCTAssertNotNil(waitFind("开始这一局"), "intro 未出现")
+        app.buttons["开始这一局"].tap()
+
+        // 选 9 张（LazyVGrid 懒加载，边点边上滑）
+        let cardQuery = app.buttons.matching(NSPredicate(format: "label CONTAINS 'LIFE · '"))
+        var rounds = 0
+        while rounds < 10, !app.buttons["带着这 9 张牌出发"].exists {
+            rounds += 1
+            var tappedThisPass = false
+            for el in cardQuery.allElementsBoundByIndex
+            where el.isHittable && !el.label.contains("✓") {
+                el.tap()
+                tappedThisPass = true
+                if app.buttons["带着这 9 张牌出发"].exists { break }
+            }
+            if !app.buttons["带着这 9 张牌出发"].exists, !tappedThisPass || rounds % 2 == 0 {
+                app.swipeUp()
+            }
+        }
+        XCTAssertTrue(app.buttons["带着这 9 张牌出发"].waitForExistence(timeout: 3), "未能选满 9 张")
+        app.buttons["带着这 9 张牌出发"].tap()
+
+        // 抽牌页
+        XCTAssertNotNil(waitFind("左右滑动牌弧 · 点击其中一张"), "抽牌页未出现")
+        RunLoop.current.run(until: Date().addingTimeInterval(1))
+        snap("fan-before")
+
+        // 诊断：5 个牌按钮的可访问性 frame
+        for i in 1...5 {
+            let b = app.buttons["抽第 \(i) 张牌"]
+            print("FANCHECK frame \(i): exists=\(b.exists) frame=\(b.exists ? "\(b.frame)" : "-")")
+        }
+
+        // 坐标点击最右侧牌的视觉中心（模拟真实手指落点）：
+        // 提示文本上方 16pt 间距 + 214pt 牌弧；右侧牌中心约在文本上方 103pt、右偏 146pt。
+        let hint = app.staticTexts["左右滑动牌弧 · 点击其中一张"]
+        let base = hint.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0))
+        let decision = app.buttons["接受它"]
+
+        base.withOffset(CGVector(dx: 146, dy: -103)).tap()
+        let rightHit = decision.waitForExistence(timeout: 2.5)
+        print("FANCHECK right-card tap responded=\(rightHit)")
+        snap("fan-after-right-tap")
+
+        if !rightHit {
+            base.withOffset(CGVector(dx: 0, dy: -141)).tap()
+            let centerHit = decision.waitForExistence(timeout: 2.5)
+            print("FANCHECK center-card tap responded=\(centerHit)")
+            snap("fan-after-center-tap")
+            XCTAssertTrue(centerHit, "扇形牌视觉位置点击无响应（右侧与中间均未触发翻牌）")
+        }
+
+        // 返回抽牌页（多层全屏页都有「返回」，取当前可点的那个），
+        // 滑动牌弧后由可访问性点击最左侧牌，验证滑动与命中区域
+        XCTAssertTrue(app.buttons.matching(identifier: "返回").allElementsBoundByIndex
+            .last(where: { $0.isHittable })
+            .map { $0.tap(); return true } ?? false, "找不到可点的「返回」")
+        XCTAssertNotNil(waitFind("左右滑动牌弧 · 点击其中一张"), "返回抽牌页失败")
+        base.withOffset(CGVector(dx: 100, dy: -123))
+            .press(forDuration: 0.05,
+                   thenDragTo: base.withOffset(CGVector(dx: -60, dy: -123)),
+                   withVelocity: .default, thenHoldForDuration: 0.1)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.8))
+        snap("fan-after-swipe")
+        let leftCard = app.buttons["抽第 1 张牌"]
+        XCTAssertTrue(leftCard.waitForExistence(timeout: 3), "最左侧牌不存在")
+        leftCard.tap()
+        XCTAssertTrue(decision.waitForExistence(timeout: 2.5), "滑动后点击最左侧牌无响应")
+        print("FANCHECK left-card tap after swipe responded=true")
+        snap("fan-after-left-tap")
+    }
+}
