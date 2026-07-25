@@ -21,6 +21,11 @@ export const runtimeConfig = {
   get supabaseAnonKey(): string {
     return env("SUPABASE_ANON_KEY");
   },
+  // service_role 密钥：绕过 RLS 写共享表（如 travelers 无 insert 策略）。
+  // Edge 运行时默认注入 SUPABASE_SERVICE_ROLE_KEY，本地 serve 需在 .env 提供。
+  get serviceRoleKey(): string {
+    return env("SUPABASE_SERVICE_ROLE_KEY");
+  },
   get deepseekApiKey(): string {
     return env("DEEPSEEK_API_KEY");
   },
