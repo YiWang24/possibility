@@ -99,40 +99,6 @@ export const simulationSchema = {
   additionalProperties: false,
 } as const;
 
-// simulate 拆分生成用：单情景 + 底线分析（含旅人推荐）。
-// 单次全量生成（3 情景 + 底线 ≈ 3000 token）经网关常超时/被截断，
-// 拆成 4 个小请求后每个都落在与 lab-choices 同量级的「可稳定返回」区间。
-export const bottomLineSchema = {
-  type: "object",
-  properties: {
-    bottom_line_analysis: {
-      type: "object",
-      properties: {
-        is_acceptable: { type: "boolean" },
-        risks: {
-          type: "array",
-          maxItems: 5,
-          items: { type: "string", minLength: 1 },
-        },
-        protective_conditions: {
-          type: "array",
-          maxItems: 5,
-          items: { type: "string", minLength: 1 },
-        },
-      },
-      required: ["is_acceptable", "risks", "protective_conditions"],
-      additionalProperties: false,
-    },
-    recommended_traveler_ids: {
-      type: "array",
-      maxItems: 3,
-      items: { type: "integer" },
-    },
-  },
-  required: ["bottom_line_analysis", "recommended_traveler_ids"],
-  additionalProperties: false,
-} as const;
-
 export const labChoiceSchema = {
   type: "object",
   properties: {
@@ -311,15 +277,6 @@ export type ScenarioOutput = {
   gains: string[];
   costs: string[];
   key_condition: string;
-};
-
-export type BottomLineOutput = {
-  bottom_line_analysis: {
-    is_acceptable: boolean;
-    risks: string[];
-    protective_conditions: string[];
-  };
-  recommended_traveler_ids: number[];
 };
 
 export type SimulationOutput = {

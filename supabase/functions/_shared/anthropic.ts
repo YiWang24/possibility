@@ -49,7 +49,6 @@ ${JSON.stringify(options.schema)}
   // 偶发失败：3 次每次 45s，共 135s，留在 Edge Function 150s 墙钟内。
   const maxAttempts = 3;
   const perAttemptTimeout = 45_000;
-  let lastDebug: Record<string, unknown> | undefined;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let message;
@@ -71,14 +70,9 @@ ${JSON.stringify(options.schema)}
         throw error;
       }
       // 超时/连接中断（status 非数值）：记录后重试
-      console.error(`structuredOutput attempt ${attempt} failed:`, error);
-      lastDebug = {
-        stage: "create_throw",
-        attempt,
-        model: options.model,
-        errName: error instanceof Error ? error.name : typeof error,
-        errMessage: error instanceof Error ? error.message : String(error),
-      };
+      console.error(
+        `structuredOutput attempt ${attempt}/${maxAttempts} timed out`,
+      );
       continue;
     }
 
@@ -90,21 +84,15 @@ ${JSON.stringify(options.schema)}
     const parsed = extractJson<T>(text);
     if (parsed !== null) return parsed;
 
-    // 解析失败：记录后重试
-    lastDebug = {
-      stage: "json_parse_failed",
-      attempt,
-      model: options.model,
-      stopReason: message.stop_reason ?? null,
-      textHead: text.slice(0, 400),
-    };
+    console.error(
+      `structuredOutput attempt ${attempt}/${maxAttempts} unparseable (stop=${message.stop_reason})`,
+    );
   }
 
   throw new HttpError(
     502,
     "MODEL_OUTPUT_INVALID",
     "AI 多次生成均超时或返回了无法解析的结构，请稍后重试。",
-    lastDebug, // TODO(debug): 定位后移除
   );
 }
 
