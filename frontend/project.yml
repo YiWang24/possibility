@@ -54,6 +54,16 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido.uitests
         TEST_TARGET_NAME: Kaleido
+  KaleidoTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: KaleidoTests
+    dependencies:
+      - target: Kaleido
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido.tests
 schemes:
   Kaleido:
     build:
@@ -65,4 +75,5 @@ schemes:
     test:
       config: Debug
       targets:
+        - KaleidoTests
         - KaleidoUITests

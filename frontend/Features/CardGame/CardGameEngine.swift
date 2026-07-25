@@ -9,15 +9,16 @@ import Observation
 @Observable
 @MainActor
 final class CardGameEngine {
-    enum Phase { case intro, select, draw, decision, trade, result }
+    enum Phase: String, Codable { case intro, select, draw, decision, trade, result }
 
     let config: CardGameConfig
+    private let store: UserDefaults
     var phase: Phase = .intro
     /// 选牌顺序即持有顺序
     var selected: [String] = []
     var held: [String] = []
-    var accepted: [(scenario: GameScenario, severity: Int)] = []
-    var traded: [(scenario: GameScenario, ids: [String], cannotAccept: String, abandon: String)] = []
+    var accepted: [(round: Int, scenario: GameScenario, severity: Int)] = []
+    var traded: [(round: Int, scenario: GameScenario, ids: [String], cannotAccept: String, abandon: String)] = []
     var round = 0
     var pressure = 1
     var acceptStreak = 0
@@ -27,8 +28,10 @@ final class CardGameEngine {
     var reasonCannotAccept = ""
     var reasonAbandon = ""
 
-    init(kind: CardGameKind) {
+    init(kind: CardGameKind, store: UserDefaults = .standard) {
         config = CardGameData.config(kind)
+        self.store = store
+        restoreProgress()
     }
 
     func card(_ id: String) -> GameCard { config.cards.first { $0.id == id }! }
@@ -63,6 +66,7 @@ final class CardGameEngine {
         reasonCannotAccept = ""
         reasonAbandon = ""
         phase = .select
+        saveProgress()
     }
 
     /// 选牌开关；满 9 张时返回提示
@@ -74,6 +78,7 @@ final class CardGameEngine {
         } else {
             return "这一局只能带走 9 张底牌"
         }
+        saveProgress()
         return nil
     }
 
@@ -85,6 +90,7 @@ final class CardGameEngine {
         acceptStreak = 0
         seenTitles = []
         phase = .draw
+        saveProgress()
     }
 
     /// 抽牌候选（原型 stageOptions：优先压力邻近、未出现过的情境）
@@ -116,13 +122,14 @@ final class CardGameEngine {
         current = scenario
         seenTitles.insert(scenario.title)
         phase = .decision
+        saveProgress()
     }
 
     var canTrade: Bool { held.count - 2 >= 3 }
 
     func accept() {
         guard let current else { return }
-        accepted.append((current, pressure))
+        accepted.append((round, current, pressure))
         acceptStreak += 1
         pressure = min(4, pressure + 1)
         finishRound()
@@ -133,6 +140,7 @@ final class CardGameEngine {
         reasonCannotAccept = ""
         reasonAbandon = ""
         phase = .trade
+        saveProgress()
     }
 
     func toggleTrade(_ id: String) -> String? {
@@ -143,12 +151,13 @@ final class CardGameEngine {
         } else {
             return "这一轮需要交换 2 张底牌"
         }
+        saveProgress()
         return nil
     }
 
     func confirmTrade() {
         guard tradePick.count == 2, let current else { return }
-        traded.append((current, tradePick,
+        traded.append((round, current, tradePick,
                        reasonCannotAccept.trimmingCharacters(in: .whitespacesAndNewlines),
                        reasonAbandon.trimmingCharacters(in: .whitespacesAndNewlines)))
         held.removeAll { tradePick.contains($0) }
@@ -162,6 +171,22 @@ final class CardGameEngine {
         round += 1
         current = nil
         phase = held.count == 3 ? .result : .draw
+        saveProgress()
+    }
+
+    func returnToDraw() {
+        current = nil
+        tradePick = []
+        reasonCannotAccept = ""
+        reasonAbandon = ""
+        phase = .draw
+        saveProgress()
+    }
+
+    func cancelTrade() {
+        tradePick = []
+        phase = .decision
+        saveProgress()
     }
 
     /// life 三段轮次信息（其余游戏返回轮次文案）
@@ -174,9 +199,9 @@ final class CardGameEngine {
 
     // MARK: 结果保存
 
-    /// 保存结果：life 写人生底牌签名，其余写画像维度。返回写入的关键词。
-    /// 本地写入后异步整局上云（save_card_game），失败静默（本地已存）。
-    func saveResult(home: HomeModel, supabase: SupabaseService?) -> [String] {
+    /// 先把结果写入本地画像。云端只走 save_card_game，避免与 save_dimension
+    /// 竞争覆盖同一维度；结果快照会保留到云端成功，失败时可重试。
+    func saveResultLocally(home: HomeModel) -> [String] {
         let cards = heldCards
         let tags = cards.map(\.name)
         if config.kind == .life {
@@ -186,39 +211,195 @@ final class CardGameEngine {
             }
             home.loadLifeSignature()
         } else if let key = config.kind.targetDimension {
-            home.saveDimension(key, keywords: tags, using: supabase)
+            home.saveDimension(key, keywords: tags, using: nil)
         }
-        CardGameLocalRecord.markDone(config.kind)
-        uploadResult(cards: cards, using: supabase)
+        CardGameLocalRecord.markDone(config.kind, store: store)
+        saveProgress()
         return tags
     }
 
     /// 整局结果上云：kind + 最终 3 张底牌 + 轮次 + 接受/交换记录。
-    /// 真实优先 + 静默兜底：无 supabase 或请求失败都不打扰用户（本地已保存）。
-    private func uploadResult(cards: [GameCard], using supabase: SupabaseService?) {
-        guard let supabase else { return }
+    /// 错误抛给界面展示；成功后才清除可重试快照。
+    func uploadResult(using supabase: SupabaseService) async throws {
+        let cards = heldCards
         let kind = config.kind.rawValue
         let rounds = round
         let finalCards = cards.map {
             CardGameCardPayload(id: $0.id, name: $0.name, glyph: $0.glyph, group: $0.group)
         }
         let acceptedEvents = accepted.map {
-            CardGameAcceptedEvent(scenario: $0.scenario.title, severity: $0.severity)
+            CardGameAcceptedEvent(round: $0.round, scenario: $0.scenario.title, severity: $0.severity)
         }
         let tradedEvents = traded.map { entry in
             CardGameTradedEvent(
+                round: entry.round,
                 scenario: entry.scenario.title,
                 ids: entry.ids,
                 reasons: [entry.cannotAccept, entry.abandon].filter { !$0.isEmpty })
         }
-        Task {
-            try? await supabase.saveCardGameRemote(
-                kind: kind,
-                finalCards: finalCards,
-                rounds: rounds,
-                accepted: acceptedEvents,
-                traded: tradedEvents)
+        _ = try await supabase.saveCardGameRemote(
+            kind: kind,
+            finalCards: finalCards,
+            rounds: rounds,
+            accepted: acceptedEvents,
+            traded: tradedEvents)
+        CardGameLocalRecord.clearProgress(config.kind, store: store)
+    }
+
+    // MARK: 局内快照
+
+    private struct AcceptedSnapshot: Codable {
+        let round: Int
+        let title: String
+        let severity: Int
+    }
+
+    private struct TradedSnapshot: Codable {
+        let round: Int
+        let title: String
+        let ids: [String]
+        let cannotAccept: String
+        let abandon: String
+    }
+
+    private struct ProgressSnapshot: Codable {
+        let version: Int
+        let kind: String
+        let phase: Phase
+        let selected: [String]
+        let held: [String]
+        let accepted: [AcceptedSnapshot]
+        let traded: [TradedSnapshot]
+        let round: Int
+        let pressure: Int
+        let acceptStreak: Int
+        let seenTitles: [String]
+        let currentTitle: String?
+        let tradePick: [String]
+        let reasonCannotAccept: String
+        let reasonAbandon: String
+    }
+
+    func saveProgress() {
+        guard phase != .intro else {
+            CardGameLocalRecord.clearProgress(config.kind, store: store)
+            return
         }
+        let snapshot = ProgressSnapshot(
+            version: 1,
+            kind: config.kind.rawValue,
+            phase: phase,
+            selected: selected,
+            held: held,
+            accepted: accepted.map {
+                AcceptedSnapshot(round: $0.round, title: $0.scenario.title, severity: $0.severity)
+            },
+            traded: traded.map {
+                TradedSnapshot(
+                    round: $0.round,
+                    title: $0.scenario.title,
+                    ids: $0.ids,
+                    cannotAccept: $0.cannotAccept,
+                    abandon: $0.abandon)
+            },
+            round: round,
+            pressure: pressure,
+            acceptStreak: acceptStreak,
+            seenTitles: Array(seenTitles),
+            currentTitle: current?.title,
+            tradePick: tradePick,
+            reasonCannotAccept: reasonCannotAccept,
+            reasonAbandon: reasonAbandon)
+        guard let data = try? JSONEncoder().encode(snapshot) else { return }
+        CardGameLocalRecord.saveProgress(data, for: config.kind, store: store)
+    }
+
+    private func restoreProgress() {
+        guard let data = CardGameLocalRecord.progressData(config.kind, store: store) else {
+            return
+        }
+        guard let snapshot = try? JSONDecoder().decode(ProgressSnapshot.self, from: data),
+              snapshot.version == 1,
+              snapshot.kind == config.kind.rawValue else {
+            CardGameLocalRecord.clearProgress(config.kind, store: store)
+            return
+        }
+        let validCardIDs = Set(config.cards.map(\.id))
+        let allScenarios = config.scenarioRounds.flatMap { $0 }
+        let scenarioByTitle = Dictionary(uniqueKeysWithValues: allScenarios.map { ($0.title, $0) })
+        let tradedIDs = snapshot.traded.flatMap(\.ids)
+        let requiresCurrent = snapshot.phase == .decision || snapshot.phase == .trade
+        guard Set(snapshot.selected).count == snapshot.selected.count,
+              Set(snapshot.held).count == snapshot.held.count,
+              Set(snapshot.tradePick).count == snapshot.tradePick.count,
+              Set(snapshot.selected).isSubset(of: validCardIDs),
+              Set(snapshot.held).isSubset(of: validCardIDs),
+              Set(snapshot.tradePick).isSubset(of: Set(snapshot.held)),
+              snapshot.selected.count <= 9,
+              snapshot.held.count <= 9,
+              (1...4).contains(snapshot.pressure),
+              snapshot.round >= 0,
+              snapshot.acceptStreak >= 0,
+              snapshot.phase != .result || snapshot.held.count == 3,
+              snapshot.phase == .select || snapshot.selected.count == 9,
+              snapshot.phase == .select || snapshot.held.count >= 3,
+              snapshot.phase == .select || Set(snapshot.held).isSubset(of: Set(snapshot.selected)),
+              snapshot.phase == .select || snapshot.held.count == 9 - snapshot.traded.count * 2,
+              Set(tradedIDs).count == tradedIDs.count,
+              Set(tradedIDs).isDisjoint(with: Set(snapshot.held)),
+              snapshot.round == snapshot.accepted.count + snapshot.traded.count,
+              !requiresCurrent || snapshot.currentTitle != nil,
+              snapshot.phase != .trade || snapshot.tradePick.count <= 2,
+              let restoredAccepted = restoreAccepted(snapshot.accepted, scenarios: scenarioByTitle),
+              let restoredTraded = restoreTraded(snapshot.traded, scenarios: scenarioByTitle),
+              snapshot.currentTitle == nil || scenarioByTitle[snapshot.currentTitle!] != nil else {
+            CardGameLocalRecord.clearProgress(config.kind, store: store)
+            return
+        }
+        phase = snapshot.phase
+        selected = snapshot.selected
+        held = snapshot.held
+        accepted = restoredAccepted
+        traded = restoredTraded
+        round = snapshot.round
+        pressure = snapshot.pressure
+        acceptStreak = snapshot.acceptStreak
+        seenTitles = Set(snapshot.seenTitles.filter { scenarioByTitle[$0] != nil })
+        current = snapshot.currentTitle.flatMap { scenarioByTitle[$0] }
+        tradePick = snapshot.tradePick
+        reasonCannotAccept = snapshot.reasonCannotAccept
+        reasonAbandon = snapshot.reasonAbandon
+    }
+
+    private func restoreAccepted(
+        _ snapshots: [AcceptedSnapshot],
+        scenarios: [String: GameScenario]
+    ) -> [(round: Int, scenario: GameScenario, severity: Int)]? {
+        var result: [(Int, GameScenario, Int)] = []
+        for entry in snapshots {
+            guard entry.round >= 0,
+                  let scenario = scenarios[entry.title],
+                  (1...4).contains(entry.severity) else { return nil }
+            result.append((entry.round, scenario, entry.severity))
+        }
+        return result
+    }
+
+    private func restoreTraded(
+        _ snapshots: [TradedSnapshot],
+        scenarios: [String: GameScenario]
+    ) -> [(round: Int, scenario: GameScenario, ids: [String], cannotAccept: String, abandon: String)]? {
+        var result: [(Int, GameScenario, [String], String, String)] = []
+        let validCardIDs = Set(config.cards.map(\.id))
+        for entry in snapshots {
+            guard entry.round >= 0,
+                  let scenario = scenarios[entry.title],
+                  entry.ids.count == 2,
+                  Set(entry.ids).count == 2,
+                  Set(entry.ids).isSubset(of: validCardIDs) else { return nil }
+            result.append((entry.round, scenario, entry.ids, entry.cannotAccept, entry.abandon))
+        }
+        return result
     }
 
     // MARK: 结果分析
@@ -400,15 +581,39 @@ enum CardGameLocalRecord {
         "kaleido_cardgame_done_\(kind.rawValue)"
     }
 
-    static func isDone(_ kind: CardGameKind) -> Bool {
-        UserDefaults.standard.bool(forKey: doneKey(kind))
+    private static func progressKey(_ kind: CardGameKind) -> String {
+        "kaleido_cardgame_progress_\(kind.rawValue)_v1"
     }
 
-    static func markDone(_ kind: CardGameKind) {
-        UserDefaults.standard.set(true, forKey: doneKey(kind))
+    static func isDone(_ kind: CardGameKind, store: UserDefaults = .standard) -> Bool {
+        store.bool(forKey: doneKey(kind))
+    }
+
+    static func markDone(_ kind: CardGameKind, store: UserDefaults = .standard) {
+        store.set(true, forKey: doneKey(kind))
+    }
+
+    static func saveProgress(_ data: Data, for kind: CardGameKind, store: UserDefaults = .standard) {
+        store.set(data, forKey: progressKey(kind))
+    }
+
+    static func progressData(_ kind: CardGameKind, store: UserDefaults = .standard) -> Data? {
+        store.data(forKey: progressKey(kind))
+    }
+
+    static func clearProgress(_ kind: CardGameKind, store: UserDefaults = .standard) {
+        store.removeObject(forKey: progressKey(kind))
+    }
+
+    static func hasProgress(_ kind: CardGameKind, store: UserDefaults = .standard) -> Bool {
+        progressData(kind, store: store) != nil
     }
 
     static var doneKinds: Set<CardGameKind> {
-        Set(CardGameKind.allCases.filter(isDone))
+        Set(CardGameKind.allCases.filter { isDone($0) })
+    }
+
+    static var progressKinds: Set<CardGameKind> {
+        Set(CardGameKind.allCases.filter { hasProgress($0) })
     }
 }

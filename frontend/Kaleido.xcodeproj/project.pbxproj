@@ -47,6 +47,7 @@
 		92785CDFB446800FBE5317FE /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = DD739C2EA27B09B77ED3F8E2 /* Supabase */; };
 		99585BE06FFFD44528A63115 /* KaleidoscopeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C4F170152E5F8ED07F3A5EB /* KaleidoscopeView.swift */; };
 		99B15A5EFA533C19C15D24F8 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C73D2F4BD87192D637B6952E /* ChatView.swift */; };
+		9FBDB6A8CD61643443CD1E66 /* CardGameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B726C084B320F3F451B8A949 /* CardGameTests.swift */; };
 		A06B8609FD95E970804D9937 /* MeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 572440142820D68F0D354C4C /* MeModel.swift */; };
 		A08D59CF5B505AECE873765E /* WatchModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A892E5B4C3E6CCD441F9753A /* WatchModeView.swift */; };
 		A36C3C5CA378FC5723356B7C /* CardGameData.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBBA7B995028009FF0BF2B8A /* CardGameData.swift */; };
@@ -71,6 +72,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		1113B75592BE11086895A771 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AAB1DBA5175DB87FD3B2A845 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5FC792D4DA3FF0AE9D83A9BB;
+			remoteInfo = Kaleido;
+		};
 		C90CA2BB6037B2B5876C5AAA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = AAB1DBA5175DB87FD3B2A845 /* Project object */;
@@ -99,6 +107,7 @@
 		572440142820D68F0D354C4C /* MeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeModel.swift; sourceTree = "<group>"; };
 		59273FC1707EFDD2FF744582 /* ChatSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSummaryView.swift; sourceTree = "<group>"; };
 		5B624D9F1ED89FA3627F0581 /* AssessmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentView.swift; sourceTree = "<group>"; };
+		5BA93B2392F473A8FBCF2954 /* KaleidoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KaleidoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		60B89103AE2DA34D7C7696B0 /* HomeCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCards.swift; sourceTree = "<group>"; };
 		6278E05B22D23E6602A56370 /* MeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeView.swift; sourceTree = "<group>"; };
 		6A000132F17F495D1B88DF1F /* DiaryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryModel.swift; sourceTree = "<group>"; };
@@ -124,6 +133,7 @@
 		A892E5B4C3E6CCD441F9753A /* WatchModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchModeView.swift; sourceTree = "<group>"; };
 		B1E51F1DF13F0E6B099D0AA0 /* KaleidoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoApp.swift; sourceTree = "<group>"; };
 		B699FA5FE4EF9640F7E3CEF5 /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
+		B726C084B320F3F451B8A949 /* CardGameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameTests.swift; sourceTree = "<group>"; };
 		BDE612AA9892053749AFB5DB /* AssessmentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentData.swift; sourceTree = "<group>"; };
 		C2FB9ABBC039561C69B0D2BA /* CardGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameView.swift; sourceTree = "<group>"; };
 		C6D8BDCCEEFD50B68EAD6A23 /* ChatStreamClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatStreamClient.swift; sourceTree = "<group>"; };
@@ -275,6 +285,14 @@
 			path = CardGame;
 			sourceTree = "<group>";
 		};
+		6F64FAE8690399BE6939C134 /* KaleidoTests */ = {
+			isa = PBXGroup;
+			children = (
+				B726C084B320F3F451B8A949 /* CardGameTests.swift */,
+			);
+			path = KaleidoTests;
+			sourceTree = "<group>";
+		};
 		704BB56852DCA52CE1E77917 = {
 			isa = PBXGroup;
 			children = (
@@ -282,6 +300,7 @@
 				3CE034D8B7BD130C4FA84ED7 /* App */,
 				5098F5273F1009AEFE928C9A /* Core */,
 				DCAC9633E88440311FD38A0C /* Features */,
+				6F64FAE8690399BE6939C134 /* KaleidoTests */,
 				615F0807AABF42DA1FABFC8B /* KaleidoUITests */,
 				DCECF1450C4A0E496A9098A8 /* Products */,
 			);
@@ -338,6 +357,7 @@
 			isa = PBXGroup;
 			children = (
 				8B45E4BB96242AA23C1F0179 /* Kaleido.app */,
+				5BA93B2392F473A8FBCF2954 /* KaleidoTests.xctest */,
 				3BAA5C6D2DA702E30365195C /* KaleidoUITests.xctest */,
 			);
 			name = Products;
@@ -392,6 +412,24 @@
 			productReference = 8B45E4BB96242AA23C1F0179 /* Kaleido.app */;
 			productType = "com.apple.product-type.application";
 		};
+		66C585762443FA479E949C01 /* KaleidoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E6165D76C4B5C1A2B701FC2A /* Build configuration list for PBXNativeTarget "KaleidoTests" */;
+			buildPhases = (
+				74689C87AE84B2914A27F7E1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B4BF4627EA14BA77149B00FE /* PBXTargetDependency */,
+			);
+			name = KaleidoTests;
+			packageProductDependencies = (
+			);
+			productName = KaleidoTests;
+			productReference = 5BA93B2392F473A8FBCF2954 /* KaleidoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		A90A9BA511D1F3CF9964C592 /* KaleidoUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 86EDB8A07256569BB89CAC3D /* Build configuration list for PBXNativeTarget "KaleidoUITests" */;
@@ -422,6 +460,9 @@
 					5FC792D4DA3FF0AE9D83A9BB = {
 						ProvisioningStyle = Automatic;
 					};
+					66C585762443FA479E949C01 = {
+						ProvisioningStyle = Automatic;
+					};
 					A90A9BA511D1F3CF9964C592 = {
 						ProvisioningStyle = Automatic;
 						TestTargetID = 5FC792D4DA3FF0AE9D83A9BB;
@@ -446,6 +487,7 @@
 			projectRoot = "";
 			targets = (
 				5FC792D4DA3FF0AE9D83A9BB /* Kaleido */,
+				66C585762443FA479E949C01 /* KaleidoTests */,
 				A90A9BA511D1F3CF9964C592 /* KaleidoUITests */,
 			);
 		};
@@ -536,6 +578,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		74689C87AE84B2914A27F7E1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9FBDB6A8CD61643443CD1E66 /* CardGameTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -543,6 +593,11 @@
 			isa = PBXTargetDependency;
 			target = 5FC792D4DA3FF0AE9D83A9BB /* Kaleido */;
 			targetProxy = C90CA2BB6037B2B5876C5AAA /* PBXContainerItemProxy */;
+		};
+		B4BF4627EA14BA77149B00FE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5FC792D4DA3FF0AE9D83A9BB /* Kaleido */;
+			targetProxy = 1113B75592BE11086895A771 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -561,6 +616,22 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		4E7C1486F803312BEB63C949 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kaleido.app/Kaleido";
 			};
 			name = Debug;
 		};
@@ -594,6 +665,22 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		AF74A3E96022B653AEEA1EC1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.kaleido.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kaleido.app/Kaleido";
 			};
 			name = Release;
 		};
@@ -760,6 +847,15 @@
 			buildConfigurations = (
 				62AA8E1D1FD2B717B751DD83 /* Debug */,
 				E21EA28C4E86138983A24B94 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E6165D76C4B5C1A2B701FC2A /* Build configuration list for PBXNativeTarget "KaleidoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E7C1486F803312BEB63C949 /* Debug */,
+				AF74A3E96022B653AEEA1EC1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

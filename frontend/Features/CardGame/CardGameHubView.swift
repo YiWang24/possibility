@@ -12,6 +12,7 @@ struct CardGameHubView: View {
     @State private var activeGame: CardGameKind?
     /// 已完成的卡牌局（本地标记 ∪ 云端回读），驱动“已完成”角标
     @State private var completedKinds: Set<CardGameKind> = []
+    @State private var progressKinds: Set<CardGameKind> = []
     @State private var didSyncRemote = false
 
     var body: some View {
@@ -37,6 +38,7 @@ struct CardGameHubView: View {
         .fullScreenCover(item: $activeGame, onDismiss: {
             // 结算后刷新本地完成标记
             completedKinds = CardGameLocalRecord.doneKinds
+            progressKinds = CardGameLocalRecord.progressKinds
         }) { kind in
             CardGameView(kind: kind, home: home)
                 .environment(toast)
@@ -51,6 +53,7 @@ struct CardGameHubView: View {
     @MainActor
     private func syncRemoteGames() async {
         completedKinds = CardGameLocalRecord.doneKinds
+        progressKinds = CardGameLocalRecord.progressKinds
         guard !didSyncRemote else { return }
         didSyncRemote = true
         // 本地各 kind 均已完成时无需回读
@@ -139,8 +142,8 @@ struct CardGameHubView: View {
                             .font(.system(size: 11)).foregroundStyle(Theme.sub)
                     }
                     Spacer()
-                    if completedKinds.contains(.life) {
-                        doneBadge
+                    if completedKinds.contains(.life) || progressKinds.contains(.life) {
+                        statusBadge(.life)
                     }
                     Text("›").font(.system(size: 16)).foregroundStyle(Theme.faint)
                 }
@@ -165,14 +168,18 @@ struct CardGameHubView: View {
         .buttonStyle(PressScaleStyle())
     }
 
-    /// “已完成”角标（本地或云端存在完成局）
-    private var doneBadge: some View {
-        Text("已完成")
+    /// 完成、进行中或本地已完成但云端待同步的角标。
+    private func statusBadge(_ kind: CardGameKind) -> some View {
+        let pendingSync = completedKinds.contains(kind) && progressKinds.contains(kind)
+        let title = pendingSync ? "待同步" : completedKinds.contains(kind) ? "已完成" : "继续"
+        let color = pendingSync ? Color(hex: 0xFFB096) : completedKinds.contains(kind)
+            ? Color(hex: 0x8EE7C8) : Color(hex: 0x9DBCFF)
+        return Text(title)
             .font(.system(size: 9.5, weight: .semibold))
-            .foregroundStyle(Color(hex: 0x8EE7C8))
+            .foregroundStyle(color)
             .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(Color(hex: 0x3ED9A4, alpha: 0.12), in: Capsule())
-            .overlay(Capsule().strokeBorder(Color(hex: 0x3ED9A4, alpha: 0.35), lineWidth: 1))
+            .background(color.opacity(0.12), in: Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.35), lineWidth: 1))
     }
 
     private func rule(_ no: String, _ label: String) -> some View {
@@ -210,8 +217,8 @@ struct CardGameHubView: View {
                     Text(sub).font(.system(size: 11)).foregroundStyle(Theme.sub)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                if completedKinds.contains(kind) {
-                    doneBadge
+                if completedKinds.contains(kind) || progressKinds.contains(kind) {
+                    statusBadge(kind)
                 }
                 Text("›").font(.system(size: 15)).foregroundStyle(Theme.faint)
             }
@@ -221,6 +228,7 @@ struct CardGameHubView: View {
                 .strokeBorder(Color(hex: cfg.accent, alpha: 0.24), lineWidth: 1))
         }
         .buttonStyle(PressScaleStyle())
+        .accessibilityIdentifier("card-game-\(kind.rawValue)")
     }
 }
 

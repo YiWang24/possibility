@@ -69,15 +69,36 @@ Deno.serve(async (req) => {
           console.error("save card game failed:", error.message);
           throw new HttpError(500, "DATABASE_ERROR", "保存卡牌结果失败。");
         }
-        // Update the relevant dimension in profiles
+        // 关系专题同时写规范化画像维度，保留 card_game 来源；人生卡牌没有
+        // 对应的 profile_dimensions 枚举键，仅通过 profiles.dims.life 参与动态画像。
         const tags = input.final_cards.map((c) => c.name);
         const dimKey = input.kind === "marriage" ? "love" : input.kind;
+        if (input.kind !== "life") {
+          const { error: dimensionError } = await db.from("profile_dimensions")
+            .upsert({
+              user_id: user.id,
+              dimension: dimKey,
+              tags,
+              source: "card_game",
+            }, { onConflict: "user_id,dimension" });
+          if (dimensionError) {
+            console.error(
+              "save card game dimension failed:",
+              dimensionError.message,
+            );
+            throw new HttpError(500, "DATABASE_ERROR", "保存卡牌画像维度失败。");
+          }
+        }
         const dimsUpdate: Record<string, string> = {};
         dimsUpdate[dimKey] = tags.join(" · ");
-        await db.rpc("apply_profile_update", {
+        const { error: profileError } = await db.rpc("apply_profile_update", {
           p_dims: dimsUpdate,
           p_portrait_delta: 3,
         });
+        if (profileError) {
+          console.error("save card game profile failed:", profileError.message);
+          throw new HttpError(500, "DATABASE_ERROR", "更新卡牌画像失败。");
+        }
         return jsonResponse({ ok: true, kind: input.kind, tags });
       }
 

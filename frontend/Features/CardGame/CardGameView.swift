@@ -16,6 +16,9 @@ struct CardGameView: View {
     @State private var resultAppeared = false
     /// 抽牌扇形中被点选的命运卡下标（短暂高亮后再进入决策；每次重新展示牌弧时归零）
     @State private var selectedFateIndex: Int?
+    @State private var isSaving = false
+    @State private var saveError: String?
+    @State private var didSyncResult = false
 
     init(kind: CardGameKind, home: HomeModel) {
         self.kind = kind
@@ -40,6 +43,9 @@ struct CardGameView: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .animation(.easeOut(duration: 0.25), value: engine.phaseKey)
+        .onDisappear {
+            if !didSyncResult { engine.saveProgress() }
+        }
     }
 
     // MARK: 顶栏
@@ -95,9 +101,10 @@ struct CardGameView: View {
 
     private func back() {
         switch engine.phase {
-        case .trade: engine.phase = .decision
-        case .decision: engine.phase = .draw
+        case .trade: engine.cancelTrade()
+        case .decision: engine.returnToDraw()
         case .draw:
+            engine.saveProgress()
             toast.show("\(cfg.title)进度已为你保留")
             dismiss()
         default: dismiss()
@@ -559,7 +566,30 @@ struct CardGameView: View {
                 }
             }
             .scrollIndicators(.hidden)
-            foot(primary: (kind == .life ? "保存到我的私密画像" : "保存最关心的三点", { saveAndClose() }), enabled: true)
+            if let saveError {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("已保存在本机，云端同步失败", systemImage: "exclamationmark.icloud")
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(Color(hex: 0xFFB096))
+                    Text(saveError)
+                        .font(.system(size: 10.5)).lineSpacing(3).foregroundStyle(Theme.sub)
+                    Button("暂时关闭，稍后从“待同步”继续") { dismiss() }
+                        .font(.system(size: 11.5, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                        .accessibilityIdentifier("card-game-close-local-result")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(13)
+                .background(Color(hex: 0xFF7A4D, alpha: 0.09))
+                .overlay(alignment: .top) { Rectangle().fill(Color(hex: 0xFF7A4D, alpha: 0.3)).frame(height: 1) }
+            }
+            foot(
+                primary: (
+                    isSaving ? "正在保存…" : saveError == nil
+                        ? (kind == .life ? "保存到我的私密画像" : "保存最关心的三点")
+                        : "重试云端同步",
+                    { saveAndClose() }),
+                enabled: !isSaving)
         }
         .onAppear {
             withAnimation(.easeOut(duration: 0.7).delay(0.15)) { resultAppeared = true }
@@ -567,13 +597,26 @@ struct CardGameView: View {
     }
 
     private func saveAndClose() {
-        let tags = engine.saveResult(home: home, supabase: supabase)
-        if kind == .life {
-            toast.show("三张底牌已融入动态画像 · 深层分析保持私密")
-        } else {
-            toast.show("\(cfg.title.prefix(2))中最关心的三点已写入画像：\(tags.joined(separator: " · "))")
+        guard !isSaving else { return }
+        let tags = engine.saveResultLocally(home: home)
+        saveError = nil
+        isSaving = true
+        Task {
+            do {
+                try await engine.uploadResult(using: supabase)
+                didSyncResult = true
+                home.refreshPersona(using: supabase)
+                if kind == .life {
+                    toast.show("三张底牌已融入动态画像并同步")
+                } else {
+                    toast.show("\(cfg.title.prefix(2))中最关心的三点已写入画像：\(tags.joined(separator: " · "))")
+                }
+                dismiss()
+            } catch {
+                isSaving = false
+                saveError = "请检查网络后重试。你的三张底牌、取舍记录和画像关键词都已安全留在本机。"
+            }
         }
-        dismiss()
     }
 
     /// 婚姻 / 家庭 / 人际结果（原型 renderRelationshipResult）

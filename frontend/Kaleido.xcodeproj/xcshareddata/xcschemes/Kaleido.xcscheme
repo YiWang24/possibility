@@ -58,6 +58,17 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "66C585762443FA479E949C01"
+               BuildableName = "KaleidoTests.xctest"
+               BlueprintName = "KaleidoTests"
+               ReferencedContainer = "container:Kaleido.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "A90A9BA511D1F3CF9964C592"
                BuildableName = "KaleidoUITests.xctest"
                BlueprintName = "KaleidoUITests"

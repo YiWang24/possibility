@@ -536,3 +536,35 @@ final class CardGameFanCheck: XCTestCase {
         snap("fan-after-left-tap")
     }
 }
+
+// MARK: - 关系专题入口与独立介绍页
+
+final class RelationshipCardTopicsCheck: XCTestCase {
+    func testEachRelationshipTopicOpensItsOwnIntroduction() throws {
+        let app = XCUIApplication()
+        app.launch()
+
+        let entry = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "人生卡牌：你最后会留下什么？")
+        ).firstMatch
+        XCTAssertTrue(entry.waitForExistence(timeout: 8))
+        entry.tap()
+
+        let topics: [(id: String, intro: String)] = [
+            ("card-game-marriage", "当婚姻不断要求取舍\n你最后会守住什么？"),
+            ("card-game-family", "当家庭不断要求取舍\n你最后会守住什么？"),
+            ("card-game-social", "在人群与关系之间\n你最后会守住什么？"),
+        ]
+        for topic in topics {
+            let button = app.buttons[topic.id]
+            XCTAssertTrue(button.waitForExistence(timeout: 5), "\(topic.id) 入口不存在")
+            button.tap()
+            XCTAssertTrue(app.staticTexts[topic.intro].waitForExistence(timeout: 5), "\(topic.id) 未进入独立介绍页")
+            let backs = app.buttons.matching(identifier: "返回").allElementsBoundByIndex
+            guard let back = backs.last(where: \.isHittable) else {
+                return XCTFail("\(topic.id) 介绍页没有可用返回按钮")
+            }
+            back.tap()
+        }
+    }
+}
