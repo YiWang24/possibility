@@ -54,6 +54,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido.uitests
         TEST_TARGET_NAME: Kaleido
+        GENERATE_INFOPLIST_FILE: YES
   KaleidoTests:
     type: bundle.unit-test
     platform: iOS
@@ -64,6 +65,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.kaleido.tests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Kaleido:
     build:

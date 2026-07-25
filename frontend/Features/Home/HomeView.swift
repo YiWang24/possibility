@@ -15,6 +15,9 @@ struct HomeView: View {
     @State private var showStudio = false
     @State private var showCardHub = false
     @State private var launchGame: CardGameKind?
+    /// 从画像半屏浮层启动卡牌时，等待 sheet 完成退场后再呈现全屏游戏。
+    /// 同一轮更新里同时 dismiss sheet / present cover 会被 SwiftUI 丢弃。
+    @State private var pendingCardGame: CardGameKind?
 
     var body: some View {
         ScrollView {
@@ -48,12 +51,17 @@ struct HomeView: View {
                 }
             )
         }
-        .sheet(item: $activeDimension) { key in
+        .sheet(item: $activeDimension, onDismiss: {
+            guard let game = pendingCardGame else { return }
+            pendingCardGame = nil
+            launchGame = game
+        }) { key in
             DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key), onSave: { keywords in
                 model.saveDimension(key, keywords: keywords, using: supabase)
             }, onLaunchCardGame: { game in
+                guard let game = CardGameKind(rawValue: game) else { return }
+                pendingCardGame = game
                 activeDimension = nil
-                launchGame = CardGameKind(rawValue: game)
             })
             .presentationDetents([.fraction(0.82)])
             .presentationDragIndicator(.visible)

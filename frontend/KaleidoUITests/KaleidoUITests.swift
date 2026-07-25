@@ -436,6 +436,7 @@ final class CardGameFanCheck: XCTestCase {
 
     func testFanCardTapAtVisualPosition() throws {
         let app = XCUIApplication()
+        app.launchArguments += ["-kaleido_cardgame_progress_life_v1", "__UITEST_EMPTY__"]
         app.launch()
 
         func waitFind(_ label: String, _ timeout: TimeInterval = 8) -> XCUIElement? {
@@ -537,12 +538,51 @@ final class CardGameFanCheck: XCTestCase {
     }
 }
 
-// MARK: - 关系专题入口与独立介绍页
+// MARK: - 关系专题入口、独立介绍页与开局
 
 final class RelationshipCardTopicsCheck: XCTestCase {
-    func testEachRelationshipTopicOpensItsOwnIntroduction() throws {
+    private func launchWithoutRelationshipProgress() -> XCUIApplication {
         let app = XCUIApplication()
+        // NSArgumentDomain 优先于持久化 UserDefaults；用非 Data 值屏蔽模拟器残留进度，
+        // 保证这里验证的是首次介绍页 → 开局链路。保存/恢复另由 CardGameTests 覆盖。
+        for kind in ["marriage", "family", "social"] {
+            app.launchArguments += ["-kaleido_cardgame_progress_\(kind)_v1", "__UITEST_EMPTY__"]
+        }
         app.launch()
+        return app
+    }
+
+    func testCardGameLaunchFromDimensionSheetWaitsForDismissal() throws {
+        let app = launchWithoutRelationshipProgress()
+
+        let loveDimension = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "我在恋爱关系中在意")
+        ).firstMatch
+        for _ in 0..<6 where !loveDimension.isHittable {
+            app.swipeUp()
+        }
+        XCTAssertTrue(loveDimension.waitForExistence(timeout: 5), "首页恋爱关系画像维度不存在")
+        loveDimension.tap()
+
+        let marriageTool = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS %@", "婚姻卡牌：最后会留下什么？")
+        ).firstMatch
+        XCTAssertTrue(marriageTool.waitForExistence(timeout: 5), "画像浮层内的婚姻卡牌入口不存在")
+        marriageTool.tap()
+
+        XCTAssertTrue(
+            app.staticTexts["当婚姻不断要求取舍\n你最后会守住什么？"].waitForExistence(timeout: 8),
+            "画像浮层退场后没有进入婚姻卡牌介绍页"
+        )
+        app.buttons["开始这一局"].tap()
+        XCTAssertTrue(
+            app.staticTexts["婚姻中，你最想守住什么？"].waitForExistence(timeout: 5),
+            "从画像入口点击开局后没有进入婚姻选牌页"
+        )
+    }
+
+    func testEachRelationshipTopicCanStartItsOwnGame() throws {
+        let app = launchWithoutRelationshipProgress()
 
         let entry = app.buttons.matching(
             NSPredicate(format: "label CONTAINS %@", "人生卡牌：你最后会留下什么？")
@@ -550,19 +590,26 @@ final class RelationshipCardTopicsCheck: XCTestCase {
         XCTAssertTrue(entry.waitForExistence(timeout: 8))
         entry.tap()
 
-        let topics: [(id: String, intro: String)] = [
-            ("card-game-marriage", "当婚姻不断要求取舍\n你最后会守住什么？"),
-            ("card-game-family", "当家庭不断要求取舍\n你最后会守住什么？"),
-            ("card-game-social", "在人群与关系之间\n你最后会守住什么？"),
+        let topics: [(id: String, intro: String, selection: String)] = [
+            ("card-game-marriage", "当婚姻不断要求取舍\n你最后会守住什么？", "婚姻中，你最想守住什么？"),
+            ("card-game-family", "当家庭不断要求取舍\n你最后会守住什么？", "在家庭关系中，你最想守住什么？"),
+            ("card-game-social", "在人群与关系之间\n你最后会守住什么？", "在人际交往中，你最想守住什么？"),
         ]
         for topic in topics {
             let button = app.buttons[topic.id]
             XCTAssertTrue(button.waitForExistence(timeout: 5), "\(topic.id) 入口不存在")
             button.tap()
             XCTAssertTrue(app.staticTexts[topic.intro].waitForExistence(timeout: 5), "\(topic.id) 未进入独立介绍页")
+            let start = app.buttons["开始这一局"]
+            XCTAssertTrue(start.waitForExistence(timeout: 5), "\(topic.id) 开局按钮不存在")
+            start.tap()
+            XCTAssertTrue(
+                app.staticTexts[topic.selection].waitForExistence(timeout: 5),
+                "\(topic.id) 点击开始后未进入自己的选牌页"
+            )
             let backs = app.buttons.matching(identifier: "返回").allElementsBoundByIndex
             guard let back = backs.last(where: \.isHittable) else {
-                return XCTFail("\(topic.id) 介绍页没有可用返回按钮")
+                return XCTFail("\(topic.id) 选牌页没有可用返回按钮")
             }
             back.tap()
         }
