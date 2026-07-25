@@ -235,16 +235,39 @@ struct CommunityView: View {
     // MARK: 悬赏贴
 
     private var bountyFeed: some View {
+        let cols = distributeBounties(bounties)
+        return HStack(alignment: .top, spacing: 11) {
+            bountyColumn(cols.0)
+            bountyColumn(cols.1)
+        }
+    }
+
+    private func bountyColumn(_ items: [Bounty]) -> some View {
         VStack(spacing: 11) {
-            ForEach(bounties) { b in
-                BountyCard(bounty: b) {
+            ForEach(items) { bounty in
+                BountyCard(bounty: bounty) {
                     activeBounty = BountySelection(
-                        bounty: b,
+                        bounty: bounty,
                         usesDemoData: isShowingDemoBounties
                     )
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .top)
+    }
+
+    /// 两列自然高度卡片形成错落瀑布流。
+    private func distributeBounties(_ items: [Bounty]) -> ([Bounty], [Bounty]) {
+        var left: [Bounty] = []
+        var right: [Bounty] = []
+        for (index, bounty) in items.enumerated() {
+            if index.isMultiple(of: 2) {
+                left.append(bounty)
+            } else {
+                right.append(bounty)
+            }
+        }
+        return (left, right)
     }
 
     // MARK: 抽取 FAB
@@ -319,32 +342,53 @@ struct BountyCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 0) {
-                // 顶部标签（原型 .bounty-tags 蓝色 pill；gap:5px 横竖同值，故行距也取 5）
+                // 窄卡片只展示前三个标签，保持瀑布流节奏。
                 if let tags = bounty.tags, !tags.isEmpty {
                     FlowLayout(spacing: 5, lineSpacing: 5) {
-                        ForEach(tags.prefix(4), id: \.self) { BountyTagPill(text: $0) }
+                        ForEach(tags.prefix(3), id: \.self) { BountyTagPill(text: $0) }
                     }
                 }
 
                 Text(bounty.question)
-                    .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink).lineSpacing(4)
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink).lineSpacing(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, (bounty.tags?.isEmpty == false) ? 11 : 0)
 
-                // 底栏：悬赏文案（杏色）在左，回应数右对齐（原型 .bounty-foot）
-                HStack(alignment: .bottom, spacing: 8) {
-                    Text(bounty.reward)
-                        .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.apricot)
-                    Spacer(minLength: 8)
+                if let goal = bounty.rewardGoal {
+                    Text(goal)
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundStyle(Theme.sub)
+                        .lineLimit(2)
+                        .padding(.top, 9)
+                }
+
+                Rectangle()
+                    .fill(Theme.line)
+                    .frame(height: 1)
+                    .padding(.top, 12)
+
+                // 金额票签固定在卡片底部，回应数作为次级信息。
+                HStack(alignment: .bottom, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("悬赏金")
+                            .font(.system(size: 8.5, weight: .medium))
+                            .foregroundStyle(Theme.faint)
+                        Text(bounty.displayAmount)
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.apricot)
+                    }
+                    Spacer(minLength: 4)
                     Text(bounty.responses)
-                        .font(.system(size: 10)).foregroundStyle(Theme.faint)
+                        .font(.system(size: 9.5)).foregroundStyle(Theme.faint)
+                        .lineLimit(2)
                         .multilineTextAlignment(.trailing)
                 }
-                .padding(.top, 12)
+                .padding(.top, 10)
             }
-            .padding(.horizontal, 15).padding(.vertical, 16)
+            .padding(.horizontal, 13).padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .kaleidoCard(radius: 20)
+            .kaleidoCard(radius: 18)
         }
         .buttonStyle(PressScaleStyle())
     }
@@ -416,8 +460,8 @@ struct BountyComposeView: View {
                 }
                 if !tagsValid { hint("标签最多 5 个，当前 \(tags.count) 个") }
 
-                field("悬赏文案（选填）") {
-                    composeInput($reward, prompt: "例如：悬赏 3 个真实故事", lines: 1...2)
+                field("悬赏金额（选填）") {
+                    composeInput($reward, prompt: "例如：29 或 ¥29", lines: 1...1)
                 }
 
                 if let errorText {
@@ -464,14 +508,14 @@ struct BountyComposeView: View {
         guard canSubmit else { return }
         submitting = true
         errorText = nil
-        let rewardText = reward.trimmingCharacters(in: .whitespacesAndNewlines)
+        let rewardText = normalizedReward
         Task {
             do {
                 try await supabase.createBounty(
                     question: trimmedQuestion,
                     tags: tags.map { String($0.prefix(30)) },
                     detail: String(detail.trimmingCharacters(in: .whitespacesAndNewlines).prefix(2000)),
-                    reward: String((rewardText.isEmpty ? "悬赏 3 个真实故事" : rewardText).prefix(50))
+                    reward: String(rewardText.prefix(50))
                 )
                 onPublished()
                 dismiss()
@@ -481,6 +525,15 @@ struct BountyComposeView: View {
             }
             submitting = false
         }
+    }
+
+    private var normalizedReward: String {
+        let value = reward.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else { return "¥0 悬赏" }
+        if value.range(of: #"^\d+(?:\.\d{1,2})?$"#, options: .regularExpression) != nil {
+            return "¥\(value) 悬赏"
+        }
+        return value
     }
 }
 

@@ -131,6 +131,38 @@ struct Bounty: Codable, Identifiable, Hashable, Sendable {
         case id, question, reward, responses, tags, detail, status
         case createdAt = "created_at"
     }
+
+    /// 列表金额展示。兼容线上旧数据：
+    /// - 新数据/已修复数据直接从「¥29 悬赏」「29 元」提取；
+    /// - 三条内置种子按详情 mock 的既有金额兜底；
+    /// - 测试帖或未填写金额显示 ¥0。
+    var displayAmount: String {
+        let normalized = reward.replacingOccurrences(of: "￥", with: "¥")
+        let currencyPatterns = [
+            #"¥\s*\d+(?:\.\d{1,2})?"#,
+            #"\d+(?:\.\d{1,2})?\s*元"#,
+        ]
+        for pattern in currencyPatterns {
+            if let range = normalized.range(of: pattern, options: .regularExpression) {
+                let digits = normalized[range].filter { $0.isNumber || $0 == "." }
+                if !digits.isEmpty { return "¥\(digits)" }
+            }
+        }
+        switch id {
+        case 1: return "¥29"
+        case 2: return "¥19.9"
+        case 3: return "¥39"
+        default: return "¥0"
+        }
+    }
+
+    /// 金额已在卡片底栏单独呈现；这里仅保留旧数据中的征集目标。
+    var rewardGoal: String? {
+        let trimmed = reward.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != "无" else { return nil }
+        guard !trimmed.contains("¥"), !trimmed.contains("￥"), !trimmed.contains("元") else { return nil }
+        return trimmed
+    }
 }
 
 /// POST /community action=get_bounty 出参：悬赏详情 + 回应列表
