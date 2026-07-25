@@ -14,6 +14,8 @@ struct CardGameView: View {
     @State private var engine: CardGameEngine
     /// 结果页动画
     @State private var resultAppeared = false
+    /// 抽牌扇形中被点选的命运卡下标（短暂高亮后再进入决策；每次重新展示牌弧时归零）
+    @State private var selectedFateIndex: Int?
 
     init(kind: CardGameKind, home: HomeModel) {
         self.kind = kind
@@ -303,6 +305,8 @@ struct CardGameView: View {
             }
             .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 26)
         }
+        .onAppear { selectedFateIndex = nil }
+        .sensoryFeedback(.selection, trigger: selectedFateIndex)
     }
 
     private var pressureColor: Color {
@@ -325,19 +329,30 @@ struct CardGameView: View {
             ZStack {
                 ForEach(Array(options.enumerated()), id: \.offset) { i, scenario in
                     let d = CGFloat(i) - mid
+                    let isSelected = selectedFateIndex == i
                     Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            engine.draw(scenario)
+                        // 先给出清晰的选中态，短暂停留后再进入决策；
+                        // 否则牌随点随消失，只剩一瞬的按压缩放，看不到「选中」反馈。
+                        guard selectedFateIndex == nil else { return }
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                            selectedFateIndex = i
+                        }
+                        let chosen = scenario
+                        Task {
+                            try? await Task.sleep(for: .seconds(0.3))
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                engine.draw(chosen)
+                            }
                         }
                     } label: {
-                        faceDownCard
+                        faceDownCard(isSelected: isSelected)
                             .rotationEffect(.degrees(Double(d) * 12.5))
                     }
                     .buttonStyle(PressScaleStyle(scale: 0.94))
                     // 弧线：中间高、两侧低（原型 y = -10 / 7 / 28）
                     .position(x: Self.arcW / 2 + d * 73,
                               y: Self.arcH / 2 - 8 + (2 * d * d + 15 * abs(d) - 10))
-                    .zIndex(-abs(Double(d)))   // 中间牌在最上层（原型 z 金字塔）
+                    .zIndex(isSelected ? 10 : -abs(Double(d)))   // 选中牌置顶；否则中间牌在最上层（原型 z 金字塔）
                     .accessibilityLabel("抽第 \(i + 1) 张牌")
                 }
             }
@@ -349,18 +364,23 @@ struct CardGameView: View {
         .padding(.top, 10)
     }
 
-    private var faceDownCard: some View {
+    /// 背面命运卡；`isSelected` 为点选后的高亮态（强调色描边 + 光晕 + 放大上移，
+    /// 与选底牌 `selectCard` 的视觉语言一致）。
+    private func faceDownCard(isSelected: Bool) -> some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .fill(LinearGradient(colors: [Color(hex: 0x232948), Color(hex: 0x161A30)],
                                  startPoint: .topLeading, endPoint: .bottomTrailing))
             .overlay(
                 Text("✦")
-                    .font(.system(size: 21)).foregroundStyle(accent.opacity(0.5))
+                    .font(.system(size: 21)).foregroundStyle(accent.opacity(isSelected ? 1 : 0.5))
             )
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(accent.opacity(0.35), lineWidth: 1))
+                .strokeBorder(isSelected ? accent : accent.opacity(0.35), lineWidth: isSelected ? 2 : 1))
             .frame(width: 120, height: 165)
-            .shadow(color: .black.opacity(0.45), radius: 10, y: 6)
+            .shadow(color: isSelected ? accent.opacity(0.5) : .black.opacity(0.45),
+                    radius: isSelected ? 16 : 10, y: 6)
+            .scaleEffect(isSelected ? 1.08 : 1)
+            .offset(y: isSelected ? -16 : 0)
     }
 
     // MARK: 决策

@@ -64,9 +64,12 @@ struct CommunityView: View {
         }
         .scrollIndicators(.hidden)
         .scrollDisabled(watchMode && tab == 0)
+        .refreshable { await refreshBounties() }
         .screenBackground()
         .overlay(alignment: .bottomTrailing) { tab == 0 ? AnyView(drawFab) : AnyView(composeFab) }
         .task { await refreshBounties() }
+        // TabView 常驻不重跑 .task，回到本 Tab 时补一次拉取（refreshBounties 自带非空守卫，不会空覆盖）
+        .onAppear { Task { await refreshBounties() } }
         .fullScreenCover(isPresented: $showDraw) { KaleidoscopeDrawView() }
         .fullScreenCover(item: $activeBounty) { selection in
             BountyDetailView(bounty: selection.bounty, usesDemoData: selection.usesDemoData)

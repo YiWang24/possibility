@@ -22,6 +22,8 @@ struct LabView: View {
     @State private var showCustomEditor = false
     @State private var customName = ""
     @State private var customDesc = ""
+    /// 「一起带走」横排的可视窗口宽度（用于按比例算卡宽，恰好露出 2.5 张作可横滑提示）
+    @State private var carryContainerWidth: CGFloat = 0
 
     private let space = "lab"
 
@@ -489,7 +491,16 @@ struct LabView: View {
     // MARK: 底线卡（原型 carry-section）
 
     private var carrySection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let spacing: CGFloat = 9        // HStack 卡间距
+        let hPad: CGFloat = 12          // 卡片内部左右内边距
+        let margin: CGFloat = 22        // 内容左右安全边距（与全出血相抵）
+        // 目标：横排恰好露出 2.5 张卡，末尾半张作「可横滑」提示。
+        // 可视窗口内 = 2 张整卡 + 2 个间距 + 半张卡 → 外部卡宽 = (W - 2·间距) / 2.5。
+        let outerWidth = carryContainerWidth > 0
+            ? (carryContainerWidth - spacing * 2) / 2.5
+            : 96 + hPad * 2             // 首帧回退到原固定宽，避免闪烁
+        let innerWidth = max(outerWidth - hPad * 2, 0)   // frame 宽 = 外部可见宽 - 左右内边距
+        return VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("什么要一起带走？").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
                 Spacer()
@@ -497,19 +508,28 @@ struct LabView: View {
                     .font(.system(size: 12)).monospacedDigit()
             }
             ScrollView(.horizontal) {
-                HStack(spacing: 9) {
+                HStack(spacing: spacing) {
                     ForEach(LabModel.carryCards) { card in
-                        carryCard(card)
+                        carryCard(card, width: innerWidth)
                     }
                 }
             }
             .scrollIndicators(.hidden)
-            .padding(.horizontal, -22)
-            .contentMargins(.horizontal, 22, for: .scrollContent)
+            // 背景 GeometryReader 只量宽、不占布局高度，避免行高塌陷；
+            // 量的是全出血前的区域宽（= 内容安全区），即真实可视窗口。
+            .background {
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { carryContainerWidth = geo.size.width }
+                        .onChange(of: geo.size.width) { _, w in carryContainerWidth = w }
+                }
+            }
+            .padding(.horizontal, -margin)
+            .contentMargins(.horizontal, margin, for: .scrollContent)
         }
     }
 
-    private func carryCard(_ card: LabModel.CarryCard) -> some View {
+    private func carryCard(_ card: LabModel.CarryCard, width: CGFloat) -> some View {
         let on = model.carry.contains(card.id)
         return Button {
             if let message = model.toggleCarry(card.id) { toast.show(message) }
@@ -519,7 +539,7 @@ struct LabView: View {
                 Text(card.name).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(card.source).font(.system(size: 9.5)).foregroundStyle(Theme.faint)
             }
-            .frame(width: 96, alignment: .leading)
+            .frame(width: width, alignment: .leading)
             .padding(.horizontal, 12).padding(.vertical, 12)
             .background(on ? Color(hex: 0x5E96FF, alpha: 0.1) : Theme.card,
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous))
