@@ -3,7 +3,8 @@ export const matchSchema = {
   properties: {
     matches: {
       type: "array",
-      minItems: 3,
+      // 不用 minItems 硬约束恰好 3 个：部分网关的约束解码遇到精确计数
+      // 会退化为长时间生成；条数由 match/index.ts 代码层校验（!=3 即 502）。
       maxItems: 3,
       items: {
         type: "object",
@@ -21,7 +22,7 @@ export const matchSchema = {
   additionalProperties: false,
 } as const;
 
-const scenarioSchema = {
+export const scenarioSchema = {
   type: "object",
   properties: {
     headline: { type: "string", minLength: 1 },
@@ -95,6 +96,40 @@ export const simulationSchema = {
     },
   },
   required: ["scenarios", "bottom_line_analysis", "recommended_traveler_ids"],
+  additionalProperties: false,
+} as const;
+
+// simulate 拆分生成用：单情景 + 底线分析（含旅人推荐）。
+// 单次全量生成（3 情景 + 底线 ≈ 3000 token）经网关常超时/被截断，
+// 拆成 4 个小请求后每个都落在与 lab-choices 同量级的「可稳定返回」区间。
+export const bottomLineSchema = {
+  type: "object",
+  properties: {
+    bottom_line_analysis: {
+      type: "object",
+      properties: {
+        is_acceptable: { type: "boolean" },
+        risks: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string", minLength: 1 },
+        },
+        protective_conditions: {
+          type: "array",
+          maxItems: 5,
+          items: { type: "string", minLength: 1 },
+        },
+      },
+      required: ["is_acceptable", "risks", "protective_conditions"],
+      additionalProperties: false,
+    },
+    recommended_traveler_ids: {
+      type: "array",
+      maxItems: 3,
+      items: { type: "integer" },
+    },
+  },
+  required: ["bottom_line_analysis", "recommended_traveler_ids"],
   additionalProperties: false,
 } as const;
 
@@ -246,14 +281,25 @@ export type MatchOutput = {
   }>;
 };
 
+export type ScenarioOutput = {
+  headline: string;
+  dimensions: Array<{ label: string; text: string }>;
+  gains: string[];
+  costs: string[];
+  key_condition: string;
+};
+
+export type BottomLineOutput = {
+  bottom_line_analysis: {
+    is_acceptable: boolean;
+    risks: string[];
+    protective_conditions: string[];
+  };
+  recommended_traveler_ids: number[];
+};
+
 export type SimulationOutput = {
-  scenarios: Record<"general" | "optimistic" | "cautionary", {
-    headline: string;
-    dimensions: Array<{ label: string; text: string }>;
-    gains: string[];
-    costs: string[];
-    key_condition: string;
-  }>;
+  scenarios: Record<"general" | "optimistic" | "cautionary", ScenarioOutput>;
   bottom_line_analysis: {
     is_acceptable: boolean;
     risks: string[];

@@ -205,6 +205,35 @@ final class SupabaseService {
 
     // MARK: - Edge Functions（非流式：match / simulate / analyze-diary）
 
+    /// Edge Function 返回的业务错误：{"error":{"code","message"}}
+    /// 携带后端 message，让 UI/日志能区分「限流 / 上游 AI 不可用 / 参数错误」而非笼统的网络失败。
+    struct EdgeFunctionError: LocalizedError, Decodable {
+        struct Inner: Decodable {
+            let code: String?
+            let message: String?
+        }
+        let error: Inner?
+        var statusCode: Int = 0
+
+        enum CodingKeys: String, CodingKey { case error }
+
+        var errorDescription: String? {
+            error?.message ?? "服务暂时不可用（HTTP \(statusCode)）"
+        }
+    }
+
+    private static func throwIfHTTPError(_ response: URLResponse, data: Data) throws {
+        guard let http = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        guard !(200..<300).contains(http.statusCode) else { return }
+        if var backendError = try? JSONDecoder().decode(EdgeFunctionError.self, from: data) {
+            backendError.statusCode = http.statusCode
+            throw backendError
+        }
+        throw URLError(.badServerResponse)
+    }
+
     /// 通用 JSON POST 到 Edge Function（带 JWT + apikey）
     private func callFunction<In: Encodable, Out: Decodable>(
         _ name: String, body: In, as _: Out.Type
@@ -218,9 +247,7 @@ final class SupabaseService {
         req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
         req.httpBody = try JSONEncoder().encode(body)
         let (data, response) = try await URLSession.shared.data(for: req)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw URLError(.badServerResponse)
-        }
+        try Self.throwIfHTTPError(response, data: data)
         return try JSONDecoder().decode(Out.self, from: data)
     }
 
@@ -339,9 +366,7 @@ final class SupabaseService {
         req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
         req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
         let (data, response) = try await URLSession.shared.data(for: req)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw URLError(.badServerResponse)
-        }
+        try Self.throwIfHTTPError(response, data: data)
         let profile = try JSONDecoder().decode(RemoteProfile.self, from: data)
         remoteProfileCache = (profile, Date())
         return profile
