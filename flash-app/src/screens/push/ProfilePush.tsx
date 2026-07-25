@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAppStore, usePushOpen, usePushPayload } from '@/store/appStore';
 import { USERS } from '@/data/users';
 import ProfileContent from '../comm/ProfileContent';
+import { getWatchProfileUser } from '../comm/watchUsers';
 
 /** 用户主页 push (原型 #profilePage + openProfile/renderProfile). */
 export default function ProfilePush() {
@@ -12,8 +13,9 @@ export default function ProfilePush() {
   // Unlocked full-experience ids persist across users (原型 unlockedProfileIds).
   const [unlockedIds, setUnlockedIds] = useState<Set<number>>(() => new Set());
 
-  // Fall back to the first user when no id is carried (payload before first tap).
-  const user = USERS.find((u) => u.id === payload.userId) ?? USERS[0];
+  // Resolve seeded USERS first, then procedural watch users, then a safe default.
+  const userId = payload.userId;
+  const user = (userId === undefined ? undefined : (USERS.find((u) => u.id === userId) ?? getWatchProfileUser(userId))) ?? USERS[0];
   if (!user) return null;
 
   const unlock = () => {

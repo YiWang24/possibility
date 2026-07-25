@@ -1,28 +1,24 @@
 import { useRef, useState } from 'react';
 import type { ScreenProps } from './types';
 import { useAppStore } from '@/store/appStore';
-import { USERS } from '@/data/users';
-import { profileMetaFor } from '@/data/profileMeta';
 import { BOUNTIES } from '@/data/bounties';
-import UserCard from './comm/UserCard';
 import BountyCard from './comm/BountyCard';
+import WatchGrid from './comm/WatchGrid';
+import Kaleido from './comm/Kaleido';
 
 type CommMode = 0 | 1;
 
-function matches(values: (string | undefined)[], query: string): boolean {
+function matches(values: string[], query: string): boolean {
   if (query === '') return true;
-  return values
-    .filter((v): v is string => v !== undefined)
-    .join(' ')
-    .toLowerCase()
-    .includes(query);
+  return values.join(' ').toLowerCase().includes(query);
 }
 
-/** 03 · 万花筒社区 (原型 #scr-comm + commTab/renderComm/searchCommunity). */
+/** 03 · 万花筒社区 (原型 #scr-comm + commTab/renderComm/searchCommunity + drawfab). */
 export default function CommScreen({ active }: ScreenProps) {
   const openPush = useAppStore((s) => s.openPush);
   const [mode, setMode] = useState<CommMode>(0);
   const [queries, setQueries] = useState<[string, string]>(['', '']);
+  const [kal, setKal] = useState<{ open: boolean; seq: number }>({ open: false, seq: 0 });
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const raw = queries[mode];
@@ -35,6 +31,12 @@ export default function CommScreen({ active }: ScreenProps) {
     // The store's PushPayload has no bounty field; reuse `question` to carry the id.
     openPush('bountyPage', { question: String(id) });
   };
+  const openKal = () => {
+    setKal((k) => ({ open: true, seq: k.seq + 1 }));
+  };
+  const closeKal = () => {
+    setKal((k) => ({ ...k, open: false }));
+  };
 
   const setQuery = (value: string) => {
     setQueries((prev) => (mode === 0 ? [value, prev[1]] : [prev[0], value]));
@@ -44,13 +46,8 @@ export default function CommScreen({ active }: ScreenProps) {
     inputRef.current?.focus();
   };
 
-  const users = USERS.filter((u) => {
-    const m = profileMetaFor(u);
-    return matches([u.name, u.bio, u.quote, ...u.tags, m.city, m.from, m.to], query);
-  });
   const bounties = BOUNTIES.filter((b) => matches([b.q, ...b.tags, b.amount, b.goal, b.n, b.asker, b.city, b.detail], query));
-
-  const feedClass = mode === 1 && query !== '' ? 'masonry bounty-search-mode' : 'masonry';
+  const feedClass = query !== '' ? 'masonry bounty-search-mode' : 'masonry';
 
   return (
     <section className={`screen${active ? ' on' : ''}`} id="scr-comm" data-testid="screen-comm">
@@ -107,23 +104,26 @@ export default function CommScreen({ active }: ScreenProps) {
         </button>
       </div>
 
-      <div className={feedClass} id="commFeed">
-        {mode === 0 ? (
-          users.length > 0 ? (
-            users.map((u) => <UserCard key={u.id} user={u} onOpen={openProfile} />)
+      {mode === 0 ? (
+        <WatchGrid query={queries[0]} onOpenUser={openProfile} />
+      ) : (
+        <div className={feedClass} id="commFeed">
+          {bounties.length > 0 ? (
+            bounties.map((b) => <BountyCard key={b.id} bounty={b} onOpen={openBounty} />)
           ) : (
             <div className="comm-empty">
-              <b>没有找到相关用户</b>试试“AI”“设计”或城市名称
+              <b>没有找到相关悬赏</b>换个关键词再试试
             </div>
-          )
-        ) : bounties.length > 0 ? (
-          bounties.map((b) => <BountyCard key={b.id} bounty={b} onOpen={openBounty} />)
-        ) : (
-          <div className="comm-empty">
-            <b>没有找到相关悬赏</b>换个关键词再试试
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      <button type="button" className="drawfab show" id="drawfab" data-testid="comm-drawfab" onClick={openKal}>
+        <span className="miniorb" />
+        随机抽取
+      </button>
+
+      <Kaleido key={kal.seq} open={kal.open} onClose={closeKal} onOpenUser={openProfile} />
     </section>
   );
 }
