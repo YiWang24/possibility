@@ -1,14 +1,12 @@
 import SwiftUI
 
-// MARK: - 画像工作室（原型 #profileStudio）
+// MARK: - 画像工坊（原型 #profileStudio）
 //
 // 大五主卡（进入 / 继续 n/120 / 查看结果）· 处境扫描 CTA · 生活画像五维网格 ·
-// MBTI 面板 · 来源图例。从首页「人格底色」「探索更多画像」进入（fullScreenCover）。
+// MBTI 面板 · 来源图例。从首页「探索更多画像」进入（fullScreenCover）。
 
 struct ProfileStudioView: View {
     let home: HomeModel
-    /// 维度卡「进入」→ 关闭工作室并打开对应维度浮层（原型 closePush + openDimensionSheet）
-    var onOpenDimension: (DimensionKey) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
@@ -16,6 +14,8 @@ struct ProfileStudioView: View {
 
     @State private var assessmentKind: AssessmentKind?
     @State private var showContextScan = false
+    @State private var activeDimension: DimensionKey?
+    @State private var launchGame: CardGameKind?
     @State private var mbtiOpen = false
     @State private var mbti = MBTIStore.current
     /// 测评浮层关闭后触发状态刷新
@@ -26,11 +26,10 @@ struct ProfileStudioView: View {
             topBar
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    hero
-                    section(title: "人格底色", note: "完整测评 · 任选其一开始") { bigFiveCard }
-                    section(title: "此刻的处境", note: "状态不是人格") { contextCard }
-                    section(title: "生活画像", note: "与数字人下方维度一致") { assessmentGrid }
-                    section(title: "MBTI", note: "可随时修改") { mbtiPanel }
+                    section(title: "人格底色") { bigFiveCard }
+                    section(title: "此刻的处境") { contextCard }
+                    section(title: "生活画像") { assessmentGrid }
+                    section(title: "MBTI") { mbtiPanel }
                     sourceKey
                 }
                 .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 36)
@@ -45,6 +44,27 @@ struct ProfileStudioView: View {
         .fullScreenCover(isPresented: $showContextScan) {
             ContextScanView().environment(toast)
         }
+        .sheet(item: $activeDimension) { key in
+            DimensionSheet(
+                key: key,
+                initialSelected: home.selectedKeywords(for: key),
+                onSave: { keywords in
+                    home.saveDimension(key, keywords: keywords, using: supabase)
+                },
+                onLaunchCardGame: { game in
+                    activeDimension = nil
+                    launchGame = CardGameKind(rawValue: game)
+                }
+            )
+            .presentationDetents([.fraction(0.82)])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(Color(hex: 0x10131C))
+        }
+        .fullScreenCover(item: $launchGame) { kind in
+            CardGameView(kind: kind, home: home)
+                .environment(toast)
+                .environment(supabase)
+        }
     }
 
     private var topBar: some View {
@@ -57,47 +77,16 @@ struct ProfileStudioView: View {
             }
             .buttonStyle(PressScaleStyle())
             .accessibilityLabel("返回")
-            VStack(alignment: .leading, spacing: 2) {
-                Text("画像工作室").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
-                Text("每次只做一件，画像慢慢长出来").font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-            }
+            Text("画像工坊").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
             Spacer()
         }
         .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 12)
         .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
     }
 
-    private var hero: some View {
+    private func section(title: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 11) {
-            Text("PROFILE ATELIER · 私密探索")
-                .font(.system(size: 9.5, weight: .semibold)).tracking(2.4)
-                .foregroundStyle(Color(hex: 0x9DBCFF))
-            Text("不是把你归类，\n而是留下可以修正的证据。")
-                .font(.system(size: 21, weight: .bold)).lineSpacing(6).foregroundStyle(Theme.ink)
-            Text("标准量表、主题探索和你自己的话会分开记录。原始答案默认仅自己可见。")
-                .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background {
-            ZStack(alignment: .topTrailing) {
-                LinearGradient(colors: [Color(hex: 0x141A34), Color(hex: 0x1B2148), Color(hex: 0x10132A)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-                RadialGradient(colors: [Color(hex: 0x8F7BFF, alpha: 0.26), .clear],
-                               center: .topTrailing, startRadius: 0, endRadius: 190)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(Color(hex: 0x7A9EFF, alpha: 0.26), lineWidth: 1))
-    }
-
-    private func section(title: String, note: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 11) {
-            HStack {
-                Text(title).font(.system(size: 14.5, weight: .bold)).foregroundStyle(Theme.ink)
-                Spacer()
-                Text(note).font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-            }
+            Text(title).font(.system(size: 14.5, weight: .bold)).foregroundStyle(Theme.ink)
             content()
         }
     }
@@ -231,8 +220,7 @@ struct ProfileStudioView: View {
             ForEach(Self.gridSpecs, id: \.key) { spec in
                 let state = gridState(spec)
                 Button {
-                    dismiss()
-                    onOpenDimension(spec.key)
+                    activeDimension = spec.key
                 } label: {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 12) {
@@ -365,7 +353,7 @@ struct ProfileStudioView: View {
 }
 
 #Preview {
-    ProfileStudioView(home: HomeModel(), onOpenDimension: { _ in })
+    ProfileStudioView(home: HomeModel())
         .environment(ToastCenter())
         .environment(SupabaseService())
         .preferredColorScheme(.dark)

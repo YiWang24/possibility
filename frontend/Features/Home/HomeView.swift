@@ -11,6 +11,7 @@ struct HomeView: View {
     @State private var chatLaunch: ChatLaunch?
     @State private var diaryLaunch: DiaryLaunch?
     @State private var activeDimension: DimensionKey?
+    @State private var assessmentKind: AssessmentKind?
     @State private var showStudio = false
     @State private var showCardHub = false
     @State private var launchGame: CardGameKind?
@@ -58,11 +59,13 @@ struct HomeView: View {
             .presentationBackground(Color(hex: 0x10131C))
         }
         .fullScreenCover(isPresented: $showStudio) {
-            ProfileStudioView(home: model) { key in
-                activeDimension = key
-            }
+            ProfileStudioView(home: model)
             .environment(toast)
             .environment(supabase)
+        }
+        .fullScreenCover(item: $assessmentKind) { kind in
+            AssessmentFlowView(kind: kind, onSaveToProfile: saveAssessment)
+                .environment(toast)
         }
         .fullScreenCover(isPresented: $showCardHub) {
             CardGameHubView(home: model)
@@ -122,13 +125,21 @@ struct HomeView: View {
         }
     }
 
-    /// 维度点击路由：软维度开浮层；人格底色进画像工作室
+    /// 维度点击路由：软维度开浮层；人格底色直接进入大五人格测评
     private func handleDimTap(_ dim: HomeModel.PortraitDim) {
         if let key = dim.dimensionKey {
             activeDimension = key
         } else {
-            showStudio = true
+            assessmentKind = .bigfive
         }
+    }
+
+    private func saveAssessment(_ kind: AssessmentKind, tags: [String]) {
+        guard kind == .bigfive else { return }
+        var text = "大五：" + tags.prefix(3).joined(separator: " · ")
+        if let mbti = MBTIStore.current { text += " · MBTI：\(mbti)" }
+        model.savePersonality(text)
+        toast.show("结果已写入人格底色 · 原始答案默认私密")
     }
 }
 

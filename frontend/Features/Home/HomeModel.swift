@@ -204,7 +204,7 @@ final class HomeModel {
         let label: String
         /// nil 表示尚未填写（todo 虚线态）
         let value: String?
-        /// 点击打开的维度浮层；nil 表示走画像工作室（如人格底色）
+        /// 点击打开的维度浮层；nil 表示人格底色，直接进入大五人格测评
         let dimensionKey: DimensionKey?
         var isTodo: Bool { value == nil }
     }
@@ -214,7 +214,7 @@ final class HomeModel {
     private let store = UserDefaults.standard
     private static let storePrefix = "kaleido_dim_"
 
-    /// 人格底色（走工作室测评，暂未接入 → 常为 nil）
+    /// 人格底色（由大五人格测评结果写入）
     var personalityText: String? { filledDims["personality"] }
 
     /// 从本地读取已填维度（冷启动调用），随后云端画像合并（换机 / 重装漫游）
