@@ -38,6 +38,10 @@ Deno.test("front-door prompt requires an answer before product routing", () => {
   );
   assert(prompt.includes("不要替用户拍板"), "advice must remain tentative");
   assert(
+    prompt.includes("250 个中文字符以内"),
+    "visible chat reply must fit within one mobile screen",
+  );
+  assert(
     prompt.includes("这个理解接近你吗？"),
     "verification state needs an explicit cue",
   );
