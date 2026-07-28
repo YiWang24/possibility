@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>我有可能 · 人生决策扑克牌（精细牌面版）</title>
+<style>
+  :root{ --ink:#1c3f94; --red:#d21f2b; --gold:#f3c518; --black:#16181d; }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:#0e1116; color:#e8e8ea;
+    font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{text-align:center;padding:40px 20px 6px}
+  header h1{margin:0;font-size:26px;letter-spacing:2px}
+  header p{margin:8px 0 0;color:#9aa0aa;font-size:14px}
+  header .note{margin-top:6px;color:#6b7280;font-size:11px}
+  .deck{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;padding:30px 24px 40px;max-width:1240px;margin:0 auto}
+  .card{
+    position:relative;width:300px;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.5);
+  }
+  .card > img{width:100%;height:auto;display:block}
+  /* 中缝场景牌 */
+  .plate{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:80%;display:flex;align-items:center;gap:10px;
+    background:rgba(22,24,29,.94);border:2px solid var(--gold);border-radius:14px;
+    padding:9px 12px;box-shadow:0 4px 14px rgba(0,0,0,.4);
+  }
+  .plate .emblem{
+    flex:0 0 auto;width:40px;height:40px;border-radius:50%;
+    background:#fff;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;
+  }
+  .plate .emblem svg{width:26px;height:26px}
+  .plate .txt{line-height:1.15}
+  .plate .txt .zh{color:#fff;font-size:15px;font-weight:700;white-space:nowrap}
+  .plate .txt .en{color:var(--gold);font-size:8px;letter-spacing:2px;font-family:Georgia,serif;margin-top:2px}
+  /* 品牌 */
+  .brand{
+    position:absolute;left:0;right:0;bottom:6px;text-align:center;
+    font-size:8px;letter-spacing:3px;color:var(--ink);font-family:Georgia,serif;opacity:.8;
+    text-shadow:0 0 3px #fff,0 0 3px #fff;
+  }
+  .cap{width:300px;text-align:center;font-size:13px;color:#b9bfca;line-height:1.5;margin-top:-14px}
+  .cap b{color:#fff}
+  .col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .toolbar{text-align:center;padding:10px 0 40px}
+  .toolbar button{background:#1c3f94;color:#fff;border:0;border-radius:8px;padding:10px 18px;font-size:14px;cursor:pointer}
+  footer{text-align:center;color:#5b616b;font-size:11px;padding:0 20px 40px;line-height:1.7}
+  @media print{
+    body{background:#fff}
+    header,.toolbar,footer,.cap{display:none}
+    .deck{gap:10px}
+    .card{box-shadow:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>我有可能 · 人生决策扑克牌</h1>
+  <p>精细牌面版 —— 真实宫廷牌插画 + 场景叠加</p>
+  <div class="note">牌面矢量图 © Chris Aguilar · totalnonsense.com · LGPL 3.0</div>
+</header>
+
+<div class="deck" id="deck"></div>
+
+<div class="toolbar"><button onclick="window.print()">打印 / 导出 PDF</button></div>
+
+<footer>
+  牌面精细插画来自 Chris Aguilar「Vectorized Playing Cards 1.3」(LGPL 3.0)，本页仅叠加场景文案与品牌标。<br>
+  四张 King 各具不同持械姿势（♠持剑下垂 / ♥举剑于首 / ♣持剑握权杖 / ♦侧身持斧），天然对应「动作姿势变换」。<br>
+  如需完全原创、无授权约束的插画，请使用同目录「出图提示词.md」走 AI 出图。
+</footer>
+
+<script>
+const EMB = {
+  grad:`<svg viewBox="-40 -30 80 70"><g><rect x="-20" y="0" width="40" height="14" rx="2" fill="#16181d"/><polygon points="0,-14 34,-2 0,10 -34,-2" fill="#1c3f94" stroke="#16181d" stroke-width="1.5"/><circle cx="0" cy="-2" r="4" fill="#f3c518"/><path d="M24,-2 L30,16" stroke="#f3c518" stroke-width="2.5"/><circle cx="30" cy="18" r="4" fill="#d21f2b"/></g></svg>`,
+  rocket:`<svg viewBox="-24 -34 48 66"><g><path d="M0,-30 C12,-16 12,4 6,18 L-6,18 C-12,4 -12,-16 0,-30 Z" fill="#fff" stroke="#1c3f94" stroke-width="2"/><circle cx="0" cy="-6" r="6" fill="#1c3f94"/><path d="M-6,14 L-16,26 L-6,22 Z" fill="#d21f2b"/><path d="M6,14 L16,26 L6,22 Z" fill="#d21f2b"/><path d="M-4,20 C-2,32 2,32 4,20 Z" fill="#f3c518"/></g></svg>`,
+  ring:`<svg viewBox="-30 -22 60 50"><g fill="none" stroke-width="6"><circle cx="-9" cy="4" r="14" stroke="#f3c518"/><circle cx="11" cy="4" r="14" stroke="#f3c518"/><path d="M-9,-16 l-5,8 h10 z" fill="#d21f2b" stroke="none"/></g></svg>`,
+  baby:`<svg viewBox="-24 -24 48 58"><g><circle cx="0" cy="-6" r="14" fill="#fff" stroke="#1c3f94" stroke-width="2"/><path d="M-9,-12 a6 6 0 0 1 8,-2" stroke="#d21f2b" stroke-width="2.5" fill="none"/><circle cx="4" cy="-9" r="2.5" fill="#1c3f94"/><rect x="-3" y="6" width="6" height="22" rx="3" fill="#f3c518"/><circle cx="-16" cy="-4" r="4" fill="#d21f2b"/><circle cx="16" cy="-4" r="4" fill="#1c3f94"/></g></svg>`
+};
+
+const cards = [
+  { img:"vendor/cards/KS.svg", emb:"grad",   zh:"35岁 · 辞职留学",   en:"QUIT & STUDY ABROAD",
+    cap:"<b>♠ 黑桃 · 智识/挑战</b><br>推倒重来，把人生当第二次高考" },
+  { img:"vendor/cards/KD.svg", emb:"rocket", zh:"30岁 · 转行创业",   en:"CAREER PIVOT",
+    cap:"<b>♦ 方块 · 财富/事业</b><br>离开安稳区，赌一次自己的想法" },
+  { img:"vendor/cards/KH.svg", emb:"ring",   zh:"28岁 · 异地恋结婚", en:"MARRY ACROSS MILES",
+    cap:"<b>♥ 红桃 · 情感/婚姻</b><br>把两座城市，收成一个家" },
+  { img:"vendor/cards/KC.svg", emb:"baby",   zh:"33岁 · 要不要生小孩", en:"TO HAVE A CHILD",
+    cap:"<b>♣ 梅花 · 家庭/成长</b><br>多一个人，多一种可能" },
+];
+
+document.getElementById("deck").innerHTML = cards.map(c => `
+  <div class="col">
+    <div class="card">
+      <img src="${c.img}" alt="">
+      <div class="plate">
+        <div class="emblem">${EMB[c.emb]}</div>
+        <div class="txt"><div class="zh">${c.zh}</div><div class="en">${c.en}</div></div>
+      </div>
+      <div class="brand">我有可能 · POSSIBILITY</div>
+    </div>
+    <div class="cap">${c.cap}</div>
+  </div>`).join("");
+</script>
+</body>
+</html>
