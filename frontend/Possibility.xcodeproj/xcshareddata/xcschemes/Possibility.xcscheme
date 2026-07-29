@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
+               BlueprintIdentifier = "C2474A909F3B0387E61B95D1"
                BuildableName = "Possibility.app"
                BlueprintName = "Possibility"
                ReferencedContainer = "container:Possibility.xcodeproj">
@@ -29,7 +29,7 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A90A9BA511D1F3CF9964C592"
+               BlueprintIdentifier = "97C3EF562E8333EE867AAEF9"
                BuildableName = "PossibilityUITests.xctest"
                BlueprintName = "PossibilityUITests"
                ReferencedContainer = "container:Possibility.xcodeproj">
@@ -46,7 +46,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
+            BlueprintIdentifier = "C2474A909F3B0387E61B95D1"
             BuildableName = "Possibility.app"
             BlueprintName = "Possibility"
             ReferencedContainer = "container:Possibility.xcodeproj">
@@ -58,7 +58,7 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "66C585762443FA479E949C01"
+               BlueprintIdentifier = "651A2602E3AA0C22DBDB2DCE"
                BuildableName = "PossibilityTests.xctest"
                BlueprintName = "PossibilityTests"
                ReferencedContainer = "container:Possibility.xcodeproj">
@@ -69,7 +69,7 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A90A9BA511D1F3CF9964C592"
+               BlueprintIdentifier = "97C3EF562E8333EE867AAEF9"
                BuildableName = "PossibilityUITests.xctest"
                BlueprintName = "PossibilityUITests"
                ReferencedContainer = "container:Possibility.xcodeproj">
@@ -93,7 +93,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
+            BlueprintIdentifier = "C2474A909F3B0387E61B95D1"
             BuildableName = "Possibility.app"
             BlueprintName = "Possibility"
             ReferencedContainer = "container:Possibility.xcodeproj">
@@ -112,7 +112,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "5FC792D4DA3FF0AE9D83A9BB"
+            BlueprintIdentifier = "C2474A909F3B0387E61B95D1"
             BuildableName = "Possibility.app"
             BlueprintName = "Possibility"
             ReferencedContainer = "container:Possibility.xcodeproj">
