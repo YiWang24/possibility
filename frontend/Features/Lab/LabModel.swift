@@ -13,12 +13,35 @@ final class LabModel {
 
     struct Choice: Identifiable, Hashable, Codable {
         var id: String { name }
-        let emoji: String
+        /// 卡面图标（设计系统语义键），不是 LLM 直出的 emoji
+        let icon: CardIcon
         let name: String
         let desc: String
         var isCustom: Bool = false
         /// LLM 卡的 CSS 颜色（#RRGGBB / rgba(...)）；nil 走默认卡面视觉
         var color: String? = nil
+
+        /// UserDefaults 里的旧自定义卡只有 emoji 字段。缺 icon 时按文案重新匹配，
+        /// 匹配不上落到 .custom——升级后老卡不能整批解码失败而消失。
+        init(from decoder: Decoder) throws {
+            let box = try decoder.container(keyedBy: CodingKeys.self)
+            let name = try box.decode(String.self, forKey: .name)
+            let desc = try box.decode(String.self, forKey: .desc)
+            self.init(icon: try box.decodeIfPresent(CardIcon.self, forKey: .icon)
+                          ?? CardIcon.match(title: name, desc: desc) ?? .custom,
+                      name: name,
+                      desc: desc,
+                      isCustom: try box.decodeIfPresent(Bool.self, forKey: .isCustom) ?? true,
+                      color: try box.decodeIfPresent(String.self, forKey: .color))
+        }
+
+        init(icon: CardIcon, name: String, desc: String, isCustom: Bool = false, color: String? = nil) {
+            self.icon = icon
+            self.name = name
+            self.desc = desc
+            self.isCustom = isCustom
+            self.color = color
+        }
     }
 
     var question = ExploreTopic.career.sampleQuestion
@@ -59,7 +82,9 @@ final class LabModel {
         let n = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(18))
         let d = String(desc.trimmingCharacters(in: .whitespacesAndNewlines).prefix(42))
         guard !n.isEmpty, !d.isEmpty, !choices.contains(where: { $0.name == n }) else { return nil }
-        let choice = Choice(emoji: "✍️", name: n, desc: d, isCustom: true)
+        // 用户自己写的卡也过一遍语义匹配：写「回学校读书」就该拿到书本图标，
+        // 匹配不上再落到「手写卡」图标。
+        let choice = Choice(icon: CardIcon.match(title: n, desc: d) ?? .custom, name: n, desc: d, isCustom: true)
         customChoices.append(choice)
         pick = choice.name
         persistCustom()
@@ -111,7 +136,7 @@ final class LabModel {
             let name = String(card.title.trimmingCharacters(in: .whitespacesAndNewlines).prefix(18))
             let desc = String(card.description.trimmingCharacters(in: .whitespacesAndNewlines).prefix(42))
             guard !name.isEmpty, !desc.isEmpty, seen.insert(name).inserted else { continue }
-            mapped.append(Choice(emoji: card.glyph.isEmpty ? "✦" : card.glyph,
+            mapped.append(Choice(icon: CardIcon.resolve(key: card.glyph, title: name, desc: desc),
                                  name: name, desc: desc, color: card.color))
         }
         // 卡片全部被去重/清洗过滤：等同 API 返回无效
@@ -131,7 +156,7 @@ final class LabModel {
 
     struct CarryCard: Identifiable, Hashable {
         let id: String
-        let glyph: String
+        let icon: CardIcon
         let name: String
         let source: String
         /// 最坏结果里的底线风险描述（floor test）
@@ -142,17 +167,17 @@ final class LabModel {
     var carry: [String] = []
 
     static let carryCards: [CarryCard] = [
-        CarryCard(id: "income", glyph: "▣", name: "稳定收入", source: "对话线索",
+        CarryCard(id: "income", icon: .money, name: "稳定收入", source: "对话线索",
                   risk: "转型不顺时，收入可能在一段时间内下降，生活安全感受到直接冲击。"),
-        CarryCard(id: "health", glyph: "＋", name: "身体不透支", source: "日记线索",
+        CarryCard(id: "health", icon: .health, name: "身体不透支", source: "日记线索",
                   risk: "反复尝试与加倍学习可能挤压睡眠和恢复时间，身体先替选择支付代价。"),
-        CarryCard(id: "relation", glyph: "♡", name: "重要关系", source: "关系画像",
+        CarryCard(id: "relation", icon: .connect, name: "重要关系", source: "关系画像",
                   risk: "压力与时间投入可能让你减少陪伴，也可能加剧家人对这次改变的不理解。"),
-        CarryCard(id: "craft", glyph: "✦", name: "专业积累", source: "职业画像",
+        CarryCard(id: "craft", icon: .deepen, name: "专业积累", source: "职业画像",
                   risk: "最差情况下，新岗位没有站稳，原有专业身份也因中断而需要重新证明。"),
-        CarryCard(id: "creation", glyph: "◇", name: "创造实感", source: "动态画像",
+        CarryCard(id: "creation", icon: .create, name: "创造实感", source: "动态画像",
                   risk: "你可能进入一个更偏协调和推进的岗位，却发现真正动手创造的时刻反而更少。"),
-        CarryCard(id: "exit", glyph: "↩", name: "保留退路", source: "风险预案",
+        CarryCard(id: "exit", icon: .retreat, name: "保留退路", source: "风险预案",
                   risk: "如果投入过深、现金流下降或履历断裂，回到原路径的成本会明显升高。"),
     ]
 

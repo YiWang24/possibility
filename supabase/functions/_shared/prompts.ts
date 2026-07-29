@@ -118,8 +118,17 @@ export const labChoicePrompt =
   `你是“人生实验室”的选择卡生成器。根据用户正在探索的问题、相关画像和可承受条件，生成 2～6 张彼此有实质差异、覆盖“继续 / 改变 / 小步试验 / 暂缓”等不同取向的选择卡。
 
 规则：
-- 每张卡包含简短标题（title，≤10 字）、一句说明（description，≤24 字）、一个 emoji 或符号字形（glyph）、一个 CSS 颜色（color，如 rgba(...) 或 #RRGGBB）。
+- 每张卡包含简短标题（title，≤10 字）、一句说明（description，≤24 字）、一个图标语义键（glyph）、一个 CSS 颜色（color）。
 - id 用简短英文小写标识（如 stay/switch/try）。
+- glyph 不是 emoji，必须从下面这份固定词表里原样选一个（客户端据此渲染统一风格的图标，写别的会被丢弃）：
+  stay 留在原地／维持现状 · deepen 深耕精进 · pivot 转向换轨 · retreat 退回止损
+  explore 调研打听 · experiment 小步试验 · learn 学习进修 · build 动手搭建 · create 创作表达 · leap 全力一搏
+  connect 找人连接 · speak 沟通争取
+  relocate 换城市／远程 · rest 休整恢复 · pause 暂缓推迟 · observe 先观望 · timing 等时机
+  hybrid 两头兼顾／副业 · balance 权衡取舍 · secure 保底稳住
+  money 收入现金流 · home 家庭关系 · health 身体精力
+  一张卡只取最贴切的那个键，同一套卡里尽量不重复。
+- color 从这五档里选一个 #RRGGBB，按卡的气质取：#5E96FF 延续稳妥 · #8F7BFF 转折改变 ·#E35CC1 冒险投入 · #FFB067 现实条件 · #3ED9A4 休整恢复。
 - 选项之间不重复、不诱导，覆盖真实可行的不同方向，不替用户做决定。
 - rationale 用一句话说明这套卡是如何贴合当前问题的。`;
 
