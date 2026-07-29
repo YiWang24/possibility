@@ -44,4 +44,25 @@ export const runtimeConfig = {
   get diaryModel(): string {
     return env("DEEPSEEK_DIARY_MODEL", "deepseek-v4-pro");
   },
+  // Auth Send SMS Hook 的 standardwebhooks secret（形如 v1,whsec_<base64>）。
+  // 本地默认值与 config.toml [auth.hook.send_sms].secrets 保持一致。
+  get sendSmsHookSecret(): string {
+    return env(
+      "SEND_SMS_HOOK_SECRET",
+      "v1,whsec_bG9jYWwtZGV2LXNlbmQtc21zLWhvb2stc2VjcmV0",
+    );
+  },
+  // 阿里云短信（签名/模板需在阿里云控制台报备后填入 Function Secrets）
+  get aliyunSmsAccessKeyId(): string {
+    return env("ALIYUN_SMS_ACCESS_KEY_ID");
+  },
+  get aliyunSmsAccessKeySecret(): string {
+    return env("ALIYUN_SMS_ACCESS_KEY_SECRET");
+  },
+  get aliyunSmsSignName(): string {
+    return env("ALIYUN_SMS_SIGN_NAME");
+  },
+  get aliyunSmsTemplateCode(): string {
+    return env("ALIYUN_SMS_TEMPLATE_CODE");
+  },
 } as const;

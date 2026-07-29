@@ -6,7 +6,8 @@
   "imports": {
     "ai": "npm:ai@7.0.37",
     "@ai-sdk/deepseek": "npm:@ai-sdk/deepseek@3.0.13",
-    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.110.0"
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.110.0",
+    "standardwebhooks": "npm:standardwebhooks@1.0.0"
   },
   "lint": {
     "rules": {

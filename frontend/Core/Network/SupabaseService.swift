@@ -15,6 +15,25 @@ final class SupabaseService {
     private(set) var userId: UUID?
     private(set) var isReady = false
     private(set) var lastError: String?
+    /// 当前 Auth 用户（匿名或正式）；登录/登出/转正后由 authStateChanges 刷新
+    private(set) var currentUser: User?
+    private var authListener: Task<Void, Never>?
+
+    /// 游客（匿名会话或尚未建立会话）——AuthGate 据此决定是否弹登录页
+    var isAnonymous: Bool { currentUser?.isAnonymous ?? true }
+
+    /// 已绑定手机号（Supabase 存储格式 8613812345678 → +86 138****5678 脱敏展示）
+    var phoneDisplay: String? {
+        guard var phone = currentUser?.phone, !phone.isEmpty else { return nil }
+        if phone.hasPrefix("86"), phone.count == 13 { phone.removeFirst(2) }
+        guard phone.count == 11 else { return phone }
+        return "+86 \(phone.prefix(3))****\(phone.suffix(4))"
+    }
+
+    /// 是否绑定了 Apple 身份
+    var isAppleLinked: Bool {
+        currentUser?.identities?.contains { $0.provider == "apple" } ?? false
+    }
 
     // MARK: - 服务端状态缓存
 
@@ -35,12 +54,15 @@ final class SupabaseService {
     // MARK: - 启动：匿名登录 + 预取公开内容
 
     func bootstrap() async {
+        startAuthListener()
         do {
             if let session = try? await client.auth.session {
                 userId = session.user.id
+                currentUser = session.user
             } else {
                 let session = try await client.auth.signInAnonymously()
                 userId = session.user.id
+                currentUser = session.user
             }
             isReady = true
             async let t: Void = loadTravelers()
@@ -50,6 +72,19 @@ final class SupabaseService {
             _ = await (t, b, p, u)
         } catch {
             lastError = error.localizedDescription
+        }
+    }
+
+    /// 监听会话变化（转正 / 换账号 / 登出），保持 currentUser 与 UI 同步
+    private func startAuthListener() {
+        guard authListener == nil else { return }
+        authListener = Task { [weak self] in
+            guard let self else { return }
+            for await (event, session) in self.client.auth.authStateChanges {
+                guard [.signedIn, .signedOut, .userUpdated, .tokenRefreshed].contains(event) else { continue }
+                self.currentUser = session?.user
+                if let id = session?.user.id { self.userId = id }
+            }
         }
     }
 
@@ -64,6 +99,125 @@ final class SupabaseService {
         userId = session.user.id
         isReady = true
         return session.accessToken
+    }
+
+    // MARK: - 真实登录（手机验证码 / Apple —— 技术设计文档 §登录系统）
+
+    /// 手机验证码流向：匿名转正（updateUser 原地链接，user_id 不变）或既有账号登录
+    enum PhoneOTPFlow: Sendable {
+        case linkAnonymous   // verifyOTP 用 .phoneChange
+        case signIn          // verifyOTP 用 .sms（登录后触发匿名数据迁移）
+    }
+
+    /// 发送验证码。匿名态优先走转正路径；号码已被注册（phone_exists）时
+    /// 自动切换为既有账号登录流，verify 成功后经 merge-anonymous 迁移匿名数据。
+    func sendPhoneOTP(_ rawPhone: String) async throws -> PhoneOTPFlow {
+        let phone = Self.e164Phone(rawPhone)
+        if isAnonymous, (try? await client.auth.session) != nil {
+            do {
+                try await client.auth.update(user: UserAttributes(phone: phone))
+                return .linkAnonymous
+            } catch let error as AuthError where error.errorCode.rawValue == "phone_exists" {
+                try await client.auth.signInWithOTP(phone: phone)
+                return .signIn
+            }
+        }
+        try await client.auth.signInWithOTP(phone: phone)
+        return .signIn
+    }
+
+    /// 校验验证码。signIn 流会替换会话：先暂存匿名 token，成功后迁移数据。
+    func verifyPhoneOTP(_ rawPhone: String, code: String, flow: PhoneOTPFlow) async throws {
+        let phone = Self.e164Phone(rawPhone)
+        switch flow {
+        case .linkAnonymous:
+            try await client.auth.verifyOTP(phone: phone, token: code, type: .phoneChange)
+        case .signIn:
+            let anonymousToken = await anonymousAccessToken()
+            try await client.auth.verifyOTP(phone: phone, token: code, type: .sms)
+            await mergeAnonymousData(token: anonymousToken)
+        }
+        await refreshAfterAuthChange()
+    }
+
+    /// Apple 原生登录（signInWithIdToken）。会产生/命中另一个正式账号：
+    /// 先暂存匿名 token，登录成功后经 merge-anonymous 迁移数据。
+    /// - Parameter fullName: Apple 仅首次授权返回，随手写入 user metadata
+    func signInWithApple(idToken: String, nonce: String, fullName: String?) async throws {
+        let anonymousToken = await anonymousAccessToken()
+        try await client.auth.signInWithIdToken(
+            credentials: .init(provider: .apple, idToken: idToken, nonce: nonce)
+        )
+        if let fullName, !fullName.isEmpty {
+            try? await client.auth.update(user: UserAttributes(data: ["full_name": .string(fullName)]))
+        }
+        await mergeAnonymousData(token: anonymousToken)
+        await refreshAfterAuthChange()
+    }
+
+    /// 退出登录：清空本地缓存后回落到全新匿名会话（游客模式仍可用）
+    func signOut() async {
+        try? await client.auth.signOut()
+        resetUserCaches()
+        await bootstrap()
+    }
+
+    /// 注销账号（App Store 5.1.1(v)）：服务端删除 auth 用户（业务表级联清理）后本地登出
+    func deleteAccount() async throws {
+        struct Body: Encodable {}
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction("delete-account", body: Body(), as: Response.self)
+        await signOut()
+    }
+
+    // MARK: 登录私有工具
+
+    /// 展示用手机号 → E.164（默认 +86；11 位裸号自动补前缀）
+    static func e164Phone(_ raw: String) -> String {
+        let digits = raw.filter(\.isNumber)
+        if raw.hasPrefix("+") { return "+\(digits)" }
+        if digits.hasPrefix("86"), digits.count == 13 { return "+\(digits)" }
+        return "+86\(digits)"
+    }
+
+    /// 当前会话若是匿名，取其 access token（登录切换账号前暂存，供数据迁移）
+    private func anonymousAccessToken() async -> String? {
+        guard let session = try? await client.auth.session, session.user.isAnonymous else { return nil }
+        return session.accessToken
+    }
+
+    /// POST /merge-anonymous：把旧匿名账号数据迁到当前正式账号。
+    /// 失败不阻断登录（记录 lastError，可由后台任务/客服兜底）。
+    private func mergeAnonymousData(token: String?) async {
+        guard let token else { return }
+        struct Body: Encodable { let anonymous_access_token: String }
+        struct Response: Decodable { let ok: Bool }
+        do {
+            _ = try await callFunction("merge-anonymous", body: Body(anonymous_access_token: token), as: Response.self)
+        } catch {
+            lastError = "匿名数据迁移失败：\(error.localizedDescription)"
+        }
+    }
+
+    /// 登录 / 转正 / 登出后：同步会话状态并重拉用户侧数据
+    private func refreshAfterAuthChange() async {
+        if let session = try? await client.auth.session {
+            userId = session.user.id
+            currentUser = session.user
+        }
+        invalidateRemoteProfileCache()
+        async let p: Void = loadProfile()
+        async let u: Void = loadUnlocks()
+        _ = await (p, u)
+    }
+
+    /// 登出 / 注销时清空所有仅属于旧账号的本地缓存
+    private func resetUserCaches() {
+        userId = nil
+        currentUser = nil
+        profile = nil
+        unlockedProfileIds = []
+        invalidateRemoteProfileCache()
     }
 
     // MARK: - 公开内容

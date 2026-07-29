@@ -6,10 +6,15 @@ import SwiftUI
 
 struct MeView: View {
     @Environment(SupabaseService.self) private var supabase
+    @Environment(ToastCenter.self) private var toast
     @State private var store = MyProfileStore()
     @State private var editMode: MeEditMode?
     /// 编辑保存后刷新画像 item（依赖 UserDefaults 的部分）
     @State private var tick = 0
+    /// 编辑公开主页是关键动作：游客先登录（AuthGate 就地弹 LoginSheet）
+    @State private var authGate = AuthGateCenter()
+    @State private var showDeleteConfirm = false
+    @State private var accountBusy = false
 
     var body: some View {
         ScrollView {
@@ -18,6 +23,7 @@ struct MeView: View {
                 hero.padding(.top, 16)
                 tabs.padding(.top, 16)
                 panel.padding(.top, 16)
+                accountSection.padding(.top, 24)
             }
             .padding(.horizontal, 22)
             .padding(.top, 20)
@@ -32,9 +38,15 @@ struct MeView: View {
         .fullScreenCover(item: $editMode, onDismiss: { tick += 1 }) { mode in
             MeEditView(store: store, mode: mode)
         }
+        .authGate(authGate)
     }
 
     private var profile: MyProfile { store.profile }
+
+    /// 编辑公开主页统一走登录门控（游客登录成功后继续打开编辑页）
+    private func requestEdit(_ mode: MeEditMode) {
+        authGate.require(supabase) { editMode = mode }
+    }
 
     // MARK: Hero（原型 .prof-hero）
 
@@ -57,7 +69,7 @@ struct MeView: View {
                 }
                 Spacer()
                 Button {
-                    editMode = .basic
+                    requestEdit(.basic)
                 } label: {
                     Text("✎").font(.system(size: 14))
                         .foregroundStyle(Theme.ink)
@@ -137,7 +149,7 @@ struct MeView: View {
         let lifeCards = items.first { $0.key == "life" }?.cards ?? []
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "设置展示", isLink: true) {
-                editMode = .persona
+                requestEdit(.persona)
             }
             VStack(spacing: 14) {
                 ZStack(alignment: .topLeading) {
@@ -231,7 +243,7 @@ struct MeView: View {
     private var storyPanel: some View {
         VStack(alignment: .leading, spacing: 14) {
             SectionHeader(title: "我的人生关键轨迹", trailing: "编辑故事", isLink: true) {
-                editMode = .story
+                requestEdit(.story)
             }
             MeTimeline(nodes: profile.traj)
 
@@ -287,7 +299,7 @@ struct MeView: View {
     private var advicePanel: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我愿意分享的经验", trailing: "编辑建议", isLink: true) {
-                editMode = .advice
+                requestEdit(.advice)
             }
             if profile.adviceModules.isEmpty {
                 emptyNote("还没有公开经验模块，点击“编辑建议”添加第一条内容")
@@ -324,7 +336,7 @@ struct MeView: View {
         let enabled = profile.services.filter(\.enabled)
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我可以提供的服务", trailing: "编辑服务", isLink: true) {
-                editMode = .service
+                requestEdit(.service)
             }
             if enabled.isEmpty {
                 emptyNote("暂未公开服务，可以在这里编辑并开启")
@@ -356,6 +368,99 @@ struct MeView: View {
             .frame(maxWidth: .infinity).padding(.vertical, 26)
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
+    }
+
+    // MARK: 账号（登录状态 / 登录 / 退出 / 注销 —— 技术设计文档 §登录系统）
+
+    private var accountStatusText: String {
+        if supabase.isAnonymous { return "游客模式" }
+        if let phone = supabase.phoneDisplay { return phone }
+        if supabase.isAppleLinked { return "Apple 账号" }
+        return "已登录"
+    }
+
+    private var accountSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader(title: "账号")
+            VStack(spacing: 0) {
+                HStack {
+                    Text("登录状态").font(.system(size: 13)).foregroundStyle(Theme.sub)
+                    Spacer()
+                    Text(accountStatusText)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(supabase.isAnonymous ? Theme.faint : Color(hex: 0x8EE7C8))
+                }
+                .padding(.horizontal, 16).padding(.vertical, 14)
+
+                Divider().overlay(Theme.line)
+
+                if supabase.isAnonymous {
+                    accountRow("登录 / 注册", tint: Theme.blue) {
+                        // 空续接：仅弹登录页；成功后 authStateChanges 刷新状态行
+                        authGate.require(supabase) {}
+                    }
+                    HStack(spacing: 6) {
+                        Image(systemName: "info.circle").font(.system(size: 10))
+                        Text("游客数据保存在本机对应的匿名账号里，登录后自动并入正式账号。")
+                    }
+                    .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
+                    .padding(.horizontal, 16).padding(.bottom, 13)
+                } else {
+                    accountRow("退出登录", tint: Theme.sub) {
+                        guard !accountBusy else { return }
+                        accountBusy = true
+                        Task {
+                            await supabase.signOut()
+                            accountBusy = false
+                            toast.show("已退出登录，切换为游客模式")
+                        }
+                    }
+                    Divider().overlay(Theme.line)
+                    accountRow("注销账号", tint: Theme.orange) {
+                        showDeleteConfirm = true
+                    }
+                }
+            }
+            .kaleidoCard()
+        }
+        .confirmationDialog(
+            "注销后账号与全部数据将被永久删除，且无法恢复。",
+            isPresented: $showDeleteConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("永久删除我的账号", role: .destructive) {
+                guard !accountBusy else { return }
+                accountBusy = true
+                Task {
+                    do {
+                        try await supabase.deleteAccount()
+                        toast.show("账号已注销")
+                    } catch {
+                        toast.show("注销失败，请稍后重试")
+                    }
+                    accountBusy = false
+                }
+            }
+            Button("取消", role: .cancel) {}
+        }
+    }
+
+    private func accountRow(_ title: String, tint: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(tint)
+                Spacer()
+                if accountBusy {
+                    ProgressView().controlSize(.small).tint(Theme.faint)
+                } else {
+                    Text("›").font(.system(size: 15)).foregroundStyle(Theme.faint)
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(accountBusy)
     }
 }
 

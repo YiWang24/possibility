@@ -21,6 +21,32 @@ enabled = true
 site_url = "http://localhost:3000"
 # 匿名登录：对上 PRD「匿名/隐私」入口
 enable_anonymous_sign_ins = true
+# 匿名账号转正（updateUser 链接 phone identity）需要手动 identity linking
+enable_manual_linking = true
+
+# ---- 手机验证码登录（短信经 send-sms-hook 走阿里云，见 [auth.hook.send_sms]） ----
+[auth.sms]
+enable_signup = true
+enable_confirmations = true
+
+# 本地开发固定测试号码 + 验证码（不触发真实短信，也不经过 hook）
+[auth.sms.test_otp]
+8613800000000 = "123456"
+
+# 自定义短信发送：Auth 生成 OTP 后回调 send-sms-hook（阿里云 Dysmsapi）。
+# secret 仅本地开发用（与 functions serve 的 SEND_SMS_HOOK_SECRET 保持一致）；
+# 线上在 Dashboard → Auth → Hooks 配置并用生成的 secret。
+[auth.hook.send_sms]
+enabled = true
+uri = "http://host.docker.internal:54321/functions/v1/send-sms-hook"
+secrets = "v1,whsec_bG9jYWwtZGV2LXNlbmQtc21zLWhvb2stc2VjcmV0"
+
+# ---- Apple 登录（iOS 原生 signInWithIdToken，无需 secret）----
+# 线上在 Dashboard 配置 Apple provider，Client IDs 填 App Bundle ID。
+[auth.external.apple]
+enabled = true
+client_id = "com.johnnywang.possibility"
+secret = ""
 
 [storage]
 enabled = true
@@ -60,4 +86,14 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.persona]
+verify_jwt = true
+
+# Auth Send SMS Hook：无用户 JWT，用 standardwebhooks secret 校验
+[functions.send-sms-hook]
+verify_jwt = false
+
+[functions.merge-anonymous]
+verify_jwt = true
+
+[functions.delete-account]
 verify_jwt = true

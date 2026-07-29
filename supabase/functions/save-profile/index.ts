@@ -86,7 +86,11 @@ Deno.serve(async (req) => {
               "save card game dimension failed:",
               dimensionError.message,
             );
-            throw new HttpError(500, "DATABASE_ERROR", "保存卡牌画像维度失败。");
+            throw new HttpError(
+              500,
+              "DATABASE_ERROR",
+              "保存卡牌画像维度失败。",
+            );
           }
         }
         const dimsUpdate: Record<string, string> = {};

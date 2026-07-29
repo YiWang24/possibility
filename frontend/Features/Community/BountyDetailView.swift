@@ -17,6 +17,8 @@ struct BountyDetailView: View {
     @State private var showCardModal = false
     @State private var message = ""
     @State private var sent = false
+    /// 回应悬赏是关键动作：游客先登录（AuthGate 就地弹 LoginSheet）
+    @State private var authGate = AuthGateCenter()
     /// get_bounty 拉到的远端详情；帖子主体在列表数据中已经可用，这里主要补充回应。
     @State private var remote: BountyDetailResponse?
     @State private var didFinishRemoteLoad = false
@@ -88,6 +90,7 @@ struct BountyDetailView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: 0x10131C))
         }
+        .authGate(authGate)
     }
 
     /// 远端列表只补拉回应；本地演示列表保持使用同一套演示详情。
@@ -256,7 +259,11 @@ struct BountyDetailView: View {
 
     private var actionBar: some View {
         Button(sent ? "名片已发送 ✓" : "发送我的名片") {
-            if sent { toast.show("你的名片已经发送") } else { showCardModal = true }
+            if sent {
+                toast.show("你的名片已经发送")
+            } else {
+                authGate.require(supabase) { showCardModal = true }
+            }
         }
         .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
         .frame(maxWidth: .infinity).padding(.vertical, 15)
