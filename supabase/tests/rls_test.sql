@@ -517,4 +517,200 @@ end
 $$;
 reset role;
 
+-- ==================== 8. merge_anonymous_user：匿名账号数据迁移（登录系统） ====================
+-- old 模拟匿名账号，new 为正式账号；构造重叠数据后合并，校验：
+-- 迁移正确、唯一冲突丢弃匿名侧保留正式侧、profiles 合并规则、旧行清空、
+-- 以及权限仅 service_role（authenticated 不得执行）。
+insert into auth.users (id, role, created_at, updated_at)
+values
+  ('33333333-3333-4333-8333-333333333333', 'authenticated', now(), now()),
+  ('44444444-4444-4444-8444-444444444444', 'authenticated', now(), now());
+
+-- 授权校验：authenticated 角色不得执行迁移函数（仅 grant 给 service_role）。
+select set_config(
+  'request.jwt.claim.sub',
+  '44444444-4444-4444-8444-444444444444',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  begin
+    perform public.merge_anonymous_user(
+      '33333333-3333-4333-8333-333333333333',
+      '44444444-4444-4444-8444-444444444444'
+    );
+    raise exception 'authenticated must NOT execute merge_anonymous_user';
+  exception when insufficient_privilege then null; end;
+end
+$$;
+reset role;
+
+-- 构造迁移前数据（postgres 直接写，模拟两账号既有数据）。
+-- profiles：old 覆盖 dims 与 pct，验证合并时 new 键优先 + pct 取较大。
+update public.profiles
+  set dims = '{"a":"1","shared":"old"}'::jsonb, portrait_pct = 40
+  where id = '33333333-3333-4333-8333-333333333333';
+update public.profiles
+  set dims = '{"b":"2","shared":"new"}'::jsonb, portrait_pct = 10
+  where id = '44444444-4444-4444-8444-444444444444';
+
+-- conversations：无 user_id 唯一约束 → 直接改归属。
+insert into public.conversations (id, user_id, topic)
+values (
+  'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  '33333333-3333-4333-8333-333333333333',
+  'anon-topic'
+);
+
+-- unlocks：old 有 (profile,1)(profile,2)；new 有 (profile,1)
+-- → 冲突丢弃 old 的 1，迁入 old 的 2；new 最终恰 2 行。
+insert into public.unlocks (user_id, kind, target_id, amount)
+values
+  ('33333333-3333-4333-8333-333333333333', 'profile', '1', 9),
+  ('33333333-3333-4333-8333-333333333333', 'profile', '2', 9),
+  ('44444444-4444-4444-8444-444444444444', 'profile', '1', 9);
+
+-- profile_dimensions：old 有 skill/love；new 有 skill
+-- → 冲突丢弃 old skill（保留 new 值），迁入 old love。
+insert into public.profile_dimensions (user_id, dimension, tags)
+values
+  ('33333333-3333-4333-8333-333333333333', 'skill', '{"old"}'),
+  ('33333333-3333-4333-8333-333333333333', 'love', '{"old"}'),
+  ('44444444-4444-4444-8444-444444444444', 'skill', '{"new"}');
+
+-- card_game_results：仅 old 有 life → 直接迁入。
+insert into public.card_game_results (user_id, kind, final_cards)
+values ('33333333-3333-4333-8333-333333333333', 'life', '[]'::jsonb);
+
+-- bounty_responses：old 回应悬赏 1、2；new 回应悬赏 1
+-- → 冲突丢弃 old 对 1 的回应，迁入 old 对 2 的回应。
+insert into public.bounty_responses (bounty_id, user_id, message)
+values
+  (1, '33333333-3333-4333-8333-333333333333', 'old-resp'),
+  (2, '33333333-3333-4333-8333-333333333333', 'old-resp-2'),
+  (1, '44444444-4444-4444-8444-444444444444', 'new-resp');
+
+-- public_profiles：两账号均建档 → 合并应保留 new、删除 old。
+insert into public.public_profiles (id, name)
+values
+  ('33333333-3333-4333-8333-333333333333', 'old-name'),
+  ('44444444-4444-4444-8444-444444444444', 'new-name');
+
+-- 执行迁移（postgres 拥有 execute 权限）。
+select public.merge_anonymous_user(
+  '33333333-3333-4333-8333-333333333333',
+  '44444444-4444-4444-8444-444444444444'
+);
+
+do $$
+declare
+  v_dims jsonb;
+  v_pct  smallint;
+begin
+  -- profiles：dims 合并（new 覆盖 shared），pct 取较大值 40，old 行删除。
+  select dims, portrait_pct into v_dims, v_pct
+  from public.profiles where id = '44444444-4444-4444-8444-444444444444';
+  if not (v_dims ? 'a' and v_dims ? 'b' and v_dims->>'shared' = 'new') then
+    raise exception 'merge profiles dims wrong: %', v_dims;
+  end if;
+  if v_pct <> 40 then
+    raise exception 'merge portrait_pct should be greatest=40, got %', v_pct;
+  end if;
+  if exists (
+    select 1 from public.profiles
+    where id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'old profiles row must be deleted after merge';
+  end if;
+
+  -- conversations：old 的会话已归属 new，old 无残留。
+  if (
+    select count(*) from public.conversations
+    where user_id = '44444444-4444-4444-8444-444444444444'
+      and id = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+  ) <> 1 then
+    raise exception 'conversation should be reassigned to new user';
+  end if;
+  if exists (
+    select 1 from public.conversations
+    where user_id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'no conversation should remain on old user';
+  end if;
+
+  -- unlocks：冲突 (profile,1) 保留 new、丢弃 old；(profile,2) 迁入 → new 恰 2 行。
+  if (
+    select count(*) from public.unlocks
+    where user_id = '44444444-4444-4444-8444-444444444444'
+  ) <> 2 then
+    raise exception 'new user should have exactly 2 unlocks after merge';
+  end if;
+  if exists (
+    select 1 from public.unlocks
+    where user_id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'no unlocks should remain on old user';
+  end if;
+
+  -- profile_dimensions：skill 保留 new 值，love 迁入 → new 恰 2 行。
+  if (
+    select count(*) from public.profile_dimensions
+    where user_id = '44444444-4444-4444-8444-444444444444'
+  ) <> 2 then
+    raise exception 'new user should have exactly 2 dimensions after merge';
+  end if;
+  if (
+    select tags[1] from public.profile_dimensions
+    where user_id = '44444444-4444-4444-8444-444444444444'
+      and dimension = 'skill'
+  ) <> 'new' then
+    raise exception 'conflicting skill dimension should keep new user value';
+  end if;
+
+  -- card_game_results：old 的 life 直接迁入。
+  if (
+    select count(*) from public.card_game_results
+    where user_id = '44444444-4444-4444-8444-444444444444' and kind = 'life'
+  ) <> 1 then
+    raise exception 'card_game_results should be reassigned to new user';
+  end if;
+
+  -- bounty_responses：冲突悬赏 1 保留 new、丢弃 old；悬赏 2 迁入 → new 恰 2 行。
+  if (
+    select count(*) from public.bounty_responses
+    where user_id = '44444444-4444-4444-8444-444444444444'
+  ) <> 2 then
+    raise exception 'new user should have exactly 2 bounty_responses after merge';
+  end if;
+  if (
+    select message from public.bounty_responses
+    where user_id = '44444444-4444-4444-8444-444444444444' and bounty_id = 1
+  ) <> 'new-resp' then
+    raise exception 'conflicting bounty_response should keep new user message';
+  end if;
+  if exists (
+    select 1 from public.bounty_responses
+    where user_id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'no bounty_responses should remain on old user';
+  end if;
+
+  -- public_profiles：保留 new-name，old 行删除。
+  if (
+    select name from public.public_profiles
+    where id = '44444444-4444-4444-8444-444444444444'
+  ) <> 'new-name' then
+    raise exception 'public_profiles should keep new user row';
+  end if;
+  if exists (
+    select 1 from public.public_profiles
+    where id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'old public_profiles row must be removed after merge';
+  end if;
+end
+$$;
+
 rollback;
+

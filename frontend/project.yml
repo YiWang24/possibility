@@ -25,6 +25,10 @@ targets:
     dependencies:
       - package: Supabase
         product: Supabase
+    entitlements:
+      path: Possibility.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
     info:
       path: Info.plist
       properties:

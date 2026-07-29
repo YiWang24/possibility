@@ -21,6 +21,8 @@ struct CommunityView: View {
     /// community Edge Function 返回的真实悬赏（成功后优先展示）
     @State private var remoteBounties: [Bounty]?
     @State private var showCompose = false
+    /// 发悬赏是关键动作：游客先登录（AuthGate 就地弹 LoginSheet）
+    @State private var authGate = AuthGateCenter()
 
     private var travelers: [Traveler] {
         supabase.travelers.isEmpty ? DemoData.travelers : supabase.travelers
@@ -84,6 +86,7 @@ struct CommunityView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: 0x10131C))
         }
+        .authGate(authGate)
     }
 
     private var communityHeader: some View {
@@ -290,7 +293,7 @@ struct CommunityView: View {
     // MARK: 发悬赏 FAB（悬赏贴 tab，风格同抽取 FAB）
 
     private var composeFab: some View {
-        Button { showCompose = true } label: {
+        Button { authGate.require(supabase) { showCompose = true } } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill").font(.system(size: 15, weight: .semibold))
                 Text("发布悬赏").font(.system(size: 13.5, weight: .semibold)).tracking(0.5)

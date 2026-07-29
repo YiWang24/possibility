@@ -11,6 +11,8 @@ struct PaywallView: View {
     @Environment(SupabaseService.self) private var supabase
     @State private var processing = false
     @State private var succeeded = false
+    /// 付费解锁是关键动作：游客先登录（AuthGate 就地弹 LoginSheet）
+    @State private var authGate = AuthGateCenter()
 
     var body: some View {
         ScrollView {
@@ -20,6 +22,7 @@ struct PaywallView: View {
             .padding(.horizontal, 22).padding(.top, 12).padding(.bottom, 34)
         }
         .scrollIndicators(.hidden)
+        .authGate(authGate)
     }
 
     // MARK: 结账表单
@@ -91,6 +94,10 @@ struct PaywallView: View {
     // MARK: 动作
 
     private func pay() {
+        authGate.require(supabase) { confirmPay() }
+    }
+
+    private func confirmPay() {
         processing = true
         Task {
             if case .unlock = checkout {
