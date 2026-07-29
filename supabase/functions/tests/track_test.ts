@@ -129,7 +129,9 @@ Deno.test("sanitizeProps rejects PII-prone keys", () => {
     phone: "13812345678",
     name: "王一",
     email: "a@b.com",
-    access_token: "eyJhbGciOi",
+    // 断言的是「键名被丢弃」，值本身无关紧要。刻意不写成 JWT 形状（eyJ… 前缀）：
+    // 密钥扫描器会把它当成真凭证告警，为一个测试夹具造一堆误报不值得。
+    access_token: "<dropped-by-key-name>",
     // 合法的派生值必须留下
     content_chars: 128,
   });
