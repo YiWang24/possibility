@@ -41,6 +41,13 @@ final class HomeModel {
     private var analyzeTask: Task<Void, Never>?
     private var lastTranscript: String?
 
+    /// 日记输入方式（diary_created.input_method）。重试沿用本次链路的原始方式，
+    /// 所以只在两个真正的入口改写它。
+    private enum DiaryInputMethod: String {
+        case voice, text
+    }
+    private var diaryInputMethod: DiaryInputMethod = .voice
+
     /// demo：录音得到的预置 transcript（真实 STT 非主线）
     private let sampleTranscript = "今天又在纠结要不要转产品。会议上帮团队理清了一个乱成一团的需求，那一刻很有成就感，但一想到要放弃做了六年的设计，还是会慌。"
 
@@ -81,6 +88,7 @@ final class HomeModel {
     /// ASR 不可用时仍保留 demo transcript，但情绪/关键词绝不由客户端伪造：必须来自 analyze-diary。
     func startAnalyzeDiary(using supabase: SupabaseService) {
         guard !analyzing else { return }
+        diaryInputMethod = .voice
         finishRecording()
         analyzing = true
         analysisError = nil
@@ -105,6 +113,7 @@ final class HomeModel {
         guard !analyzing else { return }
         let text = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
+        diaryInputMethod = .text
         transcript = text
         lastTranscript = text
         analyzing = true
@@ -146,6 +155,9 @@ final class HomeModel {
         guard !Task.isCancelled else { return }
         if let result {
             analysis = result
+            // 写库成功才算创建（失败/取消都不上报）；只报字数，转写正文绝不进属性
+            Analytics.shared.track(.diaryCreated(inputMethod: diaryInputMethod.rawValue,
+                                                 contentChars: transcript.count))
             // analyze-diary 已同步写入 diary_entries；刷新今天的真实状态。
             await loadDiaryOverview(using: supabase)
         } else {

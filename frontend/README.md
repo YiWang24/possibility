@@ -29,6 +29,22 @@ frontend/
 
 > `ANTHROPIC_API_KEY` **绝不进 App / 仓库**，只存 Supabase Function Secrets（技术设计文档 §5 / §11.1）。
 
+### 埋点密钥（docs/埋点方案.md）
+
+同一条注入路径再加三个键，填在 `Config.xcconfig` 里：
+
+| 键 | 去哪拿 | 缺省行为 |
+|---|---|---|
+| `POSTHOG_API_KEY` | PostHog → Project Settings → **Project API Key**（`phc_` 开头） | 不注册 PostHog |
+| `POSTHOG_HOST` | 默认 `https://us.i.posthog.com`；EU 区改 `eu.i.posthog.com`，有自建反代就填反代域名 | 用美区默认值 |
+| `SENTRY_DSN` | Sentry → 项目 → Client Keys (DSN) | 不启动 Sentry |
+
+- **不要填 PostHog 的 Personal API Key** —— 那是读权限凭证，泄漏后果比写入 token 严重得多。
+- 三个键**留空也能正常跑**：对应 backend 不注册，App 照常启动、埋点静默 no-op，
+  事件仍然写入 Supabase `app_events`（Layer 1 不依赖任何外部密钥）。跳过时会有一行
+  `notice` 级日志，用 Console.app 按 subsystem = bundle id、category = `analytics` 过滤即可确认。
+- xcconfig 里 `//` 是注释符，URL 中的 `//` 要写成 `/$()/` 转义（模板文件里有示例）。
+
 ## 依赖
 
 - Swift Package：`supabase-swift`（在 Xcode 中 Add Package Dependencies 引入 `Supabase`）。

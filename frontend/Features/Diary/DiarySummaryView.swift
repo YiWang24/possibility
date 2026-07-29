@@ -27,6 +27,11 @@ struct DiarySummaryView: View {
 
             if isMonth { monthContent } else { yearContent }
         }
+        // 每次切到总结 tab 算一次浏览；云端总结可能晚于本次呈现返回，
+        // 那时 day_count 退回本地已加载的日记数（不上报 UI 里的 demo 常量）
+        .onAppear {
+            Analytics.shared.track(.diarySummaryViewed(dayCount: remote?.entryCount ?? model.entries.count))
+        }
     }
 
     /// "2026-07" → "2026年7月"；年 → "2026年度"

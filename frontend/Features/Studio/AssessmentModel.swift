@@ -19,6 +19,8 @@ final class AssessmentModel {
     var result: AssessmentResult?
 
     private let store = UserDefaults.standard
+    /// 本次作答的开始时刻（仅埋点用，不进持久化 —— 续答重新计时）
+    private var startedAt: Date?
 
     struct AssessmentResult: Codable {
         /// 维度 → 分数（holland 为总分 0–20，demo 为百分比 0–100）
@@ -85,6 +87,10 @@ final class AssessmentModel {
     func begin() {
         index = answers.firstIndex(where: { $0 == nil }) ?? 0
         phase = .questions
+        // 用户真的开始答题才算开始（重进结果页不会走到这里）；
+        // 「继续作答」也重新计时，duration_ms 表示本次作答的时长
+        startedAt = Date()
+        Analytics.shared.track(.assessmentStarted(assessmentId: config.kind.rawValue))
     }
 
     func select(_ value: Int) {
@@ -120,6 +126,11 @@ final class AssessmentModel {
         if config.kind == .holland { completeHolland() } else { completeDemo() }
         phase = .result
         persist()
+        // 结算是唯一一次真正完成；重新打开已完成的测评只是看结果，不会再次上报
+        Analytics.shared.track(.assessmentCompleted(
+            assessmentId: config.kind.rawValue,
+            durationMs: startedAt.map { Int(Date().timeIntervalSince($0) * 1000) } ?? 0
+        ))
     }
 
     private func completeHolland() {

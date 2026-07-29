@@ -144,6 +144,8 @@ struct LoginSheet: View {
 
     private var appleButton: some View {
         SignInWithAppleButton(.signIn) { request in
+            // 这个闭包在用户点按后、系统授权面板拉起前执行 —— 即「发起 Apple 登录」
+            Analytics.shared.track(.authAppleStarted)
             let nonce = AppleSignIn.randomNonce()
             appleNonce = nonce
             request.requestedScopes = [.fullName]
@@ -183,6 +185,8 @@ struct LoginSheet: View {
         Task {
             do {
                 flow = try await supabase.sendPhoneOTP(phone)
+                // 打在验证码真正发出之后：发送失败不算一次「已请求」（手机号绝不进属性）
+                Analytics.shared.track(.authSMSRequested)
                 step = .code
                 startResendCountdown()
             } catch {
@@ -199,6 +203,8 @@ struct LoginSheet: View {
         Task {
             do {
                 try await supabase.verifyPhoneOTP(phone, code: code.filter(\.isNumber), flow: flow)
+                // 校验通过；auth_completed 由 SupabaseService 统一上报，这里不重复
+                Analytics.shared.track(.authSMSVerified)
                 busy = false
                 dismiss()
                 onSuccess()

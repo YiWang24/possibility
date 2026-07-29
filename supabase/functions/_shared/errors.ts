@@ -1,4 +1,17 @@
 import { corsHeaders } from "./cors.ts";
+import { captureException } from "./sentry.ts";
+
+/// 从请求 URL 推出函数名（Edge Function 的路径首段就是函数名），作为 Sentry 的
+/// transaction 维度。拿不到时退回统称——错误上报不该因为解析失败而丢失。
+function transactionOf(req?: Request): string {
+  if (!req) return "edge-function";
+  try {
+    return new URL(req.url).pathname.split("/").filter(Boolean)[0] ??
+      "edge-function";
+  } catch {
+    return "edge-function";
+  }
+}
 
 export class HttpError extends Error {
   constructor(
@@ -22,7 +35,8 @@ export function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-export function errorResponse(error: unknown): Response {
+// req 可选：传入后 Sentry 事件带上函数名维度。不传仍能上报，只是少一个分组维度。
+export function errorResponse(error: unknown, req?: Request): Response {
   if (error instanceof HttpError) {
     return jsonResponse(
       { error: { code: error.code, message: error.message } },
@@ -59,8 +73,15 @@ export function errorResponse(error: unknown): Response {
     }
   }
 
+  // 走到这里的都是「没被预期到」的异常——也就是真正的代码缺陷，正是 Sentry 该收的。
+  // 上面几类（HttpError、上游 4xx/5xx）是已知业务分支，送进去只会淹没告警。
+  // request_id 与响应体里的一致，前端报错截图能直接定位到这条 Sentry 事件。
   const requestId = crypto.randomUUID();
   console.error(`[${requestId}]`, error);
+  captureException(error, {
+    transaction: transactionOf(req),
+    requestId,
+  });
   return jsonResponse(
     {
       error: {

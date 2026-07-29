@@ -14,7 +14,12 @@ struct TimelinePanel: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(Array(nodes.enumerated()), id: \.offset) { idx, node in
                     TimelineNodeRow(node: node, isLast: idx == nodes.count - 1, open: openIndex == idx) {
+                        let expanding = openIndex != idx
                         withAnimation(.easeOut(duration: 0.25)) { openIndex = openIndex == idx ? -1 : idx }
+                        // 只在展开时上报，收起不算一次查看；rank 为节点在轨迹中的序号
+                        if expanding {
+                            Analytics.shared.track(.experienceExpanded(travelerId: model.travelerId, rank: idx))
+                        }
                     }
                 }
             }

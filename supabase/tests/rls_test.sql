@@ -57,6 +57,14 @@ begin
   exception
     when insufficient_privilege then null;
   end;
+
+  -- 埋点表（0017）只 grant 给 authenticated：未登录角色一律写不进。
+  begin
+    insert into public.app_events (event, source) values ('app_opened', 'ios');
+    raise exception 'anon app_events write unexpectedly succeeded';
+  exception
+    when insufficient_privilege then null;
+  end;
 end
 $$;
 reset role;
@@ -192,6 +200,90 @@ values (
   1,
   '{"top_emotions":["平静"],"top_keywords":["转型"],"insight":"测试洞察","highlights":[]}'::jsonb
 );
+
+-- 埋点事实表（0017）：客户端事件副本由 iOS 用登录态直写，source 标 'ios'。
+insert into public.app_events (user_id, event, props, source, session_id, app_version)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  'chat_started',
+  '{"entry_point":"home"}'::jsonb,
+  'ios',
+  'sess-1',
+  '1.0.0'
+);
+
+-- 埋点表的安全边界：只能 insert 自己的行，任何人都不可 select（0017 的核心约束——
+-- 行为数据一旦可读，登录用户就能翻出完整行为时间线）。
+do $$
+begin
+  -- 读取必须被拒：既无 select 策略，也无 select 权限。
+  begin
+    perform count(*) from public.app_events;
+    raise exception 'app_events select unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  -- 冒充他人写入必须被拒（RLS with check: auth.uid() = user_id）。
+  begin
+    insert into public.app_events (user_id, event, source)
+    values ('22222222-2222-4222-8222-222222222222', 'app_opened', 'ios');
+    raise exception 'cross-user app_events insert unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  -- user_id 留空同样被拒：auth.uid() = null 不成立，避免匿名事件混入。
+  begin
+    insert into public.app_events (event, source) values ('app_opened', 'ios');
+    raise exception 'null-user app_events insert unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  -- update / delete 无策略也无权限：事件一经写入不可篡改。
+  begin
+    update public.app_events set event = 'hacked';
+    raise exception 'app_events update unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  begin
+    delete from public.app_events;
+    raise exception 'app_events delete unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  -- source 白名单：只允许 ios / server。
+  begin
+    insert into public.app_events (user_id, event, source)
+    values ('11111111-1111-4111-8111-111111111111', 'app_opened', 'web');
+    raise exception 'app_events.source check not enforced';
+  exception when check_violation then null; end;
+
+  -- props 必须是 JSON 对象：数组会让 props->>'x' 全线失效。
+  begin
+    insert into public.app_events (user_id, event, props, source)
+    values (
+      '11111111-1111-4111-8111-111111111111', 'app_opened', '[]'::jsonb, 'ios'
+    );
+    raise exception 'app_events.props object check not enforced';
+  exception when check_violation then null; end;
+end
+$$;
+reset role;
+
+-- 反向确认分析路径没被上面的收权连坐：service_role 必须读得到，
+-- 否则 supabase/analytics/*.sql 和 Dashboard 查询会全线失效。
+set local role service_role;
+do $$
+begin
+  if (select count(*) from public.app_events) < 1 then
+    raise exception 'service_role must be able to read app_events for analytics';
+  end if;
+end
+$$;
+reset role;
+
+-- 回到用户 A 的身份继续后续用例。
+select set_config(
+  'request.jwt.claim.sub',
+  '11111111-1111-4111-8111-111111111111',
+  true
+);
+set local role authenticated;
 
 -- 用户 A 创建自己的悬赏（0007 起 authenticated 可写、RLS 锁 user_id）。
 insert into public.bounties (question, reward, responses, user_id)
@@ -597,6 +689,14 @@ values
   ('33333333-3333-4333-8333-333333333333', 'old-name'),
   ('44444444-4444-4444-8444-444444444444', 'new-name');
 
+-- app_events（0017 补进合并函数）：匿名期事件必须跟着迁到正式账号。
+-- 不迁的话，merge-anonymous 随后 deleteUser 会把它们 set null 成孤儿事件，
+-- 「app_opened → 付费」完整漏斗直接断裂（docs/埋点方案.md §2）。
+insert into public.app_events (user_id, event, source)
+values
+  ('33333333-3333-4333-8333-333333333333', 'app_opened', 'ios'),
+  ('33333333-3333-4333-8333-333333333333', 'chat_started', 'ios');
+
 -- 执行迁移（postgres 拥有 execute 权限）。
 select public.merge_anonymous_user(
   '33333333-3333-4333-8333-333333333333',
@@ -708,6 +808,52 @@ begin
     where id = '33333333-3333-4333-8333-333333333333'
   ) then
     raise exception 'old public_profiles row must be removed after merge';
+  end if;
+
+  -- app_events：匿名期两条事件都归到正式账号，旧账号无残留。
+  if (
+    select count(*) from public.app_events
+    where user_id = '44444444-4444-4444-8444-444444444444'
+  ) <> 2 then
+    raise exception 'anonymous app_events must be reassigned to the new user';
+  end if;
+  if exists (
+    select 1 from public.app_events
+    where user_id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'no app_events should remain on old user';
+  end if;
+end
+$$;
+
+-- ==================== 9. app_events：注销后去标识化而非删除 ====================
+-- 0017 用 on delete set null（业务表清一色 cascade）。这是刻意的差异：
+-- 事件按 §1 不含 PII，断开 user_id 即完成个人信息删除；若跟着 cascade，
+-- 每一次注销都会让历史漏斗/留存的分母凭空缩水。
+insert into auth.users (id, role, created_at, updated_at)
+values ('55555555-5555-4555-8555-555555555555', 'authenticated', now(), now());
+
+insert into public.app_events (user_id, event, source)
+values ('55555555-5555-4555-8555-555555555555', 'purchase_completed', 'server');
+
+delete from auth.users where id = '55555555-5555-4555-8555-555555555555';
+
+do $$
+begin
+  -- 事件行仍在，但已不指向任何人。
+  if (
+    select count(*) from public.app_events
+    where event = 'purchase_completed' and user_id is null
+  ) <> 1 then
+    raise exception
+      'app_events must survive account deletion with user_id set to null';
+  end if;
+  -- 业务表的对照组：注销后应被 cascade 清空。
+  if exists (
+    select 1 from public.profiles
+    where id = '55555555-5555-4555-8555-555555555555'
+  ) then
+    raise exception 'profiles should cascade away on account deletion';
   end if;
 end
 $$;

@@ -45,7 +45,7 @@ struct MeView: View {
 
     /// 编辑公开主页统一走登录门控（游客登录成功后继续打开编辑页）
     private func requestEdit(_ mode: MeEditMode) {
-        authGate.require(supabase) { editMode = mode }
+        authGate.require(supabase, trigger: .profileEdit) { editMode = mode }
     }
 
     // MARK: Hero（原型 .prof-hero）
@@ -396,8 +396,10 @@ struct MeView: View {
 
                 if supabase.isAnonymous {
                     accountRow("登录 / 注册", tint: Theme.blue) {
-                        // 空续接：仅弹登录页；成功后 authStateChanges 刷新状态行
-                        authGate.require(supabase) {}
+                        // 空续接：仅弹登录页；成功后 authStateChanges 刷新状态行。
+                        // trigger 传 nil：这是用户主动点「登录/注册」，事件清单的
+                        // AuthTrigger 里没有对应取值，不硬塞成 profile_edit 之类。
+                        authGate.require(supabase, trigger: nil) {}
                     }
                     HStack(spacing: 6) {
                         Image(systemName: "info.circle").font(.system(size: 10))

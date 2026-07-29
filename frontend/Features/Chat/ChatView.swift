@@ -12,9 +12,10 @@ struct ChatView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var model: ChatModel
 
-    init(launch: ChatLaunch) {
+    /// entryPoint 只服务于 chat_started 埋点；不给默认值，新入口必须自报家门
+    init(launch: ChatLaunch, entryPoint: ChatEntryPoint) {
         self.launch = launch
-        _model = State(initialValue: ChatModel(launch: launch))
+        _model = State(initialValue: ChatModel(launch: launch, entryPoint: entryPoint))
     }
 
     var body: some View {
@@ -405,7 +406,8 @@ struct BubbleShape: InsettableShape {
 }
 
 #Preview {
-    ChatView(launch: ChatLaunch(topic: .career, question: "我是否要从交互设计师转为产品经理？"))
+    ChatView(launch: ChatLaunch(topic: .career, question: "我是否要从交互设计师转为产品经理？"),
+             entryPoint: .home)
         .environment(SupabaseService())
         .preferredColorScheme(.dark)
 }

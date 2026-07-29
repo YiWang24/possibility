@@ -54,6 +54,9 @@ struct ResultView: View {
             .scrollIndicators(.hidden)
         }
         .background(Theme.paper.ignoresSafeArea())
+        // 结果页每次呈现上报一次；card_count 取结果页真正展示的相似经历卡片数
+        // （三种结局是固定 3 个面板，没有区分度），问题与选择原文不上报
+        .onAppear { Analytics.shared.track(.labResultViewed(cardCount: data.people.count)) }
     }
 
     private var topBar: some View {

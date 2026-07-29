@@ -41,6 +41,8 @@ jobs:
           DEEPSEEK_CHAT_MODEL: ${{ vars.DEEPSEEK_CHAT_MODEL }}
           DEEPSEEK_STRUCTURED_MODEL: ${{ vars.DEEPSEEK_STRUCTURED_MODEL }}
           DEEPSEEK_DIARY_MODEL: ${{ vars.DEEPSEEK_DIARY_MODEL }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: ${{ vars.SENTRY_ENVIRONMENT }}
         run: |
           umask 077
           {
@@ -49,6 +51,10 @@ jobs:
             printf 'DEEPSEEK_CHAT_MODEL=%s\n' "${DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}"
             printf 'DEEPSEEK_STRUCTURED_MODEL=%s\n' "${DEEPSEEK_STRUCTURED_MODEL:-deepseek-v4-pro}"
             printf 'DEEPSEEK_DIARY_MODEL=%s\n' "${DEEPSEEK_DIARY_MODEL:-deepseek-v4-pro}"
+            # 错误上报（docs/埋点方案.md Layer 3）。未在仓库配置 SENTRY_DSN 时写入空值，
+            # _shared/sentry.ts 会静默关闭上报——功能不可用，但绝不阻断部署。
+            printf 'SENTRY_DSN=%s\n' "${SENTRY_DSN:-}"
+            printf 'SENTRY_ENVIRONMENT=%s\n' "${SENTRY_ENVIRONMENT:-production}"
           } > supabase/.env.ci
           supabase secrets set --env-file supabase/.env.ci --project-ref "$SUPABASE_PROJECT_ID"
           rm -f supabase/.env.ci

@@ -84,7 +84,17 @@ final class ProfileModel {
     @discardableResult
     func confirmUnlock(supabase: SupabaseService) async -> Bool {
         let ok = await supabase.unlockProfile(travelerId: travelerId)
-        if ok { unlocked = true }
+        if ok {
+            unlocked = true
+            // 打在写库成功处：此刻付费经验才真的可见（重新进页面读缓存不再重复上报）
+            Analytics.shared.track(.experiencesUnlocked(count: unlockedExperienceCount))
+        }
         return ok
+    }
+
+    /// 解锁后可见的经验条数（三类建议合计）—— 只报条数，正文绝不进属性
+    private var unlockedExperienceCount: Int {
+        guard let advice = detail?.advice else { return 0 }
+        return AdviceKind.allCases.reduce(0) { $0 + advice.tips(for: $1).count }
     }
 }

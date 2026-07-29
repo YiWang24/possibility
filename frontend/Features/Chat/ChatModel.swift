@@ -11,6 +11,14 @@ import Observation
 // 确定可达；用户在纠正追问后给出自己的改写时，再把完整上下文交给 /chat。
 // 岔路口成形后用 crossroads.match_query 调 /match。
 
+/// 对话入口来源（chat_started.entry_point · docs/埋点方案.md §3.1）。
+/// 没有默认值：新增入口时必须显式声明自己是谁，避免全部被记成首页。
+enum ChatEntryPoint: String, Sendable {
+    case home      // 首页发问卡
+    case tab       // 底部 tab 直达
+    case card      // 卡片 / 推荐位带问题进入
+}
+
 @Observable
 @MainActor
 final class ChatModel {
@@ -31,6 +39,8 @@ final class ChatModel {
     }
 
     let launch: ChatLaunch
+    /// 仅用于埋点：这次对话是从哪个入口进来的
+    let entryPoint: ChatEntryPoint
     var messages: [Message] = []
     var input = ""
     var isStreaming = false
@@ -91,8 +101,9 @@ final class ChatModel {
     private(set) var restoredTopic: String?
     private(set) var restoredQuestion: String?
 
-    init(launch: ChatLaunch) {
+    init(launch: ChatLaunch, entryPoint: ChatEntryPoint) {
         self.launch = launch
+        self.entryPoint = entryPoint
     }
 
     var confirmLabel: String { hadCorrection ? "这次准确了" : "嗯，比较接近" }
@@ -126,6 +137,8 @@ final class ChatModel {
     func start(supabase: SupabaseService) async {
         guard messages.isEmpty else { return }
         messages.append(Message(role: .user, text: launch.question))
+        // 首条已发出才算一次对话开始；问题正文不上报，只报入口
+        Analytics.shared.track(.chatStarted(entryPoint: entryPoint.rawValue))
         if ExploreTopic.isSampleQuestion(launch.question) {
             startedWithMock = true
             await appendLocalReply(Self.goldenReply(for: launch))
@@ -493,6 +506,8 @@ final class ChatModel {
     ) async -> (delivered: Bool, ready: Bool, conclusion: ChatConclusion?) {
         isStreaming = true
         defer { isStreaming = false }
+        // 埋点旁路：延迟从发起请求算到 done 事件，不参与任何流程控制
+        let requestStartedAt = Date()
 
         // 服务端按 conversation_id 自取库内历史（validateChatInput 忽略 history）。
         // mock 首轮尚无 conversation_id，因此第一次调用 API 时把原问题、mock 理解和
@@ -570,10 +585,25 @@ final class ChatModel {
             messages[aiIndex].text = Self.apiFailureMessage
             return (false, ready, conclusion)
         }
+        trackTurnCompleted(startedAt: requestStartedAt, replyChars: messages[aiIndex].text.count)
         if ready || conclusion?.nextStep == .match {
             requestMatch(supabase: supabase)
         }
         return (true, ready, conclusion)
+    }
+
+    /// 一轮流式回复真正结束（收到 done 且有内容）时上报。
+    /// turn_index 直接数已成立的 AI 回复：含本地示例首轮与历史恢复的轮次，
+    /// 排除失败占位气泡；回复只报字数，正文绝不进属性。
+    private func trackTurnCompleted(startedAt: Date, replyChars: Int) {
+        let turnIndex = messages.filter {
+            $0.role == .ai && !$0.text.isEmpty && $0.text != Self.apiFailureMessage
+        }.count
+        Analytics.shared.track(.chatTurnCompleted(
+            turnIndex: turnIndex,
+            latencyMs: Int(Date().timeIntervalSince(startedAt) * 1000),
+            responseChars: replyChars
+        ))
     }
 
     /// 四条首页示例问题首轮使用的本地 mock 回复。

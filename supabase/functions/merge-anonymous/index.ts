@@ -18,6 +18,8 @@ import {
   jsonResponse,
   readJson,
 } from "../_shared/errors.ts";
+import { ServerEvent } from "../_shared/events.ts";
+import { trackEvent } from "../_shared/track.ts";
 
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
@@ -68,6 +70,12 @@ Deno.serve(async (req) => {
       throw new HttpError(500, "MERGE_FAILED", "数据迁移失败，请稍后重试。");
     }
 
+    // 必须在 deleteUser 之前上报：0017 已把旧账号的 app_events 一并迁到新 user_id，
+    // 这条事件本身也要落在新账号名下，才能把匿名期行为接回完整漏斗（§2）。
+    trackEvent(user.id, ServerEvent.IDENTITY_MERGED, {
+      anonymous_id: data.user.id,
+    });
+
     // 数据已迁移，删除匿名用户（级联清掉残留行）
     const { error: deleteError } = await svc.auth.admin.deleteUser(
       data.user.id,
@@ -79,6 +87,6 @@ Deno.serve(async (req) => {
 
     return jsonResponse({ ok: true, merged: true });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

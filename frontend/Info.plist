@@ -29,6 +29,12 @@
 	<string>录制语音日记需要使用麦克风。</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>将语音日记转写为文字需要使用语音识别。</string>
+	<key>POSTHOG_API_KEY</key>
+	<string>$(POSTHOG_API_KEY)</string>
+	<key>POSTHOG_HOST</key>
+	<string>$(POSTHOG_HOST)</string>
+	<key>SENTRY_DSN</key>
+	<string>$(SENTRY_DSN)</string>
 	<key>SUPABASE_ANON_KEY</key>
 	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>

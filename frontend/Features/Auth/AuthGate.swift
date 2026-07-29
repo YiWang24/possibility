@@ -13,12 +13,23 @@ import Observation
 final class AuthGateCenter {
     var showLogin = false
     private var pendingAction: (@MainActor () -> Void)?
+    /// 本次弹窗由哪个动作触发 —— auth_prompted / auth_abandoned 的 trigger 来源。
+    /// 登录成功时清空，这样成功后的 onDismiss 不会被记成「放弃登录」。
+    private var pendingTrigger: AuthTrigger?
 
-    /// 游客则弹登录页并记住待办动作；正式用户直接执行
-    func require(_ supabase: SupabaseService, then action: @escaping @MainActor () -> Void) {
+    /// 游客则弹登录页并记住待办动作；正式用户直接执行。
+    /// - Parameter trigger: 如实反映触发登录的动作（docs/埋点方案.md §3.2）；
+    ///   事件清单里没有对应取值的入口传 nil —— 不上报好过错报成别的动作。
+    func require(_ supabase: SupabaseService,
+                 trigger: AuthTrigger?,
+                 then action: @escaping @MainActor () -> Void) {
         if supabase.isAnonymous {
             pendingAction = action
+            pendingTrigger = trigger
             showLogin = true
+            if let trigger {
+                Analytics.shared.track(.authPrompted(trigger: trigger))
+            }
         } else {
             action()
         }
@@ -28,6 +39,8 @@ final class AuthGateCenter {
     /// （立即执行可能与 sheet dismiss 的呈现互相打架）
     func loginSucceeded() {
         showLogin = false
+        // 先于 sheet 的 onDismiss 清空，避免成功登录被 cancelled() 记为放弃
+        pendingTrigger = nil
         guard let action = pendingAction else { return }
         pendingAction = nil
         Task { @MainActor in
@@ -39,6 +52,9 @@ final class AuthGateCenter {
     /// 用户放弃登录：丢弃待办动作
     func cancelled() {
         pendingAction = nil
+        guard let trigger = pendingTrigger else { return }   // 已登录成功
+        pendingTrigger = nil
+        Analytics.shared.track(.authAbandoned(trigger: trigger))
     }
 }
 
