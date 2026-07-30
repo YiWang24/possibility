@@ -58,6 +58,15 @@ struct HomeView: View {
         }) { key in
             DimensionSheet(key: key, initialSelected: model.selectedKeywords(for: key), onSave: { keywords in
                 model.saveDimension(key, keywords: keywords, using: supabase)
+            }, onSaveAssessment: { kind, tags, answers, scores in
+                model.saveDimension(
+                    key,
+                    keywords: tags,
+                    using: supabase,
+                    assessmentKind: kind,
+                    assessmentAnswers: answers,
+                    assessmentScores: scores
+                )
             }, onLaunchCardGame: { game in
                 guard let game = CardGameKind(rawValue: game) else { return }
                 pendingCardGame = game
@@ -161,11 +170,22 @@ struct HomeView: View {
         }
     }
 
-    private func saveAssessment(_ kind: AssessmentKind, tags: [String]) {
+    private func saveAssessment(
+        _ kind: AssessmentKind,
+        tags: [String],
+        answers: [Int],
+        scores: [String: Int]
+    ) {
         guard kind == .bigfive else { return }
         var text = "大五：" + tags.prefix(3).joined(separator: " · ")
         if let mbti = MBTIStore.current { text += " · MBTI：\(mbti)" }
-        model.savePersonality(text, using: supabase)
+        model.savePersonality(
+            text,
+            using: supabase,
+            assessmentKind: kind,
+            assessmentAnswers: answers,
+            assessmentScores: scores
+        )
         toast.show("结果已写入人格底色 · 原始答案默认私密")
     }
 }

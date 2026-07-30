@@ -209,6 +209,7 @@ struct ProfileAIPermissions: Codable, Equatable, Sendable {
     static let chatScope = "chat"
     static let matchScope = "match"
     static let labScope = "lab"
+    static let communityScope = "community"
     static let empty = ProfileAIPermissions(permissions: [:])
 
     struct ScopeOption: Identifiable, Sendable {
@@ -222,6 +223,7 @@ struct ProfileAIPermissions: Codable, Equatable, Sendable {
         ScopeOption(id: chatScope, label: "探索对话", detail: "在对话中提供更贴合的回应"),
         ScopeOption(id: matchScope, label: "相似经历匹配", detail: "辅助匹配处境相关的旅人"),
         ScopeOption(id: labScope, label: "人生实验室", detail: "生成更贴合现实条件的选项"),
+        ScopeOption(id: communityScope, label: "社区与万花筒", detail: "推荐更相关且多样的真实经历"),
     ]
 
     var permissions: [String: [String: Bool]]
@@ -240,10 +242,12 @@ struct ProfileAIPermissions: Codable, Equatable, Sendable {
 /// GET /get-profile 的 profile_ai_permissions 行。
 struct RemoteAIPermissions: Codable, Sendable {
     var permissions: [String: [String: Bool]]
+    var permissionRevision: Int?
     var updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case permissions
+        case permissionRevision = "permission_revision"
         case updatedAt = "updated_at"
     }
 }

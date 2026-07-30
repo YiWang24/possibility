@@ -87,21 +87,24 @@ function EditSheet({
     // 云端同步（失败静默：本地已保存，下次成功保存自然同步）
     void (async () => {
       try {
-        const writes: Promise<unknown>[] = [
-          callFunction("save-profile", {
-            action: "save_public_profile",
-            ...myProfileRemotePayload(updated),
-          }),
-        ];
+        await callFunction("save-profile", {
+          action: "save_public_profile",
+          ...myProfileRemotePayload(updated),
+        });
         if (mode === "persona") {
-          writes.push(
-            callFunction("save-profile", {
+          const response = await callFunction<{ permission_revision: number }>(
+            "save-profile",
+            {
               action: "save_ai_permissions",
               permissions: aiPermissions,
-            }),
+              permission_revision: useMyProfile.getState().permissionRevision,
+            },
+          );
+          useMyProfile.getState().setAIPermissions(
+            aiPermissions,
+            response.permission_revision,
           );
         }
-        await Promise.all(writes);
         useData.getState().invalidateProfile();
       } catch {
         /* 静默 */

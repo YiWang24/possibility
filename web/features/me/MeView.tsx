@@ -94,7 +94,10 @@ export function MeView() {
         }
       }
       if (remote?.ai_permissions) {
-        useMyProfile.getState().applyRemotePermissions(remote.ai_permissions.permissions);
+        useMyProfile.getState().applyRemotePermissions(
+          remote.ai_permissions.permissions,
+          remote.ai_permissions.permission_revision,
+        );
       } else {
         const localPermissions = useMyProfile.getState().aiPermissions;
         if (Object.keys(localPermissions).length > 0) {
@@ -102,6 +105,7 @@ export function MeView() {
             await callFunction("save-profile", {
               action: "save_ai_permissions",
               permissions: localPermissions,
+              permission_revision: useMyProfile.getState().permissionRevision,
             });
             useData.getState().invalidateProfile();
           } catch {

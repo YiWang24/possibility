@@ -1,8 +1,4 @@
 import type { PersonaOutput } from "./schemas.ts";
-import {
-  type AIPermissions,
-  authorizedProfileContext,
-} from "./profile-permissions.ts";
 
 /**
  * 动态画像离线兜底逻辑（对应原型 AI_INTEGRATION_PROMPTS.dynamicPersona）。
@@ -19,19 +15,6 @@ export const FORM_DEFS: Record<
   wing: { name: "流光翼影", hue: 190, lobes: 4 },
   orbit: { name: "星轨旅者", hue: 248, lobes: 5 },
 };
-
-export type { AIPermissions } from "./profile-permissions.ts";
-
-/**
- * AI 授权采用默认拒绝：只有维度明确设置 persona=true 才进入生成上下文。
- * 公开主页 visibility 与 AI 授权是两个独立概念，不能互相推导。
- */
-export function authorizedPersonaContext(
-  dims: Record<string, unknown>,
-  permissions: AIPermissions,
-): string {
-  return authorizedProfileContext(dims, permissions, "persona").text;
-}
 
 /** 确定性哈希：同样的画像文本必然得到同样的 seed（0..99999）。 */
 export function hashSeed(text: string): number {

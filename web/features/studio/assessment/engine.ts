@@ -39,6 +39,7 @@ export interface FacetScore {
 /** 完成后的结果（持久化到 localStorage，供工坊读取） */
 export interface AssessmentResult {
   kind: AssessmentKind;
+  answers: (number | null)[];
   /** 按配置维度顺序 */
   dims: { key: string; score: number; max: number; percent: number }[];
   facets?: { facet: string; score: number; max: number; percent: number }[];
@@ -238,6 +239,7 @@ export function buildResult(kind: AssessmentKind, answers: (number | null)[]): A
   const tags = deriveTags(kind, dims);
   const result: AssessmentResult = {
     kind,
+    answers,
     dims: dims.map((d) => ({ key: d.key, score: d.score, max: d.max, percent: d.percent })),
     tags,
     completedAt: Date.now(),
@@ -255,9 +257,21 @@ export function buildResult(kind: AssessmentKind, answers: (number | null)[]): A
 }
 
 /** save-profile 写回 payload（bigfive → personality 维度） */
-export function saveProfilePayload(kind: AssessmentKind, tags: string[]) {
+export function saveProfilePayload(kind: AssessmentKind, result: AssessmentResult) {
   const dimension = targetDimension(kind) ?? "personality";
-  return { action: "save_dimension" as const, dimension, tags, source: "assessment" };
+  return {
+    action: "save_dimension" as const,
+    dimension,
+    tags: result.tags,
+    source: "assessment" as const,
+    assessment_kind: kind,
+    assessment_answers: result.answers,
+    assessment_scores: {
+      dims: result.dims,
+      facets: result.facets ?? [],
+      mbti: result.mbti ?? null,
+    },
+  };
 }
 
 /** 结果维度补全配置元信息（供工坊/结果视图渲染持久化结果） */

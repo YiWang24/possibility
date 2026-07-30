@@ -1,76 +1,144 @@
-# 个人档案与 AI 使用设计
+# 个人档案最终数据结构与 AI 使用设计
 
-状态：Phase 1–4 已实现
+状态：已实现，待部署
 最后更新：2026-07-30
+权威迁移：`supabase/migrations/20260730160924_finalize_profile_fact_model.sql`
 
-## 1. 设计目标
+## 1. 最终结论
 
-个人档案不是一段不断覆盖的长文本，而是由“公开资料、私密事实、授权和使用回执”组成的可追踪数据系统：
+个人档案只保留一个内容真相源：`profile_facts`。
 
-- 用户知道系统保存了什么、从哪里得到、是否由本人确认。
-- AI 只能读取当前用途明确授权的维度，缺失授权时默认拒绝。
-- 本人填写和 AI 推断分开标记，推断不能伪装成确定事实。
-- 多设备同时修改时拒绝过期写入，不静默覆盖新版本。
-- 用户可以确认、按维度删除、撤回授权、导出或清空私密画像。
-- 清空私密画像不会误删公开主页；注销账号仍由独立的账号删除流程负责。
+- 已删除 `profiles.dims`。
+- 已删除 `profile_dimensions`。
+- Web、iOS、Edge Functions 不再双读或双写兼容投影。
+- 用户直接填写、测评、卡牌结果通过事务 RPC 写入正式事实。
+- Chat、日记、实验和推演只能写 `memory_proposals`，用户确认后才能进入正式事实。
+- AI 读取必须同时满足“用途授权”和“事实质量”规则，查询失败时默认不携带个人档案。
+- 公开主页草稿与真正公开数据分表，敏感主页字段不会因表名叫 `public_profiles` 而被公开读取。
 
-## 2. 数据分层
+## 2. 六大项如何映射
 
-| 层 | 表/字段 | 内容 | 可见性 |
+首页六大项对应六个固定 `dimension`：
+
+| 产品项 | dimension | 常见来源 |
+|---|---|---|
+| 人格底色 | `personality` | 大五测评、MBTI、手填 |
+| 我擅长 | `skill` | 手填、能力测评、Chat 候选 |
+| 我喜欢 | `like` | 手填、兴趣测评、Chat/日记候选 |
+| 我在恋爱关系中在意 | `love` | 关系测评、婚姻卡牌、手填 |
+| 我在家庭关系中在意 | `family` | 家庭卡牌、手填 |
+| 我在人际交往中在意 | `social` | 社交卡牌、手填 |
+
+另有 `life` 表示“人生底牌”，来自人生卡牌等业务。数据库因此允许 7 个维度，但首页六大项的结构没有混入页面文案或自由 key。
+
+一个维度不是一段拼接字符串，而是多条可独立管理的事实。例如：
+
+```json
+[
+  {
+    "dimension": "skill",
+    "fact_kind": "capability",
+    "value": "能把复杂问题拆成可执行步骤",
+    "source": "manual",
+    "confidence": 1,
+    "user_confirmed": true
+  },
+  {
+    "dimension": "like",
+    "fact_kind": "preference",
+    "value": "喜欢安静阅读",
+    "source": "chat",
+    "confidence": 1,
+    "user_confirmed": true
+  }
+]
+```
+
+## 3. 表结构与业务职责
+
+| 表 | 业务职责 | 关键字段 | 读写边界 |
 |---|---|---|---|
-| 公开主页 | `public_profiles` | 名称、简介、城市、标签、故事、服务、展示开关 | 按公开主页策略读取；只有本人可写 |
-| 私密画像快照 | `profiles` | `dims` 兼容快照、完成度、`profile_revision` | 仅本人 |
-| 私密原子事实 | `profile_facts` | 维度、值、来源、置信度、本人确认、状态、时间 | 仅本人 |
-| 私密维度聚合 | `profile_dimensions` | 每个维度的 tags 兼容视图 | 仅本人 |
-| 原始探索结果 | `card_game_results`、`persona_jobs` | 卡牌选择与数字形象结果 | 仅本人 |
-| AI 授权 | `profile_ai_permissions` | `dimension → purpose → boolean` | 仅本人 |
-| AI 使用回执 | `app_events.profile_ai_context_used` | 用途、维度键、事实数、画像版本、时间 | 用户经隐私 API 读取最小化回执 |
+| `profiles` | 用户画像的轻量状态头 | `portrait_pct`、`profile_revision`、`permission_revision` | 本人读；状态由 RPC 更新 |
+| `profile_facts` | 唯一权威画像内容 | 维度、事实类型、值、来源、置信度、确认状态、敏感度、有效期、支持次数 | 本人读；客户端不能直接写 |
+| `profile_fact_evidence` | 每条事实的来源证据 | `fact_id`、`source_type`、`source_id`、版本、作用、置信度 | 本人读；RPC/Worker 写 |
+| `memory_proposals` | AI 对用户的待确认理解 | 操作、候选值、来源、置信度、敏感度、状态、去重键、过期时间 | 本人读/审核；AI 只提案 |
+| `assessment_runs` | 测评原始记录 | 测评类型、题目版本、答案、分数、结果标签 | 本人读；与事实原子写入 |
+| `card_game_results` | 卡牌玩法原始记录 | 卡牌类型、最终牌、轮次、接受/交换过程 | 本人读；与事实原子写入 |
+| `profile_ai_permissions` | AI 用途授权矩阵 | `dimension`、`purpose`、`allowed` | 本人读；通过带版本 RPC 整体替换 |
+| `profile_public_drafts` | 公开主页的完整私有草稿 | 故事、轨迹、服务、建议、展示开关等 | 仅本人 |
+| `public_profiles` | 真正允许匿名读取的发布结果 | 名称、头像、短简介、标签、色相、`published_facts` | `anon/authenticated` 只读 |
+| `persona_jobs` | AI 形象生成结果 | 任务状态、persona、错误信息 | 仅本人 |
+| `app_events` | AI 使用最小回执及通用埋点 | event、无原文 props、时间 | 客户端不可读；隐私 API 只返回本人的最小回执 |
 
-`profile_facts` 是 AI 长期上下文的权威来源；`profiles.dims` 与 `profile_dimensions` 保留用于旧客户端和主页展示兼容。
+### 3.1 `profiles`
 
-## 3. 原子事实结构
+`profiles` 不再保存画像正文，只承担三个轻量计数器：
 
-每条事实包含：
+- `portrait_pct`：产品展示完成度。
+- `profile_revision`：正式事实的乐观并发版本。
+- `permission_revision`：AI 授权的独立乐观并发版本。
+
+完成度变化不会伪造事实版本；权限变化也不会污染事实版本。
+
+### 3.2 `profile_facts`
+
+关键字段：
 
 - `dimension`：`personality | skill | like | love | family | social | life`
-- `value`：单条可独立确认或删除的事实
-- `source`：`manual | assessment | card_game | chat | diary | legacy`
-- `source_ref`：可选的来源引用，例如会话 ID
+- `fact_kind`：`preference | capability | value | goal | constraint | relationship_need | life_stage | self_description | pattern`
+- `value / normalized_value`：展示值和规范化去重值
+- `source`：`manual | assessment | card_game | chat | diary | lab | simulation | legacy`
+- `source_ref`：会话、日记、测评或卡牌结果引用
 - `confidence`：0–1
-- `user_confirmed`：是否由用户确认
+- `user_confirmed`：是否经过本人确认
 - `status`：`active | superseded`
+- `sensitivity`：`low | medium | high`
+- `valid_from / valid_to`：事实有效期
+- `support_count / last_supported_at`：多次观察强化信息
 - `observed_at / created_at / updated_at`
 
-本人填写、测评和卡牌选择默认是已确认事实；聊天与日记抽取默认是待确认推断。AI 提示词会明确携带“用户已确认”或“待用户确认 + 来源 + 置信度”，避免把推断说成事实。
+唯一约束是 `(user_id, dimension, value)`。删除一个维度会级联删除该维度的证据和待确认候选。
 
-## 4. 写入与版本控制
+### 3.3 `profile_fact_evidence`
 
-所有主要画像写路径统一调用 `replace_profile_dimension`：
+事实与证据分表，避免把“事实”与“为什么相信它”混为一体。
 
-1. 清洗、去重并限制每个维度最多 20 条事实。
-2. 将不再出现的旧事实标为 `superseded`。
-3. upsert 当前原子事实并保留来源、置信度和确认状态。
-4. 同步更新 `profile_dimensions` 和 `profiles.dims`。
-5. 原子递增 `profiles.profile_revision`。
+- `source_type` 支持手填、测评、卡牌、对话、日记、实验和推演。
+- `source_id + source_version` 指向具体来源版本。
+- `evidence_role` 支持 `supports | contradicts | corrects`。
+- 同一事实、来源、来源 ID、证据作用只保留一条。
 
-客户端执行确认、按维度删除或清空时提交当前 `profile_revision`。若服务端版本已经变化，RPC 返回 SQLSTATE `40001`，Edge Function 转为 HTTP 409 `PROFILE_REVISION_CONFLICT`，客户端提示刷新后重试。
+匿名账号合并时，重复事实的证据会先迁到正式账号保留的事实，再删除重复事实，避免级联丢失证据。
 
-旧客户端仍可调用 `apply_profile_update`；该 RPC 也会递增版本，但新的画像事实写入应使用 `replace_profile_dimension`。
+### 3.4 `memory_proposals`
 
-## 5. AI 读取流程
+AI 不直接改 `profile_facts`。Chat、日记、实验和推演只能创建候选：
 
-```mermaid
-flowchart LR
-    A["当前登录用户 JWT"] --> B["RLS 用户客户端"]
-    B --> C["读取 active profile_facts"]
-    B --> D["读取 profile_ai_permissions"]
-    B --> E["读取 profile_revision"]
-    C --> F["按 purpose + dimension 明确授权过滤"]
-    D --> F
-    E --> F
-    F --> G["只把获准事实加入 AI 上下文"]
-    G --> H["返回 ai_context 用途/维度/版本"]
-    F --> I["写入最小化使用回执"]
+```text
+AI 观察
+→ memory_proposals.pending
+→ 用户接受
+→ profile_facts + profile_fact_evidence
+→ proposal.status = applied
+```
+
+用户拒绝后状态为 `rejected`。候选按“用户 + 去重键”幂等，默认 30 天过期。接受候选会递增 `profile_revision`；拒绝不会改变正式事实版本。
+
+### 3.5 测评与卡牌
+
+测评和卡牌各自保留原始结果，不能只留下几个展示标签：
+
+- `save_assessment_and_profile`：同一事务写 `assessment_runs` 和正式事实。
+- `save_card_game_and_profile`：同一事务写 `card_game_results` 和正式事实。
+
+这样 AI 能读取稳定事实，产品和研究又能追溯答案、分数、题目版本或卡牌过程。
+
+### 3.6 AI 权限
+
+授权采用规范化行，而不是单行大 JSON：
+
+```text
+(user_id, dimension, purpose) -> allowed
 ```
 
 用途固定为：
@@ -78,77 +146,128 @@ flowchart LR
 - `persona`：动态 AI 形象
 - `chat`：探索对话
 - `match`：相似经历匹配
-- `lab`：人生实验室
+- `lab`：人生实验室与推演
+- `community`：社区与万花筒推荐
 
-任一事实、权限或版本查询失败时 fail closed：不附加长期画像，但不阻断用户当前主动发起的请求。使用回执不记录事实值、prompt、日记或对话原文。
+默认拒绝：没有明确的 `allowed=true` 行就不能读取。客户端提交整个矩阵时必须携带 `permission_revision`，过期版本返回 HTTP 409，避免多设备静默覆盖授权。
 
-## 6. 隐私中心
+### 3.7 公开主页
 
-Web 与 iOS 的“我的主页 → 账号 → 个人档案与 AI 隐私”均提供：
+公开主页分成两层：
 
-- 查看当前画像版本和全部 active 事实。
-- 查看每条事实的来源、置信度和本人确认状态。
-- 确认一条 AI 推断。
-- 永久删除一个画像维度及关联卡牌结果。
-- 查看最近 AI 使用回执。
-- 导出完整 JSON 档案。
-- 撤回全部 AI 授权，画像仍保留。
-- 清空全部私密画像，公开主页保留。
+```text
+profile_public_drafts
+  完整草稿，仅本人读取
+          |
+          | save_public_profile
+          v
+public_profiles
+  低风险发布字段，匿名只读
+```
 
-导出格式：
+`public_profiles` 不含年龄、城市、角色转换、完整故事、轨迹、服务或建议等草稿字段。`published_facts` 只包含草稿 `visibility` 明确打开的维度。
 
-- `schema`: `possibility.profile-export`
-- `schema_version`: `1`
-- `exported_at`
-- `data`: profile、facts、dimensions、card games、AI permissions、public profile、persona jobs、AI access receipts
+正式事实被修改、按维度删除或全部清空后，发布事实会在同一数据库事务中刷新，防止公开快照残留已删除内容。
 
-## 7. 安全边界
+## 4. 写入业务
 
-- `profile_facts` 开启 RLS，并分别定义本人 SELECT/INSERT/UPDATE/DELETE 策略。
-- `anon` 没有事实表权限，也不能执行画像写 RPC。
-- Edge Function 使用用户 JWT 创建数据库上下文，不用 service role 绕过事实表 RLS。
-- 只有读取最小化 `app_events` 回执时使用 service role，查询条件来自已验签的 `user.id`，且不返回原始内容。
-- AI 权限默认拒绝：不存在权限行、维度键或用途键时均视为 `false`。
-- 合并匿名账号时同步迁移事实、版本和授权，并处理同一事实冲突。
-- 删除账号仍走 `delete-account`；清空私密画像是范围更小、可理解的独立操作。
+| 业务 | 正式事实写入 | 原始记录 | 版本行为 |
+|---|---|---|---|
+| 用户手填六大项 | `replace_profile_dimension` | 无 | `profile_revision + 1` |
+| 测评 | `save_assessment_and_profile` | `assessment_runs` | 原子 `profile_revision + 1` |
+| 卡牌 | `save_card_game_and_profile` | `card_game_results` | 原子 `profile_revision + 1` |
+| Chat 抽取 | `propose_profile_fact` | `memory_proposals` | 不改正式版本 |
+| 日记抽取 | Worker 幂等 upsert 提案 | `memory_proposals` | 不改正式版本 |
+| 接受 AI 候选 | `review_profile_proposal` | evidence + fact | `profile_revision + 1` |
+| 拒绝 AI 候选 | `review_profile_proposal` | proposal rejected | 正式版本不变 |
+| 删除一个维度 | `delete_profile_dimension` | 级联删除关联私密数据 | `profile_revision + 1` |
+| 更新授权 | `replace_profile_ai_permissions` | 规范化权限行 | `permission_revision + 1` |
+| 清空私密画像 | `clear_private_profile` | 清事实、证据、候选、测评、卡牌、persona、授权 | 两类 revision 各 `+1` |
+| 保存公开主页 | `save_public_profile` | 草稿 + 安全发布行 | 不改事实版本 |
 
-## 8. 已完成阶段
+所有客户端画像写入口都经过 RPC；`authenticated` 对事实、证据、候选、测评和权限表没有直接写权限。
 
-### Phase 1：数据分层与用途授权
+## 5. AI 读取业务
 
-- 公开主页字段结构化。
-- 私密 AI 权限从公开 visibility 中分离。
-- persona/chat/match/lab 按用途默认拒绝。
-- Web 与 iOS 权限设置界面。
+共享读取器位于 `supabase/functions/_shared/profile-context.ts` 和 `profile-permissions.ts`。
 
-### Phase 2：事实化与来源证据
+```mermaid
+flowchart LR
+    A["已验证用户 JWT"] --> B["读取 profiles 两类 revision"]
+    B --> C["读取 active profile_facts"]
+    B --> D["读取规范化授权行"]
+    C --> E["按 purpose 过滤明确授权维度"]
+    D --> E
+    E --> F["按确认状态、置信度、支持次数、时间排序"]
+    F --> G["最多选择 12 条事实"]
+    G --> H["结构化 facts + 有预算的 prompt 文本"]
+    H --> I["Chat / Persona / Match / Lab / Community"]
+    G --> J["写最小化 AI 使用回执"]
+```
 
-- `profile_facts` 原子事实表。
-- 来源、置信度、确认状态和 superseded 历史。
-- 手填、测评、卡牌、聊天、日记写路径统一同步。
-- AI 上下文以事实表为权威来源。
+质量规则：
 
-### Phase 3：修订、冲突与可解释记录
+- `match/community` 只使用本人已确认事实。
+- `lab` 可使用本人确认事实；未确认事实必须至少有 2 次支持且置信度不低于 0.8。
+- `chat/persona` 的最低置信度为 0.7。
+- 当前请求中用户主动提供的信息始终高于长期画像。
+- 查询画像、授权或版本任一步失败时 fail closed：当前功能继续，但不附带长期画像。
 
-- 单调递增的 `profile_revision`。
-- 乐观并发冲突检测。
-- 用户确认推断、按维度删除。
-- AI 使用最小化回执与响应版本披露。
+响应中的 `ai_context` 只披露用途、使用的维度/事实 ID、`profile_revision` 和 `permission_revision`。使用回执不保存事实值、Prompt、聊天内容或日记原文。
 
-### Phase 4：数据权利与端到端管理
+## 6. 客户端读取
 
-- Web/iOS 隐私中心。
-- JSON 导出。
-- 全部撤权。
-- 清空私密画像但保留公开主页。
-- RLS、匿名拒绝、跨用户隔离、冲突、删除和保留边界测试。
+`GET /get-profile` 返回：
 
-## 9. 验证清单
+- `portrait_pct`
+- `profile_revision`
+- `facts`
+- `card_games`
+- 本人的 `profile_public_drafts`
+- 规范化后重建的权限矩阵及 `permission_revision`
 
-- Edge Functions 格式、lint、typecheck 与单元测试。
+Web 和 iOS 需要展示“维度文本”时，均在客户端把 active `profile_facts` 按 `dimension` 分组；数据库不再保存第二份聚合结果。
+
+隐私中心额外返回：
+
+- active facts
+- pending proposals
+- 权限矩阵与两类 revision
+- 最近最小化 AI 使用回执
+
+导出包含 profile 状态、facts、evidence、proposals、assessment runs、card games、permissions、私有主页草稿、安全发布结果、persona jobs 和使用回执。
+
+## 7. RLS 与安全边界
+
+- `profile_facts`、`profile_fact_evidence`、`memory_proposals`、`assessment_runs`、`profile_ai_permissions`、`profile_public_drafts`：本人 SELECT。
+- 上述画像内容表对 `authenticated` 撤销直接写权限，只能经受控 RPC 或 service-role Worker 写入。
+- `public_profiles`：`anon/authenticated` 仅 SELECT，不能直接 INSERT/UPDATE/DELETE。
+- 所有可由客户端调用的 `security definer` RPC 都显式检查 `auth.uid()`，设置空 `search_path`，并只向 `authenticated` 授权。
+- Worker 用 service role 写日记候选；客户端无法伪造 AI 来源。
+- 注销账号依靠外键级联删除私密数据；`app_events` 按现有去标识化策略处理。
+- 匿名账号合并会迁移事实、证据、候选、测评、权限、公开草稿、日记摘要等新增数据。
+
+## 8. 不兼容迁移与发布要求
+
+迁移会先把旧 `profiles.dims` 和 `profile_dimensions` 中缺失的内容回填为 `legacy` 事实，然后删除旧表/字段。它不是长期兼容层。
+
+因此数据库迁移、Edge Functions、Web 和 iOS 必须在同一发布窗口切换。旧客户端仍调用 `apply_profile_update` 或读取 `dims/profile_dimensions` 时会失败，应配合强制升级或最低版本策略。
+
+当前只完成了本地实现和验证，尚未推送远程 Supabase migration，也未部署 Edge Functions。
+
+## 9. 验证
+
+已完成：
+
 - 本地数据库从零执行全部 migration 和 seed。
-- 基础 RLS、日记 v2 RLS、个人档案隐私 RLS 测试。
-- Supabase 生成 TypeScript 与 Swift 数据库类型。
-- packages 和 Web TypeScript typecheck。
-- Web production build。
-- iOS 需在 macOS/Xcode CI 继续执行正式编译与 UI 测试；Linux 开发环境不包含 Swift/Xcode 工具链。
+- Supabase schema lint：0 错误。
+- 基础 RLS、日记 v2 RLS、个人档案隐私 RLS 全量通过。
+- Edge Functions fmt、lint、typecheck 和 121 个单元测试通过。
+- 从本地最终数据库重新生成 TypeScript 和 Swift 类型。
+- packages/Web TypeScript typecheck 通过。
+- Web production build 通过。
+
+待 macOS CI：
+
+- iOS 正式编译。
+- iOS 单元测试和关键隐私中心 UI 流程。

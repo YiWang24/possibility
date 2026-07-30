@@ -2,16 +2,8 @@
 // 结构化输出 schema 的自洽性，以及 SSE 事件编码契约。
 // 这些逻辑一旦出错会直接破坏 AI 集成的真实业务表现，故独立于校验器单测。
 
-import {
-  authorizedPersonaContext,
-  fallbackPersona,
-  FORM_DEFS,
-  hashSeed,
-} from "../_shared/persona.ts";
-import {
-  authorizedFactsContext,
-  authorizedProfileContext,
-} from "../_shared/profile-permissions.ts";
+import { fallbackPersona, FORM_DEFS, hashSeed } from "../_shared/persona.ts";
+import { authorizedFactsContext } from "../_shared/profile-permissions.ts";
 import { frontDoorPrompt } from "../_shared/prompts.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { sseEvent } from "../_shared/sse.ts";
@@ -115,57 +107,67 @@ Deno.test("persona empty input still yields a valid persona", () => {
   assert(Object.values(FORM_DEFS).some((d) => d.name === p.shape));
 });
 
-Deno.test("persona context is default-deny and purpose-scoped", () => {
-  const dims = {
-    skill: "理清复杂需求",
-    like: "徒步",
-    private_note: "不应进入模型",
-  };
-  assert(
-    authorizedPersonaContext(dims, {}) === "",
-    "missing permission row must deny every dimension",
-  );
-  const context = authorizedPersonaContext(dims, {
-    skill: { persona: true },
-    like: { chat: true },
-    private_note: { persona: false },
-  });
-  assert(context.includes("skill"));
-  assert(context.includes("理清复杂需求"));
-  assert(!context.includes("徒步"));
-  assert(!context.includes("不应进入模型"));
+Deno.test("match and community only use confirmed profile facts", () => {
+  const facts = [
+    {
+      id: "confirmed",
+      dimension: "skill",
+      value: "理清复杂需求",
+      source: "manual",
+      confidence: 1,
+      user_confirmed: true,
+    },
+    {
+      id: "inferred",
+      dimension: "like",
+      value: "可能喜欢徒步",
+      source: "diary",
+      confidence: 0.95,
+      user_confirmed: false,
+      support_count: 4,
+    },
+  ];
+  for (const purpose of ["match", "community"] as const) {
+    const context = authorizedFactsContext(
+      facts,
+      { skill: { [purpose]: true }, like: { [purpose]: true } },
+      purpose,
+      8,
+      3,
+    );
+    assert(context.factIds.join(",") === "confirmed");
+    assert(context.permissionRevision === 3);
+  }
 });
 
-Deno.test("saved profile context uses independent default-deny scopes", () => {
-  const dims = {
-    personality: "偏好先观察再行动",
-    skill: "理清复杂需求",
-    like: "徒步",
-    life: "稳定现金流",
-    unknown: "不能进入模型",
-  };
-  const permissions = {
-    personality: { chat: true, match: false },
-    skill: { match: true },
-    like: { lab: true },
-    life: { persona: true },
-    unknown: { chat: true, match: true, lab: true, persona: true },
-  };
-
-  const chat = authorizedProfileContext(dims, permissions, "chat");
-  assert(chat.dimensions.join(",") === "personality");
-  assert(chat.text.includes("先观察再行动"));
-  assert(!chat.text.includes("理清复杂需求"));
-  assert(!chat.text.includes("不能进入模型"));
-
-  const match = authorizedProfileContext(dims, permissions, "match");
-  assert(match.dimensions.join(",") === "skill");
-
-  const lab = authorizedProfileContext(dims, permissions, "lab");
-  assert(lab.dimensions.join(",") === "like");
-
-  const persona = authorizedProfileContext(dims, permissions, "persona");
-  assert(persona.dimensions.join(",") === "life");
+Deno.test("lab only uses strong repeated unconfirmed profile facts", () => {
+  const context = authorizedFactsContext(
+    [
+      {
+        id: "strong",
+        dimension: "skill",
+        value: "反复表现出拆解能力",
+        source: "diary",
+        confidence: 0.84,
+        user_confirmed: false,
+        support_count: 2,
+      },
+      {
+        id: "single",
+        dimension: "like",
+        value: "单次提到徒步",
+        source: "chat",
+        confidence: 0.95,
+        user_confirmed: false,
+        support_count: 1,
+      },
+    ],
+    { skill: { lab: true }, like: { lab: true } },
+    "lab",
+    4,
+  );
+  assert(context.factIds.join(",") === "strong");
+  assert(!context.text.includes("单次提到徒步"));
 });
 
 Deno.test("fact context distinguishes confirmed facts from AI inferences", () => {
