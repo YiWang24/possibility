@@ -18,19 +18,24 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: App
-      - path: Core
-      - path: Features
-      - path: Assets.xcassets
+      - path: Possibility/App
+      - path: Possibility/Core
+      - path: Possibility/Features
+      - path: Possibility/Resources/Assets.xcassets
     dependencies:
       - package: Supabase
         product: Supabase
+    # Base.xcconfig 已入库，内部 #include? 本地 Config.xcconfig（含密钥，不入库）。
+    # 走 configFiles 而非手工在 Xcode 里点选，xcodegen 重生成工程后不会丢。
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
     entitlements:
-      path: Possibility.entitlements
+      path: Possibility/Possibility.entitlements
       properties:
         com.apple.developer.applesignin: [Default]
     info:
-      path: Info.plist
+      path: Possibility/Resources/Info.plist
       properties:
         CFBundleDisplayName: Possibility
         UILaunchScreen: {}

@@ -182,15 +182,15 @@ npm test
 
 ```bash
 # 前端已配置线上 Supabase 回落，拉取即可直连云端
-open frontend/Possibility.xcodeproj
+open ios/Possibility.xcodeproj
 # Xcode → 选择 iOS 17+ 模拟器或真机 → Build & Run
 ```
 
 如需连本地 Supabase：
 
-1. 复制 `frontend/Config.xcconfig.example` → `frontend/Config.xcconfig`
+1. 复制 `ios/Config/Config.xcconfig.example` → `ios/Config/Config.xcconfig`
 2. 填入本地 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`
-3. Xcode Build Settings 指向该 xcconfig
+3. `cd ios && xcodegen generate`（`Config/Base.xcconfig` 已自动引入，无需手点 Build Settings）
 
 > ⚠️ `ANTHROPIC_API_KEY` **绝不进 App / 仓库**，只存 Supabase Function Secrets。
 
@@ -198,29 +198,40 @@ open frontend/Possibility.xcodeproj
 
 ## 📁 项目结构
 
+顶层按「交付物」切分：`ios/` `web/` `flash-app/` 三个可独立构建的前端，`supabase/` 一个后端，
+其余是不进产物的支撑目录（`design/` `marketing/` `docs/` `scripts/`）。
+
 ```
-adx/
-├── frontend/                    # iOS 前端 (SwiftUI)
-│   ├── App/                     # 入口 · 配置 · 导航路由
-│   │   ├── KaleidoApp.swift     # @main，暗色主题，四 Tab
-│   │   ├── AppConfig.swift      # URL/Key/价格/阈值配置
-│   │   └── Navigation.swift     # 全局路由 · 旅人主页 cover
-│   ├── Core/
-│   │   ├── DesignSystem/        # Theme · 组件 · 四个签名动画
-│   │   ├── Models/              # 数据模型 · DemoData（断网兜底）
-│   │   └── Network/             # SupabaseService · ChatStreamClient
-│   ├── Features/
-│   │   ├── Home/                # 认识自己（画像 · 日记 · AI 提问）
-│   │   ├── Chat/                # 探索对话（流式 SSE）
-│   │   ├── Lab/                 # 人生实验室（转盘 · 推演）
-│   │   ├── Community/           # 万花筒社区（抽取 · 悬赏 · 围观）
-│   │   ├── CardGame/            # 卡牌游戏
-│   │   ├── Studio/              # 画像工作室（测评 · 上下文扫描）
-│   │   ├── Me/                  # 我的主页
-│   │   ├── Diary/               # 语音日记
-│   │   └── Profile/             # 旅人主页 · 付费墙
-│   ├── Assets.xcassets/         # 社区头像资源
-│   └── Possibility.xcodeproj/   # Xcode 工程
+possibility/
+├── ios/                         # iOS App (SwiftUI) —— 标准 Xcode 布局
+│   ├── Possibility.xcodeproj/   # 由 project.yml 生成，勿手改工程设置
+│   ├── Possibility/             # ← app target 源码根（与 target 同名）
+│   │   ├── App/                 # 入口 · 配置 · 导航路由
+│   │   │   ├── PossibilityApp.swift  # @main，暗色主题，四 Tab
+│   │   │   ├── AppConfig.swift       # URL/Key/价格/阈值配置
+│   │   │   └── Navigation.swift      # 全局路由 · 旅人主页 cover
+│   │   ├── Core/
+│   │   │   ├── DesignSystem/    # Theme · 组件 · 四个签名动画
+│   │   │   ├── Models/          # 数据模型 · DemoData（断网兜底）
+│   │   │   ├── Network/         # SupabaseService · ChatStreamClient
+│   │   │   └── Utilities/       # AsyncTimeout · SupabaseTimestamp
+│   │   ├── Features/
+│   │   │   ├── Home/            # 认识自己（画像 · 日记 · AI 提问）
+│   │   │   ├── Chat/            # 探索对话（流式 SSE）
+│   │   │   ├── Lab/             # 人生实验室（转盘 · 推演）
+│   │   │   ├── Community/       # 万花筒社区（抽取 · 悬赏 · 围观）
+│   │   │   ├── CardGame/        # 卡牌游戏
+│   │   │   ├── Studio/          # 画像工作室（测评 · 上下文扫描）
+│   │   │   ├── Me/              # 我的主页
+│   │   │   ├── Diary/           # 语音日记
+│   │   │   ├── Auth/            # 手机验证码 · Apple 登录
+│   │   │   └── Profile/         # 旅人主页 · 付费墙
+│   │   ├── Resources/           # Assets.xcassets · Info.plist
+│   │   └── Possibility.entitlements
+│   ├── PossibilityTests/        # 单测（Swift Testing）
+│   ├── PossibilityUITests/      # UI 测试 · App Store 截图
+│   ├── Config/                  # Base.xcconfig（入库）· Config.xcconfig.example
+│   └── project.yml              # xcodegen 工程定义（唯一事实来源）
 │
 ├── supabase/                    # 后端 (Supabase)
 │   ├── migrations/              # 10 个 SQL migration
@@ -247,18 +258,43 @@ adx/
 │   ├── seed.sql                 # 种子数据（12 位旅人）
 │   └── config.toml              # 项目配置
 │
-├── scripts/                     # 工具脚本
-│   └── gen_seed.mjs             # 从原型生成 seed.sql
+├── web/                         # 灵光赛道演示站（纯静态 mock，可直接部署）
 │
-├── docs/                        # 设计文档
+├── flash-app/                   # 灵光 App（Vite + React，独立工程链，自带 CLAUDE.md）
+│
+├── design/                      # 设计资产（不进任何产物）
+│   ├── prototype/               # 高保真原型 HTML（seed.sql 的数据来源）
+│   ├── screens/                 # 各界面设计稿
+│   ├── app-icon-iterations/     # App 图标迭代
+│   ├── appstore/                # App Store 上架截图
+│   └── assets/                  # 共享图片母版（社区头像 · 数字人）
+│
+├── marketing/                   # 宣传物料
+│   └── possibility-poker/       # 人生决策扑克牌（HTML 模板 + 出图提示词）
+│
+├── docs/                        # 产品 / 技术文档
 │   ├── 产品同步0723.md           # 产品 PRD（完整需求）
 │   ├── 技术设计文档.md            # 技术架构设计
 │   ├── 后端开发架构.md            # 后端模块拆解与依赖图
 │   └── 并行开发方案.md            # 前后端接线开发方案
 │
+├── scripts/                     # 工具脚本
+│   ├── gen_seed.mjs             # 从原型生成 seed.sql
+│   ├── sync-assets.sh           # design/assets 母版 → iOS xcassets + web/
+│   └── verify_db.sh             # 无 CLI 环境下校验迁移
+│
 ├── .github/workflows/           # CI/CD
 └── package.json                 # 根构建脚本
 ```
+
+### 目录约定
+
+- **目录名一律 ASCII**（进路径 / CI / URL），文档文件名保留中文。
+- `supabase/` 必须在仓库根 —— Supabase CLI 按此定位工程。
+- `design/assets/` 是共享图片的**唯一母版**；iOS 的 `Assets.xcassets` 与 `web/assets/` 都是
+  由 `scripts/sync-assets.sh` 分发的副本（Xcode 和静态托管都需要真实文件，不能用符号链接）。
+  改图只改母版再跑同步。
+- `flash-app/` 是灵光赛道的独立工程，有自己的 lint / tsconfig / CLAUDE.md，不受根目录约定管辖。
 
 ---
 

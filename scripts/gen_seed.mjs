@@ -3,7 +3,7 @@
 // 用法：node scripts/gen_seed.mjs
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 
-const HTML = "万花筒-认识自己-原型.html";
+const HTML = "design/prototype/万花筒-认识自己-原型.html";
 const OUT = "supabase/seed.sql";
 
 const src = readFileSync(HTML, "utf8");
