@@ -1,0 +1,101 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:800px;height:2000px}
+  .brand{position:absolute;left:0;right:0;top:70px;z-index:4;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .brand .top{display:flex;align-items:center;gap:16px}
+  .brand svg{width:56px;height:56px}
+  .brand .nm{font-family:var(--round);font-weight:800;font-size:44px;line-height:1}
+  .brand .tg{font-size:16px;color:var(--teal-d);font-weight:700;letter-spacing:.16em}
+  .title{position:absolute;left:0;right:0;top:236px;z-index:4;text-align:center}
+  .title .pre{display:inline-block;background:var(--coral);color:#fff;border-radius:14px;padding:9px 22px;
+    font-family:var(--round);font-weight:800;font-size:24px;box-shadow:0 6px 0 rgba(38,38,31,.14)}
+  .title .big{font-family:var(--round);font-weight:800;font-size:110px;color:var(--teal-d);line-height:1;margin-top:18px}
+  .title .big em{font-style:normal;color:var(--coral)}
+  .mods{position:absolute;left:60px;right:60px;top:1140px;z-index:4;display:flex;flex-direction:column;gap:20px}
+  .mod{background:var(--paper);border-radius:24px;padding:24px 28px;display:flex;align-items:center;gap:22px;
+    box-shadow:0 10px 0 rgba(38,38,31,.08)}
+  .mod svg{width:66px;height:66px;flex:none}
+  .mod .en{font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.2em;color:var(--teal-d)}
+  .mod h3{font-family:var(--round);font-weight:800;font-size:30px;margin:2px 0 6px}
+  .mod p{font-size:16px;color:var(--ink);opacity:.7;font-weight:500;line-height:1.5}
+  .foot{position:absolute;left:0;right:0;bottom:0;height:392px;z-index:4;padding:52px 60px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .foot .slg{font-family:var(--round);font-weight:800;font-size:42px;color:#fff;text-align:center;line-height:1.4}
+  .foot .slg em{font-style:normal;color:var(--mustard)}
+  .foot .cta{margin-top:30px;display:flex;align-items:center;gap:24px}
+  .foot .qr{width:132px;height:132px;border-radius:18px;background:#fff;padding:12px}
+  .foot .qr .q{width:100%;height:100%;border-radius:8px;background:
+    repeating-linear-gradient(0deg,#26261f 0 8px,#fff 8px 16px),repeating-linear-gradient(90deg,#26261f 0 8px,transparent 8px 16px);
+    background-blend-mode:multiply}
+  .foot .info{color:#fff;text-align:left}
+  .foot .info b{font-family:var(--round);font-weight:800;font-size:26px;display:block}
+  .foot .info span{font-size:16px;opacity:.85;line-height:1.7;display:block;margin-top:6px}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="scene" id="scene" viewBox="0 0 800 2000" width="800" height="2000" preserveAspectRatio="xMidYMid slice"></svg>
+
+  <div class="brand">
+    <div class="top"><svg viewBox="-50 -50 100 100" id="bmk"></svg><div class="nm">我有可能</div></div>
+    <div class="tg">自我探索 · 人生决策平台</div>
+  </div>
+  <div class="title">
+    <span class="pre">在人生的岔路口</span>
+    <div class="big">看见更多<br><em>可能</em></div>
+  </div>
+
+  <div class="mods">
+    <div class="mod"><svg viewBox="-40 -40 80 80" id="m1"></svg><div><div class="en">KNOW YOURSELF</div><h3>认识自己</h3><p>科学测评 × 趣味探索 × AI 语音日记，生成动态自我画像</p></div></div>
+    <div class="mod"><svg viewBox="-40 -40 80 80" id="m2"></svg><div><div class="en">LIFE LAB</div><h3>人生实验室</h3><p>预演选择在 3 / 5 / 10 年后的最好、一般与最坏情形</p></div></div>
+    <div class="mod"><svg viewBox="-40 -40 80 80" id="m3"></svg><div><div class="en">KALEIDOSCOPE</div><h3>万花筒社区</h3><p>链接走过相似路的前辈，获得真实经验与互助支持</p></div></div>
+  </div>
+
+  <div class="foot">
+    <div class="slg">不替你给出标准答案，<br>只帮你<em>看见更多可能</em>。</div>
+    <div class="cta">
+      <div class="qr"><div class="q"></div></div>
+      <div class="info"><b>我有可能</b><span>面向 20-35 岁的奥德赛世代<br>科学 · 人文 · 趣味</span></div>
+    </div>
+  </div>
+</div>
+<script src="flat.js"></script>
+<script>
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  svg.appendChild(FLAT.rays(400,480,1400,30,[C.cream2,"#FBE9B8"]));
+  // 太阳
+  svg.appendChild(E("circle",{cx:610,cy:520,r:78,fill:C.mustard,filter:"url(#sticker)"}));
+  // 底部青色带
+  svg.appendChild(E("rect",{x:-20,y:1608,width:840,height:420,fill:C.tealD}));
+  svg.appendChild(E("path",{d:"M-20,1636 Q200,1585 400,1620 Q600,1652 820,1600 L820,1660 L-20,1660 Z",fill:C.teal}));
+  // 山丘（模块区上方，托住主角）
+  svg.appendChild(E("path",{d:"M-20,1010 Q220,950 440,985 Q640,1015 820,965 L820,1130 L-20,1130 Z",fill:C.tealL}));
+  svg.appendChild(E("path",{d:"M-20,1066 Q240,1015 460,1046 Q650,1072 820,1030 L820,1130 L-20,1130 Z",fill:C.teal}));
+  // 中心花
+  svg.appendChild(FLAT.flower(360,640,132,C.coral,C.mustard,C.tealD));
+  // 主角：站在山丘上举手
+  (function(){const g=E("g",{transform:"translate(560,1050) scale(1.5)",filter:"url(#sticker)"});
+    g.appendChild(E("rect",{x:-20,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:4,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:-23,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("rect",{x:2,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("path",{d:"M-25,-116 Q-27,-62 -21,-56 L21,-56 Q27,-62 25,-116 Q0,-130 -25,-116 Z",fill:C.coral}));
+    g.appendChild(E("rect",{x:21,y:-114,width:13,height:50,rx:6,fill:C.coral}));
+    g.appendChild(E("circle",{cx:28,cy:-62,r:7,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-24,-116 Q-46,-132 -58,-160 L-46,-168 Q-34,-140 -14,-104 Z",fill:C.coral}));
+    g.appendChild(E("circle",{cx:-52,cy:-158,r:7.5,fill:C.skin}));
+    g.appendChild(E("circle",{cx:0,cy:-138,r:22,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-22,-146 Q-19,-168 2,-166 Q22,-168 22,-144 Q13,-156 0,-154 Q-11,-156 -22,-146 Z",fill:C.ink}));
+    g.appendChild(E("circle",{cx:-11,cy:-140,r:2.6,fill:C.ink}));
+    g.appendChild(E("path",{d:"M-16,-129 Q-9,-124 -2,-129",stroke:C.ink,"stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+    svg.appendChild(g);})();
+  // 点缀
+  svg.appendChild(FLAT.star(150,470,30,C.coral));
+  svg.appendChild(FLAT.star(680,760,24,C.teal));
+  svg.appendChild(FLAT.cloud(180,700,0.7,C.paper));
+  [[540,410,C.mustard],[120,880,C.tealD],[700,940,C.coral]].forEach(p=>svg.appendChild(E("circle",{cx:p[0],cy:p[1],r:8,fill:p[2],filter:"url(#stickerThin)"})));
+
+  FLAT.defs(document.getElementById('bmk'));document.getElementById('bmk').appendChild(FLAT.flower(0,0,38,C.coral,C.teal,C.mustard));
+  ["m1","m2","m3"].forEach((id,k)=>{const s=document.getElementById(id);FLAT.defs(s);s.appendChild(FLAT.icon(["compass","sun","heart"][k]));});
+</script>
+<div class="grain"></div><div class="grain2"></div>
+</body></html>
