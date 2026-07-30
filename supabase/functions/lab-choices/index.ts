@@ -9,7 +9,7 @@ import { validateLabChoiceInput } from "../_shared/validate.ts";
 import { insertLabChoiceSet } from "../_shared/db.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { normalizeTopic, trackEvent } from "../_shared/track.ts";
-import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 /**
  * POST /lab-choices
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     trackEvent(user.id, ServerEvent.LAB_CHOICES_REQUESTED, {
       topic: normalizeTopic(input.topic),
     });
-    const aiContext = await loadAuthorizedProfileContext(db, user.id, "lab");
+    const aiContext = await loadProfileContext(db, user.id, "lab");
 
     let prompt = `用户正在探索的问题：${input.question}`;
     if (input.topic) prompt += `\n话题：${input.topic}`;
@@ -63,7 +63,6 @@ Deno.serve(async (req) => {
         purpose: aiContext.purpose,
         dimensions: aiContext.dimensions,
         profile_revision: aiContext.profileRevision,
-        permission_revision: aiContext.permissionRevision,
       },
     });
   } catch (error) {

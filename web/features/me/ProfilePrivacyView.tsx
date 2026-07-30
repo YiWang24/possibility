@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
-import { useMyProfile } from "@/stores/my-profile";
 import { useHome } from "@/features/home/store";
 
 type ProfileFact = {
@@ -15,6 +14,7 @@ type ProfileFact = {
   source_ref?: string | null;
   confidence: number;
   user_confirmed: boolean;
+  visibility: "public" | "private";
   observed_at: string;
   updated_at: string;
 };
@@ -26,7 +26,8 @@ type AccessReceipt = {
   dimension_count: number;
   fact_count: number;
   profile_revision: number;
-  permission_revision: number;
+  public_fact_count: number;
+  private_fact_count: number;
   created_at: string;
 };
 
@@ -43,12 +44,9 @@ type ProfileProposal = {
 
 type PrivacySnapshot = {
   profile_revision: number;
-  permission_revision: number;
   portrait_pct: number;
   facts: ProfileFact[];
   proposals: ProfileProposal[];
-  permissions: Record<string, Record<string, boolean>>;
-  permission_updated_at?: string | null;
   access_receipts: AccessReceipt[];
 };
 
@@ -93,7 +91,7 @@ export function ProfilePrivacyView({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<
-    null | { kind: "dimension"; dimension: string } | { kind: "revoke" } | { kind: "clear" }
+    null | { kind: "dimension"; dimension: string } | { kind: "clear" }
   >(null);
 
   const load = async () => {
@@ -167,6 +165,26 @@ export function ProfilePrivacyView({
     }
   };
 
+  const setVisibility = async (fact: ProfileFact) => {
+    if (!snapshot) return;
+    setBusy(`visibility:${fact.id}`);
+    setError(null);
+    try {
+      await callFunction("profile-privacy", {
+        action: "set_visibility",
+        fact_id: fact.id,
+        visibility: fact.visibility === "public" ? "private" : "public",
+        profile_revision: snapshot.profile_revision,
+      });
+      await load();
+      await refreshProfileCaches();
+    } catch {
+      setError("修改失败，画像可能已在其他设备更新，请刷新后重试。");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const runConfirmedAction = async () => {
     if (!confirm || !snapshot) return;
     const current = confirm;
@@ -186,33 +204,15 @@ export function ProfilePrivacyView({
           delete next[current.dimension];
           return { filledDims: next };
         });
-      } else if (current.kind === "revoke") {
-        const result = await callFunction<{ permission_revision: number }>(
-          "profile-privacy",
-          {
-          action: "revoke_all",
-          permission_revision: snapshot.permission_revision,
-          },
-        );
-        useMyProfile.getState().setAIPermissions(
-          {},
-          result.permission_revision,
-        );
       } else {
-        const result = await callFunction<{
-          profile?: { permission_revision?: number };
-        }>("profile-privacy", {
-          action: "clear_private",
+        await callFunction("profile-privacy", {
+          action: "clear_profile",
           profile_revision: snapshot.profile_revision,
         });
         for (const key of DIMENSION_KEYS) {
           window.localStorage.removeItem(`kaleido_dim_${key}`);
         }
         useHome.setState({ filledDims: {}, remotePersona: null });
-        useMyProfile.getState().setAIPermissions(
-          {},
-          result.profile?.permission_revision,
-        );
       }
       await refreshProfileCaches();
       await load();
@@ -264,7 +264,7 @@ export function ProfilePrivacyView({
             <div className="flex items-center border-b border-line px-5 py-4">
               <div className="flex flex-col">
                 <span className="text-[17px] font-bold text-ink">个人档案与 AI 隐私</span>
-                <span className="text-[10.5px] text-faint">查看事实来源、使用记录并管理数据</span>
+                <span className="text-[10.5px] text-faint">每条事实只分为公开或私人</span>
               </div>
               <button
                 type="button"
@@ -306,7 +306,7 @@ export function ProfilePrivacyView({
 
                     {Object.keys(grouped).length === 0 ? (
                       <div className="kaleido-card py-8 text-center text-[12px] text-faint">
-                        还没有私密画像事实
+                        还没有画像事实
                       </div>
                     ) : (
                       DIMENSION_KEYS.filter((key) => grouped[key]?.length).map((dimension) => (
@@ -349,6 +349,17 @@ export function ProfilePrivacyView({
                                     确认准确
                                   </button>
                                 )}
+                                <button
+                                  disabled={busy === `visibility:${fact.id}`}
+                                  onClick={() => void setVisibility(fact)}
+                                  className={`shrink-0 rounded-chip px-2 py-1 text-[9.5px] disabled:opacity-50 ${
+                                    fact.visibility === "public"
+                                      ? "bg-[#3ED9A4]/12 text-[#8EE7C8]"
+                                      : "bg-white/[0.06] text-sub"
+                                  }`}
+                                >
+                                  {fact.visibility === "public" ? "公开" : "私人"}
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -428,6 +439,9 @@ export function ProfilePrivacyView({
                               使用：{receipt.dimensions.map((d) => DIMENSION_LABELS[d] ?? d).join("、")}
                               {" · "}版本 {receipt.profile_revision}
                             </span>
+                            <span className="text-[9.5px] text-faint">
+                              公开 {receipt.public_fact_count} 条 · 私人 {receipt.private_fact_count} 条
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -438,25 +452,19 @@ export function ProfilePrivacyView({
                     <div className="flex flex-col">
                       <span className="text-[14px] font-bold text-ink">数据管理</span>
                       <span className="text-[10.5px] text-faint">
-                        公开主页与私密画像相互独立
+                        公开事实会进入公开主页；私人事实只服务于你本人
                       </span>
                     </div>
                     <div className="kaleido-card flex flex-col divide-y divide-line">
                       <PrivacyAction
                         title="导出完整个人档案"
-                        detail="下载 JSON，包含事实、来源、授权和使用记录"
+                        detail="下载 JSON，包含事实、来源和 AI 使用记录"
                         disabled={busy !== null}
                         onClick={() => void exportProfile()}
                       />
                       <PrivacyAction
-                        title="撤回全部 AI 授权"
-                        detail="保留画像，但所有 AI 场景立即停止读取"
-                        disabled={busy !== null}
-                        onClick={() => setConfirm({ kind: "revoke" })}
-                      />
-                      <PrivacyAction
-                        title="清空全部私密画像"
-                        detail="删除事实、维度、卡牌结果和 AI 形象；公开主页保留"
+                        title="清空全部画像"
+                        detail="删除公开和私人事实、卡牌结果及 AI 形象；主页基础资料保留"
                         destructive
                         disabled={busy !== null}
                         onClick={() => setConfirm({ kind: "clear" })}
@@ -474,9 +482,7 @@ export function ProfilePrivacyView({
                   <p className="mt-2 text-[11.5px] leading-relaxed text-sub">
                     {confirm.kind === "dimension"
                       ? `将永久删除“${DIMENSION_LABELS[confirm.dimension]}”及其来源记录。`
-                      : confirm.kind === "revoke"
-                        ? "所有 AI 用途授权都会关闭，但画像事实仍会保留。"
-                        : "全部私密画像将永久删除，公开主页不会受到影响。"}
+                      : "全部画像事实将永久删除，主页基础资料不会受到影响。"}
                   </p>
                   <div className="mt-5 flex gap-2.5">
                     <button

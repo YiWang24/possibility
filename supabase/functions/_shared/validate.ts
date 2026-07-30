@@ -1,10 +1,5 @@
 import { LIMITS } from "./config.ts";
 import { HttpError } from "./errors.ts";
-import {
-  AI_DIMENSIONS,
-  AI_PURPOSES,
-  type AIPermissions,
-} from "./profile-permissions.ts";
 
 type JsonObject = Record<string, unknown>;
 
@@ -216,49 +211,6 @@ export function validateSaveDimensionInput(value: unknown): SaveDimensionInput {
     );
   }
   return { dimension, tags: validatedTags, source };
-}
-
-export function validateAIPermissionsInput(value: unknown): AIPermissions {
-  const body = object(value);
-  const permissions = object(body.permissions, "permissions");
-  const allowedDimensions = new Set<string>(AI_DIMENSIONS);
-  const allowedScopes = new Set<string>(AI_PURPOSES);
-  const entries = Object.entries(permissions);
-  if (entries.length > allowedDimensions.size) {
-    throw new HttpError(400, "INVALID_INPUT", "permissions 维度过多。");
-  }
-
-  const validated: AIPermissions = {};
-  for (const [dimension, rawScopes] of entries) {
-    if (!allowedDimensions.has(dimension)) {
-      throw new HttpError(
-        400,
-        "INVALID_INPUT",
-        `不支持 AI 权限维度 ${dimension}。`,
-      );
-    }
-    const scopes = object(rawScopes, `permissions.${dimension}`);
-    const scopeEntries = Object.entries(scopes);
-    if (scopeEntries.length > allowedScopes.size) {
-      throw new HttpError(
-        400,
-        "INVALID_INPUT",
-        `permissions.${dimension} 用途过多。`,
-      );
-    }
-    validated[dimension] = {};
-    for (const [scope, allowed] of scopeEntries) {
-      if (!allowedScopes.has(scope) || typeof allowed !== "boolean") {
-        throw new HttpError(
-          400,
-          "INVALID_INPUT",
-          `permissions.${dimension}.${scope} 必须是受支持的布尔权限。`,
-        );
-      }
-      validated[dimension][scope] = allowed;
-    }
-  }
-  return validated;
 }
 
 export type SaveCardGameInput = {

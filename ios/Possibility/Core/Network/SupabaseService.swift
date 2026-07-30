@@ -606,33 +606,45 @@ final class SupabaseService {
 
     /// GET /get-profile：云端画像全量出参，事实表是唯一画像内容来源。
     struct RemoteProfile: Decodable {
+        struct Verification: Decodable, Sendable {
+            let status: String
+            let provider: String?
+            let verifiedAt: String?
+
+            enum CodingKeys: String, CodingKey {
+                case status, provider
+                case verifiedAt = "verified_at"
+            }
+        }
+
         let portraitPct: Int
         let profileRevision: Int
+        let verification: Verification
         let facts: [ProfileFact]
         /// card_game_results 行：[{kind, final_cards, rounds, accepted, traded}]
         let cardGames: [RemoteCardGame]
         /// public_profiles 行（未建档为 nil）
         let publicProfile: RemotePublicProfile?
-        /// profile_ai_permissions 私有行（未设置为 nil）
-        let aiPermissions: RemoteAIPermissions?
 
         enum CodingKeys: String, CodingKey {
             case portraitPct = "portrait_pct"
             case profileRevision = "profile_revision"
-            case facts
+            case facts, verification
             case cardGames = "card_games"
             case publicProfile = "public_profile"
-            case aiPermissions = "ai_permissions"
         }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             portraitPct = try c.decode(Int.self, forKey: .portraitPct)
             profileRevision = (try? c.decodeIfPresent(Int.self, forKey: .profileRevision)) ?? 0
+            verification = (try? c.decodeIfPresent(
+                Verification.self,
+                forKey: .verification
+            )) ?? Verification(status: "unverified", provider: nil, verifiedAt: nil)
             facts = (try? c.decodeIfPresent([ProfileFact].self, forKey: .facts)) ?? []
             cardGames = (try? c.decodeIfPresent([RemoteCardGame].self, forKey: .cardGames)) ?? []
             publicProfile = try? c.decodeIfPresent(RemotePublicProfile.self, forKey: .publicProfile)
-            aiPermissions = try? c.decodeIfPresent(RemoteAIPermissions.self, forKey: .aiPermissions)
         }
     }
 
@@ -648,8 +660,8 @@ final class SupabaseService {
         remoteProfileCache = nil
     }
 
-    func fetchRemoteProfile() async throws -> RemoteProfile {
-        if let cached = remoteProfileCache,
+    func fetchRemoteProfile(force: Bool = false) async throws -> RemoteProfile {
+        if !force, let cached = remoteProfileCache,
            Date().timeIntervalSince(cached.fetchedAt) < Self.remoteProfileCacheTTL {
             return cached.profile
         }
@@ -675,7 +687,7 @@ final class SupabaseService {
         )
     }
 
-    /// 返回格式化后的可移植 JSON；服务端导出中包含事实来源、授权和最小化使用回执。
+    /// 返回格式化后的可移植 JSON；服务端导出中包含事实来源和最小化使用回执。
     func exportProfileData() async throws -> String {
         struct Body: Encodable { let action = "export" }
         var req = URLRequest(url: AppConfig.functionURL("profile-privacy"))
@@ -766,37 +778,39 @@ final class SupabaseService {
         invalidateRemoteProfileCache()
     }
 
-    func revokeAllProfileAIPermissions(expectedRevision: Int) async throws -> Int {
+    func setProfileFactVisibility(
+        _ id: UUID,
+        visibility: String,
+        expectedRevision: Int
+    ) async throws {
         struct Body: Encodable {
-            let action = "revoke_all"
-            let permissionRevision: Int
+            let action = "set_visibility"
+            let factId: UUID
+            let visibility: String
+            let profileRevision: Int
 
             enum CodingKeys: String, CodingKey {
-                case action
-                case permissionRevision = "permission_revision"
+                case action, visibility
+                case factId = "fact_id"
+                case profileRevision = "profile_revision"
             }
         }
-        struct Response: Decodable {
-            let ok: Bool
-            let permissionRevision: Int
-
-            enum CodingKeys: String, CodingKey {
-                case ok
-                case permissionRevision = "permission_revision"
-            }
-        }
-        let response = try await callFunction(
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction(
             "profile-privacy",
-            body: Body(permissionRevision: expectedRevision),
+            body: Body(
+                factId: id,
+                visibility: visibility,
+                profileRevision: expectedRevision
+            ),
             as: Response.self
         )
         invalidateRemoteProfileCache()
-        return response.permissionRevision
     }
 
-    func clearPrivateProfile(expectedRevision: Int) async throws -> Int {
+    func clearProfile(expectedRevision: Int) async throws {
         struct Body: Encodable {
-            let action = "clear_private"
+            let action = "clear_profile"
             let profileRevision: Int
 
             enum CodingKeys: String, CodingKey {
@@ -804,23 +818,13 @@ final class SupabaseService {
                 case profileRevision = "profile_revision"
             }
         }
-        struct Response: Decodable {
-            struct Profile: Decodable {
-                let permissionRevision: Int
-                enum CodingKeys: String, CodingKey {
-                    case permissionRevision = "permission_revision"
-                }
-            }
-            let ok: Bool
-            let profile: Profile?
-        }
-        let response = try await callFunction(
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction(
             "profile-privacy",
             body: Body(profileRevision: expectedRevision),
             as: Response.self
         )
         invalidateRemoteProfileCache()
-        return response.profile?.permissionRevision ?? 0
     }
 
     /// POST /list-diary：云端真实日记条目（analyze-diary 落库）
@@ -1047,39 +1051,4 @@ final class SupabaseService {
         try await fetchRemoteProfile().publicProfile
     }
 
-    /// POST /save-profile action=save_ai_permissions：与公开 visibility 分离的私有 AI 授权。
-    func saveAIPermissionsRemote(
-        _ permissions: ProfileAIPermissions,
-        expectedRevision: Int
-    ) async throws -> Int {
-        struct Body: Encodable {
-            let action = "save_ai_permissions"
-            let permissions: [String: [String: Bool]]
-            let permissionRevision: Int
-
-            enum CodingKeys: String, CodingKey {
-                case action, permissions
-                case permissionRevision = "permission_revision"
-            }
-        }
-        struct Response: Decodable {
-            let ok: Bool
-            let permissionRevision: Int
-
-            enum CodingKeys: String, CodingKey {
-                case ok
-                case permissionRevision = "permission_revision"
-            }
-        }
-        let response = try await callFunction(
-            "save-profile",
-            body: Body(
-                permissions: permissions.permissions,
-                permissionRevision: expectedRevision
-            ),
-            as: Response.self
-        )
-        invalidateRemoteProfileCache()
-        return response.permissionRevision
-    }
 }

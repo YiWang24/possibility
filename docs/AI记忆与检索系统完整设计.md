@@ -16,7 +16,7 @@
 | `memory_items` | 哪段具体对话、日记、选择或实验经历与当前问题相关 | 未实现 |
 | 公共经历检索 | 哪些经过发布/验证的他人经历适合匹配和推荐 | 未实现 |
 
-当前版本不引入 Mem0、Graphiti、LlamaIndex、LangGraph、独立向量数据库或知识图谱。先用 Postgres/Supabase 完成稳定的事实、授权、提案、证据和数据权利边界。
+当前版本不引入 Mem0、Graphiti、LlamaIndex、LangGraph、独立向量数据库或知识图谱。先用 Postgres/Supabase 完成稳定的事实、公开/私人边界、提案、证据和数据权利边界。
 
 ## 1. 当前已实现的画像记忆
 
@@ -30,6 +30,7 @@
 - 原始值与规范化值
 - 来源和来源引用
 - 置信度与本人确认状态
+- `public/private` 可见性
 - 敏感度
 - 状态与有效期
 - 支持次数和最近支持时间
@@ -56,40 +57,36 @@ source + source_version + dimension + normalized_value
 
 拒绝只更新候选状态，不改变正式画像版本。
 
-### 1.3 用途授权
+### 1.3 公开与私人
 
-`profile_ai_permissions` 保留，并规范化为 `(user_id, dimension, purpose, allowed)`。当前用途：
+每条事实只有两个权限状态：
 
-- `chat`
-- `persona`
-- `match`
-- `lab`
-- `community`
+- `private`：默认值，只能在服务该用户本人时使用。
+- `public`：服务本人时可用，也可以进入安全发布快照，供公开主页、跨用户匹配和社区推荐使用。
 
-用途不是检索提示，而是读取个人档案的授权边界。没有明确授权就不读取。权限矩阵由独立的 `permission_revision` 防止多设备覆盖。
+Chat、Persona、Match、Lab、Simulation、Community 等 `purpose` 继续作为审计字段，但不再形成权限矩阵。用户本人使用这些功能时，可以读取自己符合质量门槛的公开和私人事实。
 
 ### 1.4 公开边界
 
-私密事实不会通过在 `profile_facts` 上加 `public/private` 直接开放跨用户读取。当前公开流程是显式发布：
+`profile_facts` 原始行始终只允许本人读取。事实级可见性只决定其是否进入安全发布快照：
 
 ```text
-私有 profile_facts
- + 私有 profile_public_drafts.visibility
+本人 profile_facts.visibility = public
 → save_public_profile
 → 安全 public_profiles.published_facts
 ```
 
-其他用户和匿名用户只能读取发布表，不能读取事实表。事实修改或删除后，发布快照同步刷新。
+其他用户和匿名用户只能读取发布表，不能读取事实表。设置可见性、修改或删除事实后，发布快照同步刷新。
 
 ## 2. 当前 AI 读取
 
 共享画像上下文读取器执行：
 
-1. 用当前用户 JWT 读取自己的 `profiles`、`profile_facts` 和 `profile_ai_permissions`。
-2. 按当前 `purpose` 保留明确授权维度。
+1. 用当前用户 JWT 读取自己的 `profiles` 和 `profile_facts`。
+2. 同时考虑本人的公开和私人 active 事实。
 3. 按确认状态、置信度、支持次数和时间排序。
-4. 最多选择 12 条事实，并限制注入 Prompt 的字符预算。
-5. 返回结构化事实、使用的事实 ID、两类 revision。
+4. 最多选择 20 条事实，并限制注入 Prompt 的字符预算。
+5. 返回结构化事实、使用的事实 ID、`profile_revision` 与公开/私人数量。
 6. 记录不含原文的 `profile_ai_context_used` 最小回执。
 
 优先级：
@@ -97,19 +94,11 @@ source + source_version + dimension + normalized_value
 ```text
 用户本轮明确内容
 > 用户已确认事实
-> 满足当前用途质量阈值的未确认事实
+> 置信度至少 0.7 的未确认事实
 > 不使用的长期数据
 ```
 
-用途质量规则：
-
-| purpose | 事实质量 |
-|---|---|
-| `match` / `community` | 仅本人已确认事实 |
-| `lab` | 已确认；或支持次数至少 2 且置信度至少 0.8 |
-| `chat` / `persona` | 最低置信度 0.7 |
-
-任何画像或授权查询失败都 fail closed：不附加长期画像，但不阻断用户当前请求。
+任何画像查询失败都 fail closed：不附加长期画像，但不阻断用户当前请求。跨用户读取不经过这个本人上下文读取器，只能使用 `public_profiles.published_facts`。
 
 ## 3. 下一阶段：经历记忆 `memory_items`
 
@@ -191,7 +180,7 @@ type MemoryContextRequest = {
 流程：
 
 ```text
-授权后的 profile facts
+本人的 profile facts
         +
 query embedding → 私有 memory_items Top K
         +
@@ -241,6 +230,7 @@ AI 生成的推演人物必须标记为 `ai_generated`，不能混入真人经�
 - 日志和 AI 使用回执不记录事实值、查询原文、对话或日记。
 - 删除来源后，相关候选、经历记忆和 Embedding 必须按产品语义删除或失效。
 - 用户的私密事实和经历不能成为另一个用户的推荐证据。
+- 真人验证字段由可信服务管理；客户端不能自我声明验证成功，公开层只暴露 `is_verified`。
 - 注销账号通过外键级联删除事实、证据、候选和未来的私有经历记忆。
 
 ## 7. 实施顺序
@@ -250,7 +240,7 @@ AI 生成的推演人物必须标记为 `ai_generated`，不能混入真人经�
 - 删除 `profiles.dims` 和 `profile_dimensions`。
 - Web/iOS/Edge 统一读取 `profile_facts`。
 - AI 写入改为 proposal → user review。
-- 增加 evidence、assessment runs、用途权限和双 revision。
+- 增加 evidence、assessment runs、事实级公开/私人边界和单一 `profile_revision`。
 - 拆分私有主页草稿与安全发布表。
 - 接入 Chat、Persona、Match、Lab、Simulation、Community 的受控读取。
 

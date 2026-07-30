@@ -1,6 +1,5 @@
 import { HttpError } from "../_shared/errors.ts";
 import {
-  validateAIPermissionsInput,
   validateBountyInput,
   validateBountyResponseInput,
   validateChatInput,
@@ -532,34 +531,6 @@ Deno.test("saveDimension honors assessment source and rejects >20 tags", () => {
       validateSaveDimensionInput({
         dimension: "skill",
         tags: Array.from({ length: 21 }, (_, i) => `t${i}`),
-      }),
-    "INVALID_INPUT",
-  );
-});
-
-Deno.test("AI permissions accept known dimensions and scopes", () => {
-  const permissions = validateAIPermissionsInput({
-    permissions: {
-      personality: { persona: true, chat: false },
-      skill: { persona: true },
-    },
-  });
-  assert(permissions.personality.persona === true);
-  assert(permissions.personality.chat === false);
-});
-
-Deno.test("AI permissions reject unknown keys and non-boolean values", () => {
-  assertHttpError(
-    () =>
-      validateAIPermissionsInput({
-        permissions: { secret: { persona: true } },
-      }),
-    "INVALID_INPUT",
-  );
-  assertHttpError(
-    () =>
-      validateAIPermissionsInput({
-        permissions: { skill: { persona: "yes" } },
       }),
     "INVALID_INPUT",
   );

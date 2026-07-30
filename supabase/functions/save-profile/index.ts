@@ -7,7 +7,6 @@ import {
   readJson,
 } from "../_shared/errors.ts";
 import {
-  validateAIPermissionsInput,
   validateSaveCardGameInput,
   validateSaveDimensionInput,
 } from "../_shared/validate.ts";
@@ -19,7 +18,6 @@ import { replaceProfileDimension } from "../_shared/db.ts";
  * - action: "save_dimension" → save a single profile dimension (tags)
  * - action: "save_card_game" → save card game result
  * - action: "save_public_profile" → save public profile data
- * - action: "save_ai_permissions" → save private, purpose-scoped AI consent
  */
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
@@ -144,9 +142,6 @@ Deno.serve(async (req) => {
         }
         if (Array.isArray(data.services)) profileData.services = data.services;
         if (Array.isArray(data.advice)) profileData.advice = data.advice;
-        if (typeof data.visibility === "object" && data.visibility !== null) {
-          profileData.visibility = data.visibility;
-        }
         if (
           isV2 &&
           Number.isInteger(data.hue) &&
@@ -195,52 +190,11 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true });
       }
 
-      case "save_ai_permissions": {
-        const permissions = validateAIPermissionsInput(body);
-        const expectedRevision = (body as Record<string, unknown>)
-          .permission_revision;
-        if (
-          expectedRevision !== undefined &&
-          (!Number.isSafeInteger(expectedRevision) ||
-            Number(expectedRevision) < 0)
-        ) {
-          throw new HttpError(
-            400,
-            "INVALID_INPUT",
-            "permission_revision 无效。",
-          );
-        }
-        const { data: permissionRevision, error } = await db.rpc(
-          "replace_profile_ai_permissions",
-          {
-            p_permissions: permissions,
-            p_expected_revision: expectedRevision === undefined
-              ? null
-              : Number(expectedRevision),
-          },
-        );
-        if (error) {
-          if (error.code === "40001") {
-            throw new HttpError(
-              409,
-              "PERMISSION_REVISION_CONFLICT",
-              "AI 授权已在其他设备更新，请刷新后重试。",
-            );
-          }
-          console.error("save AI permissions failed:", error.message);
-          throw new HttpError(500, "DATABASE_ERROR", "保存 AI 授权失败。");
-        }
-        return jsonResponse({
-          ok: true,
-          permission_revision: Number(permissionRevision ?? 0),
-        });
-      }
-
       default:
         throw new HttpError(
           400,
           "INVALID_ACTION",
-          "action 必须是 save_dimension/save_card_game/save_public_profile/save_ai_permissions 之一。",
+          "action 必须是 save_dimension/save_card_game/save_public_profile 之一。",
         );
     }
   } catch (error) {

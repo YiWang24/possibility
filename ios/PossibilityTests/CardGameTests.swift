@@ -191,39 +191,7 @@ final class ChatFlowContractTests: XCTestCase {
 }
 
 final class ProfilePrivacyTests: XCTestCase {
-    func testAIPermissionsDefaultDenyAndExplicitAllow() {
-        var permissions = ProfileAIPermissions.empty
-        XCTAssertFalse(permissions.allows("skill", scope: ProfileAIPermissions.personaScope))
-
-        permissions.setAllowed(
-            true,
-            dimension: "skill",
-            scope: ProfileAIPermissions.personaScope
-        )
-        XCTAssertTrue(permissions.allows("skill", scope: ProfileAIPermissions.personaScope))
-        XCTAssertFalse(permissions.allows("like", scope: ProfileAIPermissions.personaScope))
-    }
-
-    func testV1RemoteProfileDoesNotEraseLocalExtendedFields() {
-        let local = MyProfile.defaultProfile
-        let remote = RemotePublicProfile(
-            profileVersion: 1,
-            name: "云端昵称",
-            hue: 0,
-            age: 0,
-            city: "",
-            fromRole: "",
-            toRole: ""
-        )
-
-        let merged = local.merging(remote: remote)
-        XCTAssertEqual(merged.name, "云端昵称")
-        XCTAssertEqual(merged.hue, local.hue)
-        XCTAssertEqual(merged.meta.age, local.meta.age)
-        XCTAssertEqual(merged.meta.city, local.meta.city)
-    }
-
-    func testV2RemoteProfileRestoresExtendedFields() {
+    func testRemoteProfileRestoresExtendedFields() {
         let remote = RemotePublicProfile(
             profileVersion: 2,
             name: "云端昵称",
@@ -247,14 +215,13 @@ final class ProfilePrivacyTests: XCTestCase {
         XCTAssertEqual(merged.meta.full, "新的完整故事")
     }
 
-    func testV2RemoteProfileCanClearPublishedCollections() {
+    func testRemoteProfileCanClearPublishedCollections() {
         let remote = RemotePublicProfile(
             profileVersion: 2,
             tags: [],
             trajectory: [],
             services: [],
-            advice: [],
-            visibility: [:]
+            advice: []
         )
 
         let merged = MyProfile.defaultProfile.merging(remote: remote)
@@ -262,6 +229,5 @@ final class ProfilePrivacyTests: XCTestCase {
         XCTAssertTrue(merged.traj.isEmpty)
         XCTAssertTrue(merged.services.isEmpty)
         XCTAssertTrue(merged.adviceModules.isEmpty)
-        XCTAssertTrue(merged.visibility.isEmpty)
     }
 }

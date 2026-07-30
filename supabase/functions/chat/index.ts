@@ -31,7 +31,7 @@ import { sseEvent, sseResponse } from "../_shared/sse.ts";
 import { errorText, runInBackground } from "../_shared/background.ts";
 import { trackEvent } from "../_shared/track.ts";
 import { validateChatInput } from "../_shared/validate.ts";
-import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 function conversationText(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
@@ -155,7 +155,7 @@ Deno.serve(async (req) => {
     }
     const [history, aiContext] = await Promise.all([
       loadHistory(db, conversation.id),
-      loadAuthorizedProfileContext(db, user.id, "chat"),
+      loadProfileContext(db, user.id, "chat"),
     ]);
     await insertMessage(db, conversation.id, "user", input.message);
 
@@ -303,7 +303,6 @@ Deno.serve(async (req) => {
                   purpose: aiContext.purpose,
                   dimensions: aiContext.dimensions,
                   profile_revision: aiContext.profileRevision,
-                  permission_revision: aiContext.permissionRevision,
                 },
                 high_risk: signal.high_risk,
                 signal_degraded: signalResult.degraded,

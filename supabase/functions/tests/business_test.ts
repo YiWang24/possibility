@@ -3,7 +3,7 @@
 // 这些逻辑一旦出错会直接破坏 AI 集成的真实业务表现，故独立于校验器单测。
 
 import { fallbackPersona, FORM_DEFS, hashSeed } from "../_shared/persona.ts";
-import { authorizedFactsContext } from "../_shared/profile-permissions.ts";
+import { profileFactsContext } from "../_shared/profile-facts.ts";
 import { frontDoorPrompt } from "../_shared/prompts.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { sseEvent } from "../_shared/sse.ts";
@@ -107,7 +107,7 @@ Deno.test("persona empty input still yields a valid persona", () => {
   assert(Object.values(FORM_DEFS).some((d) => d.name === p.shape));
 });
 
-Deno.test("match and community only use confirmed profile facts", () => {
+Deno.test("owner AI contexts use both public and private facts", () => {
   const facts = [
     {
       id: "confirmed",
@@ -116,6 +116,7 @@ Deno.test("match and community only use confirmed profile facts", () => {
       source: "manual",
       confidence: 1,
       user_confirmed: true,
+      visibility: "public" as const,
     },
     {
       id: "inferred",
@@ -125,23 +126,21 @@ Deno.test("match and community only use confirmed profile facts", () => {
       confidence: 0.95,
       user_confirmed: false,
       support_count: 4,
+      visibility: "private" as const,
     },
   ];
   for (const purpose of ["match", "community"] as const) {
-    const context = authorizedFactsContext(
+    const context = profileFactsContext(
       facts,
-      { skill: { [purpose]: true }, like: { [purpose]: true } },
       purpose,
       8,
-      3,
     );
-    assert(context.factIds.join(",") === "confirmed");
-    assert(context.permissionRevision === 3);
+    assert(context.factIds.join(",") === "confirmed,inferred");
   }
 });
 
-Deno.test("lab only uses strong repeated unconfirmed profile facts", () => {
-  const context = authorizedFactsContext(
+Deno.test("fact context excludes low-confidence unconfirmed facts", () => {
+  const context = profileFactsContext(
     [
       {
         id: "strong",
@@ -151,18 +150,19 @@ Deno.test("lab only uses strong repeated unconfirmed profile facts", () => {
         confidence: 0.84,
         user_confirmed: false,
         support_count: 2,
+        visibility: "private",
       },
       {
         id: "single",
         dimension: "like",
         value: "单次提到徒步",
         source: "chat",
-        confidence: 0.95,
+        confidence: 0.69,
         user_confirmed: false,
         support_count: 1,
+        visibility: "private",
       },
     ],
-    { skill: { lab: true }, like: { lab: true } },
     "lab",
     4,
   );
@@ -179,6 +179,7 @@ Deno.test("fact context distinguishes confirmed facts from AI inferences", () =>
       source: "manual",
       confidence: 1,
       user_confirmed: true,
+      visibility: "private" as const,
     },
     {
       id: "fact-inferred",
@@ -187,33 +188,33 @@ Deno.test("fact context distinguishes confirmed facts from AI inferences", () =>
       source: "chat",
       confidence: 0.72,
       user_confirmed: false,
+      visibility: "public" as const,
     },
     {
       id: "fact-private",
       dimension: "family",
-      value: "不能泄露",
+      value: "需要稳定边界",
       source: "diary",
       confidence: 0.9,
       user_confirmed: false,
+      visibility: "private" as const,
     },
   ];
-  const context = authorizedFactsContext(
+  const context = profileFactsContext(
     facts,
-    {
-      skill: { chat: true },
-      like: { chat: true },
-      family: { chat: false },
-    },
     "chat",
     17,
   );
 
   assert(context.profileRevision === 17);
-  assert(context.dimensions.join(",") === "skill,like");
-  assert(context.factIds.join(",") === "fact-confirmed,fact-inferred");
+  assert(context.dimensions.join(",") === "skill,like,family");
+  assert(
+    context.factIds.join(",") ===
+      "fact-confirmed,fact-private,fact-inferred",
+  );
   assert(context.text.includes("用户已确认"));
   assert(context.text.includes("待用户确认，来源 chat，置信度 72%"));
-  assert(!context.text.includes("不能泄露"));
+  assert(context.text.includes("需要稳定边界"));
 });
 
 Deno.test("fact context is default-deny and excludes unknown dimensions", () => {
@@ -224,10 +225,10 @@ Deno.test("fact context is default-deny and excludes unknown dimensions", () => 
     source: "manual",
     confidence: 1,
     user_confirmed: true,
+    visibility: "private" as const,
   }];
-  const context = authorizedFactsContext(
+  const context = profileFactsContext(
     facts,
-    { private_note: { persona: true } },
     "persona",
     3,
   );

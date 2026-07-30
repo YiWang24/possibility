@@ -307,7 +307,6 @@ export interface RemotePublicProfile {
   trajectory?: TrajectoryNode[] | null;
   services?: ServiceOffer[] | null;
   advice?: AdviceModule[] | null;
-  visibility?: Record<string, boolean> | null;
   hue?: number | null;
   age?: number | null;
   city?: string | null;
@@ -319,16 +318,9 @@ export interface RemotePublicProfile {
   story_full?: string | null;
 }
 
-/** 与公开 visibility 分离的私有 AI 用途授权。 */
-export interface RemoteAIPermissions {
-  permissions: Record<string, Record<string, boolean>>;
-  permission_revision: number;
-  updated_at?: string | null;
-}
-
 /* ============ GET /get-profile 出参 ============ */
 
-/** 私密画像中的原子事实；AI 只会读取当前用途明确授权的 active 事实。 */
+/** 画像中的原子事实；公开事实可发布，私人事实只服务于本人。 */
 export interface RemoteProfileFact {
   id: string;
   dimension: string;
@@ -337,6 +329,7 @@ export interface RemoteProfileFact {
   source_ref?: string | null;
   confidence: number;
   user_confirmed: boolean;
+  visibility: "public" | "private";
   fact_kind?: string;
   sensitivity?: "low" | "medium" | "high" | string;
   support_count?: number;
@@ -370,23 +363,23 @@ export interface RemoteCardGame {
 /** GET /get-profile 云端画像全量出参 */
 export interface RemoteProfile {
   portrait_pct: number;
-  /** 乐观并发控制版本：任何私密画像变更都会递增。 */
+  /** 乐观并发控制版本：任何画像事实变更都会递增。 */
   profile_revision: number;
+  verification: {
+    status: "unverified" | "pending" | "verified" | "rejected";
+    provider: string | null;
+    verified_at: string | null;
+  };
   facts: RemoteProfileFact[];
   card_games: RemoteCardGame[];
   /** public_profiles 行（未建档为 null） */
   public_profile: RemotePublicProfile | null;
-  /** profile_ai_permissions 私有行（未设置为 null） */
-  ai_permissions: RemoteAIPermissions | null;
 }
 
 /* ============ 常量（对齐 iOS AppConfig） ============ */
 
 /** mock 解锁完整经验价格（¥9.9） */
 export const PRICE_UNLOCK_PROFILE = 9.9;
-/** 首次进入没有 profile 行时的本地兜底画像完成度 */
-export const PORTRAIT_INITIAL_PCT = 60;
-
 /* ============ 探索话题（对应原型 topicChips） ============ */
 
 export interface ExploreTopic {
