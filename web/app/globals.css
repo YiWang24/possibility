@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@theme {
+  /* 基础色 —— 与 iOS Theme.swift / 原型 :root 一一对应 */
+  --color-stage: #05070d;
+  --color-paper: #0a0c12;
+  --color-card: #13161f;
+  --color-raised: #1b1f2b;
+  --color-ink: #f2f4f9;
+  --color-sub: #98a0b3;
+  --color-faint: #5a6172;
+  --color-line: rgb(255 255 255 / 0.08);
+
+  /* 品牌色 */
+  --color-brand: #5e96ff;
+  --color-brand-deep: #2f63e8;
+  --color-violet-soft: #8f7bff;
+  --color-pink: #f06acd;
+  --color-magenta: #e35cc1;
+  --color-orange: #ff7a4d;
+  --color-apricot: #ffb067;
+  --color-teal: #3ed9a4;
+  --color-lime: #d7f464;
+
+  /* 圆角 */
+  --radius-card: 22px;
+  --radius-sheet: 30px;
+  --radius-chip: 999px;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC",
+    "Segoe UI", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "New York", "Songti SC", Georgia, "Noto Serif SC", serif;
+
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1100px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-stage);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* 渐变 —— aurora / aurora-deep / 按钮渐变 */
+@utility bg-aurora {
+  background-image: linear-gradient(
+    135deg,
+    #5e96ff 0%,
+    #8f7bff 40%,
+    #e35cc1 75%,
+    #ff7a4d 100%
+  );
+}
+@utility bg-aurora-deep {
+  background-image: linear-gradient(135deg, #2f63e8 0%, #b03390 60%, #e8542f 100%);
+}
+@utility bg-btn-g {
+  background-image: linear-gradient(135deg, #6fa5ff, #2f63e8);
+}
+@utility text-aurora {
+  background-image: linear-gradient(
+    135deg,
+    #5e96ff 0%,
+    #8f7bff 40%,
+    #e35cc1 75%,
+    #ff7a4d 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* 通用卡片 —— 对齐 iOS kaleidoCard() */
+@utility kaleido-card {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-line);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.55);
+  overflow: hidden;
+}
+
+/* 隐藏滚动条（横向 chips/牌堆） */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 光球 conic 色环 */
+@utility bg-orb-conic {
+  background-image: conic-gradient(
+    from 0deg,
+    #5e96ff,
+    #8f7bff,
+    #e35cc1,
+    #ff7a4d,
+    #5e96ff
+  );
+}
+
+/* 屏幕背景：paper 底 + 双极光径向（iOS ScreenBackground） */
+@utility screen-bg {
+  background:
+    radial-gradient(320px circle at 108% -5%, rgb(74 116 255 / 0.16), transparent),
+    radial-gradient(260px circle at -15% 30%, rgb(227 92 193 / 0.07), transparent),
+    var(--color-paper);
+}
+
+/* 熔岩灯 blob 漂移 */
+@keyframes orb-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(14%, 22%) scale(1.15); }
+  66% { transform: translate(-8%, 10%) scale(0.9); }
+}
+@keyframes orb-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-18%, -14%) scale(1.2); }
+  75% { transform: translate(6%, -24%) scale(0.85); }
+}
+@keyframes orb-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(20%, -30%) scale(1.25); }
+}
+@utility animate-orb-a {
+  animation: orb-a 9s ease-in-out infinite;
+}
+@utility animate-orb-b {
+  animation: orb-b 11s ease-in-out infinite;
+}
+@utility animate-orb-c {
+  animation: orb-c 7s ease-in-out infinite;
+}
