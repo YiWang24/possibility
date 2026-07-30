@@ -7,6 +7,8 @@
 
 create table if not exists app_events (
   id          bigserial primary key,
+  -- 客户端重试可能发生在「服务端已提交、响应却丢了」之后；event_id 保证重放不双计。
+  event_id    uuid not null default gen_random_uuid(),
   -- on delete set null：注销后事件保留但去标识化。
   -- 与 delete-account/index.ts 的口径一致——该函数只调 auth.admin.deleteUser，
   -- 靠外键动作清理业务表；app_events 按 §1 本就不含 PII（只有派生标量），
@@ -25,6 +27,92 @@ create table if not exists app_events (
 -- 漏斗/留存按事件名切时间窗；单用户时间线用于算「到岔路口的轮次」等路径指标。
 create index if not exists idx_app_events_event on app_events(event, created_at desc);
 create index if not exists idx_app_events_user  on app_events(user_id, created_at desc);
+create unique index if not exists idx_app_events_event_id on app_events(event_id);
+
+-- 匿名账号切换期间可能还有旧 JWT 发出的在途事件。仅靠「先 update、再 deleteUser」
+-- 会留下竞态：迁移 SQL 之后才提交的旧事件会被 deleteUser 的 FK 动作打成 NULL。
+-- alias 表 + BEFORE INSERT 重定向把迟到事件直接挂到正式账号，并把多次账号合并压平。
+create table if not exists app_event_user_aliases (
+  old_user_id uuid primary key,
+  new_user_id uuid not null references auth.users(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  check (old_user_id <> new_user_id)
+);
+
+alter table app_event_user_aliases enable row level security;
+revoke all on table app_event_user_aliases from anon, authenticated;
+grant all on table app_event_user_aliases to service_role;
+
+create or replace function public.redirect_app_event_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_canonical uuid;
+begin
+  if new.user_id is not null then
+    select a.new_user_id into v_canonical
+      from public.app_event_user_aliases a
+     where a.old_user_id = new.user_id;
+    if found then
+      new.user_id := v_canonical;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists redirect_app_event_user_before_insert on app_events;
+create trigger redirect_app_event_user_before_insert
+  before insert on app_events
+  for each row execute function public.redirect_app_event_user();
+
+-- RLS 在 BEFORE trigger 之后检查，所以旧 JWT 的目标 user_id 已变成正式账号。
+-- 用 security definer 只回答「当前 JWT 是否被映射到这个目标」，不开放 alias 表读取。
+-- 同时锁死 source='ios' 和客户端事件清单，防止客户端伪造 server 事实或未知事件。
+create or replace function public.can_insert_app_event(
+  p_user_id uuid,
+  p_source text,
+  p_event text
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p_user_id is not null
+     and p_source = 'ios'
+     and p_event in (
+       'app_opened', 'chat_started', 'chat_turn_completed',
+       'paywall_viewed', 'paywall_dismissed',
+       'purchase_started', 'purchase_completed', 'purchase_failed',
+       'experiences_unlocked', 'experience_expanded',
+       'action_selected', 'action_feedback_submitted',
+       'auth_prompted', 'auth_sms_requested', 'auth_sms_verified',
+       'auth_apple_started', 'auth_completed', 'auth_abandoned',
+       'lab_result_viewed', 'diary_summary_viewed',
+       'assessment_started', 'assessment_completed',
+       'card_game_started', 'card_game_completed',
+       'kaleidoscope_drawn', 'community_bounty_posted',
+       'community_bounty_responded'
+     )
+     and (
+       auth.uid() = p_user_id
+       or exists (
+         select 1
+           from public.app_event_user_aliases a
+          where a.old_user_id = auth.uid()
+            and a.new_user_id = p_user_id
+       )
+     );
+$$;
+
+revoke all on function public.redirect_app_event_user() from public, anon, authenticated;
+revoke all on function public.can_insert_app_event(uuid, text, text) from public, anon;
+grant execute on function public.can_insert_app_event(uuid, text, text) to authenticated;
 
 -- ==================== RLS 策略 ====================
 -- 与本项目其它用户表（0002/0013）不同：这里刻意「只给 insert，不给 select」。
@@ -35,7 +123,8 @@ alter table app_events enable row level security;
 
 drop policy if exists "Users insert own events" on app_events;
 create policy "Users insert own events" on app_events
-  for insert to authenticated with check (auth.uid() = user_id);
+  for insert to authenticated
+  with check (public.can_insert_app_event(user_id, source, event));
 
 -- ==================== 权限授予 ====================
 -- 必须先 revoke：Supabase 的初始化里有
@@ -101,6 +190,17 @@ begin
   update public.persona_jobs    set user_id = p_new where user_id = p_old;
   update public.match_results   set user_id = p_new where user_id = p_old;
   update public.lab_choice_sets set user_id = p_new where user_id = p_old;
+
+  -- 先落 alias，再迁已有事件：从这一刻起所有迟到的旧账号 INSERT 都会被 trigger
+  -- 改挂到 p_new。若 p_old 本身是上一次合并的目标，顺手把链条压平成一跳。
+  update public.app_event_user_aliases
+     set new_user_id = p_new
+   where new_user_id = p_old;
+  insert into public.app_event_user_aliases (old_user_id, new_user_id)
+  values (p_old, p_new)
+  on conflict (old_user_id) do update
+    set new_user_id = excluded.new_user_id,
+        created_at = now();
   update public.app_events      set user_id = p_new where user_id = p_old;
 
   -- 带 user_id 唯一约束的表：与正式账号冲突的匿名行丢弃，其余重指向

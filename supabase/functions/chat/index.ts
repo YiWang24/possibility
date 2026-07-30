@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "npm:@supabase/supabase-js@2.110.0";
 import { structuredOutput } from "../_shared/llm.ts";
 import { streamChatReply } from "../_shared/chat-stream.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -11,11 +10,17 @@ import {
   insertMessage,
   loadHistory,
 } from "../_shared/db.ts";
-import { errorResponse, HttpError, readJson } from "../_shared/errors.ts";
+import {
+  errorResponse,
+  HttpError,
+  readJson,
+  requestIdOf,
+} from "../_shared/errors.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { chatSignalPrompt, frontDoorPrompt } from "../_shared/prompts.ts";
 import { type ChatSignal, chatSignalSchema } from "../_shared/schemas.ts";
 import { captureException } from "../_shared/sentry.ts";
+import { serviceClient } from "../_shared/service.ts";
 import { sseEvent, sseResponse } from "../_shared/sse.ts";
 import { runInBackground } from "../_shared/background.ts";
 import { trackEvent } from "../_shared/track.ts";
@@ -50,17 +55,25 @@ function conversationText(
  *    已是覆盖后的 signal，所以危机场景天然不会上报——这也是想要的口径。
  */
 function trackCrossroadFormed(
-  db: SupabaseClient,
   userId: string,
   conversation: ConversationRow,
 ): void {
   runInBackground((async () => {
     // turn_count 走精确 count 而不是内存里的 history：loadHistory 有 20 条上限，
     // 直接数会在第 11 轮封顶，「对话深度中位数」失真。这一句跑在响应之后，不占关键路径。
-    const { count } = await db.from("messages")
+    const { count, error } = await serviceClient().from("messages")
       .select("id", { count: "exact", head: true })
       .eq("conversation_id", conversation.id)
       .eq("role", "user");
+    if (error) {
+      console.error(JSON.stringify({
+        level: "error",
+        event: "crossroad_turn_count_failed",
+        conversation_id: conversation.id,
+        error_code: error.code ?? "QUERY_FAILED",
+      }));
+      return;
+    }
     trackEvent(userId, ServerEvent.CROSSROAD_FORMED, {
       turn_count: count ?? 0,
       time_to_form_ms: Date.now() - Date.parse(conversation.created_at),
@@ -116,6 +129,7 @@ Deno.serve(async (req) => {
 
   // chat_turn_completed.latency_ms 取用户视角：从收到请求到流式回复吐完。
   const requestStartedAt = Date.now();
+  const requestId = requestIdOf(req);
   try {
     const input = validateChatInput(await readJson(req));
     const { user, db } = await requireUser(req);
@@ -222,7 +236,7 @@ Deno.serve(async (req) => {
           // 那时岔路口早已成立，不能再算一次形成。
           // 客户端是否已断开不影响判定——岔路口已经写进库了，事实就发生了。
           if (signal.crossroads.ready && conversation.status === "open") {
-            trackCrossroadFormed(db, user.id, conversation);
+            trackCrossroadFormed(user.id, conversation);
           }
           if (!cancelled) {
             // 对齐原型探索对话契约：is_enough 表示岔路口是否已足够清晰，
@@ -252,7 +266,7 @@ Deno.serve(async (req) => {
           if (!(error instanceof HttpError)) {
             captureException(error, {
               transaction: "chat-stream",
-              userId: user.id,
+              requestId,
             });
           }
           if (!cancelled) {
@@ -261,6 +275,7 @@ Deno.serve(async (req) => {
                 code: error instanceof HttpError ? error.code : "STREAM_ERROR",
                 message: "回复中断，请稍后重试。",
               },
+              request_id: requestId,
             }, "error"));
           }
         } finally {
@@ -272,7 +287,7 @@ Deno.serve(async (req) => {
         cancelController.abort();
       },
     });
-    return sseResponse(body);
+    return sseResponse(body, requestId);
   } catch (error) {
     return errorResponse(error, req);
   }

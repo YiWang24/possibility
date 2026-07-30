@@ -110,7 +110,15 @@ export const labChoiceSchema = {
         type: "object",
         properties: {
           id: { type: "string", minLength: 1 },
-          glyph: { type: "string", minLength: 1 },
+          // 图标语义键（非 emoji），词表见 prompts.ts labChoicePrompt。
+          // 这里刻意不写 enum：约束解码收紧后 DeepSeek 网关的失败率明显上升
+          // （同 matchSchema 的计数问题），客户端 CardIcon.resolve 已按词表兜底。
+          glyph: {
+            type: "string",
+            minLength: 1,
+            description:
+              "图标语义键，取值范围：stay|deepen|pivot|retreat|explore|experiment|learn|build|create|leap|connect|speak|relocate|rest|pause|observe|timing|hybrid|balance|secure|money|home|health",
+          },
           title: { type: "string", minLength: 1 },
           description: { type: "string", minLength: 1 },
           color: { type: "string", minLength: 1 },

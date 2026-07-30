@@ -1,0 +1,72 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:1080px;height:1620px}
+  .chips-wrap{position:absolute;inset:0;z-index:4}
+  .tblock{position:absolute;left:64px;top:858px;right:64px}
+  .tblock h1{font-size:62px}
+  .tblock p{margin-top:14px;font-size:19px}
+  .cards{position:absolute;left:64px;right:64px;top:1238px}
+  .resbar{position:absolute;left:64px;right:64px;top:1492px}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="scene" id="scene" viewBox="0 0 1080 1620" width="1080" height="1620" preserveAspectRatio="xMidYMid slice"></svg>
+
+  <div class="phead">
+    <div class="bmini"><svg viewBox="-50 -50 100 100" id="bmk"></svg><div><div class="nm">我有可能</div><div class="tg">自我探索 · 人生决策</div></div></div>
+    <div class="ftag">功能 01<small>KNOW YOURSELF</small></div>
+  </div>
+
+  <div class="chips-wrap">
+    <div class="chip co" style="left:430px;top:288px">MBTI<small>性格</small></div>
+    <div class="chip te" style="left:812px;top:330px">荣格八维<small>认知功能</small></div>
+    <div class="chip mu" style="left:300px;top:520px">盖洛普优势</div>
+    <div class="chip sk" style="left:858px;top:566px">职业价值观</div>
+    <div class="chip co" style="left:430px;top:770px">星座 · 塔罗</div>
+    <div class="chip mu" style="left:770px;top:792px">八字<small>命理趣味</small></div>
+  </div>
+
+  <div class="tblock">
+    <span class="kk">认识自己</span>
+    <h1>生成一份随你成长的<br><span class="c">动态自我画像</span></h1>
+    <p>把成熟的<b>科学测评</b>与更有趣的<b>探索方式</b>结合，通过 AI 持续分析，越来越懂你。</p>
+  </div>
+
+  <div class="cards">
+    <div class="fcard"><svg class="ic" viewBox="-40 -40 80 80" id="i1"></svg><h3>科学测评</h3><p>MBTI、荣格八维、盖洛普优势、职业价值观，建立自我坐标。</p></div>
+    <div class="plus">＋</div>
+    <div class="fcard"><svg class="ic" viewBox="-40 -40 80 80" id="i2"></svg><h3>趣味探索</h3><p>人生卡牌、星座、塔罗、八字，轻松打开自我对话。</p></div>
+    <div class="plus">＋</div>
+    <div class="fcard"><svg class="ic" viewBox="-40 -40 80 80" id="i3"></svg><h3>语音日记</h3><p>说出心里盘旋的问题，AI 持续沉淀你的成长轨迹。</p></div>
+  </div>
+  <div class="resbar"><div><b>＝ 动态自我画像</b> &nbsp;<span>随你共同成长，越用越懂你</span></div><div class="go">开始认识自己 →</div></div>
+</div>
+<script src="flat.js"></script>
+<script>
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  svg.appendChild(FLAT.rays(600,470,1200,28,[C.cream2,"#FBE9B8"]));
+  // 中心自我画像花
+  svg.appendChild(FLAT.flower(600,490,168,C.coral,C.mustard,C.tealD));
+  // 仰望的小人
+  (function(){const g=E("g",{transform:"translate(230,880) scale(1.55)",filter:"url(#sticker)"});
+    g.appendChild(E("rect",{x:-20,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:4,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:-23,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("rect",{x:2,y:-9,width:21,height:11,rx:5,fill:C.mustard}));
+    g.appendChild(E("path",{d:"M-25,-116 Q-27,-62 -21,-56 L21,-56 Q27,-62 25,-116 Q0,-130 -25,-116 Z",fill:C.teal}));
+    g.appendChild(E("path",{d:"M-24,-116 Q-44,-104 -52,-78 L-40,-72 Q-30,-96 -12,-104 Z",fill:C.teal}));
+    g.appendChild(E("circle",{cx:-48,cy:-76,r:7,fill:C.skin}));
+    g.appendChild(E("rect",{x:21,y:-114,width:13,height:50,rx:6,fill:C.teal}));
+    g.appendChild(E("circle",{cx:28,cy:-62,r:7,fill:C.skin}));
+    g.appendChild(E("circle",{cx:2,cy:-138,r:22,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-20,-146 Q-17,-168 4,-166 Q24,-168 24,-144 Q15,-156 2,-154 Q-9,-156 -20,-146 Z",fill:C.ink}));
+    g.appendChild(E("circle",{cx:11,cy:-142,r:2.6,fill:C.ink}));
+    g.appendChild(E("path",{d:"M6,-131 Q12,-127 18,-131",stroke:C.ink,"stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+    svg.appendChild(g);})();
+  // 品牌标 & 图标
+  FLAT.defs(document.getElementById('bmk'));document.getElementById('bmk').appendChild(FLAT.flower(0,0,36,C.coral,C.teal,C.mustard));
+  ["i1","i2","i3"].forEach((id,k)=>{const s=document.getElementById(id);FLAT.defs(s);s.appendChild(FLAT.icon(["chart","cards","mic"][k]));});
+</script>
+<div class="grain"></div><div class="grain2"></div>
+</body></html>

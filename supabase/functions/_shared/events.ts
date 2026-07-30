@@ -1,7 +1,7 @@
 // 事件清单（契约层 · docs/埋点方案.md §3 的 TypeScript 镜像）
 //
 // 改动纪律：先改 docs/埋点方案.md，再同步本文件与
-// frontend/Core/Analytics/AnalyticsEvent+Catalog.swift。
+// ios/Possibility/Core/Analytics/AnalyticsEvent+Catalog.swift。
 // 落库实现见 track.ts —— 本文件只定义「有哪些事件、带什么属性」。
 
 /// 埋点属性值：与 Swift 侧 AnalyticsValue 对齐，只允许标量。

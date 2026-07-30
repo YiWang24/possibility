@@ -22,7 +22,8 @@ with params as (
 ),
 
 -- 每个用户在每个漏斗步骤上的首次发生时间。
--- distinct user_id 天然消解了 iOS + 服务端双份上报的重复（§0）。
+-- 服务端可确认的事实只在 app_events 写一份；这里仍按 user_id 去重，
+-- 消解用户在窗口内多次重复完成同一漏斗步骤。
 first_seen as (
   select
     e.user_id,

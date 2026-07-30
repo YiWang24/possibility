@@ -10,8 +10,6 @@
 import { runtimeConfig } from "./config.ts";
 import { runInBackground } from "./background.ts";
 
-/// 错误消息可能回显 prompt 片段，截断以限制正文外泄面（§1 的精神）。
-const MAX_MESSAGE_CHARS = 500;
 const MAX_STACK_CHARS = 4_000;
 
 type SentryTarget = { url: string; publicKey: string };
@@ -46,12 +44,17 @@ function truncate(value: string, max: number): string {
   return value.length > max ? `${value.slice(0, max)}…` : value;
 }
 
+/** Error.stack 首行通常重复原始 message；丢掉它，避免上游把用户正文塞进异常消息。 */
+function privacySafeStack(stack: string | undefined): string {
+  if (!stack) return "";
+  return truncate(stack.split("\n").slice(1).join("\n"), MAX_STACK_CHARS);
+}
+
 /** 上报上下文：requestId 与响应体里的 request_id 一致，用于前后端串联同一次故障。 */
 export type CaptureContext = {
   /// 出问题的函数名（chat / match / ...），作为 Sentry 的 transaction 维度。
   transaction: string;
   requestId?: string;
-  userId?: string | null;
 };
 
 /**
@@ -80,14 +83,15 @@ export function captureException(
         function: context.transaction,
         ...(context.requestId ? { request_id: context.requestId } : {}),
       },
-      ...(context.userId ? { user: { id: context.userId } } : {}),
       exception: {
         values: [{
           type: err?.name ?? "UnknownError",
-          value: truncate(err?.message ?? String(error), MAX_MESSAGE_CHARS),
+          // 原始 message 可能包含 prompt / transcript。类型 + stack + request_id
+          // 足够定位代码路径，正文不值得为可读性冒险外发。
+          value: "Unexpected server error",
         }],
       },
-      extra: { stack: truncate(err?.stack ?? "", MAX_STACK_CHARS) },
+      extra: { stack: privacySafeStack(err?.stack) },
     };
 
     const body = [

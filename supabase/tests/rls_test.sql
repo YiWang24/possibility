@@ -235,6 +235,43 @@ begin
     raise exception 'null-user app_events insert unexpectedly succeeded';
   exception when insufficient_privilege then null; end;
 
+  -- 客户端不能伪造服务端事实；否则 crossroad_formed / llm_request 等指标毫无可信度。
+  begin
+    insert into public.app_events (user_id, event, source)
+    values ('11111111-1111-4111-8111-111111111111', 'llm_request', 'server');
+    raise exception 'authenticated client forged a server event';
+  exception when insufficient_privilege then null; end;
+
+  -- 即使把 source 写成 ios，也不能伪造明确由服务端权威产生的业务事实。
+  begin
+    insert into public.app_events (user_id, event, source)
+    values (
+      '11111111-1111-4111-8111-111111111111',
+      'diary_created',
+      'ios'
+    );
+    raise exception 'authenticated client forged a server-authoritative event';
+  exception when insufficient_privilege then null; end;
+
+  -- event_id 是重试幂等键：相同事件重放只能保留一行。
+  insert into public.app_events (event_id, user_id, event, source)
+  values (
+    'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+    '11111111-1111-4111-8111-111111111111',
+    'app_opened',
+    'ios'
+  );
+  begin
+    insert into public.app_events (event_id, user_id, event, source)
+    values (
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      '11111111-1111-4111-8111-111111111111',
+      'app_opened',
+      'ios'
+    );
+    raise exception 'duplicate event_id unexpectedly succeeded';
+  exception when unique_violation then null; end;
+
   -- update / delete 无策略也无权限：事件一经写入不可篡改。
   begin
     update public.app_events set event = 'hacked';
@@ -251,7 +288,9 @@ begin
     insert into public.app_events (user_id, event, source)
     values ('11111111-1111-4111-8111-111111111111', 'app_opened', 'web');
     raise exception 'app_events.source check not enforced';
-  exception when check_violation then null; end;
+  exception
+    when check_violation or insufficient_privilege then null;
+  end;
 
   -- props 必须是 JSON 对象：数组会让 props->>'x' 全线失效。
   begin
@@ -826,6 +865,47 @@ begin
 end
 $$;
 
+-- 模拟 merge SQL 已完成、deleteUser 尚未执行时才抵达数据库的旧 JWT 事件。
+-- BEFORE INSERT trigger 应把 old user_id 改挂到 new；alias 表本身仍不可读。
+select set_config(
+  'request.jwt.claim.sub',
+  '33333333-3333-4333-8333-333333333333',
+  true
+);
+set local role authenticated;
+insert into public.app_events (user_id, event, source)
+values (
+  '33333333-3333-4333-8333-333333333333',
+  'app_opened',
+  'ios'
+);
+do $$
+begin
+  begin
+    perform count(*) from public.app_event_user_aliases;
+    raise exception 'authenticated must not read app_event_user_aliases';
+  exception when insufficient_privilege then null; end;
+end
+$$;
+reset role;
+
+do $$
+begin
+  if (
+    select count(*) from public.app_events
+    where user_id = '44444444-4444-4444-8444-444444444444'
+  ) <> 3 then
+    raise exception 'late anonymous app_event must be redirected to the new user';
+  end if;
+  if exists (
+    select 1 from public.app_events
+    where user_id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'late anonymous app_event remained on old user';
+  end if;
+end
+$$;
+
 -- ==================== 9. app_events：注销后去标识化而非删除 ====================
 -- 0017 用 on delete set null（业务表清一色 cascade）。这是刻意的差异：
 -- 事件按 §1 不含 PII，断开 user_id 即完成个人信息删除；若跟着 cascade，
@@ -859,4 +939,3 @@ end
 $$;
 
 rollback;
-

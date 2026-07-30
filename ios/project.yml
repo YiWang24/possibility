@@ -1,0 +1,108 @@
+name: Possibility
+options:
+  bundleIdPrefix: com.adventurex
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: JRHT3J6CWU
+packages:
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: 2.0.0
+  # 埋点 Layer 2：PostHog（客户端行为 / 漏斗 / 留存看板）
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    from: 3.68.3
+  # 埋点 Layer 3：Sentry（崩溃 + 事件面包屑，崩前行为可回放）
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa
+    from: 9.23.0
+targets:
+  Possibility:
+    type: application
+    platform: iOS
+    sources:
+      - path: Possibility/App
+      - path: Possibility/Core
+      - path: Possibility/Features
+      - path: Possibility/Resources/Assets.xcassets
+    dependencies:
+      - package: Supabase
+        product: Supabase
+      - package: PostHog
+        product: PostHog
+      - package: Sentry
+        product: Sentry
+    # Base.xcconfig 已入库，内部 #include? 本地 Config.xcconfig（含密钥，不入库）。
+    # 走 configFiles 而非手工在 Xcode 里点选，xcodegen 重生成工程后不会丢。
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    entitlements:
+      path: Possibility/Possibility.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
+    info:
+      path: Possibility/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Possibility
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        SUPABASE_URL: "$(SUPABASE_URL)"
+        SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
+        # 埋点密钥同样走 Config.xcconfig 注入，不进仓库（见 Config.xcconfig.example）。
+        # 留空时对应 backend 自动不注册，App 正常运行 —— 埋点缺失不能拖垮主流程。
+        POSTHOG_API_KEY: "$(POSTHOG_API_KEY)"
+        POSTHOG_HOST: "$(POSTHOG_HOST)"
+        SENTRY_DSN: "$(SENTRY_DSN)"
+        NSMicrophoneUsageDescription: 录制语音日记需要使用麦克风。
+        NSSpeechRecognitionUsageDescription: 将语音日记转写为文字需要使用语音识别。
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.possibility
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  PossibilityUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PossibilityUITests
+    dependencies:
+      - target: Possibility
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.possibility.uitests
+        TEST_TARGET_NAME: Possibility
+        GENERATE_INFOPLIST_FILE: YES
+  PossibilityTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PossibilityTests
+    dependencies:
+      - target: Possibility
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.possibility.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Possibility:
+    build:
+      targets:
+        Possibility: all
+        PossibilityUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - PossibilityTests
+        - PossibilityUITests

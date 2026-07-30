@@ -1,0 +1,75 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .stage{width:1080px;height:1620px}
+  .destlabel{position:absolute;z-index:4;transform:translate(-50%,-50%);font-family:var(--round);font-weight:800;
+    font-size:22px;padding:8px 18px;border-radius:14px;color:#fff;box-shadow:0 6px 0 rgba(38,38,31,.14)}
+  .tblock{position:absolute;left:64px;top:900px;right:64px}
+  .tblock h1{font-size:62px}
+  .tblock p{font-size:19px;margin-top:14px}
+  .cards{position:absolute;left:64px;right:64px;top:1236px}
+  .fcard .tag{display:inline-block;font-family:var(--round);font-weight:800;font-size:15px;padding:5px 14px;border-radius:10px;margin-bottom:12px}
+  .best .tag{background:#dff4e8;color:#2fa46b}.mid .tag{background:#e3edfb;color:#5a86cf}.worst .tag{background:#fde6dd;color:#e07a4f}
+  .best{box-shadow:0 10px 0 rgba(47,164,107,.18)}.mid{box-shadow:0 10px 0 rgba(90,134,207,.18)}.worst{box-shadow:0 10px 0 rgba(224,122,79,.18)}
+  .resbar{position:absolute;left:64px;right:64px;top:1494px}
+</style></head>
+<body>
+<div class="stage">
+  <svg class="scene" id="scene" viewBox="0 0 1080 1620" width="1080" height="1620" preserveAspectRatio="xMidYMid slice"></svg>
+
+  <div class="phead">
+    <div class="bmini"><svg viewBox="-50 -50 100 100" id="bmk"></svg><div><div class="nm">我有可能</div><div class="tg">自我探索 · 人生决策</div></div></div>
+    <div class="ftag">功能 02<small>LIFE LAB</small></div>
+  </div>
+
+  <div class="destlabel" style="left:225px;top:430px;background:var(--sky-d)">一般</div>
+  <div class="destlabel" style="left:540px;top:300px;background:var(--mustard-d)">最好</div>
+  <div class="destlabel" style="left:855px;top:430px;background:var(--coral)">最坏</div>
+
+  <div class="tblock">
+    <span class="kk">人生实验室</span>
+    <h1>把一个选择，<span class="t">推演</span>到<br><span class="c">3 / 5 / 10 年后</span></h1>
+    <p>站在岔路口先别急着决定。预演不同选择在未来的最好、一般与最坏情形，更从容地选择。</p>
+  </div>
+
+  <div class="cards">
+    <div class="fcard best"><span class="tag">最好 · BEST</span><h3>顺势起飞</h3><p>能力与机遇共振，转型落地，新赛道站稳，收入与成就感同步提升。</p></div>
+    <div class="fcard mid"><span class="tag">一般 · BASE</span><h3>稳步过渡</h3><p>有阵痛也有收获，用一两年完成切换，节奏放缓但方向清晰。</p></div>
+    <div class="fcard worst"><span class="tag">最坏 · WORST</span><h3>及时回调</h3><p>即使不顺也已看清边界，低成本试错，随时回到更适合的路。</p></div>
+  </div>
+  <div class="resbar"><div><b>＝ 更理性的选择</b> &nbsp;<span>看清每条路的三种结局</span></div><div class="go">进入实验室 →</div></div>
+</div>
+<script src="flat.js"></script>
+<script>
+  const svg=document.getElementById('scene');FLAT.defs(svg);const {E,C}=FLAT;
+  svg.appendChild(FLAT.rays(540,320,1150,28,[C.cream2,"#FBE9B8"]));
+  // 三条通往不同未来的路（从底部岔口发散）
+  const roads=[["M540,905 Q380,640 225,395",C.sky],["M540,905 L540,335",C.mustard],["M540,905 Q700,640 855,395",C.coral]];
+  roads.forEach(r=>{
+    svg.appendChild(E("path",{d:r[0],fill:"none",stroke:C.cream,"stroke-width":46,"stroke-linecap":"round",filter:"url(#stickerThin)"}));
+  });
+  roads.forEach(r=>svg.appendChild(E("path",{d:r[0],fill:"none",stroke:C.ink,"stroke-width":5,"stroke-dasharray":"4 22","stroke-linecap":"round",opacity:.3})));
+  // 三个目的地：小平台 + 天气图标
+  [[225,395,"cloud"],[540,335,"sun"],[855,395,"rain"]].forEach(d=>{
+    svg.appendChild(E("ellipse",{cx:d[0],cy:d[1]+30,rx:64,ry:20,fill:C.tealD,filter:"url(#stickerThin)"}));
+    const ic=FLAT.icon(d[2]);ic.setAttribute("transform",`translate(${d[0]},${d[1]-14}) scale(1.25)`);svg.appendChild(ic);
+  });
+  // 岔口处的小人
+  (function(){const g=E("g",{transform:"translate(540,950) scale(1.4)",filter:"url(#sticker)"});
+    g.appendChild(E("rect",{x:-20,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:4,y:-56,width:16,height:54,rx:7,fill:C.skyD}));
+    g.appendChild(E("rect",{x:-23,y:-9,width:21,height:11,rx:5,fill:C.coralD}));
+    g.appendChild(E("rect",{x:2,y:-9,width:21,height:11,rx:5,fill:C.coralD}));
+    g.appendChild(E("path",{d:"M-25,-116 Q-27,-62 -21,-56 L21,-56 Q27,-62 25,-116 Q0,-130 -25,-116 Z",fill:C.mustard}));
+    g.appendChild(E("rect",{x:-34,y:-114,width:13,height:50,rx:6,fill:C.mustard}));
+    g.appendChild(E("rect",{x:21,y:-114,width:13,height:50,rx:6,fill:C.mustard}));
+    g.appendChild(E("circle",{cx:-28,cy:-62,r:7,fill:C.skin}));g.appendChild(E("circle",{cx:28,cy:-62,r:7,fill:C.skin}));
+    g.appendChild(E("circle",{cx:0,cy:-138,r:22,fill:C.skin}));
+    g.appendChild(E("path",{d:"M-22,-146 Q-19,-168 2,-166 Q22,-168 22,-144 Q13,-156 0,-154 Q-11,-156 -22,-146 Z",fill:C.ink}));
+    g.appendChild(E("circle",{cx:-9,cy:-140,r:2.6,fill:C.ink}));g.appendChild(E("circle",{cx:9,cy:-140,r:2.6,fill:C.ink}));
+    g.appendChild(E("path",{d:"M-8,-129 Q0,-123 8,-129",stroke:C.ink,"stroke-width":2.4,fill:"none","stroke-linecap":"round"}));
+    svg.appendChild(g);})();
+  FLAT.defs(document.getElementById('bmk'));document.getElementById('bmk').appendChild(FLAT.flower(0,0,36,C.coral,C.teal,C.mustard));
+</script>
+<div class="grain"></div><div class="grain2"></div>
+</body></html>

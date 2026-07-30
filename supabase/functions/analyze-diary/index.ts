@@ -27,9 +27,10 @@ Deno.serve(async (req) => {
     });
     await insertDiaryAnalysis(db, user.id, input.transcript, result);
     await mergeProfileDimensions(db, result.dim_updates);
-    // 只上报正文长度这个派生值（§1）。input_method（voice/text）在服务端不可知——
-    // 转写在客户端完成，服务端只收到 transcript，该属性由 iOS 侧补齐。
+    // 服务端在日记写库成功后权威上报。iOS 仍发 PostHog / Sentry，但不重复写 app_events。
+    // 只记录输入方式和正文长度这个派生值，正文绝不进埋点（§1）。
     trackEvent(user.id, ServerEvent.DIARY_CREATED, {
+      input_method: input.inputMethod,
       content_chars: input.transcript.length,
     });
 

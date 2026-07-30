@@ -47,7 +47,7 @@ const DENIED_KEYS = new Set([
 ]);
 
 /// 话题分类的合法取值，镜像 iOS 的 ExploreTopic
-/// （frontend/Core/Models/UserModels.swift）。
+/// （ios/Possibility/Core/Models/UserModels.swift）。
 ///
 /// 为什么埋点属性也需要一张白名单：键名黑名单只挡得住「叫 content 的字段装正文」，
 /// 挡不住「叫 topic 的合法字段装了用户原话」。lab-choices 的 topic 在 validate.ts
@@ -137,6 +137,7 @@ export function trackEvent(
     runInBackground(
       Promise.resolve(
         db.from(EVENTS_TABLE).insert({
+          event_id: crypto.randomUUID(),
           user_id: userId,
           event,
           props: sanitizeProps(props),

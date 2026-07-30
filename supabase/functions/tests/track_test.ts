@@ -25,6 +25,7 @@ function assert(
 }
 
 type EventRow = {
+  event_id: string;
   user_id: string | null;
   event: string;
   props: Record<string, unknown>;
@@ -203,6 +204,10 @@ Deno.test("trackEvent sanitizes before writing", async () => {
   assert(!("message" in rows[0].props), "PII must not reach the table");
   assert(rows[0].source === "server", "server writes must be tagged as such");
   assert(rows[0].user_id === "u-1");
+  assert(
+    /^[0-9a-f-]{36}$/.test(rows[0].event_id),
+    "every fact needs a stable event_id for deduplication",
+  );
 });
 
 // ==================== 值域收敛：合法键名也可能装用户内容 ====================
