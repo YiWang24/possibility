@@ -1,4 +1,4 @@
-export const AI_DIMENSIONS = [
+export const PROFILE_DIMENSIONS = [
   "personality",
   "skill",
   "like",
@@ -8,7 +8,7 @@ export const AI_DIMENSIONS = [
   "life",
 ] as const;
 
-export const AI_PURPOSES = [
+export const PROFILE_CONTEXT_PURPOSES = [
   "persona",
   "chat",
   "match",
@@ -16,11 +16,10 @@ export const AI_PURPOSES = [
   "community",
 ] as const;
 
-export type AIDimension = typeof AI_DIMENSIONS[number];
-export type AIPurpose = typeof AI_PURPOSES[number];
-export type AIPermissions = Record<string, Record<string, boolean>>;
+export type ProfileDimension = typeof PROFILE_DIMENSIONS[number];
+export type ProfileContextPurpose = typeof PROFILE_CONTEXT_PURPOSES[number];
 
-const DIMENSION_LABELS: Record<AIDimension, string> = {
+const DIMENSION_LABELS: Record<ProfileDimension, string> = {
   personality: "人格底色",
   skill: "我擅长",
   like: "我喜欢",
@@ -30,12 +29,11 @@ const DIMENSION_LABELS: Record<AIDimension, string> = {
   life: "人生底牌",
 };
 
-export type AuthorizedProfileContext = {
-  purpose: AIPurpose;
-  dimensions: AIDimension[];
+export type ProfileContext = {
+  purpose: ProfileContextPurpose;
+  dimensions: ProfileDimension[];
   text: string;
   profileRevision: number;
-  permissionRevision: number;
   factIds: string[];
   facts: ProfileFactForContext[];
 };
@@ -47,45 +45,38 @@ export type ProfileFactForContext = {
   source: string;
   confidence: number;
   user_confirmed: boolean;
+  visibility: "public" | "private";
   sensitivity?: "low" | "medium" | "high";
   support_count?: number;
 };
 
 /**
- * 事实表是 AI 上下文的权威来源。用户确认状态与来源会进入提示词，
- * 让模型能区分“本人确认”和“系统从对话/日记推断”，避免把推断说成事实。
+ * profile_facts 是画像上下文的唯一权威来源。当前调用始终服务于事实
+ * 所有者，因此 public/private 都可使用；跨用户场景只能读取
+ * public_profiles.published_facts，不能调用本函数读取他人的私密事实。
  */
-export function authorizedFactsContext(
+export function profileFactsContext(
   facts: ProfileFactForContext[],
-  permissions: AIPermissions,
-  purpose: AIPurpose,
+  purpose: ProfileContextPurpose,
   profileRevision: number,
-  permissionRevision = 0,
-): AuthorizedProfileContext {
+): ProfileContext {
   const allowed = facts
     .filter((fact) => {
       if (
-        !AI_DIMENSIONS.includes(fact.dimension as AIDimension) ||
-        permissions[fact.dimension]?.[purpose] !== true ||
+        !PROFILE_DIMENSIONS.includes(fact.dimension as ProfileDimension) ||
         fact.value.trim().length === 0
       ) {
         return false;
       }
-      if (fact.user_confirmed) return true;
-      if (purpose === "match" || purpose === "community") return false;
-      if (purpose === "lab") {
-        return Number(fact.support_count ?? 1) >= 2 &&
-          Number(fact.confidence) >= 0.8;
-      }
-      return Number(fact.confidence) >= 0.7;
+      return fact.user_confirmed || Number(fact.confidence) >= 0.7;
     })
     .sort((a, b) =>
       Number(b.user_confirmed) - Number(a.user_confirmed) ||
       Number(b.confidence) - Number(a.confidence) ||
       Number(b.support_count ?? 1) - Number(a.support_count ?? 1)
     )
-    .slice(0, 12);
-  const dimensions = AI_DIMENSIONS.filter((dimension) =>
+    .slice(0, 20);
+  const dimensions = PROFILE_DIMENSIONS.filter((dimension) =>
     allowed.some((fact) => fact.dimension === dimension)
   );
   const lines = dimensions.map((dimension) => {
@@ -109,7 +100,6 @@ export function authorizedFactsContext(
     dimensions,
     text: lines.join("\n"),
     profileRevision,
-    permissionRevision,
     factIds: allowed.map(({ id }) => id),
     facts: allowed,
   };

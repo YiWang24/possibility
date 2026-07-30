@@ -12,14 +12,14 @@ import { personaPrompt } from "../_shared/prompts.ts";
 import { type PersonaOutput, personaSchema } from "../_shared/schemas.ts";
 import { fallbackPersona } from "../_shared/persona.ts";
 import { validatePersonaInput } from "../_shared/validate.ts";
-import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 /**
  * POST /persona
  * 动态数字形象异步任务（对应原型 AI_INTEGRATION_PROMPTS.dynamicPersona）。
  * - action=generate：根据已授权画像生成 persona，落库并返回 { job_id, status, persona }
  * - action=status：按 job_id 查询 { job_id, status, persona }
- * 只有 profile_ai_permissions 中 persona=true 的维度会进入 prompt（默认拒绝）。
+ * 使用本人有效画像事实；公开事实可发布，私人事实仅用于本人体验。
  * 离线兜底逻辑见 _shared/persona.ts（纯函数、可单测）。
  */
 
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     }
 
     // action === "generate"
-    const aiContext = await loadAuthorizedProfileContext(
+    const aiContext = await loadProfileContext(
       db,
       user.id,
       "persona",
@@ -101,7 +101,6 @@ Deno.serve(async (req) => {
         purpose: aiContext.purpose,
         dimensions: aiContext.dimensions,
         profile_revision: aiContext.profileRevision,
-        permission_revision: aiContext.permissionRevision,
       },
     });
   } catch (error) {

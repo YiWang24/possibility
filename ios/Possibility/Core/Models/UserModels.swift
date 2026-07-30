@@ -481,6 +481,7 @@ struct ProfileFact: Codable, Identifiable, Sendable {
     let sourceRef: String?
     let confidence: Double
     let userConfirmed: Bool
+    let visibility: String
     let status: String?
     let sensitivity: String?
     let supportCount: Int?
@@ -489,7 +490,7 @@ struct ProfileFact: Codable, Identifiable, Sendable {
     let updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, dimension, value, source, confidence, status
+        case id, dimension, value, source, confidence, visibility, status
         case sensitivity
         case factKind = "fact_kind"
         case sourceRef = "source_ref"
@@ -509,7 +510,8 @@ struct ProfileAccessReceipt: Decodable, Identifiable, Sendable {
     let dimensionCount: Int
     let factCount: Int
     let profileRevision: Int
-    let permissionRevision: Int
+    let publicFactCount: Int
+    let privateFactCount: Int
     let createdAt: String
 
     enum CodingKeys: String, CodingKey {
@@ -517,7 +519,8 @@ struct ProfileAccessReceipt: Decodable, Identifiable, Sendable {
         case dimensionCount = "dimension_count"
         case factCount = "fact_count"
         case profileRevision = "profile_revision"
-        case permissionRevision = "permission_revision"
+        case publicFactCount = "public_fact_count"
+        case privateFactCount = "private_fact_count"
         case createdAt = "created_at"
     }
 }
@@ -542,20 +545,15 @@ struct ProfileProposal: Decodable, Identifiable, Sendable {
 
 struct ProfilePrivacySnapshot: Decodable, Sendable {
     let profileRevision: Int
-    let permissionRevision: Int
     let portraitPct: Int
     let facts: [ProfileFact]
     let proposals: [ProfileProposal]
-    let permissions: [String: [String: Bool]]
-    let permissionUpdatedAt: String?
     let accessReceipts: [ProfileAccessReceipt]
 
     enum CodingKeys: String, CodingKey {
-        case facts, proposals, permissions
+        case facts, proposals
         case profileRevision = "profile_revision"
-        case permissionRevision = "permission_revision"
         case portraitPct = "portrait_pct"
-        case permissionUpdatedAt = "permission_updated_at"
         case accessReceipts = "access_receipts"
     }
 }

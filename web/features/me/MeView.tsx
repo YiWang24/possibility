@@ -11,8 +11,7 @@ import { TravelerAvatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth, phoneDisplay } from "@/stores/auth";
 import { useData } from "@/stores/data";
-import { myProfileRemotePayload, useMyProfile } from "@/stores/my-profile";
-import { callFunction } from "@/lib/supabase";
+import { useMyProfile } from "@/stores/my-profile";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { hue } from "@/lib/theme";
 import type { TrajectoryNode } from "@/lib/models";
@@ -59,9 +58,8 @@ export function MeView() {
   const deleteAccount = useAuth((s) => s.deleteAccount);
 
   /* 画像数据来源：与「认识你自己」同一份本地维度 + 云端底牌 */
-  const filledDims = useHome((s) => s.filledDims);
   const loadPortrait = useHome((s) => s.loadPortrait);
-  const cardGames = useData((s) => s.profile?.card_games);
+  const profileFacts = useData((s) => s.profile?.facts ?? []);
 
   const [tab, setTab] = useState("persona");
   const [editMode, setEditMode] = useState<MeEditMode | null>(null);
@@ -69,7 +67,7 @@ export function MeView() {
   const [accountBusy, setAccountBusy] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
-  /* 挂载：加载画像，并分别恢复公开主页与私有 AI 授权。 */
+  /* 挂载：加载画像和公开主页资料。 */
   useEffect(() => {
     void loadPortrait();
   }, [loadPortrait]);
@@ -81,69 +79,47 @@ export function MeView() {
       const pub = remote?.public_profile;
       if (pub) {
         useMyProfile.getState().applyRemote(pub);
-        if ((pub.profile_version ?? 1) < 2) {
-          try {
-            await callFunction("save-profile", {
-              action: "save_public_profile",
-              ...myProfileRemotePayload(useMyProfile.getState().profile),
-            });
-            useData.getState().invalidateProfile();
-          } catch {
-            /* 本地缓存仍可用，下次进入主页重试迁移。 */
-          }
-        }
-      }
-      if (remote?.ai_permissions) {
-        useMyProfile.getState().applyRemotePermissions(
-          remote.ai_permissions.permissions,
-          remote.ai_permissions.permission_revision,
-        );
-      } else {
-        const localPermissions = useMyProfile.getState().aiPermissions;
-        if (Object.keys(localPermissions).length > 0) {
-          try {
-            await callFunction("save-profile", {
-              action: "save_ai_permissions",
-              permissions: localPermissions,
-              permission_revision: useMyProfile.getState().permissionRevision,
-            });
-            useData.getState().invalidateProfile();
-          } catch {
-            /* 本地授权仍保留，下次进入主页重试。 */
-          }
-        }
       }
     })();
   }, [isAnonymous]);
 
-  const lifeCards = useMemo(() => {
-    const life = cardGames?.find((g) => g.kind === "life");
-    if (!life) return [] as { glyph: string; name: string }[];
-    return life.final_cards.slice(0, 3).map((c) => ({ glyph: c.glyph ?? "◆", name: c.name }));
-  }, [cardGames]);
+  const publicValues = useMemo(() => {
+    const grouped: Record<string, string[]> = {};
+    for (const fact of profileFacts) {
+      if (fact.visibility !== "public") continue;
+      (grouped[fact.dimension] ??= []).push(fact.value);
+    }
+    return grouped;
+  }, [profileFacts]);
 
-  /* 全量画像内容（含未公开项，供「设置展示」使用） */
+  const lifeCards = useMemo(
+    () => (publicValues.life ?? []).slice(0, 3).map((name) => ({ glyph: "◆", name })),
+    [publicValues],
+  );
+
+  /* 本页只展示明确标记为 public 的事实。 */
   const allPersonaItems = useMemo<PersonaItem[]>(() => {
-    const d = filledDims;
+    const value = (dimension: string, fallback = "尚未公开") =>
+      publicValues[dimension]?.join(" · ") || fallback;
     return [
-      { key: "personality", label: "人格底色", value: d.personality || "尚未填写", glyph: "◎", tint: "#5968D9" },
-      { key: "skill", label: "我擅长", value: d.skill || "尚未填写", glyph: "✦", tint: "#5E96FF" },
-      { key: "like", label: "我喜欢", value: d.like || "尚未填写", glyph: "♡", tint: "#E35CC1" },
-      { key: "love", label: "我在恋爱关系中在意", value: d.love || "尚未填写", glyph: "✿", tint: "#FF7A4D" },
-      { key: "family", label: "我在家庭关系中在意", value: d.family || "尚未填写", glyph: "⌂", tint: "#3ED9A4" },
-      { key: "social", label: "我在人际交往中在意", value: d.social || "尚未填写", glyph: "◎", tint: "#5E96FF" },
+      { key: "personality", label: "人格底色", value: value("personality"), glyph: "◎", tint: "#5968D9" },
+      { key: "skill", label: "我擅长", value: value("skill"), glyph: "✦", tint: "#5E96FF" },
+      { key: "like", label: "我喜欢", value: value("like"), glyph: "♡", tint: "#E35CC1" },
+      { key: "love", label: "我在恋爱关系中在意", value: value("love"), glyph: "✿", tint: "#FF7A4D" },
+      { key: "family", label: "我在家庭关系中在意", value: value("family"), glyph: "⌂", tint: "#3ED9A4" },
+      { key: "social", label: "我在人际交往中在意", value: value("social"), glyph: "◎", tint: "#5E96FF" },
       {
         key: "life",
         label: "我的人生底牌",
-        value: lifeCards.length ? lifeCards.map((c) => c.name).join(" · ") : "尚未生成",
+        value: value("life"),
         glyph: "◇",
         tint: "#8F7BFF",
         cards: lifeCards,
       },
     ];
-  }, [filledDims, lifeCards]);
+  }, [publicValues, lifeCards]);
 
-  const visibleItems = allPersonaItems.filter((it) => profile.visibility[it.key]);
+  const visibleItems = allPersonaItems.filter((it) => hasResult(it.value));
 
   /* 公开画像驱动的数字形象（仅由公开项生成，对齐 iOS MeView.personaModel） */
   const personaModel = useMemo(() => {
@@ -151,7 +127,7 @@ export function MeView() {
     const signature = visibleItems.find((it) => it.key === "life")?.cards?.map((c) => c.name) ?? [];
     return buildPersonaModel(values, signature);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.visibility, allPersonaItems]);
+  }, [allPersonaItems]);
 
   /* 编辑公开主页是关键动作：游客先登录，成功后继续打开编辑页 */
   const requestEdit = (mode: MeEditMode) => requireAuth(() => setEditMode(mode));
@@ -266,7 +242,7 @@ export function MeView() {
               items={visibleItems}
               totalCount={allPersonaItems.length}
               lifeCards={lifeCards}
-              onEdit={() => requestEdit("persona")}
+              onEdit={() => setPrivacyOpen(true)}
             />
           )}
         </div>
@@ -312,7 +288,7 @@ export function MeView() {
       </PageContainer>
 
       {/* 编辑浮层 */}
-      <MeEditView mode={editMode} personaItems={allPersonaItems} onClose={() => setEditMode(null)} />
+      <MeEditView mode={editMode} onClose={() => setEditMode(null)} />
       <ProfilePrivacyView open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
 
       {/* 二次确认 */}

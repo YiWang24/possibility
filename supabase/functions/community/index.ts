@@ -15,7 +15,7 @@ import {
   validateKaleidoscopeInput,
   validateListInput,
 } from "../_shared/validate.ts";
-import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 const kaleidoscopePrompt =
   `你是"万花筒"社区匹配器。根据用户画像和请求模式（similar/different），从候选旅人中选出最适合展示给用户的 1 位。
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       case "kaleidoscope_draw": {
         const input = validateKaleidoscopeInput(body);
 
-        const aiContext = await loadAuthorizedProfileContext(
+        const aiContext = await loadProfileContext(
           db,
           user.id,
           "community",
@@ -173,7 +173,6 @@ Deno.serve(async (req) => {
             purpose: aiContext.purpose,
             dimensions: aiContext.dimensions,
             profile_revision: aiContext.profileRevision,
-            permission_revision: aiContext.permissionRevision,
           },
         });
       }

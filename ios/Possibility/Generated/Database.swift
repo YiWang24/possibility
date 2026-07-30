@@ -886,54 +886,6 @@ internal enum PublicSchema {
       case userId = "user_id"
     }
   }
-  internal struct ProfileAiPermissionsSelect: Codable, Hashable, Sendable {
-    internal let allowed: Bool
-    internal let createdAt: String
-    internal let dimension: String
-    internal let purpose: String
-    internal let updatedAt: String
-    internal let userId: UUID
-    internal enum CodingKeys: String, CodingKey {
-      case allowed = "allowed"
-      case createdAt = "created_at"
-      case dimension = "dimension"
-      case purpose = "purpose"
-      case updatedAt = "updated_at"
-      case userId = "user_id"
-    }
-  }
-  internal struct ProfileAiPermissionsInsert: Codable, Hashable, Sendable {
-    internal let allowed: Bool?
-    internal let createdAt: String?
-    internal let dimension: String
-    internal let purpose: String
-    internal let updatedAt: String?
-    internal let userId: UUID
-    internal enum CodingKeys: String, CodingKey {
-      case allowed = "allowed"
-      case createdAt = "created_at"
-      case dimension = "dimension"
-      case purpose = "purpose"
-      case updatedAt = "updated_at"
-      case userId = "user_id"
-    }
-  }
-  internal struct ProfileAiPermissionsUpdate: Codable, Hashable, Sendable {
-    internal let allowed: Bool?
-    internal let createdAt: String?
-    internal let dimension: String?
-    internal let purpose: String?
-    internal let updatedAt: String?
-    internal let userId: UUID?
-    internal enum CodingKeys: String, CodingKey {
-      case allowed = "allowed"
-      case createdAt = "created_at"
-      case dimension = "dimension"
-      case purpose = "purpose"
-      case updatedAt = "updated_at"
-      case userId = "user_id"
-    }
-  }
   internal struct ProfileFactEvidenceSelect: Codable, Hashable, Sendable {
     internal let confidence: Decimal
     internal let createdAt: String
@@ -1026,6 +978,7 @@ internal enum PublicSchema {
     internal let validFrom: String?
     internal let validTo: String?
     internal let value: String
+    internal let visibility: String
     internal enum CodingKeys: String, CodingKey {
       case confidence = "confidence"
       case createdAt = "created_at"
@@ -1046,6 +999,7 @@ internal enum PublicSchema {
       case validFrom = "valid_from"
       case validTo = "valid_to"
       case value = "value"
+      case visibility = "visibility"
     }
   }
   internal struct ProfileFactsInsert: Codable, Hashable, Sendable {
@@ -1068,6 +1022,7 @@ internal enum PublicSchema {
     internal let validFrom: String?
     internal let validTo: String?
     internal let value: String
+    internal let visibility: String?
     internal enum CodingKeys: String, CodingKey {
       case confidence = "confidence"
       case createdAt = "created_at"
@@ -1088,6 +1043,7 @@ internal enum PublicSchema {
       case validFrom = "valid_from"
       case validTo = "valid_to"
       case value = "value"
+      case visibility = "visibility"
     }
   }
   internal struct ProfileFactsUpdate: Codable, Hashable, Sendable {
@@ -1110,6 +1066,7 @@ internal enum PublicSchema {
     internal let validFrom: String?
     internal let validTo: String?
     internal let value: String?
+    internal let visibility: String?
     internal enum CodingKeys: String, CodingKey {
       case confidence = "confidence"
       case createdAt = "created_at"
@@ -1130,6 +1087,7 @@ internal enum PublicSchema {
       case validFrom = "valid_from"
       case validTo = "valid_to"
       case value = "value"
+      case visibility = "visibility"
     }
   }
   internal struct ProfilePublicDraftsSelect: Codable, Hashable, Sendable {
@@ -1154,7 +1112,6 @@ internal enum PublicSchema {
     internal let toRole: String
     internal let trajectory: AnyJSON
     internal let updatedAt: String
-    internal let visibility: AnyJSON
     internal enum CodingKeys: String, CodingKey {
       case advice = "advice"
       case age = "age"
@@ -1177,7 +1134,6 @@ internal enum PublicSchema {
       case toRole = "to_role"
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
-      case visibility = "visibility"
     }
   }
   internal struct ProfilePublicDraftsInsert: Codable, Hashable, Sendable {
@@ -1202,7 +1158,6 @@ internal enum PublicSchema {
     internal let toRole: String?
     internal let trajectory: AnyJSON?
     internal let updatedAt: String?
-    internal let visibility: AnyJSON?
     internal enum CodingKeys: String, CodingKey {
       case advice = "advice"
       case age = "age"
@@ -1225,7 +1180,6 @@ internal enum PublicSchema {
       case toRole = "to_role"
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
-      case visibility = "visibility"
     }
   }
   internal struct ProfilePublicDraftsUpdate: Codable, Hashable, Sendable {
@@ -1250,7 +1204,6 @@ internal enum PublicSchema {
     internal let toRole: String?
     internal let trajectory: AnyJSON?
     internal let updatedAt: String?
-    internal let visibility: AnyJSON?
     internal enum CodingKeys: String, CodingKey {
       case advice = "advice"
       case age = "age"
@@ -1273,55 +1226,66 @@ internal enum PublicSchema {
       case toRole = "to_role"
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
-      case visibility = "visibility"
     }
   }
   internal struct ProfilesSelect: Codable, Hashable, Sendable {
     internal let createdAt: String
     internal let id: UUID
-    internal let permissionRevision: Int64
     internal let portraitPct: Int16
     internal let profileRevision: Int64
     internal let updatedAt: String
+    internal let verificationProvider: String?
+    internal let verificationStatus: String
+    internal let verifiedAt: String?
     internal enum CodingKeys: String, CodingKey {
       case createdAt = "created_at"
       case id = "id"
-      case permissionRevision = "permission_revision"
       case portraitPct = "portrait_pct"
       case profileRevision = "profile_revision"
       case updatedAt = "updated_at"
+      case verificationProvider = "verification_provider"
+      case verificationStatus = "verification_status"
+      case verifiedAt = "verified_at"
     }
   }
   internal struct ProfilesInsert: Codable, Hashable, Sendable {
     internal let createdAt: String?
     internal let id: UUID
-    internal let permissionRevision: Int64?
     internal let portraitPct: Int16?
     internal let profileRevision: Int64?
     internal let updatedAt: String?
+    internal let verificationProvider: String?
+    internal let verificationStatus: String?
+    internal let verifiedAt: String?
     internal enum CodingKeys: String, CodingKey {
       case createdAt = "created_at"
       case id = "id"
-      case permissionRevision = "permission_revision"
       case portraitPct = "portrait_pct"
       case profileRevision = "profile_revision"
       case updatedAt = "updated_at"
+      case verificationProvider = "verification_provider"
+      case verificationStatus = "verification_status"
+      case verifiedAt = "verified_at"
     }
   }
   internal struct ProfilesUpdate: Codable, Hashable, Sendable {
     internal let createdAt: String?
     internal let id: UUID?
-    internal let permissionRevision: Int64?
     internal let portraitPct: Int16?
     internal let profileRevision: Int64?
     internal let updatedAt: String?
+    internal let verificationProvider: String?
+    internal let verificationStatus: String?
+    internal let verifiedAt: String?
     internal enum CodingKeys: String, CodingKey {
       case createdAt = "created_at"
       case id = "id"
-      case permissionRevision = "permission_revision"
       case portraitPct = "portrait_pct"
       case profileRevision = "profile_revision"
       case updatedAt = "updated_at"
+      case verificationProvider = "verification_provider"
+      case verificationStatus = "verification_status"
+      case verifiedAt = "verified_at"
     }
   }
   internal struct PublicProfilesSelect: Codable, Hashable, Sendable {
@@ -1329,6 +1293,7 @@ internal enum PublicSchema {
     internal let bio: String
     internal let hue: Int16
     internal let id: UUID
+    internal let isVerified: Bool
     internal let name: String
     internal let publishedAt: String
     internal let publishedFacts: AnyJSON
@@ -1340,6 +1305,7 @@ internal enum PublicSchema {
       case bio = "bio"
       case hue = "hue"
       case id = "id"
+      case isVerified = "is_verified"
       case name = "name"
       case publishedAt = "published_at"
       case publishedFacts = "published_facts"
@@ -1353,6 +1319,7 @@ internal enum PublicSchema {
     internal let bio: String?
     internal let hue: Int16?
     internal let id: UUID
+    internal let isVerified: Bool?
     internal let name: String?
     internal let publishedAt: String?
     internal let publishedFacts: AnyJSON?
@@ -1364,6 +1331,7 @@ internal enum PublicSchema {
       case bio = "bio"
       case hue = "hue"
       case id = "id"
+      case isVerified = "is_verified"
       case name = "name"
       case publishedAt = "published_at"
       case publishedFacts = "published_facts"
@@ -1377,6 +1345,7 @@ internal enum PublicSchema {
     internal let bio: String?
     internal let hue: Int16?
     internal let id: UUID?
+    internal let isVerified: Bool?
     internal let name: String?
     internal let publishedAt: String?
     internal let publishedFacts: AnyJSON?
@@ -1388,6 +1357,7 @@ internal enum PublicSchema {
       case bio = "bio"
       case hue = "hue"
       case id = "id"
+      case isVerified = "is_verified"
       case name = "name"
       case publishedAt = "published_at"
       case publishedFacts = "published_facts"

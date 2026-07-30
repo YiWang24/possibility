@@ -5,7 +5,6 @@
 import { create } from "zustand";
 import { bootstrap, callFunction, supabase } from "@/lib/supabase";
 import {
-  PORTRAIT_INITIAL_PCT,
   PRICE_UNLOCK_PROFILE,
   travelerDetailFromRow,
   travelerFromRow,
@@ -178,27 +177,35 @@ export const useData = create<DataState>()((set, get) => ({
     try {
       const remote = await callFunction<RemoteProfile>("get-profile");
       const normalized: RemoteProfile = {
-        portrait_pct: remote.portrait_pct ?? PORTRAIT_INITIAL_PCT,
+        portrait_pct: remote.portrait_pct ?? 0,
         profile_revision: remote.profile_revision ?? 0,
+        verification: remote.verification ?? {
+          status: "unverified",
+          provider: null,
+          verified_at: null,
+        },
         facts: remote.facts ?? [],
         card_games: remote.card_games ?? [],
         public_profile: remote.public_profile ?? null,
-        ai_permissions: remote.ai_permissions ?? null,
       };
       set({ profile: normalized, profileFetchedAt: Date.now() });
       return normalized;
     } catch (err) {
       set({ lastError: errMessage(err) });
-      // 首次进入没有画像：本地兜底，后续写路径再同步
+      // 请求失败时保留空档案，不用假数据伪装真实画像。
       if (!get().profile) {
         set({
           profile: {
-            portrait_pct: PORTRAIT_INITIAL_PCT,
+            portrait_pct: 0,
             profile_revision: 0,
+            verification: {
+              status: "unverified",
+              provider: null,
+              verified_at: null,
+            },
             facts: [],
             card_games: [],
             public_profile: null,
-            ai_permissions: null,
           },
         });
       }

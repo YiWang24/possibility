@@ -552,33 +552,6 @@ export type Database = {
         }
         Relationships: []
       }
-      profile_ai_permissions: {
-        Row: {
-          allowed: boolean
-          created_at: string
-          dimension: string
-          purpose: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          allowed?: boolean
-          created_at?: string
-          dimension: string
-          purpose: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          allowed?: boolean
-          created_at?: string
-          dimension?: string
-          purpose?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profile_fact_evidence: {
         Row: {
           confidence: number
@@ -647,6 +620,7 @@ export type Database = {
           valid_from: string | null
           valid_to: string | null
           value: string
+          visibility: string
         }
         Insert: {
           confidence?: number
@@ -668,6 +642,7 @@ export type Database = {
           valid_from?: string | null
           valid_to?: string | null
           value: string
+          visibility?: string
         }
         Update: {
           confidence?: number
@@ -689,6 +664,7 @@ export type Database = {
           valid_from?: string | null
           valid_to?: string | null
           value?: string
+          visibility?: string
         }
         Relationships: []
       }
@@ -715,7 +691,6 @@ export type Database = {
           to_role: string
           trajectory: Json
           updated_at: string
-          visibility: Json
         }
         Insert: {
           advice?: Json
@@ -739,7 +714,6 @@ export type Database = {
           to_role?: string
           trajectory?: Json
           updated_at?: string
-          visibility?: Json
         }
         Update: {
           advice?: Json
@@ -763,7 +737,6 @@ export type Database = {
           to_role?: string
           trajectory?: Json
           updated_at?: string
-          visibility?: Json
         }
         Relationships: []
       }
@@ -771,26 +744,32 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          permission_revision: number
           portrait_pct: number
           profile_revision: number
           updated_at: string
+          verification_provider: string | null
+          verification_status: string
+          verified_at: string | null
         }
         Insert: {
           created_at?: string
           id: string
-          permission_revision?: number
           portrait_pct?: number
           profile_revision?: number
           updated_at?: string
+          verification_provider?: string | null
+          verification_status?: string
+          verified_at?: string | null
         }
         Update: {
           created_at?: string
           id?: string
-          permission_revision?: number
           portrait_pct?: number
           profile_revision?: number
           updated_at?: string
+          verification_provider?: string | null
+          verification_status?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -800,6 +779,7 @@ export type Database = {
           bio: string
           hue: number
           id: string
+          is_verified: boolean
           name: string
           published_at: string
           published_facts: Json
@@ -812,6 +792,7 @@ export type Database = {
           bio?: string
           hue?: number
           id: string
+          is_verified?: boolean
           name?: string
           published_at?: string
           published_facts?: Json
@@ -824,6 +805,7 @@ export type Database = {
           bio?: string
           hue?: number
           id?: string
+          is_verified?: boolean
           name?: string
           published_at?: string
           published_facts?: Json
@@ -1044,10 +1026,9 @@ export type Database = {
         Args: { p_event: string; p_source: string; p_user_id: string }
         Returns: boolean
       }
-      clear_private_profile: {
+      clear_profile: {
         Args: { p_expected_revision?: number }
         Returns: {
-          permission_revision: number
           portrait_pct: number
           profile_revision: number
         }[]
@@ -1084,10 +1065,6 @@ export type Database = {
           p_value: string
         }
         Returns: string
-      }
-      replace_profile_ai_permissions: {
-        Args: { p_expected_revision?: number; p_permissions: Json }
-        Returns: number
       }
       replace_profile_dimension: {
         Args: {
@@ -1147,6 +1124,17 @@ export type Database = {
         }[]
       }
       save_public_profile: { Args: { p_profile: Json }; Returns: undefined }
+      set_profile_fact_visibility: {
+        Args: {
+          p_expected_revision?: number
+          p_fact_id: string
+          p_visibility: string
+        }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
       update_profile_progress: {
         Args: { p_portrait_delta?: number }
         Returns: {

@@ -153,7 +153,7 @@ struct MeView: View {
         let lifeCards = items.first { $0.key == "life" }?.cards ?? []
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "设置展示", isLink: true) {
-                requestEdit(.persona)
+                showProfilePrivacy = true
             }
             VStack(spacing: 14) {
                 ZStack(alignment: .topLeading) {
@@ -512,13 +512,11 @@ private struct ProfilePrivacyView: View {
 
     private enum PendingAction: Identifiable {
         case dimension(String)
-        case revoke
         case clear
 
         var id: String {
             switch self {
             case let .dimension(value): "dimension:" + value
-            case .revoke: "revoke"
             case .clear: "clear"
             }
         }
@@ -599,7 +597,7 @@ private struct ProfilePrivacyView: View {
                     Text("档案已准备完成")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(Theme.ink)
-                    Text("JSON 包含画像事实、来源、授权与最小化 AI 使用记录。你可以保存到“文件”或发送给自己。")
+                    Text("JSON 包含画像事实、来源与最小化 AI 使用记录。你可以保存到“文件”或发送给自己。")
                         .font(.system(size: 13))
                         .lineSpacing(5)
                         .foregroundStyle(Theme.sub)
@@ -641,7 +639,7 @@ private struct ProfilePrivacyView: View {
             }
 
             if groupedFacts.isEmpty {
-                Text("还没有私密画像事实")
+                Text("还没有画像事实")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.faint)
                     .frame(maxWidth: .infinity)
@@ -693,6 +691,27 @@ private struct ProfilePrivacyView: View {
                                     .background(Color(hex: 0x5E96FF, alpha: 0.12), in: Capsule())
                                     .disabled(busy != nil)
                                 }
+                                Button {
+                                    Task { await setVisibility(fact) }
+                                } label: {
+                                    Text(fact.visibility == "public" ? "公开" : "私人")
+                                        .font(.system(size: 9.5, weight: .semibold))
+                                        .foregroundStyle(
+                                            fact.visibility == "public"
+                                                ? Color(hex: 0x8EE7C8)
+                                                : Theme.sub
+                                        )
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 5)
+                                        .background(
+                                            fact.visibility == "public"
+                                                ? Color(hex: 0x3ED9A4, alpha: 0.12)
+                                                : Theme.card,
+                                            in: Capsule()
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(busy != nil)
                             }
                             .padding(11)
                             .background(Theme.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -739,6 +758,9 @@ private struct ProfilePrivacyView: View {
                             Text("使用：\(receipt.dimensions.map { Self.dimensionLabels[$0] ?? $0 }.joined(separator: "、")) · 版本 \(receipt.profileRevision)")
                                 .font(.system(size: 10.5))
                                 .foregroundStyle(Theme.sub)
+                            Text("公开 \(receipt.publicFactCount) 条 · 私人 \(receipt.privateFactCount) 条")
+                                .font(.system(size: 9.5))
+                                .foregroundStyle(Theme.faint)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 12)
@@ -809,28 +831,21 @@ private struct ProfilePrivacyView: View {
                 Text("数据管理")
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(Theme.ink)
-                Text("公开主页与私密画像相互独立")
+                Text("公开事实会进入公开主页；私人事实只服务于你本人")
                     .font(.system(size: 10.5))
                     .foregroundStyle(Theme.faint)
             }
             VStack(spacing: 0) {
                 privacyAction(
                     "导出完整个人档案",
-                    detail: "包含事实、来源、授权和使用记录"
+                    detail: "包含事实、来源和使用记录"
                 ) {
                     Task { await exportProfile() }
                 }
                 Divider().overlay(Theme.line)
                 privacyAction(
-                    "撤回全部 AI 授权",
-                    detail: "保留画像，但所有 AI 场景立即停止读取"
-                ) {
-                    pendingAction = .revoke
-                }
-                Divider().overlay(Theme.line)
-                privacyAction(
-                    "清空全部私密画像",
-                    detail: "删除事实、卡牌结果和 AI 形象；公开主页保留",
+                    "清空全部画像",
+                    detail: "删除公开和私人事实、卡牌结果及 AI 形象；主页基础资料保留",
                     destructive: true
                 ) {
                     pendingAction = .clear
@@ -874,8 +889,7 @@ private struct ProfilePrivacyView: View {
     private var confirmationTitle: String {
         switch pendingAction {
         case .dimension: "删除整个画像维度？"
-        case .revoke: "撤回全部 AI 授权？"
-        case .clear: "清空全部私密画像？"
+        case .clear: "清空全部画像？"
         case nil: "确认操作"
         }
     }
@@ -884,10 +898,8 @@ private struct ProfilePrivacyView: View {
         switch pendingAction {
         case let .dimension(dimension):
             "将永久删除“\(Self.dimensionLabels[dimension] ?? dimension)”及其来源记录。"
-        case .revoke:
-            "所有 AI 用途授权都会关闭，但画像事实仍会保留。"
         case .clear:
-            "全部私密画像将永久删除；你的公开主页不会受到影响。"
+            "全部画像事实将永久删除；你的主页基础资料不会受到影响。"
         case nil:
             ""
         }
@@ -938,6 +950,25 @@ private struct ProfilePrivacyView: View {
     }
 
     @MainActor
+    private func setVisibility(_ fact: ProfileFact) async {
+        guard let revision = snapshot?.profileRevision else { return }
+        busy = "visibility:" + fact.id.uuidString
+        errorText = nil
+        do {
+            try await supabase.setProfileFactVisibility(
+                fact.id,
+                visibility: fact.visibility == "public" ? "private" : "public",
+                expectedRevision: revision
+            )
+            await load()
+            await store.refreshFacts(using: supabase)
+        } catch {
+            errorText = "修改失败，画像可能已在其他设备更新，请刷新后重试。"
+        }
+        busy = nil
+    }
+
+    @MainActor
     private func run(_ action: PendingAction) async {
         guard let revision = snapshot?.profileRevision else { return }
         busy = action.id
@@ -947,21 +978,9 @@ private struct ProfilePrivacyView: View {
             case let .dimension(dimension):
                 try await supabase.deleteProfileDimension(dimension, expectedRevision: revision)
                 store.clearDimensionCache(dimension)
-            case .revoke:
-                let permissionRevision = try await supabase
-                    .revokeAllProfileAIPermissions(
-                        expectedRevision: snapshot?.permissionRevision ?? 0
-                    )
-                store.applyRevokedAIPermissionsLocally(
-                    revision: permissionRevision
-                )
             case .clear:
-                let permissionRevision = try await supabase.clearPrivateProfile(
-                    expectedRevision: revision
-                )
-                store.clearPrivateProfileCache(
-                    permissionRevision: permissionRevision
-                )
+                try await supabase.clearProfile(expectedRevision: revision)
+                store.clearProfileCache()
             }
             await load()
             toast.show("设置已更新")

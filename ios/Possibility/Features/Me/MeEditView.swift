@@ -2,11 +2,11 @@ import SwiftUI
 
 // MARK: - 我的主页编辑（原型 #myEditPage · renderMyProfileEditor）
 //
-// 5 种编辑模式：basic / story / advice / service / persona（展示开关）。
+// 4 种编辑模式：basic / story / advice / service。
 // 编辑基于草稿副本，保存时整体写回（原型 myEditDraft 语义）。
 
 enum MeEditMode: String, Identifiable {
-    case basic, story, advice, service, persona
+    case basic, story, advice, service
     var id: String { rawValue }
 
     var title: String {
@@ -15,7 +15,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "编辑我的故事"
         case .advice: return "编辑经验与建议"
         case .service: return "编辑提供服务"
-        case .persona: return "设置动态画像"
         }
     }
 
@@ -25,7 +24,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "修改故事内容和人生时间线"
         case .advice: return "自由组合标题、内容与链接"
         case .service: return "设置服务内容、价格和公开状态"
-        case .persona: return "分别管理公开展示和四种 AI 用途"
         }
     }
 
@@ -35,7 +33,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "保存故事"
         case .advice: return "保存建议"
         case .service: return "保存服务"
-        case .persona: return "保存权限设置"
         }
     }
 
@@ -45,7 +42,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "已保存故事"
         case .advice: return "已保存建议"
         case .service: return "已保存服务"
-        case .persona: return "已保存权限设置"
         }
     }
 }
@@ -58,7 +54,6 @@ struct MeEditView: View {
     @Environment(ToastCenter.self) private var toast
 
     @State private var draft: MyProfile
-    @State private var aiPermissions: ProfileAIPermissions
     @State private var tagsText: String
     @State private var ageText: String
     @FocusState private var inputFocused: Bool
@@ -67,7 +62,6 @@ struct MeEditView: View {
         self.store = store
         self.mode = mode
         _draft = State(initialValue: store.profile)
-        _aiPermissions = State(initialValue: store.aiPermissions)
         _tagsText = State(initialValue: store.profile.tags.joined(separator: "，"))
         _ageText = State(initialValue: "\(store.profile.meta.age)")
     }
@@ -82,7 +76,6 @@ struct MeEditView: View {
                     case .story: storyEditor
                     case .advice: adviceEditor
                     case .service: serviceEditor
-                    case .persona: personaEditor
                     }
                 }
                 .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 30)
@@ -157,9 +150,6 @@ struct MeEditView: View {
             updated.traj = updated.traj.filter { !$0.t.trimmingCharacters(in: .whitespaces).isEmpty }
         }
         store.save(updated)
-        if mode == .persona {
-            store.saveAIPermissions(aiPermissions)
-        }
         toast.show(mode.savedToast)
         dismiss()
     }
@@ -337,62 +327,6 @@ struct MeEditView: View {
         }
     }
 
-    // MARK: 画像展示开关（原型 visibility-list）
-
-    private var personaEditor: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("动态画像权限", note: "公开展示与 AI 使用分别授权")
-            ForEach(store.allPersonaItems) { item in
-                VStack(alignment: .leading, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(item.label).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                        Text(item.value).font(.system(size: 11)).lineLimit(1).foregroundStyle(Theme.sub)
-                    }
-                    Toggle("公开展示", isOn: Binding(
-                        get: { draft.visibility[item.key] ?? false },
-                        set: { draft.visibility[item.key] = $0 }
-                    ))
-                    .font(.system(size: 11.5))
-
-                    Divider().overlay(Theme.line)
-                    Text("AI 使用范围")
-                        .font(.system(size: 10.5, weight: .semibold))
-                        .foregroundStyle(Theme.faint)
-                    ForEach(ProfileAIPermissions.scopeOptions) { scope in
-                        Toggle(isOn: Binding(
-                            get: {
-                                aiPermissions.allows(
-                                    item.key,
-                                    scope: scope.id
-                                )
-                            },
-                            set: {
-                                aiPermissions.setAllowed(
-                                    $0,
-                                    dimension: item.key,
-                                    scope: scope.id
-                                )
-                            }
-                        )) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(scope.label)
-                                Text(scope.detail)
-                                    .font(.system(size: 9.5))
-                                    .foregroundStyle(Theme.faint)
-                            }
-                        }
-                        .font(.system(size: 11.5))
-                    }
-                    .tint(Theme.blue)
-                }
-                .padding(.horizontal, 14).padding(.vertical, 12)
-                .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
-            }
-            Text("每种 AI 用途独立授权，未开启的维度不会发送给对应模型；公开展示与 AI 授权互不影响。")
-                .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-        }
-    }
 }
 
 #Preview {

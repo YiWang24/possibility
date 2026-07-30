@@ -14,7 +14,7 @@ import { validateMatchInput } from "../_shared/validate.ts";
 import { insertMatchResult } from "../_shared/db.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { trackEvent } from "../_shared/track.ts";
-import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 type TravelerForMatch = {
   id: number;
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       db.from("travelers")
         .select("id,name,quote,bio,tags,dims,trajectory")
         .order("id"),
-      loadAuthorizedProfileContext(db, user.id, "match"),
+      loadProfileContext(db, user.id, "match"),
     ]);
     const { data, error } = travelerResult;
     if (error) {
@@ -97,7 +97,6 @@ Deno.serve(async (req) => {
         purpose: aiContext.purpose,
         dimensions: aiContext.dimensions,
         profile_revision: aiContext.profileRevision,
-        permission_revision: aiContext.permissionRevision,
       },
     });
   } catch (error) {

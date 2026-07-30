@@ -6,7 +6,7 @@ import {
   jsonResponse,
   readJson,
 } from "../_shared/errors.ts";
-import { AI_DIMENSIONS } from "../_shared/profile-permissions.ts";
+import { PROFILE_DIMENSIONS } from "../_shared/profile-facts.ts";
 import { serviceClient } from "../_shared/service.ts";
 
 type JsonObject = Record<string, unknown>;
@@ -21,7 +21,7 @@ function bodyObject(value: unknown): JsonObject {
 function dimensionOf(value: unknown): string {
   if (
     typeof value !== "string" ||
-    !AI_DIMENSIONS.includes(value as typeof AI_DIMENSIONS[number])
+    !PROFILE_DIMENSIONS.includes(value as typeof PROFILE_DIMENSIONS[number])
   ) {
     throw new HttpError(400, "INVALID_INPUT", "画像维度无效。");
   }
@@ -85,7 +85,8 @@ async function accessReceipts(userId: string, limit = 50) {
       dimension_count: Number(props.dimension_count ?? dimensions.length),
       fact_count: Number(props.fact_count ?? 0),
       profile_revision: Number(props.profile_revision ?? 0),
-      permission_revision: Number(props.permission_revision ?? 0),
+      public_fact_count: Number(props.public_fact_count ?? 0),
+      private_fact_count: Number(props.private_fact_count ?? 0),
       created_at: row.created_at,
     };
   });
@@ -101,39 +102,31 @@ Deno.serve(async (req) => {
     const { user, db } = await requireUser(req);
 
     if (action === "get") {
-      const [
-        profileResult,
-        factResult,
-        proposalResult,
-        permissionResult,
-        receipts,
-      ] = await Promise
-        .all([
-          db.from("profiles")
-            .select("profile_revision,permission_revision,portrait_pct")
-            .eq("id", user.id)
-            .maybeSingle(),
-          db.from("profile_facts")
-            .select(
-              "id,dimension,fact_kind,value,source,source_ref,confidence,user_confirmed,status,sensitivity,support_count,observed_at,last_supported_at,updated_at",
-            )
-            .eq("user_id", user.id)
-            .eq("status", "active")
-            .order("dimension")
-            .order("updated_at", { ascending: false }),
-          db.from("memory_proposals")
-            .select(
-              "id,dimension,fact_kind,value,source_type,source_id,confidence,sensitivity,status,created_at,expires_at",
-            )
-            .eq("user_id", user.id)
-            .eq("status", "pending")
-            .gt("expires_at", new Date().toISOString())
-            .order("created_at", { ascending: false }),
-          db.from("profile_ai_permissions")
-            .select("dimension,purpose,allowed,updated_at")
-            .eq("user_id", user.id),
-          accessReceipts(user.id),
-        ]);
+      const [profileResult, factResult, proposalResult, receipts] =
+        await Promise
+          .all([
+            db.from("profiles")
+              .select("profile_revision,portrait_pct")
+              .eq("id", user.id)
+              .maybeSingle(),
+            db.from("profile_facts")
+              .select(
+                "id,dimension,fact_kind,value,source,source_ref,confidence,user_confirmed,visibility,status,sensitivity,support_count,observed_at,last_supported_at,updated_at",
+              )
+              .eq("user_id", user.id)
+              .eq("status", "active")
+              .order("dimension")
+              .order("updated_at", { ascending: false }),
+            db.from("memory_proposals")
+              .select(
+                "id,dimension,fact_kind,value,source_type,source_id,confidence,sensitivity,status,created_at,expires_at",
+              )
+              .eq("user_id", user.id)
+              .eq("status", "pending")
+              .gt("expires_at", new Date().toISOString())
+              .order("created_at", { ascending: false }),
+            accessReceipts(user.id),
+          ]);
       if (profileResult.error) {
         databaseFailure(profileResult.error, "读取画像版本失败。");
       }
@@ -143,28 +136,11 @@ Deno.serve(async (req) => {
       if (proposalResult.error) {
         databaseFailure(proposalResult.error, "读取待确认画像失败。");
       }
-      if (permissionResult.error) {
-        databaseFailure(permissionResult.error, "读取 AI 授权失败。");
-      }
-      const permissionMatrix: Record<string, Record<string, boolean>> = {};
-      for (const row of permissionResult.data ?? []) {
-        (permissionMatrix[row.dimension] ??= {})[row.purpose] = row.allowed;
-      }
-      const permissionUpdatedAt = (permissionResult.data ?? [])
-        .map((row) => row.updated_at)
-        .filter((value): value is string => typeof value === "string")
-        .sort()
-        .at(-1) ?? null;
       return jsonResponse({
         profile_revision: Number(profileResult.data?.profile_revision ?? 0),
-        permission_revision: Number(
-          profileResult.data?.permission_revision ?? 0,
-        ),
         portrait_pct: Number(profileResult.data?.portrait_pct ?? 0),
         facts: factResult.data ?? [],
         proposals: proposalResult.data ?? [],
-        permissions: permissionMatrix,
-        permission_updated_at: permissionUpdatedAt,
         access_receipts: receipts,
       });
     }
@@ -177,7 +153,6 @@ Deno.serve(async (req) => {
         proposalResult,
         assessmentResult,
         cardResult,
-        permissionResult,
         draftResult,
         publicationResult,
         personaResult,
@@ -185,7 +160,7 @@ Deno.serve(async (req) => {
       ] = await Promise.all([
         db.from("profiles")
           .select(
-            "portrait_pct,profile_revision,permission_revision,created_at,updated_at",
+            "portrait_pct,profile_revision,created_at,updated_at",
           )
           .eq("id", user.id)
           .maybeSingle(),
@@ -209,9 +184,6 @@ Deno.serve(async (req) => {
           .select("*")
           .eq("user_id", user.id)
           .order("created_at"),
-        db.from("profile_ai_permissions")
-          .select("dimension,purpose,allowed,created_at,updated_at")
-          .eq("user_id", user.id),
         db.from("profile_public_drafts")
           .select("*")
           .eq("id", user.id)
@@ -233,7 +205,6 @@ Deno.serve(async (req) => {
         proposalResult.error,
         assessmentResult.error,
         cardResult.error,
-        permissionResult.error,
         draftResult.error,
         publicationResult.error,
         personaResult.error,
@@ -243,7 +214,7 @@ Deno.serve(async (req) => {
       }
       return jsonResponse({
         schema: "possibility.profile-export",
-        schema_version: 1,
+        schema_version: 2,
         exported_at: new Date().toISOString(),
         data: {
           profile: profileResult.data,
@@ -252,7 +223,6 @@ Deno.serve(async (req) => {
           memory_proposals: proposalResult.data ?? [],
           assessment_runs: assessmentResult.data ?? [],
           card_games: cardResult.data ?? [],
-          ai_permissions: permissionResult.data ?? [],
           profile_public_draft: draftResult.data,
           public_profile: publicationResult.data,
           persona_jobs: personaResult.data ?? [],
@@ -298,35 +268,38 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, profile: data?.[0] ?? null });
     }
 
-    if (action === "revoke_all") {
-      const expectedRevision = revisionOf(body.permission_revision);
-      const { data, error } = await db.rpc(
-        "replace_profile_ai_permissions",
-        {
-          p_permissions: {},
-          p_expected_revision: expectedRevision ?? null,
-        },
-      );
-      if (error) databaseFailure(error, "撤回 AI 授权失败。");
-      return jsonResponse({
-        ok: true,
-        permission_revision: Number(data ?? 0),
-      });
-    }
-
-    if (action === "clear_private") {
+    if (action === "set_visibility") {
+      const factId = uuidOf(body.fact_id, "fact_id");
+      if (body.visibility !== "public" && body.visibility !== "private") {
+        throw new HttpError(
+          400,
+          "INVALID_INPUT",
+          "visibility 必须是 public 或 private。",
+        );
+      }
       const expectedRevision = revisionOf(body.profile_revision);
-      const { data, error } = await db.rpc("clear_private_profile", {
+      const { data, error } = await db.rpc("set_profile_fact_visibility", {
+        p_fact_id: factId,
+        p_visibility: body.visibility,
         p_expected_revision: expectedRevision ?? null,
       });
-      if (error) databaseFailure(error, "清空私密画像失败。");
+      if (error) databaseFailure(error, "修改事实可见性失败。");
+      return jsonResponse({ ok: true, profile: data?.[0] ?? null });
+    }
+
+    if (action === "clear_profile") {
+      const expectedRevision = revisionOf(body.profile_revision);
+      const { data, error } = await db.rpc("clear_profile", {
+        p_expected_revision: expectedRevision ?? null,
+      });
+      if (error) databaseFailure(error, "清空画像失败。");
       return jsonResponse({ ok: true, profile: data?.[0] ?? null });
     }
 
     throw new HttpError(
       400,
       "INVALID_ACTION",
-      "action 必须是 get/export/confirm_fact/review_proposal/delete_dimension/revoke_all/clear_private 之一。",
+      "action 必须是 get/export/confirm_fact/review_proposal/set_visibility/delete_dimension/clear_profile 之一。",
     );
   } catch (error) {
     return errorResponse(error, req);

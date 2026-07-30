@@ -66,13 +66,6 @@ begin
     when insufficient_privilege then null;
   end;
 
-  -- AI 授权不是公开主页内容，匿名角色连 SELECT 权限都没有。
-  begin
-    perform count(*) from public.profile_ai_permissions;
-    raise exception 'anon AI permissions read unexpectedly succeeded';
-  exception
-    when insufficient_privilege then null;
-  end;
 end
 $$;
 reset role;
@@ -165,12 +158,16 @@ values (
 );
 
 select public.save_public_profile(
-  '{"profile_version":2,"name":"测试用户A","quote":"人生如棋","visibility":{"skill":true}}'::jsonb
+  '{"profile_version":2,"name":"测试用户A","quote":"人生如棋"}'::jsonb
 );
 
-select public.replace_profile_ai_permissions(
-  '{"skill":{"persona":true},"like":{"persona":false}}'::jsonb,
-  0
+select * from public.set_profile_fact_visibility(
+  (
+    select id from public.profile_facts
+     where dimension = 'skill' and value = '编程'
+  ),
+  'public',
+  1
 );
 
 insert into public.kaleidoscope_draws (user_id, mode, traveler_id)
@@ -453,10 +450,17 @@ begin
     raise exception 'persona_jobs.persona object check not enforced';
   exception when check_violation then null; end;
 
-  -- 权限矩阵必须是对象，并通过受控 RPC 更新。
+  -- 事实可见性只能是 public/private。
   begin
-    perform public.replace_profile_ai_permissions('[]'::jsonb, 1);
-    raise exception 'profile permission object check not enforced';
+    perform * from public.set_profile_fact_visibility(
+      (
+        select id from public.profile_facts
+         where dimension = 'skill' and value = '写作'
+      ),
+      'friends',
+      2
+    );
+    raise exception 'profile visibility check not enforced';
   exception when invalid_parameter_value then null; end;
 
   -- UNIQUE(user_id, kind)
@@ -522,9 +526,6 @@ begin
   if (select count(*) from public.diary_summary_cache) <> 0 then
     raise exception 'cross-user diary_summary_cache leaked';
   end if;
-  if (select count(*) from public.profile_ai_permissions) <> 0 then
-    raise exception 'cross-user profile_ai_permissions leaked';
-  end if;
   if (
     select count(*) from public.profiles
     where id = '11111111-1111-4111-8111-111111111111'
@@ -583,19 +584,6 @@ begin
     insert into public.persona_jobs (user_id)
     values ('11111111-1111-4111-8111-111111111111');
     raise exception 'cross-user persona_job write unexpectedly succeeded';
-  exception when insufficient_privilege then null; end;
-
-  begin
-    insert into public.profile_ai_permissions (
-      user_id, dimension, purpose, allowed
-    )
-    values (
-      '11111111-1111-4111-8111-111111111111',
-      'skill',
-      'persona',
-      true
-    );
-    raise exception 'cross-user AI permissions write unexpectedly succeeded';
   exception when insufficient_privilege then null; end;
 
   begin
@@ -701,12 +689,12 @@ $$;
 reset role;
 
 -- 构造迁移前数据（postgres 直接写，模拟两账号既有数据）。
--- profiles 只保留完成度与两类修订号；画像内容由 profile_facts 承载。
+-- profiles 只保留完成度与画像修订号；画像内容由 profile_facts 承载。
 update public.profiles
-  set portrait_pct = 40, profile_revision = 3, permission_revision = 2
+  set portrait_pct = 40, profile_revision = 3
   where id = '33333333-3333-4333-8333-333333333333';
 update public.profiles
-  set portrait_pct = 10, profile_revision = 5, permission_revision = 4
+  set portrait_pct = 10, profile_revision = 5
   where id = '44444444-4444-4444-8444-444444444444';
 
 -- conversations：无 user_id 唯一约束 → 直接改归属。
@@ -770,20 +758,18 @@ do $$
 declare
   v_pct  smallint;
   v_profile_revision bigint;
-  v_permission_revision bigint;
 begin
   -- profiles：完成度取较大值，修订号在两边最大值上递增，old 行删除。
-  select portrait_pct, profile_revision, permission_revision
-    into v_pct, v_profile_revision, v_permission_revision
+  select portrait_pct, profile_revision
+    into v_pct, v_profile_revision
   from public.profiles where id = '44444444-4444-4444-8444-444444444444';
   if v_pct <> 40 then
     raise exception 'merge portrait_pct should be greatest=40, got %', v_pct;
   end if;
-  if v_profile_revision <> 6 or v_permission_revision <> 5 then
+  if v_profile_revision <> 6 then
     raise exception
-      'merge revisions should advance from max values, got profile %, permission %',
-      v_profile_revision,
-      v_permission_revision;
+      'merge revision should advance from max value, got %',
+      v_profile_revision;
   end if;
   if exists (
     select 1 from public.profiles
