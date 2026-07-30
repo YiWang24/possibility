@@ -87,7 +87,7 @@ async function runStructuredAttempt<T>(
     return {
       ok: false,
       fatal: isNonRetryable(status),
-      detail: `${(error as Error).name}: ${(error as Error).message}`,
+      detail: llmErrorCode(error),
     };
   } finally {
     clearTimeout(timer);

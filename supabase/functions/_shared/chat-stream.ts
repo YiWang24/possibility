@@ -61,7 +61,11 @@ async function runStreamAttempt(
       abortSignal: signal,
       onFinish: ({ usage }) => report(true, usage),
       onError: ({ error }) => {
-        console.error("streamText error:", error);
+        console.error(JSON.stringify({
+          level: "error",
+          event: "llm_stream_error",
+          error_code: llmErrorCode(error),
+        }));
         report(false, undefined, llmErrorCode(error));
       },
     });

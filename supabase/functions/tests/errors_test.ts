@@ -4,6 +4,7 @@ import {
   requestIdOf,
   transactionOf,
 } from "../_shared/errors.ts";
+import { errorText } from "../_shared/background.ts";
 
 function assert(
   condition: unknown,
@@ -40,6 +41,15 @@ Deno.test("requestIdOf reuses safe IDs and rejects log injection", () => {
   const generated = requestIdOf(unsafe);
   assert(generated !== "bad request id");
   assert(/^[0-9a-f-]{36}$/.test(generated));
+});
+
+Deno.test("errorText never copies raw error messages into logs", () => {
+  assert(errorText(new Error("private transcript")) === "Error");
+  assert(
+    errorText({ code: "PGRST116", message: "private row value" }) ===
+      "PGRST116",
+  );
+  assert(errorText("private transcript") === "string");
 });
 
 Deno.test("errorResponse correlates expected errors without exposing internals", async () => {

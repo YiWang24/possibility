@@ -8,7 +8,7 @@
 // 与 track.ts 同一条铁律：绝不影响主流程——无 DSN 静默跳过，上报失败只 console.error。
 
 import { runtimeConfig } from "./config.ts";
-import { runInBackground } from "./background.ts";
+import { errorText, runInBackground } from "./background.ts";
 
 const MAX_STACK_CHARS = 4_000;
 
@@ -115,6 +115,6 @@ export function captureException(
       }),
     );
   } catch (reportError) {
-    console.error("sentry: capture failed:", reportError);
+    console.error(`sentry: capture failed: ${errorText(reportError)}`);
   }
 }

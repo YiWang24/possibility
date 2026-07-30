@@ -10,11 +10,17 @@ declare const EdgeRuntime:
   | { waitUntil(promise: Promise<unknown>): void }
   | undefined;
 
-/** 把 unknown 错误压成一行可读日志，避免 `[object Object]`。 */
+/**
+ * 把 unknown 错误压成不含 message 的稳定类型/错误码。
+ * message 可能回显 prompt、transcript 或数据库字段值，日志里一律不要。
+ */
 export function errorText(error: unknown): string {
-  return error instanceof Error
-    ? `${error.name}: ${error.message}`
-    : String(error);
+  if (error instanceof Error) return error.name;
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = String((error as { code?: unknown }).code ?? "");
+    if (/^[A-Za-z0-9._:-]{1,64}$/.test(code)) return code;
+  }
+  return typeof error;
 }
 
 /**

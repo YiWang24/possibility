@@ -22,7 +22,7 @@ import { type ChatSignal, chatSignalSchema } from "../_shared/schemas.ts";
 import { captureException } from "../_shared/sentry.ts";
 import { serviceClient } from "../_shared/service.ts";
 import { sseEvent, sseResponse } from "../_shared/sse.ts";
-import { runInBackground } from "../_shared/background.ts";
+import { errorText, runInBackground } from "../_shared/background.ts";
 import { trackEvent } from "../_shared/track.ts";
 import { validateChatInput } from "../_shared/validate.ts";
 
@@ -165,7 +165,12 @@ Deno.serve(async (req) => {
       schema: chatSignalSchema,
       track: { userId: user.id, feature: "chat_signal" },
     }).then((signal) => ({ signal, degraded: false })).catch((error) => {
-      console.error("chat signal extraction failed:", error);
+      console.error(JSON.stringify({
+        level: "error",
+        event: "chat_signal_extraction_failed",
+        request_id: requestId,
+        error_type: errorText(error),
+      }));
       return { signal: fallbackSignal, degraded: true };
     });
 
@@ -260,7 +265,12 @@ Deno.serve(async (req) => {
             }, "done"));
           }
         } catch (error) {
-          console.error("chat stream failed:", error);
+          console.error(JSON.stringify({
+            level: "error",
+            event: "chat_stream_failed",
+            request_id: requestId,
+            error_type: errorText(error),
+          }));
           // 流已经开始，异常不会走到 errorResponse（响应头早发出去了），
           // 这里是 chat 唯一能把「回复中断」送进 Sentry 的地方。
           if (!(error instanceof HttpError)) {

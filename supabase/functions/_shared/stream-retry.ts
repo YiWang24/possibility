@@ -2,6 +2,8 @@
 //（不引入 ai / @ai-sdk/anthropic，避免其 @vercel/oidc 在导入期调用 os.hostname()
 // 需要 --allow-sys）。具体的 Anthropic/Vercel 流式实现见 chat-stream.ts。
 
+import { errorText } from "./background.ts";
+
 export interface StreamWithRetryOptions {
   maxAttempts: number;
   attemptTimeoutMs: number;
@@ -40,7 +42,12 @@ export async function streamWithRetry(
     try {
       await options.runAttempt(emit, signal);
     } catch (error) {
-      console.error(`chat stream attempt ${attempt} failed:`, error);
+      console.error(JSON.stringify({
+        level: "error",
+        event: "chat_stream_attempt_failed",
+        attempt,
+        error_type: errorText(error),
+      }));
     }
 
     // 拿到内容即结束；只有空尝试才会进入下一轮重试。
