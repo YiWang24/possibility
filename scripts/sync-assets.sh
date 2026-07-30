@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 把 design/assets 下的图片母版分发到各消费端。
+# 把 docs/design/assets 下的图片母版分发到各消费端。
 #
 # 为什么要复制而不是共用一份：Xcode 的 .xcassets 必须是目录内的真实文件（imageset +
 # Contents.json），静态托管（GitHub Pages / Netlify）默认也不跟随符号链接。所以母版留一份在
-# design/assets/，其余都是由本脚本生成的副本 —— 改图只改母版，然后跑一次本脚本。
+# docs/design/assets/，其余都是由本脚本生成的副本 —— 改图只改母版，然后跑一次本脚本。
 #
 # 用法：bash scripts/sync-assets.sh [--check]
 #   无参数  写入副本
@@ -14,7 +14,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-SRC_AVATARS="design/assets/community-avatars"
+SRC_AVATARS="docs/design/assets/community-avatars"
 IOS_XCASSETS="ios/Possibility/Resources/Assets.xcassets"
 WEB_AVATARS="web/assets/community-avatars"
 
@@ -79,7 +79,7 @@ done
 
 if (( CHECK_ONLY )); then
   if (( drift )); then
-    echo "副本与 design/assets 母版不同步，跑 bash scripts/sync-assets.sh 修复。" >&2
+    echo "副本与 docs/design/assets 母版不同步，跑 bash scripts/sync-assets.sh 修复。" >&2
     exit 1
   fi
   echo "副本与母版一致。"

@@ -199,7 +199,7 @@ open ios/Possibility.xcodeproj
 ## 📁 项目结构
 
 顶层按「交付物」切分：`ios/` `web/` `flash-app/` 三个可独立构建的前端，`supabase/` 一个后端，
-其余是不进产物的支撑目录（`design/` `marketing/` `docs/` `scripts/`）。
+`scripts/` 工具脚本。**所有不进产物的资料（文档 / 设计稿 / 原型 / 宣传物料）统一收在 `docs/` 一个目录下。**
 
 ```
 possibility/
@@ -262,25 +262,23 @@ possibility/
 │
 ├── flash-app/                   # 灵光 App（Vite + React，独立工程链，自带 CLAUDE.md）
 │
-├── design/                      # 设计资产（不进任何产物）
-│   ├── prototype/               # 高保真原型 HTML（seed.sql 的数据来源）
-│   ├── screens/                 # 各界面设计稿
-│   ├── app-icon-iterations/     # App 图标迭代
-│   ├── appstore/                # App Store 上架截图
-│   └── assets/                  # 共享图片母版（社区头像 · 数字人）
-│
-├── marketing/                   # 宣传物料
-│   └── possibility-poker/       # 人生决策扑克牌（HTML 模板 + 出图提示词）
-│
-├── docs/                        # 产品 / 技术文档
+├── docs/                        # ← 所有不进产物的资料，只此一处
 │   ├── 产品同步0723.md           # 产品 PRD（完整需求）
 │   ├── 技术设计文档.md            # 技术架构设计
 │   ├── 后端开发架构.md            # 后端模块拆解与依赖图
-│   └── 并行开发方案.md            # 前后端接线开发方案
+│   ├── 并行开发方案.md            # 前后端接线开发方案
+│   ├── design/                  # 设计资产
+│   │   ├── prototype/           # 高保真原型 HTML（seed.sql 的数据来源）
+│   │   ├── screens/             # 各界面设计稿
+│   │   ├── app-icon-iterations/ # App 图标迭代
+│   │   ├── appstore/            # App Store 上架截图
+│   │   └── assets/              # 共享图片母版（社区头像 · 数字人）
+│   └── marketing/               # 宣传物料
+│       └── possibility-poker/   # 人生决策扑克牌（HTML 模板 + 出图提示词）
 │
 ├── scripts/                     # 工具脚本
 │   ├── gen_seed.mjs             # 从原型生成 seed.sql
-│   ├── sync-assets.sh           # design/assets 母版 → iOS xcassets + web/
+│   ├── sync-assets.sh           # docs/design/assets 母版 → iOS xcassets + web/
 │   └── verify_db.sh             # 无 CLI 环境下校验迁移
 │
 ├── .github/workflows/           # CI/CD
@@ -289,12 +287,19 @@ possibility/
 
 ### 目录约定
 
+- **不进产物的资料只放 `docs/`** —— 文档、设计稿、原型、宣传物料全部收在这一个目录下，
+  根目录不再新增 `assets/` `design/` 之类的平级目录。
 - **目录名一律 ASCII**（进路径 / CI / URL），文档文件名保留中文。
 - `supabase/` 必须在仓库根 —— Supabase CLI 按此定位工程。
-- `design/assets/` 是共享图片的**唯一母版**；iOS 的 `Assets.xcassets` 与 `web/assets/` 都是
+- `docs/design/assets/` 是共享图片的**唯一母版**；iOS 的 `Assets.xcassets` 与 `web/assets/` 都是
   由 `scripts/sync-assets.sh` 分发的副本（Xcode 和静态托管都需要真实文件，不能用符号链接）。
   改图只改母版再跑同步。
 - `flash-app/` 是灵光赛道的独立工程，有自己的 lint / tsconfig / CLAUDE.md，不受根目录约定管辖。
+
+> ⚠️ 本仓库在 `~/Documents` 下，处于 iCloud Drive 同步范围。git 批量重命名目录时 iCloud 会
+> 留下空的 `xxx 2` 副本（无内容，未跟踪）。执行大规模目录调整后用
+> `find . -not -path './.git/*' -name '* [0-9]' -type d -empty -delete` 清理，
+> 或把仓库移出 `~/Documents` 彻底避免。
 
 ---
 

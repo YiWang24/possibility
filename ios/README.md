@@ -29,7 +29,7 @@ ios/
 └─ project.yml              工程定义：target / SPM 依赖 / Info.plist 键 / 签名
 ```
 
-社区头像等共享图片的母版在仓库根 `design/assets/`，用 `scripts/sync-assets.sh` 分发进
+社区头像等共享图片的母版在 `docs/design/assets/`，用 `scripts/sync-assets.sh` 分发进
 `Possibility/Resources/Assets.xcassets`，不要直接手改 xcassets 里的图片。
 
 ## 配置
