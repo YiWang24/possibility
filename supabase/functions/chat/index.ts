@@ -1,7 +1,4 @@
-import {
-  propagateAttributes,
-  startActiveObservation,
-} from "@langfuse/tracing";
+import { propagateAttributes, startActiveObservation } from "@langfuse/tracing";
 import { structuredOutput } from "../_shared/llm.ts";
 import { streamChatReply } from "../_shared/chat-stream.ts";
 import { requireUser } from "../_shared/auth.ts";
@@ -283,7 +280,10 @@ Deno.serve(async (req) => {
               // next_actions 给出下一步入口；同时保留 crossroads/profile 原字段。
               const nextActions = signal.conclusion.ready
                 ? signal.conclusion.next_step === "match"
-                  ? [{ type: "match", label: "看看走过类似岔路口、结局不同的人" }]
+                  ? [{
+                    type: "match",
+                    label: "看看走过类似岔路口、结局不同的人",
+                  }]
                   : [{ type: "lab", label: "去人生实验室推演不同选择" }]
                 : [];
               controller.enqueue(sseEvent({
