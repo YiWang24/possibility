@@ -1,6 +1,8 @@
 import { APICallError, generateObject, jsonSchema } from "ai";
+import { propagateAttributes } from "@langfuse/tracing";
 import { deepseekProvider } from "./deepseek.ts";
 import { HttpError } from "./errors.ts";
+import { flushTraces, type LlmTrace, telemetryEnabled } from "./telemetry.ts";
 import { type LLMTrackContext, trackLLMRequest } from "./track.ts";
 
 /**
@@ -25,6 +27,8 @@ export type StructuredOutputOptions = {
   schema: { type: "object"; [key: string]: unknown };
   /// 传入即上报 llm_request（token 用量/延迟/成败）。不传则静默跳过。
   track?: LLMTrackContext;
+  /// 传入且已配置 Langfuse 环境变量时上报调用链路 trace。不传则静默跳过。
+  trace?: LlmTrace;
 };
 
 function deepseek(model: string) {
@@ -66,6 +70,9 @@ async function runStructuredAttempt<T>(
       maxOutputTokens: options.maxTokens,
       maxRetries: 0, // 重试由 structuredOutput 控制
       abortSignal: controller.signal,
+      telemetry: options.trace
+        ? { functionId: options.trace.callName ?? options.trace.name }
+        : undefined,
     });
     trackLLMRequest(options.track, {
       model: options.model,
@@ -94,7 +101,7 @@ async function runStructuredAttempt<T>(
   }
 }
 
-export async function structuredOutput<T>(
+async function generateWithRetry<T>(
   options: StructuredOutputOptions,
 ): Promise<T> {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -120,4 +127,19 @@ export async function structuredOutput<T>(
     "MODEL_OUTPUT_INVALID",
     "AI 多次生成均超时或返回了无法解析的结构，请稍后重试。",
   );
+}
+
+export async function structuredOutput<T>(
+  options: StructuredOutputOptions,
+): Promise<T> {
+  if (!telemetryEnabled || !options.trace) return generateWithRetry(options);
+  const { name, userId, sessionId, metadata } = options.trace;
+  try {
+    return await propagateAttributes(
+      { traceName: name, userId, sessionId, metadata },
+      () => generateWithRetry<T>(options),
+    ) as T;
+  } finally {
+    await flushTraces();
+  }
 }

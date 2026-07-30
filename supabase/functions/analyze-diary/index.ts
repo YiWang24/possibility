@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       prompt: input.transcript,
       schema: diarySchema,
       track: { userId: user.id, feature: "analyze_diary" },
+      trace: { name: "analyze-diary", userId: user.id },
     });
     await insertDiaryAnalysis(db, user.id, input.transcript, result);
     await mergeProfileDimensions(db, result.dim_updates);

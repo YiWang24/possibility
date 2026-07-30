@@ -1,7 +1,9 @@
 import { streamText } from "ai";
+import { propagateAttributes } from "@langfuse/tracing";
 import { deepseekProvider } from "./deepseek.ts";
 import { llmErrorCode } from "./llm.ts";
 import { streamWithRetry } from "./stream-retry.ts";
+import { type LlmTrace, telemetryEnabled } from "./telemetry.ts";
 import { type LLMTrackContext, trackLLMRequest } from "./track.ts";
 
 // 用 Vercel AI SDK 承接“认识自己”探索对话的流式回复，后端为 DeepSeek v4。
@@ -25,6 +27,8 @@ export interface StreamChatReplyOptions {
   attemptTimeoutMs?: number;
   /// 传入即上报 llm_request（每次尝试一条，重试同样烧钱）。不传则静默跳过。
   track?: LLMTrackContext;
+  /// 传入且已配置 Langfuse 环境变量时上报调用链路 trace。不传则静默跳过。
+  trace?: LlmTrace;
 }
 
 /**
@@ -59,6 +63,9 @@ async function runStreamAttempt(
       messages: options.messages,
       maxOutputTokens: options.maxOutputTokens,
       abortSignal: signal,
+      telemetry: options.trace
+        ? { functionId: options.trace.callName ?? options.trace.name }
+        : undefined,
       onFinish: ({ usage }) => report(true, usage),
       onError: ({ error }) => {
         console.error(JSON.stringify({
@@ -88,11 +95,18 @@ async function runStreamAttempt(
 export function streamChatReply(
   options: StreamChatReplyOptions,
 ): Promise<string> {
-  return streamWithRetry({
-    maxAttempts: options.maxAttempts ?? 3,
-    attemptTimeoutMs: options.attemptTimeoutMs ?? 45_000,
-    cancelSignal: options.cancelSignal,
-    onDelta: options.onDelta,
-    runAttempt: (emit, signal) => runStreamAttempt(options, emit, signal),
-  });
+  const run = () =>
+    streamWithRetry({
+      maxAttempts: options.maxAttempts ?? 3,
+      attemptTimeoutMs: options.attemptTimeoutMs ?? 45_000,
+      cancelSignal: options.cancelSignal,
+      onDelta: options.onDelta,
+      runAttempt: (emit, signal) => runStreamAttempt(options, emit, signal),
+    });
+  if (!telemetryEnabled || !options.trace) return run();
+  const { name, userId, sessionId, metadata } = options.trace;
+  return propagateAttributes(
+    { traceName: name, userId, sessionId, metadata },
+    run,
+  );
 }

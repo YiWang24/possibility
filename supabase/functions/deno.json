@@ -7,7 +7,13 @@
     "ai": "npm:ai@7.0.37",
     "@ai-sdk/deepseek": "npm:@ai-sdk/deepseek@3.0.13",
     "@supabase/supabase-js": "npm:@supabase/supabase-js@2.110.0",
-    "standardwebhooks": "npm:standardwebhooks@1.0.0"
+    "standardwebhooks": "npm:standardwebhooks@1.0.0",
+    "@langfuse/otel": "npm:@langfuse/otel@5.9.1",
+    "@langfuse/tracing": "npm:@langfuse/tracing@5.9.1",
+    "@langfuse/vercel-ai-sdk": "npm:@langfuse/vercel-ai-sdk@5.9.1",
+    "@opentelemetry/api": "npm:@opentelemetry/api@1.9.0",
+    "@opentelemetry/sdk-trace-base": "npm:@opentelemetry/sdk-trace-base@2.10.0",
+    "@opentelemetry/context-async-hooks": "npm:@opentelemetry/context-async-hooks@2.10.0"
   },
   "lint": {
     "rules": {

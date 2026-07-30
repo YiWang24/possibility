@@ -73,6 +73,11 @@ Deno.serve(async (req) => {
       prompt,
       schema: simulationSchema,
       track: { userId: user.id, feature: "simulate" },
+      trace: {
+        name: "simulate",
+        userId: user.id,
+        metadata: { time_horizon: input.time_horizon },
+      },
     });
 
     // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
@@ -104,6 +109,7 @@ Deno.serve(async (req) => {
           schema: generatedTravelersSchema,
           // 后台社区扩容也在烧 token，成本报表必须能看见它。
           track: { userId: user.id, feature: "traveler_gen" },
+          trace: { name: "simulate-traveler-gen", userId: user.id },
         })
           .then((generated) =>
             generated && generated.travelers.length > 0

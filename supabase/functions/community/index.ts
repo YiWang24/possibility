@@ -117,6 +117,11 @@ Deno.serve(async (req) => {
             }`,
             schema: kaleidoSchema,
             track: { userId: user.id, feature: "kaleidoscope" },
+            trace: {
+              name: "community-kaleidoscope",
+              userId: user.id,
+              metadata: { mode: input.mode },
+            },
           });
           const valid = candidates.find((t) => t.id === result.traveler_id);
           if (valid) {
