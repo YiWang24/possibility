@@ -9,7 +9,7 @@ import XCTest
 // 注:appstore-03b-community-watch(社区放映模式)不在本测试内 —— 放映舞台的常驻动画
 // 让 XCUITest 等待 app idle 超时。改用调试直达参数冷启动后直接截屏:
 //   xcrun simctl launch <udid> com.johnnywang.possibility -possibility-tab community -possibility-watch 1
-//   xcrun simctl io <udid> screenshot assets/appstore/appstore-03b-community-watch.png
+//   xcrun simctl io <udid> screenshot docs/design/appstore/appstore-03b-community-watch.png
 
 final class AppStoreScreenshots: XCTestCase {
 

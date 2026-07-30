@@ -1,0 +1,9 @@
+// Possibility · 基础构建配置（入库）
+//
+// project.yml 的 target.configFiles 指向本文件，所以 `xcodegen generate` 重生成工程后
+// 配置链接不会丢失（此前靠手工在 Xcode → Build Settings 里点选，每次重生成都要重来）。
+//
+// 本地密钥走下面的可选引入：复制 Config.xcconfig.example → Config.xcconfig 并填值。
+// `#include?` 在文件缺失时不报错，此时 SUPABASE_* 为空，AppConfig 回落到内置默认值。
+
+#include? "Config.xcconfig"
