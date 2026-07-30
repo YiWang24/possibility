@@ -1,0 +1,6 @@
+# Doppler 本地开发默认作用域：仓库根 = possibility/dev，子目录自动继承
+# 首次使用：doppler setup --no-interactive
+# 切环境：doppler configure set config stg|prd
+setup:
+  - project: possibility
+    config: dev

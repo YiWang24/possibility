@@ -198,8 +198,9 @@ open ios/Possibility.xcodeproj
 
 ## 📁 项目结构
 
-顶层按「交付物」切分：`ios/` `web/` `flash-app/` 三个可独立构建的前端，`supabase/` 一个后端，
-`scripts/` 工具脚本。**所有不进产物的资料（文档 / 设计稿 / 原型 / 宣传物料）统一收在 `docs/` 一个目录下。**
+顶层按「交付物」切分：`ios/` `android/` `web/` `flash-app/` 四个可独立构建的前端，`supabase/` 一个后端，
+`packages/` TS 共享层，`scripts/` 工具脚本。环境变量统一由 **Doppler**（项目 `possibility`，dev/stg/prd 三环境）管理。
+**所有不进产物的资料（文档 / 设计稿 / 原型 / 宣传物料）统一收在 `docs/` 一个目录下。**
 
 ```
 possibility/
@@ -258,9 +259,17 @@ possibility/
 │   ├── seed.sql                 # 种子数据（12 位旅人）
 │   └── config.toml              # 项目配置
 │
-├── web/                         # 灵光赛道演示站（纯静态 mock，可直接部署）
+├── web/                         # 灵光赛道演示站（纯静态 mock，规划重建为完整 Next.js 产品应用）
 │
 ├── flash-app/                   # 灵光 App（Vite + React，独立工程链，自带 CLAUDE.md）
+│
+├── android/                     # Android App（Kotlin + Jetpack Compose + supabase-kt）
+│   ├── app/                     # 应用模块，BuildConfig 读 Doppler 注入的 Supabase 配置
+│   └── gradle/libs.versions.toml
+│
+├── packages/                    # TS 共享层（pnpm workspace；flash-app 独立不引用）
+│   ├── shared-types/            # supabase gen types 产物 + Edge Function 名称契约
+│   └── api-client/              # Supabase 客户端 + Edge Function 调用封装
 │
 ├── docs/                        # ← 所有不进产物的资料，只此一处
 │   ├── 产品同步0723.md           # 产品 PRD（完整需求）
@@ -278,10 +287,15 @@ possibility/
 │
 ├── scripts/                     # 工具脚本
 │   ├── gen_seed.mjs             # 从原型生成 seed.sql
+│   ├── gen-types.sh             # Supabase → TS（packages/shared-types）+ Swift（ios/…/Generated）
+│   ├── gen-xcconfig.sh          # doppler run -- 生成 ios/Config/Config.xcconfig
+│   ├── doppler-sync.sh          # Doppler → Supabase Edge Functions Secrets 单向同步
 │   ├── sync-assets.sh           # docs/design/assets 母版 → iOS xcassets + web/
 │   └── verify_db.sh             # 无 CLI 环境下校验迁移
 │
-├── .github/workflows/           # CI/CD
+├── doppler.yaml                 # Doppler 作用域（possibility/dev），doppler run -- 注入变量
+├── pnpm-workspace.yaml          # pnpm workspace：packages/* + web
+├── .github/workflows/           # CI/CD（按路径触发：backend / packages / android）
 └── package.json                 # 根构建脚本
 ```
 
