@@ -86,10 +86,11 @@ struct ChatStreamClient: Sendable {
     /// - `event:` 记录当前事件名（默认 message）
     /// - `data:` 累积 JSON；空行触发派发
     func stream(_ request: ChatRequest) -> AsyncThrowingStream<ChatStreamEvent, Error> {
+        let requestId = UUID().uuidString
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let urlRequest = try await makeRequest(request)
+                    let urlRequest = try await makeRequest(request, requestId: requestId)
                     let (bytes, response) = try await session.bytes(for: urlRequest)
                     try Self.validate(response)
 
@@ -105,7 +106,7 @@ struct ChatStreamClient: Sendable {
                             try dispatch(
                                 event: event,
                                 data: value.trimmingCharacters(in: .whitespaces),
-                                to: continuation,
+                                to: continuation
                             )
                             event = "message"
                         }
@@ -113,6 +114,14 @@ struct ChatStreamClient: Sendable {
                     }
                     continuation.finish()
                 } catch {
+                    if !Task.isCancelled {
+                        let correlatedId = (error as? ChatStreamServerError)?.requestId ?? requestId
+                        AppObservability.recordRequestFailure(
+                            function: functionName,
+                            requestId: correlatedId,
+                            error: error
+                        )
+                    }
                     continuation.finish(throwing: error)
                 }
             }
@@ -122,7 +131,7 @@ struct ChatStreamClient: Sendable {
 
     // MARK: - 私有
 
-    private func makeRequest(_ body: ChatRequest) async throws -> URLRequest {
+    private func makeRequest(_ body: ChatRequest, requestId: String) async throws -> URLRequest {
         var req = URLRequest(url: AppConfig.functionURL(functionName))
         req.httpMethod = "POST"
         req.timeoutInterval = 60
@@ -130,6 +139,7 @@ struct ChatStreamClient: Sendable {
         req.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         req.setValue(apiKey, forHTTPHeaderField: "apikey")
         req.setValue("Bearer \(try await tokenProvider())", forHTTPHeaderField: "Authorization")
+        req.setValue(requestId, forHTTPHeaderField: "X-Request-ID")
         req.httpBody = try JSONEncoder().encode(body)
         return req
     }
@@ -163,7 +173,8 @@ struct ChatStreamClient: Sendable {
             let err = try? JSONDecoder().decode(ServerErrorPayload.self, from: payload)
             throw ChatStreamServerError(
                 code: err?.error?.code ?? "STREAM_ERROR",
-                message: err?.error?.message ?? "回复中断，请稍后重试。"
+                message: err?.error?.message ?? "回复中断，请稍后重试。",
+                requestId: err?.requestId
             )
         }
         // 常规文本片段：{"t":"..."}
@@ -180,6 +191,12 @@ struct ChatStreamClient: Sendable {
             let message: String?
         }
         let error: Inner?
+        let requestId: String?
+
+        enum CodingKeys: String, CodingKey {
+            case error
+            case requestId = "request_id"
+        }
     }
 }
 
@@ -187,6 +204,7 @@ struct ChatStreamClient: Sendable {
 struct ChatStreamServerError: LocalizedError, Sendable {
     let code: String
     let message: String
+    let requestId: String?
     var errorDescription: String? { message }
 }
 

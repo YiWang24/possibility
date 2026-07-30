@@ -61,6 +61,6 @@ Deno.serve(async (req) => {
       public_profile: publicProfile ?? null,
     });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

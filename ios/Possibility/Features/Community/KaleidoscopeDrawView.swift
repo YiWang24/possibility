@@ -222,6 +222,8 @@ struct KaleidoscopeDrawView: View {
                 drawn = chosen
                 phase = .result
             }
+            // 转盘停下、结果落定才算抽到一次（远程失败回落本地候选同样成立）
+            Analytics.shared.track(.kaleidoscopeDrawn)
         }
     }
 }

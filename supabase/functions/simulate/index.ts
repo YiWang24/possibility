@@ -14,22 +14,9 @@ import {
 } from "../_shared/schemas.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { validateSimulateInputV2 } from "../_shared/validate.ts";
-
-// Supabase Edge Functions 的后台任务 API：响应返回后仍保持 isolate 存活，
-// 直到传入的 promise 结束（受 150s 墙钟约束）。类型未随 Deno 内置，故此处声明。
-declare const EdgeRuntime:
-  | { waitUntil(promise: Promise<unknown>): void }
-  | undefined;
-
-// 非关键任务放到响应之后跑：优先用 EdgeRuntime.waitUntil 保活；
-// 运行时不支持时退化为 fire-and-forget（尽力而为，不阻塞、不抛错）。
-function runInBackground(task: Promise<unknown>): void {
-  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime?.waitUntil) {
-    EdgeRuntime.waitUntil(task);
-  } else {
-    void task;
-  }
-}
+import { ServerEvent } from "../_shared/events.ts";
+import { runInBackground } from "../_shared/background.ts";
+import { trackEvent } from "../_shared/track.ts";
 
 type TravelerCandidate = {
   id: number;
@@ -49,6 +36,10 @@ Deno.serve(async (req) => {
   try {
     const input = validateSimulateInputV2(await readJson(req));
     const { user, db } = await requireUser(req);
+    // 只带 years（1..10 的整数）；question/choice 是用户原话，属 §1 禁止上报的正文。
+    trackEvent(user.id, ServerEvent.SIMULATION_REQUESTED, {
+      years: input.years,
+    });
 
     // 候选旅人：用于生成「相似旅人推荐」，模型只能从这些 id 中挑选。
     const { data: travelerRows } = await db
@@ -81,6 +72,7 @@ Deno.serve(async (req) => {
       system: simulationPrompt,
       prompt,
       schema: simulationSchema,
+      track: { userId: user.id, feature: "simulate" },
     });
 
     // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
@@ -110,6 +102,8 @@ Deno.serve(async (req) => {
           system: travelerGenPrompt,
           prompt: genPrompt,
           schema: generatedTravelersSchema,
+          // 后台社区扩容也在烧 token，成本报表必须能看见它。
+          track: { userId: user.id, feature: "traveler_gen" },
         })
           .then((generated) =>
             generated && generated.travelers.length > 0
@@ -132,6 +126,6 @@ Deno.serve(async (req) => {
       recommended_travelers: [],
     });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

@@ -1,6 +1,8 @@
 import { streamText } from "ai";
 import { deepseekProvider } from "./deepseek.ts";
+import { llmErrorCode } from "./llm.ts";
 import { streamWithRetry } from "./stream-retry.ts";
+import { type LLMTrackContext, trackLLMRequest } from "./track.ts";
 
 // 用 Vercel AI SDK 承接“认识自己”探索对话的流式回复，后端为 DeepSeek v4。
 //
@@ -21,6 +23,62 @@ export interface StreamChatReplyOptions {
   cancelSignal?: AbortSignal;
   maxAttempts?: number;
   attemptTimeoutMs?: number;
+  /// 传入即上报 llm_request（每次尝试一条，重试同样烧钱）。不传则静默跳过。
+  track?: LLMTrackContext;
+}
+
+/**
+ * 单次流式尝试：把增量喂给 emit，并在结束/失败时上报一条 llm_request。
+ *
+ * 上报路径三选一，用 reported 去重：onFinish（正常结束，唯一能拿到 usage 的地方）、
+ * onError/catch（上游报错）、循环后的 aborted 判定（超时或客户端断开）。
+ */
+async function runStreamAttempt(
+  options: StreamChatReplyOptions,
+  emit: (text: string) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  const startedAt = Date.now();
+  let reported = false;
+  const report = (ok: boolean, usage?: unknown, errorCode?: string): void => {
+    if (reported) return;
+    reported = true;
+    trackLLMRequest(options.track, {
+      model: options.model,
+      usage,
+      latencyMs: Date.now() - startedAt,
+      ok,
+      errorCode,
+    });
+  };
+
+  try {
+    const result = streamText({
+      model: deepseekProvider()(options.model),
+      system: options.system,
+      messages: options.messages,
+      maxOutputTokens: options.maxOutputTokens,
+      abortSignal: signal,
+      onFinish: ({ usage }) => report(true, usage),
+      onError: ({ error }) => {
+        console.error(JSON.stringify({
+          level: "error",
+          event: "llm_stream_error",
+          error_code: llmErrorCode(error),
+        }));
+        report(false, undefined, llmErrorCode(error));
+      },
+    });
+    for await (const delta of result.textStream) {
+      if (signal.aborted) break;
+      emit(delta);
+    }
+    // 正常结束由 onFinish 上报（带 usage）；这里只兜住被超时/取消打断的尝试。
+    if (signal.aborted) report(false, undefined, "ABORTED");
+  } catch (error) {
+    report(false, undefined, llmErrorCode(error));
+    throw error;
+  }
 }
 
 /**
@@ -35,19 +93,6 @@ export function streamChatReply(
     attemptTimeoutMs: options.attemptTimeoutMs ?? 45_000,
     cancelSignal: options.cancelSignal,
     onDelta: options.onDelta,
-    runAttempt: async (emit, signal) => {
-      const result = streamText({
-        model: deepseekProvider()(options.model),
-        system: options.system,
-        messages: options.messages,
-        maxOutputTokens: options.maxOutputTokens,
-        abortSignal: signal,
-        onError: ({ error }) => console.error("streamText error:", error),
-      });
-      for await (const delta of result.textStream) {
-        if (signal.aborted) break;
-        emit(delta);
-      }
-    },
+    runAttempt: (emit, signal) => runStreamAttempt(options, emit, signal),
   });
 }

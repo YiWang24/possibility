@@ -15,7 +15,9 @@
 		0C1BD169207B532422288263 /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C99882E0720270DA61E74FF /* DialView.swift */; };
 		0DA76CB6E54B752FBDC2B889 /* DiaryData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D78345014AE4314E5701CAB /* DiaryData.swift */; };
 		12BB5C70922DCCEFB89AB46E /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 942DB63872F1EF197E082875 /* AppConfig.swift */; };
+		13DEC256816F24F5543582D1 /* AnalyticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A208138BF922934372D678 /* AnalyticsTests.swift */; };
 		16DBCAB9BD3183A235A5897A /* AsyncTimeout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00A8EA0211BA0086E22D165 /* AsyncTimeout.swift */; };
+		1B6EC8AB900C4E63384F54E5 /* AnalyticsEvent+Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B268159974A678B6A714A56 /* AnalyticsEvent+Catalog.swift */; };
 		1E850B5E9CD65299DED6CBE5 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8721D78ED6F25C0C88AA31 /* Theme.swift */; };
 		1F08856B12E4529AE27A5311 /* AuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1248A5434ABC8B9883F5E347 /* AuthGate.swift */; };
 		22D3A2C9AA3CD268CF301772 /* KaleidoscopeDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E10DE6C099E69BB0F3F77C1 /* KaleidoscopeDrawView.swift */; };
@@ -23,6 +25,7 @@
 		255F3FAC100045FDD33B318D /* CardIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 787FBC923D38D9AC621071DF /* CardIconTests.swift */; };
 		27267E91C34A60C559F306D4 /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2F9977BB46AD27AC3EDBF0 /* ContentModels.swift */; };
 		27851D89398520A277F50AE8 /* ChatStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A66E7957C018F28AE0D5320 /* ChatStreamClient.swift */; };
+		282D9AFC450DC4DED27F3558 /* AnalyticsIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D52D71415C8415DCBA1B449C /* AnalyticsIdentity.swift */; };
 		31840B944EB082620402CFB8 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D42332B2DD677F8FDB1F33 /* PaywallView.swift */; };
 		3234F079D7394368B20B0FB4 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93FD99C770031C1C3DC0D15 /* HomeModel.swift */; };
 		33D70AA22000628C8AD028AE /* AppStoreScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64161A4A56C068BECFE28DF /* AppStoreScreenshots.swift */; };
@@ -31,10 +34,12 @@
 		448A20EAC8771074BA4943B8 /* HomeCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA165C8E6F2A77F2CC442B9F /* HomeCards.swift */; };
 		47EEFE4DEF60CD3BCE978C86 /* KaleidoscopeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 698180189E2682F3CCCB486E /* KaleidoscopeView.swift */; };
 		488A98FCD9007C095D8876CB /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F4D2507D480CDEE3443D374 /* ProfileView.swift */; };
+		4BCDC83A1531F0BB84567375 /* Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24568246CB58D3ADCCB020B2 /* Analytics.swift */; };
 		5694343508D12DE214CB26DB /* ProfilePanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F98BB133326413E6F49B7A5 /* ProfilePanels.swift */; };
 		5D7F0D07F1DDFDFCB9BD3ABE /* DiaryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596CED23DDA137C050489897 /* DiaryDetailView.swift */; };
 		5EC91FC62E16B29EBA88C95F /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51129B1B7F87093065CCC8EC /* OrbView.swift */; };
 		6224F195BDA26920A43AE176 /* AppleSignInCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30B7B6ADAB6F296D90BE9A0D /* AppleSignInCoordinator.swift */; };
+		65ACCF758E1D7AA76C96AA2A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = F13E8EF1CA4AB0E2FC5842A8 /* Sentry */; };
 		772DE1B3FCA1C70DDF7DE3CD /* MeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351A794A055BA499DC309163 /* MeView.swift */; };
 		7B74C2B7F98E8D5D8CF4DFD4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBC846C3ACF38AAEBAFBD79 /* WaveformView.swift */; };
 		7E2953E80851F2B283F5F1B9 /* CardGameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = FABE6A15C76DC9D96B714A13 /* CardGameEngine.swift */; };
@@ -43,6 +48,7 @@
 		8340CB56FDBE6C0F691DBD52 /* AssessmentResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041700E2ADAC3071B4A4690B /* AssessmentResultView.swift */; };
 		83533EF621F6867BF037A0F2 /* SupabaseTimestamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FE5CA51D6824FF070E68648 /* SupabaseTimestamp.swift */; };
 		8DBC33D3E2ADEC80D1E275CC /* LabModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948BA19BE8030ED705FCD158 /* LabModel.swift */; };
+		9028629F1611A9F73087164A /* SupabaseService+Analytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C226F3A187343313B576559 /* SupabaseService+Analytics.swift */; };
 		926D91A5731F4E17B0DCEE02 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C1DBAF9F3362AB4D6B05FF6C /* Supabase */; };
 		9C79AE3AACB31B36A5D3A547 /* MeEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 971907DAD0690B91471BE690 /* MeEditView.swift */; };
 		A133D91035F75A343B264CF5 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6B4014AD989DB0ACED82804 /* HomeView.swift */; };
@@ -50,6 +56,7 @@
 		A2EEBD979C7C4D3B7D61FB5C /* DiaryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F33F9B6549A8E2A719A6AAF6 /* DiaryModel.swift */; };
 		A594347087AF3E8D09C3C17C /* ChatSummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91D0601A6197ADCC554061D2 /* ChatSummaryView.swift */; };
 		A77CBCE5DCCE295A0EBB91E1 /* CardGameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED1FB90120DA8234D01EACDA /* CardGameTests.swift */; };
+		AAE5363F74681B00D04CDD19 /* PostHogBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDFF75D5E912238827A3C43E /* PostHogBackend.swift */; };
 		B03D8F43EF528FC6AAF1CEC9 /* LabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D0891E5BF580B62C0931772 /* LabView.swift */; };
 		B59BFAAE8C4DE6DD89A3BA19 /* CardGameData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1649B9606B38690C90F72808 /* CardGameData.swift */; };
 		B6F11D3744D196A5ED2D96CB /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 8B86302BF2A4F44398A2C8CA /* Shaders.metal */; };
@@ -60,9 +67,13 @@
 		C51F4C289E858D6A9C843EF1 /* CardIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7735138ACE8A745DC2F66C92 /* CardIcon.swift */; };
 		C6B5ACE6D39A223416A03195 /* PossibilityUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 671A657C5D6193273703F78B /* PossibilityUITests.swift */; };
 		C81CD1325F9E939713AE3359 /* UserModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A19616E41BB812662799579F /* UserModels.swift */; };
+		C8DA54DB55EF9182FBA8FB32 /* AnalyticsLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 415D71DDB0A6299F5C17EC5F /* AnalyticsLog.swift */; };
 		C9FAE245FFCC72BC99E7ACAF /* DimensionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64EF03BBE0E831730CF6AC43 /* DimensionSheet.swift */; };
 		CE63A743C41A1A7F93614149 /* AssessmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82746AC054B4AC9B70F48E86 /* AssessmentView.swift */; };
+		D0BD01157B3C07B37F008642 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 036F8C2CAB3EB3536458C78E /* PostHog */; };
 		D0FAA3FA4D597AB0CB893F2B /* CardGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D06D2C120F718C83B1F4FA00 /* CardGameView.swift */; };
+		D249E82CEE6CD0A3B84C02D4 /* SupabaseEventBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = E469AE164513C33035CA855A /* SupabaseEventBackend.swift */; };
+		D61191FEBE2A6A05D4A0B5C1 /* SentryBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72172BC567A5EA335C0F3585 /* SentryBackend.swift */; };
 		D841E67EE24F94B3E14C8D3B /* ProfileModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FDCA88F55ACD0DBABD184F5 /* ProfileModel.swift */; };
 		D8D271485C35A4FE742F437A /* LoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05558C74F36CDCC0D567615 /* LoginSheet.swift */; };
 		D9CAECCE89B2F747D858E33E /* AssessmentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDACB8F9FFF74798EA374752 /* AssessmentData.swift */; };
@@ -102,11 +113,14 @@
 		1649B9606B38690C90F72808 /* CardGameData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameData.swift; sourceTree = "<group>"; };
 		1BA0DE5B547567BD1704B355 /* WatchModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchModeView.swift; sourceTree = "<group>"; };
 		1F4D2507D480CDEE3443D374 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		24568246CB58D3ADCCB020B2 /* Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Analytics.swift; sourceTree = "<group>"; };
 		2F84742DA98A7269C4291830 /* ChatModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatModel.swift; sourceTree = "<group>"; };
 		2FBA6DE37272B60B7002A572 /* DiarySummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiarySummaryView.swift; sourceTree = "<group>"; };
 		30B7B6ADAB6F296D90BE9A0D /* AppleSignInCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInCoordinator.swift; sourceTree = "<group>"; };
 		351A794A055BA499DC309163 /* MeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeView.swift; sourceTree = "<group>"; };
+		3B268159974A678B6A714A56 /* AnalyticsEvent+Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AnalyticsEvent+Catalog.swift"; sourceTree = "<group>"; };
 		3E1C2FBC3AAA584EF79B797B /* DiaryDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryDayView.swift; sourceTree = "<group>"; };
+		415D71DDB0A6299F5C17EC5F /* AnalyticsLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsLog.swift; sourceTree = "<group>"; };
 		443EDC936DC407B871300814 /* BountyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BountyDetailView.swift; sourceTree = "<group>"; };
 		466E1B5A1FB645D0239638EA /* ProfileStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStudioView.swift; sourceTree = "<group>"; };
 		4821E4633242563373929DB8 /* PossibilityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PossibilityApp.swift; sourceTree = "<group>"; };
@@ -119,7 +133,9 @@
 		64EF03BBE0E831730CF6AC43 /* DimensionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DimensionSheet.swift; sourceTree = "<group>"; };
 		671A657C5D6193273703F78B /* PossibilityUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PossibilityUITests.swift; sourceTree = "<group>"; };
 		698180189E2682F3CCCB486E /* KaleidoscopeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeView.swift; sourceTree = "<group>"; };
+		6C226F3A187343313B576559 /* SupabaseService+Analytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SupabaseService+Analytics.swift"; sourceTree = "<group>"; };
 		6E10DE6C099E69BB0F3F77C1 /* KaleidoscopeDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeDrawView.swift; sourceTree = "<group>"; };
+		72172BC567A5EA335C0F3585 /* SentryBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryBackend.swift; sourceTree = "<group>"; };
 		736BF2D8C2A484E4C55AB6F8 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
 		7735138ACE8A745DC2F66C92 /* CardIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardIcon.swift; sourceTree = "<group>"; };
 		77F3CF53344B4A63CD764555 /* PossibilityTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PossibilityTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -148,16 +164,20 @@
 		A2D2C48FAB6AFD1BC799A510 /* MeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeModel.swift; sourceTree = "<group>"; };
 		A6D42332B2DD677F8FDB1F33 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		AB0FD2C967552C2704670360 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
+		B3A208138BF922934372D678 /* AnalyticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsTests.swift; sourceTree = "<group>"; };
 		BDACB8F9FFF74798EA374752 /* AssessmentData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentData.swift; sourceTree = "<group>"; };
 		C00A8EA0211BA0086E22D165 /* AsyncTimeout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncTimeout.swift; sourceTree = "<group>"; };
 		C05558C74F36CDCC0D567615 /* LoginSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginSheet.swift; sourceTree = "<group>"; };
 		C385F2E0EE2271D758BDC9C9 /* MyProfileModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyProfileModels.swift; sourceTree = "<group>"; };
 		CA165C8E6F2A77F2CC442B9F /* HomeCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCards.swift; sourceTree = "<group>"; };
 		D06D2C120F718C83B1F4FA00 /* CardGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameView.swift; sourceTree = "<group>"; };
+		D52D71415C8415DCBA1B449C /* AnalyticsIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsIdentity.swift; sourceTree = "<group>"; };
 		D64161A4A56C068BECFE28DF /* AppStoreScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshots.swift; sourceTree = "<group>"; };
 		D6B4014AD989DB0ACED82804 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D93FD99C770031C1C3DC0D15 /* HomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeModel.swift; sourceTree = "<group>"; };
+		DDFF75D5E912238827A3C43E /* PostHogBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogBackend.swift; sourceTree = "<group>"; };
 		E040A36FFA64D2C2BCD3C549 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E469AE164513C33035CA855A /* SupabaseEventBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseEventBackend.swift; sourceTree = "<group>"; };
 		EC9D6969230C7843E1CA15D4 /* PersonaCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaCanvasView.swift; sourceTree = "<group>"; };
 		ED1FB90120DA8234D01EACDA /* CardGameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameTests.swift; sourceTree = "<group>"; };
 		F1737689E7DF58902AFD6C50 /* AssessmentModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentModel.swift; sourceTree = "<group>"; };
@@ -172,6 +192,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				926D91A5731F4E17B0DCEE02 /* Supabase in Frameworks */,
+				D0BD01157B3C07B37F008642 /* PostHog in Frameworks */,
+				65ACCF758E1D7AA76C96AA2A /* Sentry in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,6 +273,7 @@
 		59CFA53EDA344F6D8D1EEBFF /* PossibilityTests */ = {
 			isa = PBXGroup;
 			children = (
+				B3A208138BF922934372D678 /* AnalyticsTests.swift */,
 				ED1FB90120DA8234D01EACDA /* CardGameTests.swift */,
 				787FBC923D38D9AC621071DF /* CardIconTests.swift */,
 			);
@@ -276,6 +299,20 @@
 				D06D2C120F718C83B1F4FA00 /* CardGameView.swift */,
 			);
 			path = CardGame;
+			sourceTree = "<group>";
+		};
+		9BCAD4B96145E587065B5744 /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				24568246CB58D3ADCCB020B2 /* Analytics.swift */,
+				3B268159974A678B6A714A56 /* AnalyticsEvent+Catalog.swift */,
+				D52D71415C8415DCBA1B449C /* AnalyticsIdentity.swift */,
+				415D71DDB0A6299F5C17EC5F /* AnalyticsLog.swift */,
+				DDFF75D5E912238827A3C43E /* PostHogBackend.swift */,
+				72172BC567A5EA335C0F3585 /* SentryBackend.swift */,
+				E469AE164513C33035CA855A /* SupabaseEventBackend.swift */,
+			);
+			path = Analytics;
 			sourceTree = "<group>";
 		};
 		A918821F148B5EC7906B1B47 /* PossibilityUITests */ = {
@@ -355,6 +392,7 @@
 			children = (
 				7A66E7957C018F28AE0D5320 /* ChatStreamClient.swift */,
 				82499AB284DEE9B04F47B7DC /* SupabaseService.swift */,
+				6C226F3A187343313B576559 /* SupabaseService+Analytics.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -430,6 +468,7 @@
 		F0502F0FAA53B3F23BA223BF /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				9BCAD4B96145E587065B5744 /* Analytics */,
 				D5616A1DC5AFFE1BC7832243 /* DesignSystem */,
 				E8C32A15BAD5DA9449371B1F /* Models */,
 				D4F55EDC97BDDC7EE977730E /* Network */,
@@ -453,8 +492,6 @@
 				A51D91BEDC619FAC60BF5921 /* PBXTargetDependency */,
 			);
 			name = PossibilityTests;
-			packageProductDependencies = (
-			);
 			productName = PossibilityTests;
 			productReference = 77F3CF53344B4A63CD764555 /* PossibilityTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -471,8 +508,6 @@
 				E1F2C6E905A61E2B19AA4023 /* PBXTargetDependency */,
 			);
 			name = PossibilityUITests;
-			packageProductDependencies = (
-			);
 			productName = PossibilityUITests;
 			productReference = 0E16FCF69CBB73D2AB9852FF /* PossibilityUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -492,6 +527,8 @@
 			name = Possibility;
 			packageProductDependencies = (
 				C1DBAF9F3362AB4D6B05FF6C /* Supabase */,
+				036F8C2CAB3EB3536458C78E /* PostHog */,
+				F13E8EF1CA4AB0E2FC5842A8 /* Sentry */,
 			);
 			productName = Possibility;
 			productReference = FAFEBDFA61595B982762DBBA /* Possibility.app */;
@@ -531,6 +568,8 @@
 			mainGroup = C4A83C086EEA033A6F7F979B;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				F8DC7075CA660B1F5EE795B5 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				D345F5B8E1B73F00C7154302 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				361B59D31A9E117006B1ECAB /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -539,8 +578,8 @@
 			projectRoot = "";
 			targets = (
 				C2474A909F3B0387E61B95D1 /* Possibility */,
-				97C3EF562E8333EE867AAEF9 /* PossibilityUITests */,
 				651A2602E3AA0C22DBDB2DCE /* PossibilityTests */,
+				97C3EF562E8333EE867AAEF9 /* PossibilityUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -561,6 +600,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4BCDC83A1531F0BB84567375 /* Analytics.swift in Sources */,
+				1B6EC8AB900C4E63384F54E5 /* AnalyticsEvent+Catalog.swift in Sources */,
+				282D9AFC450DC4DED27F3558 /* AnalyticsIdentity.swift in Sources */,
+				C8DA54DB55EF9182FBA8FB32 /* AnalyticsLog.swift in Sources */,
 				12BB5C70922DCCEFB89AB46E /* AppConfig.swift in Sources */,
 				6224F195BDA26920A43AE176 /* AppleSignInCoordinator.swift in Sources */,
 				D9CAECCE89B2F747D858E33E /* AssessmentData.swift in Sources */,
@@ -610,12 +653,16 @@
 				31840B944EB082620402CFB8 /* PaywallView.swift in Sources */,
 				0B988993311EC55E2D91E0C6 /* PersonaCanvasView.swift in Sources */,
 				391DE9218ECF4CF7D2BAA857 /* PossibilityApp.swift in Sources */,
+				AAE5363F74681B00D04CDD19 /* PostHogBackend.swift in Sources */,
 				D841E67EE24F94B3E14C8D3B /* ProfileModel.swift in Sources */,
 				5694343508D12DE214CB26DB /* ProfilePanels.swift in Sources */,
 				01E921D7AD7F8E89ACFFD864 /* ProfileStudioView.swift in Sources */,
 				488A98FCD9007C095D8876CB /* ProfileView.swift in Sources */,
 				F96A892ECA6A4FF48676170F /* ResultView.swift in Sources */,
+				D61191FEBE2A6A05D4A0B5C1 /* SentryBackend.swift in Sources */,
 				B6F11D3744D196A5ED2D96CB /* Shaders.metal in Sources */,
+				D249E82CEE6CD0A3B84C02D4 /* SupabaseEventBackend.swift in Sources */,
+				9028629F1611A9F73087164A /* SupabaseService+Analytics.swift in Sources */,
 				C18D90D9775C8FA60B893FC3 /* SupabaseService.swift in Sources */,
 				83533EF621F6867BF037A0F2 /* SupabaseTimestamp.swift in Sources */,
 				1E850B5E9CD65299DED6CBE5 /* Theme.swift in Sources */,
@@ -638,6 +685,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13DEC256816F24F5543582D1 /* AnalyticsTests.swift in Sources */,
 				A77CBCE5DCCE295A0EBB91E1 /* CardGameTests.swift in Sources */,
 				255F3FAC100045FDD33B318D /* CardIconTests.swift in Sources */,
 			);
@@ -938,13 +986,39 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		D345F5B8E1B73F00C7154302 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.23.0;
+			};
+		};
+		F8DC7075CA660B1F5EE795B5 /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.68.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		036F8C2CAB3EB3536458C78E /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F8DC7075CA660B1F5EE795B5 /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
 		C1DBAF9F3362AB4D6B05FF6C /* Supabase */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 361B59D31A9E117006B1ECAB /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		F13E8EF1CA4AB0E2FC5842A8 /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D345F5B8E1B73F00C7154302 /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

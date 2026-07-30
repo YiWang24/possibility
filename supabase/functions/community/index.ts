@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
               )
             }`,
             schema: kaleidoSchema,
+            track: { userId: user.id, feature: "kaleidoscope" },
           });
           const valid = candidates.find((t) => t.id === result.traveler_id);
           if (valid) {
@@ -270,6 +271,6 @@ Deno.serve(async (req) => {
         );
     }
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

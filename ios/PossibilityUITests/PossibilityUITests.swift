@@ -125,7 +125,7 @@ final class PossibilityUITests: XCTestCase {
         RunLoop.current.run(until: Date().addingTimeInterval(30))
         XCTAssertNil(
             find("我好像在接你的路上迷路了", timeout: 1),
-            "对话报错兜底——发送后没有真实回复（复现用户反馈的 bug）",
+            "对话报错兜底——发送后没有真实回复（复现用户反馈的 bug）"
         )
     }
 
@@ -136,7 +136,7 @@ final class PossibilityUITests: XCTestCase {
         assertExists("卡片", timeout: 6)
         XCTAssertNil(
             find("放映", timeout: 1),
-            "社区没有默认放映模式（出现了「放映」切换入口，说明当前是卡片流）",
+            "社区没有默认放映模式（出现了「放映」切换入口，说明当前是卡片流）"
         )
         snap("w00-community-watchmode-default")
     }

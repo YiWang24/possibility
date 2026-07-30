@@ -17,8 +17,9 @@ Deno.test("SSE text and named events follow client contract", () => {
 });
 
 Deno.test("SSE response disables buffering and caching", () => {
-  const response = sseResponse(new ReadableStream());
+  const response = sseResponse(new ReadableStream(), "request-sse");
   assert(response.headers.get("content-type")?.startsWith("text/event-stream"));
   assert(response.headers.get("cache-control") === "no-cache, no-transform");
   assert(response.headers.get("x-accel-buffering") === "no");
+  assert(response.headers.get("x-request-id") === "request-sse");
 });

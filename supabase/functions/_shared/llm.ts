@@ -1,6 +1,7 @@
 import { APICallError, generateObject, jsonSchema } from "ai";
 import { deepseekProvider } from "./deepseek.ts";
 import { HttpError } from "./errors.ts";
+import { type LLMTrackContext, trackLLMRequest } from "./track.ts";
 
 /**
  * 结构化输出适配层：走 Vercel AI SDK（`ai` + `@ai-sdk/deepseek`），后端为 DeepSeek v4。
@@ -11,6 +12,21 @@ import { HttpError } from "./errors.ts";
  * （@ai-sdk/deepseek@3.0.13 的 providerOptions.deepseek.thinking 不生效，见 deepseek.ts）。
  */
 
+// DeepSeek 公网端点稳定，但仍给少量重试覆盖偶发的解析失败/网络抖动。
+// 3 次 × 45s，留在 Edge Function 150s 墙钟内。
+const MAX_ATTEMPTS = 3;
+const PER_ATTEMPT_TIMEOUT_MS = 45_000;
+
+export type StructuredOutputOptions = {
+  model: string;
+  maxTokens: number;
+  system: string;
+  prompt: string;
+  schema: { type: "object"; [key: string]: unknown };
+  /// 传入即上报 llm_request（token 用量/延迟/成败）。不传则静默跳过。
+  track?: LLMTrackContext;
+};
+
 function deepseek(model: string) {
   return deepseekProvider()(model);
 }
@@ -20,55 +36,83 @@ function isNonRetryable(status: number | undefined): boolean {
   return status === 400 || status === 401 || status === 403 || status === 404;
 }
 
-export async function structuredOutput<T>(
-  options: {
-    model: string;
-    maxTokens: number;
-    system: string;
-    prompt: string;
-    schema: { type: "object"; [key: string]: unknown };
-  },
-): Promise<T> {
-  // DeepSeek 公网端点稳定，但仍给少量重试覆盖偶发的解析失败/网络抖动。
-  // 3 次 × 45s，留在 Edge Function 150s 墙钟内。
-  const maxAttempts = 3;
-  const perAttemptTimeout = 45_000;
+/**
+ * 埋点用的错误码：优先取上游 HTTP 状态（能区分限流/鉴权/网关故障），
+ * 否则退回错误类名（AbortError / TypeError…）。绝不放错误消息进去——
+ * 消息里可能回显 prompt 片段，那就等于把对话正文写进埋点（§1 禁止）。
+ */
+export function llmErrorCode(error: unknown): string {
+  const status = APICallError.isInstance(error) ? error.statusCode : undefined;
+  if (status !== undefined) return `HTTP_${status}`;
+  return error instanceof Error ? error.name : "UNKNOWN";
+}
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), perAttemptTimeout);
-    try {
-      const { object } = await generateObject({
-        model: deepseek(options.model),
-        schema: jsonSchema<T>(options.schema),
-        system: options.system,
-        prompt: options.prompt,
-        maxOutputTokens: options.maxTokens,
-        maxRetries: 0, // 重试由本函数控制
-        abortSignal: controller.signal,
-      });
-      return object as T;
-    } catch (error) {
-      // 真正的 4xx 配置错误（凭证/请求非法）：直接抛出，别浪费重试。
-      const status = APICallError.isInstance(error)
-        ? error.statusCode
-        : undefined;
-      if (isNonRetryable(status)) {
-        throw new HttpError(
-          502,
-          "MODEL_UPSTREAM_ERROR",
-          "AI 服务配置异常，请稍后重试。",
-        );
-      }
-      // 超时/网络抖动/无法解析出合法对象：记录后重试。
-      console.error(
-        `structuredOutput attempt ${attempt}/${maxAttempts} failed:`,
-        (error as Error).name,
-        (error as Error).message,
+type Attempt<T> =
+  | { ok: true; object: T }
+  | { ok: false; fatal: boolean; detail: string };
+
+async function runStructuredAttempt<T>(
+  options: StructuredOutputOptions,
+): Promise<Attempt<T>> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_TIMEOUT_MS);
+  const startedAt = Date.now();
+  try {
+    const result = await generateObject({
+      model: deepseek(options.model),
+      schema: jsonSchema<T>(options.schema),
+      system: options.system,
+      prompt: options.prompt,
+      maxOutputTokens: options.maxTokens,
+      maxRetries: 0, // 重试由 structuredOutput 控制
+      abortSignal: controller.signal,
+    });
+    trackLLMRequest(options.track, {
+      model: options.model,
+      usage: result.usage,
+      latencyMs: Date.now() - startedAt,
+      ok: true,
+    });
+    return { ok: true, object: result.object as T };
+  } catch (error) {
+    trackLLMRequest(options.track, {
+      model: options.model,
+      latencyMs: Date.now() - startedAt,
+      ok: false,
+      errorCode: llmErrorCode(error),
+    });
+    const status = APICallError.isInstance(error)
+      ? error.statusCode
+      : undefined;
+    return {
+      ok: false,
+      fatal: isNonRetryable(status),
+      detail: llmErrorCode(error),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export async function structuredOutput<T>(
+  options: StructuredOutputOptions,
+): Promise<T> {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const result = await runStructuredAttempt<T>(options);
+    if (result.ok) return result.object;
+    // 真正的 4xx 配置错误（凭证/请求非法）：直接抛出，别浪费重试。
+    if (result.fatal) {
+      throw new HttpError(
+        502,
+        "MODEL_UPSTREAM_ERROR",
+        "AI 服务配置异常，请稍后重试。",
       );
-    } finally {
-      clearTimeout(timer);
     }
+    // 超时/网络抖动/无法解析出合法对象：记录后重试。
+    console.error(
+      `structuredOutput attempt ${attempt}/${MAX_ATTEMPTS} failed:`,
+      result.detail,
+    );
   }
 
   throw new HttpError(

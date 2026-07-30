@@ -70,6 +70,13 @@ final class LabModel {
 
     var choices: [Choice] { remoteChoices + customChoices }
 
+    /// 埋点用话题分类：实验室本身没有话题概念，而问题正文是用户内容不能上报，
+    /// 因此命中首页四条预置问题时回落到对应话题，其余一律记为 custom。
+    private var analyticsTopic: String {
+        let clean = question.trimmingCharacters(in: .whitespacesAndNewlines)
+        return ExploreTopic.allCases.first { $0.sampleQuestion == clean }?.rawValue ?? "custom"
+    }
+
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.customStoreKey),
            let saved = try? JSONDecoder().decode([Choice].self, from: data) {
@@ -111,6 +118,11 @@ final class LabModel {
 
         choicesRequestID += 1
         let requestID = choicesRequestID
+        // Layer 1 由 lab-choices 在鉴权与校验通过后权威写入；端上只补
+        // PostHog / Sentry，避免 app_events 同一次请求双计数。
+        Analytics.shared.track(
+            AnalyticsEvent.labChoicesRequested(topic: analyticsTopic).externalOnly()
+        )
         choicesLoading = true
         errorMessage = nil
         remoteChoices = []
@@ -225,6 +237,11 @@ final class LabModel {
 
     func runSim(supabase: SupabaseService) async {
         guard let pick, !loading else { return }
+        // 打在 guard 之后：重复点击被拦下的那些不算一次推演请求
+        // Layer 1 由 simulate 权威写入；端上只补 PostHog / Sentry。
+        Analytics.shared.track(
+            AnalyticsEvent.simulationRequested(years: horizon.apiYears).externalOnly()
+        )
         loading = true
         loadStep = 0
         errorMessage = nil

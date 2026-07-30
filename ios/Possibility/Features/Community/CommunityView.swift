@@ -293,7 +293,7 @@ struct CommunityView: View {
     // MARK: 发悬赏 FAB（悬赏贴 tab，风格同抽取 FAB）
 
     private var composeFab: some View {
-        Button { authGate.require(supabase) { showCompose = true } } label: {
+        Button { authGate.require(supabase, trigger: .bountyPost) { showCompose = true } } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill").font(.system(size: 15, weight: .semibold))
                 Text("发布悬赏").font(.system(size: 13.5, weight: .semibold)).tracking(0.5)
@@ -520,6 +520,8 @@ struct BountyComposeView: View {
                     detail: String(detail.trimmingCharacters(in: .whitespacesAndNewlines).prefix(2000)),
                     reward: String(rewardText.prefix(50))
                 )
+                // 服务端写入成功才算发布；悬赏正文/标签/赏金都不进属性
+                Analytics.shared.track(.communityBountyPosted)
                 onPublished()
                 dismiss()
                 toast.show("悬赏已发布")

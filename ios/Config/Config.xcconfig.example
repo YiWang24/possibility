@@ -15,3 +15,19 @@ SUPABASE_ANON_KEY = your-supabase-anon-key
 
 // 本地开发（supabase start）可改用本机地址：
 // SUPABASE_URL = http:/$()/127.0.0.1:54321
+
+// ── 埋点（docs/埋点方案.md）────────────────────────────────────────────
+//
+// 三个值都留空也能正常跑：对应 backend 不注册，事件只写 Supabase app_events。
+// 这些是**写入凭证**，硬编码进仓库等于把上报端点公开给任何反编译者，
+// 混进来的脏数据无法回收 —— 所以 AppConfig 对它们不设线上兜底值。
+//
+// POSTHOG_API_KEY：PostHog 项目设置里的 Project API Key（`phc_` 开头），
+//                  不要填 Personal API Key（那是读权限凭证，泄漏后果严重得多）。
+// POSTHOG_HOST：   默认 https:/$()/us.i.posthog.com；EU 区改 eu.i.posthog.com，
+//                  接了自建反代（国内可达性）就填反代域名。
+// SENTRY_DSN：     Sentry 项目 → Client Keys (DSN)。
+
+POSTHOG_API_KEY =
+POSTHOG_HOST = https:/$()/us.i.posthog.com
+SENTRY_DSN =

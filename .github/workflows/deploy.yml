@@ -37,6 +37,9 @@ jobs:
       - name: 推送数据库迁移
         run: doppler run --command 'supabase db push'
 
+      # 错误上报（docs/埋点方案.md Layer 3）的 SENTRY_DSN / SENTRY_ENVIRONMENT 也走这条通道：
+      # doppler-sync.sh 只排除 DOPPLER_/SUPABASE_ 前缀，其余键全量同步，无需在此逐个列举。
+      # Doppler 未配 SENTRY_DSN 时 _shared/sentry.ts 静默关闭上报——功能不可用，但绝不阻断部署。
       - name: 同步 Edge Function 密钥（Doppler → Supabase）
         run: doppler run --command 'bash scripts/doppler-sync.sh prd "$SUPABASE_PROJECT_REF"'
 

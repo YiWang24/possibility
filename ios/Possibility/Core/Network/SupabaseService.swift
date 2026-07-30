@@ -65,6 +65,8 @@ final class SupabaseService {
                 currentUser = session.user
             }
             isReady = true
+            // 冷启动：没有「上一个 user_id」（规则 1）→ 只 identify，不 alias
+            if let user = currentUser { syncAnalyticsIdentity(previousUserId: nil, user: user) }
             async let t: Void = loadTravelers()
             async let b: Void = loadBounties()
             async let p: Void = loadProfile()
@@ -98,6 +100,9 @@ final class SupabaseService {
         let session = try await client.auth.signInAnonymously()
         userId = session.user.id
         isReady = true
+        // 会话是在这里补建的（bootstrap 失败 / 过期），埋点身份要跟着补上，
+        // 否则这批用户的事件会一路挂着 nil user_id
+        syncAnalyticsIdentity(previousUserId: nil, user: session.user)
         return session.accessToken
     }
 
@@ -129,36 +134,59 @@ final class SupabaseService {
     /// 校验验证码。signIn 流会替换会话：先暂存匿名 token，成功后迁移数据。
     func verifyPhoneOTP(_ rawPhone: String, code: String, flow: PhoneOTPFlow) async throws {
         let phone = Self.e164Phone(rawPhone)
+        let wasAnonymous = isAnonymous
+        // 旧 user_id 必须在会话被替换前抓住：.signIn 流整个换掉会话，
+        // 之后向 client 要到的已经是新账号，alias 的源端就没了。
+        let previousUserId = userId
+        let response: AuthResponse
         switch flow {
         case .linkAnonymous:
-            try await client.auth.verifyOTP(phone: phone, token: code, type: .phoneChange)
+            response = try await client.auth.verifyOTP(phone: phone, token: code, type: .phoneChange)
         case .signIn:
             let anonymousToken = await anonymousAccessToken()
-            try await client.auth.verifyOTP(phone: phone, token: code, type: .sms)
-            await mergeAnonymousData(token: anonymousToken)
+            response = try await client.auth.verifyOTP(phone: phone, token: code, type: .sms)
+            await mergeAnonymousData(token: anonymousToken, anonymousUserId: previousUserId)
         }
+        // .linkAnonymous：原地链接手机号，user_id 不变（规则 2）→ 只更新 person properties；
+        // .signIn：号码已属于既有账号，user_id 变了 → 与 Apple 同属规则 3，必须先 alias。
+        // 两种情况都交给 resolve 判定，不在这里写死。
+        syncAnalyticsIdentity(previousUserId: previousUserId, user: response.user)
         await refreshAfterAuthChange()
+        Analytics.shared.track(.authCompleted(method: "sms", wasAnonymous: wasAnonymous))
     }
 
     /// Apple 原生登录（signInWithIdToken）。会产生/命中另一个正式账号：
     /// 先暂存匿名 token，登录成功后经 merge-anonymous 迁移数据。
     /// - Parameter fullName: Apple 仅首次授权返回，随手写入 user metadata
     func signInWithApple(idToken: String, nonce: String, fullName: String?) async throws {
+        let wasAnonymous = isAnonymous
+        // 这一行是整个埋点最关键的时机：signInWithIdToken 一返回，client 上的会话
+        // 就换成新账号了，authStateChanges 也会把 userId 覆盖掉。此刻不把旧匿名 id
+        // 抓在手里，alias 就没有源端 —— 匿名期行为全部成为孤儿事件，
+        // 「进入 → 付费」漏斗从登录那一刻断开。
+        let previousUserId = userId
         let anonymousToken = await anonymousAccessToken()
-        try await client.auth.signInWithIdToken(
+        let session = try await client.auth.signInWithIdToken(
             credentials: .init(provider: .apple, idToken: idToken, nonce: nonce)
         )
+        // 规则 3：Apple 登录必然换 user_id → 先 alias(旧, 新) 再 identify(新)。
+        // 紧贴登录调用，不等 merge / 缓存刷新，避免中间产生归属错乱的事件。
+        syncAnalyticsIdentity(previousUserId: previousUserId, user: session.user)
         if let fullName, !fullName.isEmpty {
-            try? await client.auth.update(user: UserAttributes(data: ["full_name": .string(fullName)]))
+            _ = try? await client.auth.update(user: UserAttributes(data: ["full_name": .string(fullName)]))
         }
-        await mergeAnonymousData(token: anonymousToken)
+        await mergeAnonymousData(token: anonymousToken, anonymousUserId: previousUserId)
         await refreshAfterAuthChange()
+        Analytics.shared.track(.authCompleted(method: "apple", wasAnonymous: wasAnonymous))
     }
 
     /// 退出登录：清空本地缓存后回落到全新匿名会话（游客模式仍可用）
     func signOut() async {
         try? await client.auth.signOut()
         resetUserCaches()
+        // 断开本地身份关联：登出后的行为属于新的匿名用户，不能继续挂在旧账号上。
+        // 紧接着的 bootstrap 会为新匿名会话重新 identify。
+        Analytics.shared.reset()
         await bootstrap()
     }
 
@@ -188,12 +216,29 @@ final class SupabaseService {
 
     /// POST /merge-anonymous：把旧匿名账号数据迁到当前正式账号。
     /// 失败不阻断登录（记录 lastError，可由后台任务/客服兜底）。
-    private func mergeAnonymousData(token: String?) async {
+    /// - Parameter anonymousUserId: 被迁移的匿名 user_id，仅用于上报 identity_merged
+    private func mergeAnonymousData(token: String?, anonymousUserId: UUID?) async {
         guard let token else { return }
         struct Body: Encodable { let anonymous_access_token: String }
-        struct Response: Decodable { let ok: Bool }
+        struct Response: Decodable {
+            let ok: Bool
+            let merged: Bool
+        }
         do {
-            _ = try await callFunction("merge-anonymous", body: Body(anonymous_access_token: token), as: Response.self)
+            let response = try await callFunction(
+                "merge-anonymous",
+                body: Body(anonymous_access_token: token),
+                as: Response.self
+            )
+            // 只有真的迁成功才算合并 —— 失败时上报会让「合并率」指标虚高，
+            // 掩盖掉需要人工兜底的那部分用户（docs/埋点方案.md §3.2）
+            // Layer 1 由服务端权威写入；端上只补 PostHog / Sentry，避免事实表双计数。
+            if response.merged, let anonymousUserId {
+                Analytics.shared.track(
+                    AnalyticsEvent.identityMerged(anonymousId: anonymousUserId.uuidString)
+                        .externalOnly()
+                )
+            }
         } catch {
             lastError = "匿名数据迁移失败：\(error.localizedDescription)"
         }
@@ -384,9 +429,13 @@ final class SupabaseService {
             let message: String?
         }
         let error: Inner?
+        let requestId: String?
         var statusCode: Int = 0
 
-        enum CodingKeys: String, CodingKey { case error }
+        enum CodingKeys: String, CodingKey {
+            case error
+            case requestId = "request_id"
+        }
 
         var errorDescription: String? {
             error?.message ?? "服务暂时不可用（HTTP \(statusCode)）"
@@ -409,6 +458,7 @@ final class SupabaseService {
     private func callFunction<In: Encodable, Out: Decodable>(
         _ name: String, body: In, as _: Out.Type
     ) async throws -> Out {
+        let requestId = UUID().uuidString
         var req = URLRequest(url: AppConfig.functionURL(name))
         req.httpMethod = "POST"
         // simulate/match 的结构化生成可达 2 分钟以上，默认 60s 会提前断开
@@ -416,10 +466,21 @@ final class SupabaseService {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
         req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.setValue(requestId, forHTTPHeaderField: "X-Request-ID")
         req.httpBody = try JSONEncoder().encode(body)
-        let (data, response) = try await URLSession.shared.data(for: req)
-        try Self.throwIfHTTPError(response, data: data)
-        return try JSONDecoder().decode(Out.self, from: data)
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            try Self.throwIfHTTPError(response, data: data)
+            return try JSONDecoder().decode(Out.self, from: data)
+        } catch {
+            let correlatedId = (error as? EdgeFunctionError)?.requestId ?? requestId
+            AppObservability.recordRequestFailure(
+                function: name,
+                requestId: correlatedId,
+                error: error
+            )
+            throw error
+        }
     }
 
     /// POST /match：3 位结局不同旅人 + 匹配理由
@@ -454,9 +515,16 @@ final class SupabaseService {
     }
 
     /// POST /analyze-diary：情绪 + 关键词
-    func analyzeDiary(transcript: String) async throws -> DiaryAnalysis {
-        struct Body: Encodable { let transcript: String }
-        return try await callFunction("analyze-diary", body: Body(transcript: transcript), as: DiaryAnalysis.self)
+    func analyzeDiary(transcript: String, inputMethod: String) async throws -> DiaryAnalysis {
+        struct Body: Encodable {
+            let transcript: String
+            let input_method: String
+        }
+        return try await callFunction(
+            "analyze-diary",
+            body: Body(transcript: transcript, input_method: inputMethod),
+            as: DiaryAnalysis.self
+        )
     }
 
     // MARK: - Edge Functions（画像 / 社区 / 日记 —— 真实调用优先，失败由调用方兜底）

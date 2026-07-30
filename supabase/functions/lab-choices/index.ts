@@ -7,6 +7,8 @@ import { labChoicePrompt } from "../_shared/prompts.ts";
 import { type LabChoiceOutput, labChoiceSchema } from "../_shared/schemas.ts";
 import { validateLabChoiceInput } from "../_shared/validate.ts";
 import { insertLabChoiceSet } from "../_shared/db.ts";
+import { ServerEvent } from "../_shared/events.ts";
+import { normalizeTopic, trackEvent } from "../_shared/track.ts";
 
 /**
  * POST /lab-choices
@@ -23,6 +25,12 @@ Deno.serve(async (req) => {
     // 鉴权：选择卡基于用户上下文生成，需登录。
     // 读取用户已授权画像作为上下文（RLS 仅本人可见）。
     const { user, db } = await requireUser(req);
+    // topic 必须先收敛到有限集再上报：validate.ts 对它只校验「字符串且 ≤40 字」，
+    // 原样上报等于把 40 字的用户自由输入写进埋点（§1 禁止），且与 iOS 侧
+    // 已归一化的取值对不上账。question 是用户原话，任何情况下都不上报。
+    trackEvent(user.id, ServerEvent.LAB_CHOICES_REQUESTED, {
+      topic: normalizeTopic(input.topic),
+    });
     const { data: profile } = await db
       .from("profiles")
       .select("dims")
@@ -47,10 +55,11 @@ Deno.serve(async (req) => {
       system: labChoicePrompt,
       prompt,
       schema: labChoiceSchema,
+      track: { userId: user.id, feature: "lab_choices" },
     });
     await insertLabChoiceSet(db, user.id, input, result);
     return jsonResponse(result);
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

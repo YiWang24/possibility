@@ -262,7 +262,7 @@ struct BountyDetailView: View {
             if sent {
                 toast.show("你的名片已经发送")
             } else {
-                authGate.require(supabase) { showCardModal = true }
+                authGate.require(supabase, trigger: .bountyRespond) { showCardModal = true }
             }
         }
         .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
@@ -337,6 +337,8 @@ struct BountyDetailView: View {
             defer { sending = false }
             do {
                 try await supabase.respondBounty(bountyId: bounty.id, message: String(payload.prefix(500)))
+                // 名片真的发出去了才算回应；只带 bounty_id，名片正文不上报
+                Analytics.shared.track(.communityBountyResponded(bountyId: bounty.id))
                 var ids = Self.sentIds
                 ids.insert(bounty.id)
                 Self.sentIds = ids
