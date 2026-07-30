@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+    paths:
+      - 'supabase/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 jobs:
