@@ -179,10 +179,8 @@ export const useData = create<DataState>()((set, get) => ({
       const remote = await callFunction<RemoteProfile>("get-profile");
       const normalized: RemoteProfile = {
         portrait_pct: remote.portrait_pct ?? PORTRAIT_INITIAL_PCT,
-        dims: remote.dims ?? {},
         profile_revision: remote.profile_revision ?? 0,
         facts: remote.facts ?? [],
-        dimensions: remote.dimensions ?? [],
         card_games: remote.card_games ?? [],
         public_profile: remote.public_profile ?? null,
         ai_permissions: remote.ai_permissions ?? null,
@@ -196,10 +194,8 @@ export const useData = create<DataState>()((set, get) => ({
         set({
           profile: {
             portrait_pct: PORTRAIT_INITIAL_PCT,
-            dims: {},
             profile_revision: 0,
             facts: [],
-            dimensions: [],
             card_games: [],
             public_profile: null,
             ai_permissions: null,

@@ -40,6 +40,7 @@ export const AI_SCOPE_OPTIONS = [
   { key: "chat", label: "探索对话", detail: "在对话中提供更贴合的回应" },
   { key: "match", label: "相似经历匹配", detail: "辅助匹配处境相关的旅人" },
   { key: "lab", label: "人生实验室", detail: "生成更贴合现实条件的选项" },
+  { key: "community", label: "社区与万花筒", detail: "推荐更相关且多样的真实经历" },
 ] as const;
 export type ProfileAIPermissions = Record<string, Record<string, boolean>>;
 
@@ -223,14 +224,15 @@ export function mergeRemoteMyProfile(local: MyProfile, remote: RemotePublicProfi
 interface MyProfileState {
   profile: MyProfile;
   aiPermissions: ProfileAIPermissions;
+  permissionRevision: number;
   /** 整体替换（编辑页保存） */
   setProfile: (profile: MyProfile) => void;
-  setAIPermissions: (permissions: ProfileAIPermissions) => void;
+  setAIPermissions: (permissions: ProfileAIPermissions, revision?: number) => void;
   /** 局部更新（visibility 开关等） */
   update: (patch: Partial<MyProfile>) => void;
   /** 云端恢复：远端字段覆盖本地（空字段保留本地值） */
   applyRemote: (remote: RemotePublicProfile) => void;
-  applyRemotePermissions: (permissions: ProfileAIPermissions) => void;
+  applyRemotePermissions: (permissions: ProfileAIPermissions, revision: number) => void;
   /** 恢复默认档案 */
   reset: () => void;
 }
@@ -240,12 +242,19 @@ export const useMyProfile = create<MyProfileState>()(
     (set, get) => ({
       profile: DEFAULT_MY_PROFILE,
       aiPermissions: {},
+      permissionRevision: 0,
       setProfile: (profile) => set({ profile }),
-      setAIPermissions: (aiPermissions) => set({ aiPermissions }),
+      setAIPermissions: (aiPermissions, revision) =>
+        set((state) => ({
+          aiPermissions,
+          permissionRevision: revision ?? state.permissionRevision,
+        })),
       update: (patch) => set({ profile: { ...get().profile, ...patch } }),
       applyRemote: (remote) => set({ profile: mergeRemoteMyProfile(get().profile, remote) }),
-      applyRemotePermissions: (aiPermissions) => set({ aiPermissions }),
-      reset: () => set({ profile: DEFAULT_MY_PROFILE, aiPermissions: {} }),
+      applyRemotePermissions: (aiPermissions, permissionRevision) =>
+        set({ aiPermissions, permissionRevision }),
+      reset: () =>
+        set({ profile: DEFAULT_MY_PROFILE, aiPermissions: {}, permissionRevision: 0 }),
     }),
     {
       name: MY_PROFILE_STORAGE_KEY,
@@ -255,7 +264,14 @@ export const useMyProfile = create<MyProfileState>()(
         const stored = (persisted as Partial<MyProfileState> | undefined)?.profile;
         const aiPermissions =
           (persisted as Partial<MyProfileState> | undefined)?.aiPermissions ?? {};
-        return { ...current, profile: mergeWithDefaultProfile(stored), aiPermissions };
+        const permissionRevision =
+          (persisted as Partial<MyProfileState> | undefined)?.permissionRevision ?? 0;
+        return {
+          ...current,
+          profile: mergeWithDefaultProfile(stored),
+          aiPermissions,
+          permissionRevision,
+        };
       },
     },
   ),

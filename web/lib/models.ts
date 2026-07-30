@@ -241,10 +241,12 @@ export interface Unlock {
 
 /** POST /match 出参：3 位结局不同的旅人 + 可解释理由 */
 export interface AIContextDisclosure {
-  purpose: "persona" | "chat" | "match" | "lab";
+  purpose: "persona" | "chat" | "match" | "lab" | "community";
   dimensions: string[];
   /** 本次 AI 上下文对应的画像版本；用于向用户解释和排查跨设备更新。 */
   profile_revision?: number;
+  /** 本次 AI 上下文对应的用途授权版本。 */
+  permission_revision?: number;
 }
 
 export interface MatchResponse {
@@ -320,20 +322,11 @@ export interface RemotePublicProfile {
 /** 与公开 visibility 分离的私有 AI 用途授权。 */
 export interface RemoteAIPermissions {
   permissions: Record<string, Record<string, boolean>>;
+  permission_revision: number;
   updated_at?: string | null;
 }
 
 /* ============ GET /get-profile 出参 ============ */
-
-/** profile_dimensions 行：{dimension, tags, source, updated_at} */
-export interface RemoteProfileDimension {
-  /** skill | like | love | family | social | personality */
-  dimension: string;
-  tags: string[];
-  /** manual | card_game | ... */
-  source?: string | null;
-  updated_at?: string | null;
-}
 
 /** 私密画像中的原子事实；AI 只会读取当前用途明确授权的 active 事实。 */
 export interface RemoteProfileFact {
@@ -344,6 +337,12 @@ export interface RemoteProfileFact {
   source_ref?: string | null;
   confidence: number;
   user_confirmed: boolean;
+  fact_kind?: string;
+  sensitivity?: "low" | "medium" | "high" | string;
+  support_count?: number;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  last_supported_at?: string | null;
   status?: "active" | "superseded" | string;
   observed_at?: string | null;
   updated_at?: string | null;
@@ -371,11 +370,9 @@ export interface RemoteCardGame {
 /** GET /get-profile 云端画像全量出参 */
 export interface RemoteProfile {
   portrait_pct: number;
-  dims: Record<string, string>;
   /** 乐观并发控制版本：任何私密画像变更都会递增。 */
   profile_revision: number;
   facts: RemoteProfileFact[];
-  dimensions: RemoteProfileDimension[];
   card_games: RemoteCardGame[];
   /** public_profiles 行（未建档为 null） */
   public_profile: RemotePublicProfile | null;

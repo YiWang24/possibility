@@ -100,6 +100,72 @@ internal enum PublicSchema {
       case userId = "user_id"
     }
   }
+  internal struct AssessmentRunsSelect: Codable, Hashable, Sendable {
+    internal let answers: AnyJSON
+    internal let assessmentKind: String
+    internal let completedAt: String
+    internal let createdAt: String
+    internal let id: UUID
+    internal let resultTags: [String]
+    internal let schemaVersion: Int32
+    internal let scores: AnyJSON
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case answers = "answers"
+      case assessmentKind = "assessment_kind"
+      case completedAt = "completed_at"
+      case createdAt = "created_at"
+      case id = "id"
+      case resultTags = "result_tags"
+      case schemaVersion = "schema_version"
+      case scores = "scores"
+      case userId = "user_id"
+    }
+  }
+  internal struct AssessmentRunsInsert: Codable, Hashable, Sendable {
+    internal let answers: AnyJSON?
+    internal let assessmentKind: String
+    internal let completedAt: String?
+    internal let createdAt: String?
+    internal let id: UUID?
+    internal let resultTags: [String]?
+    internal let schemaVersion: Int32?
+    internal let scores: AnyJSON?
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case answers = "answers"
+      case assessmentKind = "assessment_kind"
+      case completedAt = "completed_at"
+      case createdAt = "created_at"
+      case id = "id"
+      case resultTags = "result_tags"
+      case schemaVersion = "schema_version"
+      case scores = "scores"
+      case userId = "user_id"
+    }
+  }
+  internal struct AssessmentRunsUpdate: Codable, Hashable, Sendable {
+    internal let answers: AnyJSON?
+    internal let assessmentKind: String?
+    internal let completedAt: String?
+    internal let createdAt: String?
+    internal let id: UUID?
+    internal let resultTags: [String]?
+    internal let schemaVersion: Int32?
+    internal let scores: AnyJSON?
+    internal let userId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case answers = "answers"
+      case assessmentKind = "assessment_kind"
+      case completedAt = "completed_at"
+      case createdAt = "created_at"
+      case id = "id"
+      case resultTags = "result_tags"
+      case schemaVersion = "schema_version"
+      case scores = "scores"
+      case userId = "user_id"
+    }
+  }
   internal struct BountiesSelect: Codable, Hashable, Sendable {
     internal let createdAt: String
     internal let detail: String
@@ -568,6 +634,150 @@ internal enum PublicSchema {
       case userState = "user_state"
     }
   }
+  internal struct MemoryProposalsSelect: Codable, Hashable, Sendable {
+    internal let confidence: Decimal
+    internal let createdAt: String
+    internal let dedupeKey: String
+    internal let dimension: String
+    internal let expiresAt: String
+    internal let factKind: String
+    internal let id: UUID
+    internal let modelName: String?
+    internal let normalizedValue: String
+    internal let operation: String
+    internal let promptVersion: String?
+    internal let rationaleCode: String
+    internal let reviewedAt: String?
+    internal let schemaVersion: Int32
+    internal let sensitivity: String
+    internal let sourceId: String
+    internal let sourceType: String
+    internal let sourceVersion: Int32
+    internal let status: String
+    internal let targetFactId: UUID?
+    internal let userId: UUID
+    internal let value: String
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case dedupeKey = "dedupe_key"
+      case dimension = "dimension"
+      case expiresAt = "expires_at"
+      case factKind = "fact_kind"
+      case id = "id"
+      case modelName = "model_name"
+      case normalizedValue = "normalized_value"
+      case operation = "operation"
+      case promptVersion = "prompt_version"
+      case rationaleCode = "rationale_code"
+      case reviewedAt = "reviewed_at"
+      case schemaVersion = "schema_version"
+      case sensitivity = "sensitivity"
+      case sourceId = "source_id"
+      case sourceType = "source_type"
+      case sourceVersion = "source_version"
+      case status = "status"
+      case targetFactId = "target_fact_id"
+      case userId = "user_id"
+      case value = "value"
+    }
+  }
+  internal struct MemoryProposalsInsert: Codable, Hashable, Sendable {
+    internal let confidence: Decimal
+    internal let createdAt: String?
+    internal let dedupeKey: String
+    internal let dimension: String
+    internal let expiresAt: String?
+    internal let factKind: String?
+    internal let id: UUID?
+    internal let modelName: String?
+    internal let normalizedValue: String
+    internal let operation: String?
+    internal let promptVersion: String?
+    internal let rationaleCode: String?
+    internal let reviewedAt: String?
+    internal let schemaVersion: Int32?
+    internal let sensitivity: String?
+    internal let sourceId: String
+    internal let sourceType: String
+    internal let sourceVersion: Int32?
+    internal let status: String?
+    internal let targetFactId: UUID?
+    internal let userId: UUID
+    internal let value: String
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case dedupeKey = "dedupe_key"
+      case dimension = "dimension"
+      case expiresAt = "expires_at"
+      case factKind = "fact_kind"
+      case id = "id"
+      case modelName = "model_name"
+      case normalizedValue = "normalized_value"
+      case operation = "operation"
+      case promptVersion = "prompt_version"
+      case rationaleCode = "rationale_code"
+      case reviewedAt = "reviewed_at"
+      case schemaVersion = "schema_version"
+      case sensitivity = "sensitivity"
+      case sourceId = "source_id"
+      case sourceType = "source_type"
+      case sourceVersion = "source_version"
+      case status = "status"
+      case targetFactId = "target_fact_id"
+      case userId = "user_id"
+      case value = "value"
+    }
+  }
+  internal struct MemoryProposalsUpdate: Codable, Hashable, Sendable {
+    internal let confidence: Decimal?
+    internal let createdAt: String?
+    internal let dedupeKey: String?
+    internal let dimension: String?
+    internal let expiresAt: String?
+    internal let factKind: String?
+    internal let id: UUID?
+    internal let modelName: String?
+    internal let normalizedValue: String?
+    internal let operation: String?
+    internal let promptVersion: String?
+    internal let rationaleCode: String?
+    internal let reviewedAt: String?
+    internal let schemaVersion: Int32?
+    internal let sensitivity: String?
+    internal let sourceId: String?
+    internal let sourceType: String?
+    internal let sourceVersion: Int32?
+    internal let status: String?
+    internal let targetFactId: UUID?
+    internal let userId: UUID?
+    internal let value: String?
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case dedupeKey = "dedupe_key"
+      case dimension = "dimension"
+      case expiresAt = "expires_at"
+      case factKind = "fact_kind"
+      case id = "id"
+      case modelName = "model_name"
+      case normalizedValue = "normalized_value"
+      case operation = "operation"
+      case promptVersion = "prompt_version"
+      case rationaleCode = "rationale_code"
+      case reviewedAt = "reviewed_at"
+      case schemaVersion = "schema_version"
+      case sensitivity = "sensitivity"
+      case sourceId = "source_id"
+      case sourceType = "source_type"
+      case sourceVersion = "source_version"
+      case status = "status"
+      case targetFactId = "target_fact_id"
+      case userId = "user_id"
+      case value = "value"
+    }
+  }
   internal struct MessagesSelect: Codable, Hashable, Sendable {
     internal let content: String
     internal let conversationId: UUID
@@ -677,92 +887,122 @@ internal enum PublicSchema {
     }
   }
   internal struct ProfileAiPermissionsSelect: Codable, Hashable, Sendable {
+    internal let allowed: Bool
     internal let createdAt: String
-    internal let permissions: AnyJSON
+    internal let dimension: String
+    internal let purpose: String
     internal let updatedAt: String
     internal let userId: UUID
     internal enum CodingKeys: String, CodingKey {
+      case allowed = "allowed"
       case createdAt = "created_at"
-      case permissions = "permissions"
+      case dimension = "dimension"
+      case purpose = "purpose"
       case updatedAt = "updated_at"
       case userId = "user_id"
     }
   }
   internal struct ProfileAiPermissionsInsert: Codable, Hashable, Sendable {
+    internal let allowed: Bool?
     internal let createdAt: String?
-    internal let permissions: AnyJSON?
+    internal let dimension: String
+    internal let purpose: String
     internal let updatedAt: String?
     internal let userId: UUID
     internal enum CodingKeys: String, CodingKey {
+      case allowed = "allowed"
       case createdAt = "created_at"
-      case permissions = "permissions"
+      case dimension = "dimension"
+      case purpose = "purpose"
       case updatedAt = "updated_at"
       case userId = "user_id"
     }
   }
   internal struct ProfileAiPermissionsUpdate: Codable, Hashable, Sendable {
-    internal let createdAt: String?
-    internal let permissions: AnyJSON?
-    internal let updatedAt: String?
-    internal let userId: UUID?
-    internal enum CodingKeys: String, CodingKey {
-      case createdAt = "created_at"
-      case permissions = "permissions"
-      case updatedAt = "updated_at"
-      case userId = "user_id"
-    }
-  }
-  internal struct ProfileDimensionsSelect: Codable, Hashable, Sendable {
-    internal let createdAt: String
-    internal let dimension: String
-    internal let id: Int64
-    internal let source: String
-    internal let tags: [String]
-    internal let updatedAt: String
-    internal let userId: UUID
-    internal enum CodingKeys: String, CodingKey {
-      case createdAt = "created_at"
-      case dimension = "dimension"
-      case id = "id"
-      case source = "source"
-      case tags = "tags"
-      case updatedAt = "updated_at"
-      case userId = "user_id"
-    }
-  }
-  internal struct ProfileDimensionsInsert: Codable, Hashable, Sendable {
-    internal let createdAt: String?
-    internal let dimension: String
-    internal let id: Int64?
-    internal let source: String?
-    internal let tags: [String]?
-    internal let updatedAt: String?
-    internal let userId: UUID
-    internal enum CodingKeys: String, CodingKey {
-      case createdAt = "created_at"
-      case dimension = "dimension"
-      case id = "id"
-      case source = "source"
-      case tags = "tags"
-      case updatedAt = "updated_at"
-      case userId = "user_id"
-    }
-  }
-  internal struct ProfileDimensionsUpdate: Codable, Hashable, Sendable {
+    internal let allowed: Bool?
     internal let createdAt: String?
     internal let dimension: String?
-    internal let id: Int64?
-    internal let source: String?
-    internal let tags: [String]?
+    internal let purpose: String?
     internal let updatedAt: String?
     internal let userId: UUID?
     internal enum CodingKeys: String, CodingKey {
+      case allowed = "allowed"
       case createdAt = "created_at"
       case dimension = "dimension"
-      case id = "id"
-      case source = "source"
-      case tags = "tags"
+      case purpose = "purpose"
       case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct ProfileFactEvidenceSelect: Codable, Hashable, Sendable {
+    internal let confidence: Decimal
+    internal let createdAt: String
+    internal let evidenceRole: String
+    internal let factId: UUID
+    internal let id: UUID
+    internal let observedAt: String
+    internal let sourceId: String
+    internal let sourceType: String
+    internal let sourceVersion: Int32
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case evidenceRole = "evidence_role"
+      case factId = "fact_id"
+      case id = "id"
+      case observedAt = "observed_at"
+      case sourceId = "source_id"
+      case sourceType = "source_type"
+      case sourceVersion = "source_version"
+      case userId = "user_id"
+    }
+  }
+  internal struct ProfileFactEvidenceInsert: Codable, Hashable, Sendable {
+    internal let confidence: Decimal?
+    internal let createdAt: String?
+    internal let evidenceRole: String?
+    internal let factId: UUID
+    internal let id: UUID?
+    internal let observedAt: String?
+    internal let sourceId: String
+    internal let sourceType: String
+    internal let sourceVersion: Int32?
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case evidenceRole = "evidence_role"
+      case factId = "fact_id"
+      case id = "id"
+      case observedAt = "observed_at"
+      case sourceId = "source_id"
+      case sourceType = "source_type"
+      case sourceVersion = "source_version"
+      case userId = "user_id"
+    }
+  }
+  internal struct ProfileFactEvidenceUpdate: Codable, Hashable, Sendable {
+    internal let confidence: Decimal?
+    internal let createdAt: String?
+    internal let evidenceRole: String?
+    internal let factId: UUID?
+    internal let id: UUID?
+    internal let observedAt: String?
+    internal let sourceId: String?
+    internal let sourceType: String?
+    internal let sourceVersion: Int32?
+    internal let userId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case evidenceRole = "evidence_role"
+      case factId = "fact_id"
+      case id = "id"
+      case observedAt = "observed_at"
+      case sourceId = "source_id"
+      case sourceType = "source_type"
+      case sourceVersion = "source_version"
       case userId = "user_id"
     }
   }
@@ -770,27 +1010,41 @@ internal enum PublicSchema {
     internal let confidence: Decimal
     internal let createdAt: String
     internal let dimension: String
+    internal let factKind: String
     internal let id: UUID
+    internal let lastSupportedAt: String
+    internal let normalizedValue: String
     internal let observedAt: String
+    internal let sensitivity: String
     internal let source: String
     internal let sourceRef: String?
     internal let status: String
+    internal let supportCount: Int32
     internal let updatedAt: String
     internal let userConfirmed: Bool
     internal let userId: UUID
+    internal let validFrom: String?
+    internal let validTo: String?
     internal let value: String
     internal enum CodingKeys: String, CodingKey {
       case confidence = "confidence"
       case createdAt = "created_at"
       case dimension = "dimension"
+      case factKind = "fact_kind"
       case id = "id"
+      case lastSupportedAt = "last_supported_at"
+      case normalizedValue = "normalized_value"
       case observedAt = "observed_at"
+      case sensitivity = "sensitivity"
       case source = "source"
       case sourceRef = "source_ref"
       case status = "status"
+      case supportCount = "support_count"
       case updatedAt = "updated_at"
       case userConfirmed = "user_confirmed"
       case userId = "user_id"
+      case validFrom = "valid_from"
+      case validTo = "valid_to"
       case value = "value"
     }
   }
@@ -798,27 +1052,41 @@ internal enum PublicSchema {
     internal let confidence: Decimal?
     internal let createdAt: String?
     internal let dimension: String
+    internal let factKind: String?
     internal let id: UUID?
+    internal let lastSupportedAt: String?
+    internal let normalizedValue: String
     internal let observedAt: String?
+    internal let sensitivity: String?
     internal let source: String?
     internal let sourceRef: String?
     internal let status: String?
+    internal let supportCount: Int32?
     internal let updatedAt: String?
     internal let userConfirmed: Bool?
     internal let userId: UUID
+    internal let validFrom: String?
+    internal let validTo: String?
     internal let value: String
     internal enum CodingKeys: String, CodingKey {
       case confidence = "confidence"
       case createdAt = "created_at"
       case dimension = "dimension"
+      case factKind = "fact_kind"
       case id = "id"
+      case lastSupportedAt = "last_supported_at"
+      case normalizedValue = "normalized_value"
       case observedAt = "observed_at"
+      case sensitivity = "sensitivity"
       case source = "source"
       case sourceRef = "source_ref"
       case status = "status"
+      case supportCount = "support_count"
       case updatedAt = "updated_at"
       case userConfirmed = "user_confirmed"
       case userId = "user_id"
+      case validFrom = "valid_from"
+      case validTo = "valid_to"
       case value = "value"
     }
   }
@@ -826,79 +1094,45 @@ internal enum PublicSchema {
     internal let confidence: Decimal?
     internal let createdAt: String?
     internal let dimension: String?
+    internal let factKind: String?
     internal let id: UUID?
+    internal let lastSupportedAt: String?
+    internal let normalizedValue: String?
     internal let observedAt: String?
+    internal let sensitivity: String?
     internal let source: String?
     internal let sourceRef: String?
     internal let status: String?
+    internal let supportCount: Int32?
     internal let updatedAt: String?
     internal let userConfirmed: Bool?
     internal let userId: UUID?
+    internal let validFrom: String?
+    internal let validTo: String?
     internal let value: String?
     internal enum CodingKeys: String, CodingKey {
       case confidence = "confidence"
       case createdAt = "created_at"
       case dimension = "dimension"
+      case factKind = "fact_kind"
       case id = "id"
+      case lastSupportedAt = "last_supported_at"
+      case normalizedValue = "normalized_value"
       case observedAt = "observed_at"
+      case sensitivity = "sensitivity"
       case source = "source"
       case sourceRef = "source_ref"
       case status = "status"
+      case supportCount = "support_count"
       case updatedAt = "updated_at"
       case userConfirmed = "user_confirmed"
       case userId = "user_id"
+      case validFrom = "valid_from"
+      case validTo = "valid_to"
       case value = "value"
     }
   }
-  internal struct ProfilesSelect: Codable, Hashable, Sendable {
-    internal let createdAt: String
-    internal let dims: AnyJSON
-    internal let id: UUID
-    internal let portraitPct: Int16
-    internal let profileRevision: Int64
-    internal let updatedAt: String
-    internal enum CodingKeys: String, CodingKey {
-      case createdAt = "created_at"
-      case dims = "dims"
-      case id = "id"
-      case portraitPct = "portrait_pct"
-      case profileRevision = "profile_revision"
-      case updatedAt = "updated_at"
-    }
-  }
-  internal struct ProfilesInsert: Codable, Hashable, Sendable {
-    internal let createdAt: String?
-    internal let dims: AnyJSON?
-    internal let id: UUID
-    internal let portraitPct: Int16?
-    internal let profileRevision: Int64?
-    internal let updatedAt: String?
-    internal enum CodingKeys: String, CodingKey {
-      case createdAt = "created_at"
-      case dims = "dims"
-      case id = "id"
-      case portraitPct = "portrait_pct"
-      case profileRevision = "profile_revision"
-      case updatedAt = "updated_at"
-    }
-  }
-  internal struct ProfilesUpdate: Codable, Hashable, Sendable {
-    internal let createdAt: String?
-    internal let dims: AnyJSON?
-    internal let id: UUID?
-    internal let portraitPct: Int16?
-    internal let profileRevision: Int64?
-    internal let updatedAt: String?
-    internal enum CodingKeys: String, CodingKey {
-      case createdAt = "created_at"
-      case dims = "dims"
-      case id = "id"
-      case portraitPct = "portrait_pct"
-      case profileRevision = "profile_revision"
-      case updatedAt = "updated_at"
-    }
-  }
-  internal struct PublicProfilesSelect: Codable, Hashable, Sendable {
+  internal struct ProfilePublicDraftsSelect: Codable, Hashable, Sendable {
     internal let advice: AnyJSON
     internal let age: Int16?
     internal let avatarUrl: String?
@@ -946,7 +1180,7 @@ internal enum PublicSchema {
       case visibility = "visibility"
     }
   }
-  internal struct PublicProfilesInsert: Codable, Hashable, Sendable {
+  internal struct ProfilePublicDraftsInsert: Codable, Hashable, Sendable {
     internal let advice: AnyJSON?
     internal let age: Int16?
     internal let avatarUrl: String?
@@ -994,7 +1228,7 @@ internal enum PublicSchema {
       case visibility = "visibility"
     }
   }
-  internal struct PublicProfilesUpdate: Codable, Hashable, Sendable {
+  internal struct ProfilePublicDraftsUpdate: Codable, Hashable, Sendable {
     internal let advice: AnyJSON?
     internal let age: Int16?
     internal let avatarUrl: String?
@@ -1040,6 +1274,126 @@ internal enum PublicSchema {
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
       case visibility = "visibility"
+    }
+  }
+  internal struct ProfilesSelect: Codable, Hashable, Sendable {
+    internal let createdAt: String
+    internal let id: UUID
+    internal let permissionRevision: Int64
+    internal let portraitPct: Int16
+    internal let profileRevision: Int64
+    internal let updatedAt: String
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case id = "id"
+      case permissionRevision = "permission_revision"
+      case portraitPct = "portrait_pct"
+      case profileRevision = "profile_revision"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct ProfilesInsert: Codable, Hashable, Sendable {
+    internal let createdAt: String?
+    internal let id: UUID
+    internal let permissionRevision: Int64?
+    internal let portraitPct: Int16?
+    internal let profileRevision: Int64?
+    internal let updatedAt: String?
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case id = "id"
+      case permissionRevision = "permission_revision"
+      case portraitPct = "portrait_pct"
+      case profileRevision = "profile_revision"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct ProfilesUpdate: Codable, Hashable, Sendable {
+    internal let createdAt: String?
+    internal let id: UUID?
+    internal let permissionRevision: Int64?
+    internal let portraitPct: Int16?
+    internal let profileRevision: Int64?
+    internal let updatedAt: String?
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case id = "id"
+      case permissionRevision = "permission_revision"
+      case portraitPct = "portrait_pct"
+      case profileRevision = "profile_revision"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct PublicProfilesSelect: Codable, Hashable, Sendable {
+    internal let avatarUrl: String?
+    internal let bio: String
+    internal let hue: Int16
+    internal let id: UUID
+    internal let name: String
+    internal let publishedAt: String
+    internal let publishedFacts: AnyJSON
+    internal let quote: String
+    internal let tags: [String]
+    internal let updatedAt: String
+    internal enum CodingKeys: String, CodingKey {
+      case avatarUrl = "avatar_url"
+      case bio = "bio"
+      case hue = "hue"
+      case id = "id"
+      case name = "name"
+      case publishedAt = "published_at"
+      case publishedFacts = "published_facts"
+      case quote = "quote"
+      case tags = "tags"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct PublicProfilesInsert: Codable, Hashable, Sendable {
+    internal let avatarUrl: String?
+    internal let bio: String?
+    internal let hue: Int16?
+    internal let id: UUID
+    internal let name: String?
+    internal let publishedAt: String?
+    internal let publishedFacts: AnyJSON?
+    internal let quote: String?
+    internal let tags: [String]?
+    internal let updatedAt: String?
+    internal enum CodingKeys: String, CodingKey {
+      case avatarUrl = "avatar_url"
+      case bio = "bio"
+      case hue = "hue"
+      case id = "id"
+      case name = "name"
+      case publishedAt = "published_at"
+      case publishedFacts = "published_facts"
+      case quote = "quote"
+      case tags = "tags"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct PublicProfilesUpdate: Codable, Hashable, Sendable {
+    internal let avatarUrl: String?
+    internal let bio: String?
+    internal let hue: Int16?
+    internal let id: UUID?
+    internal let name: String?
+    internal let publishedAt: String?
+    internal let publishedFacts: AnyJSON?
+    internal let quote: String?
+    internal let tags: [String]?
+    internal let updatedAt: String?
+    internal enum CodingKeys: String, CodingKey {
+      case avatarUrl = "avatar_url"
+      case bio = "bio"
+      case hue = "hue"
+      case id = "id"
+      case name = "name"
+      case publishedAt = "published_at"
+      case publishedFacts = "published_facts"
+      case quote = "quote"
+      case tags = "tags"
+      case updatedAt = "updated_at"
     }
   }
   internal struct SimulationsSelect: Codable, Hashable, Sendable {

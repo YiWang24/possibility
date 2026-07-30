@@ -6,11 +6,9 @@ import Foundation
 struct UserProfile: Codable, Identifiable, Sendable {
     let id: UUID
     var portraitPct: Int
-    /// 我擅长 / 我喜欢 / …（维度名 → 内容）
-    var dims: [String: String]
 
     enum CodingKeys: String, CodingKey {
-        case id, dims
+        case id
         case portraitPct = "portrait_pct"
     }
 }
@@ -473,39 +471,32 @@ struct RemoteCardGame: Decodable, Sendable {
     }
 }
 
-/// GET /get-profile dimensions 条目（profile_dimensions 行）
-struct RemoteProfileDimension: Decodable, Sendable {
-    /// skill | like | love | family | social | personality
-    let dimension: String
-    let tags: [String]
-    /// manual | card_game | ...
-    let source: String?
-    let updatedAt: String?
-
-    enum CodingKeys: String, CodingKey {
-        case dimension, tags, source
-        case updatedAt = "updated_at"
-    }
-}
-
 /// 私密画像的原子事实；来源和确认状态用于区分“本人确认”与“AI 推断”。
 struct ProfileFact: Codable, Identifiable, Sendable {
     let id: UUID
     let dimension: String
+    let factKind: String?
     let value: String
     let source: String
     let sourceRef: String?
     let confidence: Double
     let userConfirmed: Bool
     let status: String?
+    let sensitivity: String?
+    let supportCount: Int?
     let observedAt: String?
+    let lastSupportedAt: String?
     let updatedAt: String?
 
     enum CodingKeys: String, CodingKey {
         case id, dimension, value, source, confidence, status
+        case sensitivity
+        case factKind = "fact_kind"
         case sourceRef = "source_ref"
         case userConfirmed = "user_confirmed"
+        case supportCount = "support_count"
         case observedAt = "observed_at"
+        case lastSupportedAt = "last_supported_at"
         case updatedAt = "updated_at"
     }
 }
@@ -518,6 +509,7 @@ struct ProfileAccessReceipt: Decodable, Identifiable, Sendable {
     let dimensionCount: Int
     let factCount: Int
     let profileRevision: Int
+    let permissionRevision: Int
     let createdAt: String
 
     enum CodingKeys: String, CodingKey {
@@ -525,21 +517,43 @@ struct ProfileAccessReceipt: Decodable, Identifiable, Sendable {
         case dimensionCount = "dimension_count"
         case factCount = "fact_count"
         case profileRevision = "profile_revision"
+        case permissionRevision = "permission_revision"
         case createdAt = "created_at"
+    }
+}
+
+struct ProfileProposal: Decodable, Identifiable, Sendable {
+    let id: UUID
+    let dimension: String
+    let value: String
+    let sourceType: String
+    let confidence: Double
+    let sensitivity: String
+    let createdAt: String
+    let expiresAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, dimension, value, confidence, sensitivity
+        case sourceType = "source_type"
+        case createdAt = "created_at"
+        case expiresAt = "expires_at"
     }
 }
 
 struct ProfilePrivacySnapshot: Decodable, Sendable {
     let profileRevision: Int
+    let permissionRevision: Int
     let portraitPct: Int
     let facts: [ProfileFact]
+    let proposals: [ProfileProposal]
     let permissions: [String: [String: Bool]]
     let permissionUpdatedAt: String?
     let accessReceipts: [ProfileAccessReceipt]
 
     enum CodingKeys: String, CodingKey {
-        case facts, permissions
+        case facts, proposals, permissions
         case profileRevision = "profile_revision"
+        case permissionRevision = "permission_revision"
         case portraitPct = "portrait_pct"
         case permissionUpdatedAt = "permission_updated_at"
         case accessReceipts = "access_receipts"

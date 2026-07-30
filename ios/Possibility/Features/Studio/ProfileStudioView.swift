@@ -67,6 +67,16 @@ struct ProfileStudioView: View {
                 onSave: { keywords in
                     home.saveDimension(key, keywords: keywords, using: supabase)
                 },
+                onSaveAssessment: { kind, tags, answers, scores in
+                    home.saveDimension(
+                        key,
+                        keywords: tags,
+                        using: supabase,
+                        assessmentKind: kind,
+                        assessmentAnswers: answers,
+                        assessmentScores: scores
+                    )
+                },
                 onLaunchCardGame: { game in
                     activeDimension = nil
                     if let kind = CardGameKind(rawValue: game) {
@@ -313,13 +323,31 @@ struct ProfileStudioView: View {
     // MARK: 动作
 
     /// 测评结果写入画像（原型 saveHollandToProfile / saveDemoAssessmentToProfile）
-    private func saveAssessment(_ kind: AssessmentKind, tags: [String]) {
+    private func saveAssessment(
+        _ kind: AssessmentKind,
+        tags: [String],
+        answers: [Int],
+        scores: [String: Int]
+    ) {
         if kind == .bigfive {
             var text = "大五：" + tags.prefix(3).joined(separator: " · ")
             if let mbti { text += " · MBTI：\(mbti)" }
-            home.savePersonality(text, using: supabase)
+            home.savePersonality(
+                text,
+                using: supabase,
+                assessmentKind: kind,
+                assessmentAnswers: answers,
+                assessmentScores: scores
+            )
         } else if let key = kind.targetDimension {
-            home.saveDimension(key, keywords: tags, using: supabase)
+            home.saveDimension(
+                key,
+                keywords: tags,
+                using: supabase,
+                assessmentKind: kind,
+                assessmentAnswers: answers,
+                assessmentScores: scores
+            )
         }
         tick += 1
         toast.show("结果已写入画像 · 原始答案默认私密")

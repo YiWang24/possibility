@@ -26,13 +26,27 @@ type AccessReceipt = {
   dimension_count: number;
   fact_count: number;
   profile_revision: number;
+  permission_revision: number;
   created_at: string;
+};
+
+type ProfileProposal = {
+  id: string;
+  dimension: string;
+  value: string;
+  source_type: string;
+  confidence: number;
+  sensitivity: string;
+  created_at: string;
+  expires_at: string;
 };
 
 type PrivacySnapshot = {
   profile_revision: number;
+  permission_revision: number;
   portrait_pct: number;
   facts: ProfileFact[];
+  proposals: ProfileProposal[];
   permissions: Record<string, Record<string, boolean>>;
   permission_updated_at?: string | null;
   access_receipts: AccessReceipt[];
@@ -62,6 +76,7 @@ const PURPOSE_LABELS: Record<string, string> = {
   chat: "探索对话",
   match: "相似经历匹配",
   lab: "人生实验室",
+  community: "社区与万花筒",
 };
 
 const DIMENSION_KEYS = Object.keys(DIMENSION_LABELS);
@@ -129,6 +144,29 @@ export function ProfilePrivacyView({
     }
   };
 
+  const reviewProposal = async (
+    proposal: ProfileProposal,
+    accept: boolean,
+  ) => {
+    if (!snapshot) return;
+    setBusy(`proposal:${proposal.id}`);
+    setError(null);
+    try {
+      await callFunction("profile-privacy", {
+        action: "review_proposal",
+        proposal_id: proposal.id,
+        accept,
+        profile_revision: snapshot.profile_revision,
+      });
+      await load();
+      await refreshProfileCaches();
+    } catch {
+      setError("处理失败，画像可能已在其他设备更新，请刷新后重试。");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const runConfirmedAction = async () => {
     if (!confirm || !snapshot) return;
     const current = confirm;
@@ -149,10 +187,21 @@ export function ProfilePrivacyView({
           return { filledDims: next };
         });
       } else if (current.kind === "revoke") {
-        await callFunction("profile-privacy", { action: "revoke_all" });
-        useMyProfile.getState().setAIPermissions({});
+        const result = await callFunction<{ permission_revision: number }>(
+          "profile-privacy",
+          {
+          action: "revoke_all",
+          permission_revision: snapshot.permission_revision,
+          },
+        );
+        useMyProfile.getState().setAIPermissions(
+          {},
+          result.permission_revision,
+        );
       } else {
-        await callFunction("profile-privacy", {
+        const result = await callFunction<{
+          profile?: { permission_revision?: number };
+        }>("profile-privacy", {
           action: "clear_private",
           profile_revision: snapshot.profile_revision,
         });
@@ -160,7 +209,10 @@ export function ProfilePrivacyView({
           window.localStorage.removeItem(`kaleido_dim_${key}`);
         }
         useHome.setState({ filledDims: {}, remotePersona: null });
-        useMyProfile.getState().setAIPermissions({});
+        useMyProfile.getState().setAIPermissions(
+          {},
+          result.profile?.permission_revision,
+        );
       }
       await refreshProfileCaches();
       await load();
@@ -300,6 +352,50 @@ export function ProfilePrivacyView({
                               </div>
                             </div>
                           ))}
+                        </div>
+                      ))
+                    )}
+                  </section>
+
+                  <section className="flex flex-col gap-3">
+                    <div className="flex flex-col">
+                      <span className="text-[14px] font-bold text-ink">待你确认的理解</span>
+                      <span className="text-[10.5px] text-faint">
+                        Chat 和日记只能提出候选，不会直接覆盖正式画像
+                      </span>
+                    </div>
+                    {(snapshot?.proposals ?? []).length === 0 ? (
+                      <div className="kaleido-card py-7 text-center text-[12px] text-faint">
+                        暂无待确认内容
+                      </div>
+                    ) : (
+                      (snapshot?.proposals ?? []).map((proposal) => (
+                        <div key={proposal.id} className="kaleido-card flex flex-col gap-3 p-4">
+                          <div>
+                            <div className="text-[12px] font-medium text-ink">{proposal.value}</div>
+                            <div className="mt-1 text-[9.5px] text-faint">
+                              {DIMENSION_LABELS[proposal.dimension] ?? proposal.dimension}
+                              {" · "}
+                              {SOURCE_LABELS[proposal.source_type] ?? proposal.source_type}
+                              {" · "}置信度 {Math.round(Number(proposal.confidence) * 100)}%
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              disabled={busy === `proposal:${proposal.id}`}
+                              onClick={() => void reviewProposal(proposal, false)}
+                              className="flex-1 rounded-chip border border-line py-2 text-[11px] text-sub disabled:opacity-50"
+                            >
+                              不是这样
+                            </button>
+                            <button
+                              disabled={busy === `proposal:${proposal.id}`}
+                              onClick={() => void reviewProposal(proposal, true)}
+                              className="flex-1 rounded-chip bg-brand py-2 text-[11px] font-semibold text-white disabled:opacity-50"
+                            >
+                              确认加入
+                            </button>
+                          </div>
                         </div>
                       ))
                     )}

@@ -507,6 +507,7 @@ private struct ProfilePrivacyView: View {
     private static let purposeLabels = [
         "persona": "动态 AI 形象", "chat": "探索对话",
         "match": "相似经历匹配", "lab": "人生实验室",
+        "community": "社区与万花筒",
     ]
 
     private enum PendingAction: Identifiable {
@@ -550,6 +551,7 @@ private struct ProfilePrivacyView: View {
                                 )
                         }
                         factsSection
+                        proposalsSection
                         receiptsSection
                         dataSection
                     }
@@ -750,6 +752,57 @@ private struct ProfilePrivacyView: View {
         }
     }
 
+    private var proposalsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("待你确认的理解")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                Text("Chat 和日记只能提出候选，不会直接覆盖正式画像")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.faint)
+            }
+            if snapshot?.proposals.isEmpty != false {
+                Text("暂无待确认内容")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.faint)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .kaleidoCard()
+            } else {
+                ForEach(snapshot?.proposals ?? []) { proposal in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(proposal.value)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Theme.ink)
+                        Text("\(Self.dimensionLabels[proposal.dimension] ?? proposal.dimension) · \(Self.sourceLabels[proposal.sourceType] ?? proposal.sourceType) · 置信度 \(Int((proposal.confidence * 100).rounded()))%")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(Theme.faint)
+                        HStack(spacing: 8) {
+                            Button("不是这样") {
+                                Task { await review(proposal, accept: false) }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Theme.raised, in: Capsule())
+                            Button("确认加入") {
+                                Task { await review(proposal, accept: true) }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .foregroundStyle(.white)
+                            .background(Theme.buttonGradient, in: Capsule())
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .disabled(busy != nil)
+                    }
+                    .padding(14)
+                    .kaleidoCard()
+                }
+            }
+        }
+    }
+
     private var dataSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
@@ -867,6 +920,24 @@ private struct ProfilePrivacyView: View {
     }
 
     @MainActor
+    private func review(_ proposal: ProfileProposal, accept: Bool) async {
+        guard let revision = snapshot?.profileRevision else { return }
+        busy = "proposal:" + proposal.id.uuidString
+        errorText = nil
+        do {
+            try await supabase.reviewProfileProposal(
+                proposal.id,
+                accept: accept,
+                expectedRevision: revision
+            )
+            await load()
+        } catch {
+            errorText = "处理失败，画像可能已在其他设备更新，请刷新后重试。"
+        }
+        busy = nil
+    }
+
+    @MainActor
     private func run(_ action: PendingAction) async {
         guard let revision = snapshot?.profileRevision else { return }
         busy = action.id
@@ -877,11 +948,20 @@ private struct ProfilePrivacyView: View {
                 try await supabase.deleteProfileDimension(dimension, expectedRevision: revision)
                 store.clearDimensionCache(dimension)
             case .revoke:
-                try await supabase.revokeAllProfileAIPermissions()
-                store.applyRevokedAIPermissionsLocally()
+                let permissionRevision = try await supabase
+                    .revokeAllProfileAIPermissions(
+                        expectedRevision: snapshot?.permissionRevision ?? 0
+                    )
+                store.applyRevokedAIPermissionsLocally(
+                    revision: permissionRevision
+                )
             case .clear:
-                try await supabase.clearPrivateProfile(expectedRevision: revision)
-                store.clearPrivateProfileCache()
+                let permissionRevision = try await supabase.clearPrivateProfile(
+                    expectedRevision: revision
+                )
+                store.clearPrivateProfileCache(
+                    permissionRevision: permissionRevision
+                )
             }
             await load()
             toast.show("设置已更新")

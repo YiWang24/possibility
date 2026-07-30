@@ -8,7 +8,13 @@ export const AI_DIMENSIONS = [
   "life",
 ] as const;
 
-export const AI_PURPOSES = ["persona", "chat", "match", "lab"] as const;
+export const AI_PURPOSES = [
+  "persona",
+  "chat",
+  "match",
+  "lab",
+  "community",
+] as const;
 
 export type AIDimension = typeof AI_DIMENSIONS[number];
 export type AIPurpose = typeof AI_PURPOSES[number];
@@ -29,7 +35,9 @@ export type AuthorizedProfileContext = {
   dimensions: AIDimension[];
   text: string;
   profileRevision: number;
+  permissionRevision: number;
   factIds: string[];
+  facts: ProfileFactForContext[];
 };
 
 export type ProfileFactForContext = {
@@ -39,40 +47,9 @@ export type ProfileFactForContext = {
   source: string;
   confidence: number;
   user_confirmed: boolean;
+  sensitivity?: "low" | "medium" | "high";
+  support_count?: number;
 };
-
-/**
- * 从私有画像中只挑出当前用途明确授权的维度。
- * 维度、用途或授权行缺失时一律拒绝；未知键永远不会进入模型上下文。
- */
-export function authorizedProfileContext(
-  dims: Record<string, unknown>,
-  permissions: AIPermissions,
-  purpose: AIPurpose,
-): AuthorizedProfileContext {
-  const entries = AI_DIMENSIONS.flatMap((dimension) => {
-    const value = dims[dimension];
-    if (
-      permissions[dimension]?.[purpose] !== true ||
-      typeof value !== "string" ||
-      value.trim().length === 0
-    ) {
-      return [];
-    }
-    return [{
-      dimension,
-      text: `${DIMENSION_LABELS[dimension]}（${dimension}）：${value.trim()}`,
-    }];
-  });
-
-  return {
-    purpose,
-    dimensions: entries.map(({ dimension }) => dimension),
-    text: entries.map(({ text }) => text).join("\n"),
-    profileRevision: 0,
-    factIds: [],
-  };
-}
 
 /**
  * 事实表是 AI 上下文的权威来源。用户确认状态与来源会进入提示词，
@@ -83,19 +60,37 @@ export function authorizedFactsContext(
   permissions: AIPermissions,
   purpose: AIPurpose,
   profileRevision: number,
+  permissionRevision = 0,
 ): AuthorizedProfileContext {
-  const allowed = facts.filter((fact) =>
-    AI_DIMENSIONS.includes(fact.dimension as AIDimension) &&
-    permissions[fact.dimension]?.[purpose] === true &&
-    fact.value.trim().length > 0
-  );
+  const allowed = facts
+    .filter((fact) => {
+      if (
+        !AI_DIMENSIONS.includes(fact.dimension as AIDimension) ||
+        permissions[fact.dimension]?.[purpose] !== true ||
+        fact.value.trim().length === 0
+      ) {
+        return false;
+      }
+      if (fact.user_confirmed) return true;
+      if (purpose === "match" || purpose === "community") return false;
+      if (purpose === "lab") {
+        return Number(fact.support_count ?? 1) >= 2 &&
+          Number(fact.confidence) >= 0.8;
+      }
+      return Number(fact.confidence) >= 0.7;
+    })
+    .sort((a, b) =>
+      Number(b.user_confirmed) - Number(a.user_confirmed) ||
+      Number(b.confidence) - Number(a.confidence) ||
+      Number(b.support_count ?? 1) - Number(a.support_count ?? 1)
+    )
+    .slice(0, 12);
   const dimensions = AI_DIMENSIONS.filter((dimension) =>
     allowed.some((fact) => fact.dimension === dimension)
   );
   const lines = dimensions.map((dimension) => {
     const values = allowed
       .filter((fact) => fact.dimension === dimension)
-      .slice(0, 20)
       .map((fact) => {
         const reliability = fact.user_confirmed
           ? "用户已确认"
@@ -114,6 +109,8 @@ export function authorizedFactsContext(
     dimensions,
     text: lines.join("\n"),
     profileRevision,
+    permissionRevision,
     factIds: allowed.map(({ id }) => id),
+    facts: allowed,
   };
 }

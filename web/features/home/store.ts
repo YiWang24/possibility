@@ -230,12 +230,16 @@ export const useHome = create<HomeState>()((set, get) => ({
     }
     set({ filledDims: local });
 
-    // 2. 云端画像合并（远端非空、本地为空的键补进来）
+    // 2. 从权威原子事实聚合云端画像（不再读取兼容 dims 投影）
     const remote = await useData.getState().loadProfile();
-    if (remote?.dims) {
+    if (remote?.facts) {
       const merged = { ...get().filledDims };
       for (const key of DIM_ORDER) {
-        const value = remote.dims[key];
+        const value = remote.facts
+          .filter((fact) => fact.dimension === key)
+          .map((fact) => fact.value.trim())
+          .filter(Boolean)
+          .join(" · ");
         if (value && value.length > 0 && !merged[key]) {
           merged[key] = value;
           lsSet(STORE_PREFIX + key, value);

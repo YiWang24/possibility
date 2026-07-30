@@ -22,18 +22,21 @@ export async function loadAuthorizedProfileContext(
 ): Promise<AuthorizedProfileContext> {
   const [profileResult, factResult, permissionResult] = await Promise.all([
     db.from("profiles")
-      .select("profile_revision")
+      .select("profile_revision,permission_revision")
       .eq("id", userId)
       .maybeSingle(),
     db.from("profile_facts")
-      .select("id,dimension,value,source,confidence,user_confirmed")
+      .select(
+        "id,dimension,value,source,confidence,user_confirmed,sensitivity,support_count",
+      )
       .eq("user_id", userId)
       .eq("status", "active")
-      .order("updated_at", { ascending: false }),
+      .order("user_confirmed", { ascending: false })
+      .order("confidence", { ascending: false })
+      .order("last_supported_at", { ascending: false }),
     db.from("profile_ai_permissions")
-      .select("permissions")
-      .eq("user_id", userId)
-      .maybeSingle(),
+      .select("dimension,purpose,allowed")
+      .eq("user_id", userId),
   ]);
 
   if (profileResult.error || factResult.error || permissionResult.error) {
@@ -50,15 +53,22 @@ export async function loadAuthorizedProfileContext(
       dimensions: [],
       text: "",
       profileRevision: 0,
+      permissionRevision: 0,
       factIds: [],
+      facts: [],
     };
   }
 
+  const permissions: AIPermissions = {};
+  for (const row of permissionResult.data ?? []) {
+    (permissions[row.dimension] ??= {})[row.purpose] = row.allowed;
+  }
   const context = authorizedFactsContext(
     (factResult.data ?? []) as ProfileFactForContext[],
-    (permissionResult.data?.permissions ?? {}) as AIPermissions,
+    permissions,
     purpose,
     Number(profileResult.data?.profile_revision ?? 0),
+    Number(profileResult.data?.permission_revision ?? 0),
   );
   if (context.dimensions.length > 0) {
     trackEvent(userId, ServerEvent.PROFILE_AI_CONTEXT_USED, {
@@ -67,6 +77,7 @@ export async function loadAuthorizedProfileContext(
       dimension_count: context.dimensions.length,
       fact_count: context.factIds.length,
       profile_revision: context.profileRevision,
+      permission_revision: context.permissionRevision,
     });
   }
   return context;

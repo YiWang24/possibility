@@ -36,14 +36,54 @@ Deno.serve(async (req) => {
     switch (action) {
       case "save_dimension": {
         const input = validateSaveDimensionInput(body);
-        const confirmed = input.source === "manual" ||
-          input.source === "assessment";
+        if (input.source === "assessment") {
+          const raw = body as Record<string, unknown>;
+          const assessmentKind = typeof raw.assessment_kind === "string"
+            ? raw.assessment_kind.trim()
+            : input.dimension;
+          const answers = raw.assessment_answers ?? [];
+          const scores = raw.assessment_scores ?? {};
+          if (
+            assessmentKind.length < 1 ||
+            assessmentKind.length > 50 ||
+            !Array.isArray(answers) ||
+            answers.length > 200 ||
+            typeof scores !== "object" ||
+            scores === null ||
+            Array.isArray(scores) ||
+            JSON.stringify(scores).length > 20_000
+          ) {
+            throw new HttpError(400, "INVALID_INPUT", "测评结果格式无效。");
+          }
+          const { data, error } = await db.rpc(
+            "save_assessment_and_profile",
+            {
+              p_dimension: input.dimension,
+              p_values: input.tags,
+              p_assessment_kind: assessmentKind,
+              p_answers: answers,
+              p_scores: scores,
+              p_schema_version: 1,
+              p_expected_revision: null,
+            },
+          );
+          if (error) {
+            console.error("save assessment failed:", error.message);
+            throw new HttpError(500, "DATABASE_ERROR", "保存测评结果失败。");
+          }
+          return jsonResponse({
+            ok: true,
+            dimension: input.dimension,
+            profile_revision: Number(data?.[0]?.profile_revision ?? 0),
+            assessment_run_id: data?.[0]?.assessment_run_id ?? null,
+          });
+        }
         const snapshot = await replaceProfileDimension(db, {
           dimension: input.dimension,
           values: input.tags,
           source: input.source,
-          confidence: confirmed ? 1 : 0.7,
-          userConfirmed: confirmed,
+          confidence: 1,
+          userConfirmed: true,
           portraitDelta: 2,
         });
         return jsonResponse({
@@ -55,36 +95,27 @@ Deno.serve(async (req) => {
 
       case "save_card_game": {
         const input = validateSaveCardGameInput(body);
-        const { error } = await db.from("card_game_results")
-          .upsert({
-            user_id: user.id,
-            kind: input.kind,
-            final_cards: input.final_cards,
-            rounds: input.rounds,
-            accepted: input.accepted,
-            traded: input.traded,
-          }, { onConflict: "user_id,kind" });
+        const { data: snapshot, error } = await db.rpc(
+          "save_card_game_and_profile",
+          {
+            p_kind: input.kind,
+            p_final_cards: input.final_cards,
+            p_rounds: input.rounds,
+            p_accepted: input.accepted,
+            p_traded: input.traded,
+            p_expected_revision: null,
+          },
+        );
         if (error) {
           console.error("save card game failed:", error.message);
           throw new HttpError(500, "DATABASE_ERROR", "保存卡牌结果失败。");
         }
-        // 卡牌结果与画像事实分开保存；画像 RPC 同步快照、事实来源与 revision。
         const tags = input.final_cards.map((c) => c.name);
-        const dimKey = input.kind === "marriage" ? "love" : input.kind;
-        const snapshot = await replaceProfileDimension(db, {
-          dimension: dimKey,
-          values: tags,
-          source: "card_game",
-          sourceRef: input.kind,
-          confidence: 1,
-          userConfirmed: true,
-          portraitDelta: 3,
-        });
         return jsonResponse({
           ok: true,
           kind: input.kind,
           tags,
-          profile_revision: snapshot.profile_revision,
+          profile_revision: Number(snapshot?.[0]?.profile_revision ?? 0),
         });
       }
 
@@ -153,8 +184,10 @@ Deno.serve(async (req) => {
         if (isV2 && typeof data.story_full === "string") {
           profileData.story_full = data.story_full.trim().slice(0, 12_000);
         }
-        const { error } = await db.from("public_profiles")
-          .upsert(profileData, { onConflict: "id" });
+        delete profileData.id;
+        const { error } = await db.rpc("save_public_profile", {
+          p_profile: profileData,
+        });
         if (error) {
           console.error("save public profile failed:", error.message);
           throw new HttpError(500, "DATABASE_ERROR", "保存公开资料失败。");
@@ -164,16 +197,43 @@ Deno.serve(async (req) => {
 
       case "save_ai_permissions": {
         const permissions = validateAIPermissionsInput(body);
-        const { error } = await db.from("profile_ai_permissions")
-          .upsert({
-            user_id: user.id,
-            permissions,
-          }, { onConflict: "user_id" });
+        const expectedRevision = (body as Record<string, unknown>)
+          .permission_revision;
+        if (
+          expectedRevision !== undefined &&
+          (!Number.isSafeInteger(expectedRevision) ||
+            Number(expectedRevision) < 0)
+        ) {
+          throw new HttpError(
+            400,
+            "INVALID_INPUT",
+            "permission_revision 无效。",
+          );
+        }
+        const { data: permissionRevision, error } = await db.rpc(
+          "replace_profile_ai_permissions",
+          {
+            p_permissions: permissions,
+            p_expected_revision: expectedRevision === undefined
+              ? null
+              : Number(expectedRevision),
+          },
+        );
         if (error) {
+          if (error.code === "40001") {
+            throw new HttpError(
+              409,
+              "PERMISSION_REVISION_CONFLICT",
+              "AI 授权已在其他设备更新，请刷新后重试。",
+            );
+          }
           console.error("save AI permissions failed:", error.message);
           throw new HttpError(500, "DATABASE_ERROR", "保存 AI 授权失败。");
         }
-        return jsonResponse({ ok: true });
+        return jsonResponse({
+          ok: true,
+          permission_revision: Number(permissionRevision ?? 0),
+        });
       }
 
       default:

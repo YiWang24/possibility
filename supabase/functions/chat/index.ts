@@ -303,6 +303,7 @@ Deno.serve(async (req) => {
                   purpose: aiContext.purpose,
                   dimensions: aiContext.dimensions,
                   profile_revision: aiContext.profileRevision,
+                  permission_revision: aiContext.permissionRevision,
                 },
                 high_risk: signal.high_risk,
                 signal_degraded: signalResult.degraded,

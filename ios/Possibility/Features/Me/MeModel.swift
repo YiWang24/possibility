@@ -8,6 +8,7 @@ import Observation
 final class MyProfileStore {
     var profile: MyProfile
     var aiPermissions: ProfileAIPermissions
+    private var permissionRevision = 0
     /// 画像本地缓存被云端补齐时，驱动依赖 UserDefaults 的 computed properties 刷新。
     private var personaRevision = 0
     /// 当前主页 tab：persona / story / advice / service
@@ -67,13 +68,14 @@ final class MyProfileStore {
     }
 
     /// 隐私中心完成“清空私密画像”后同步清理设备缓存；公开主页资料不受影响。
-    func clearPrivateProfileCache() {
+    func clearPrivateProfileCache(permissionRevision: Int) {
         remotePermissionsSaveTask?.cancel()
         for key in ["personality", "skill", "like", "love", "family", "social", "life"] {
             store.removeObject(forKey: "kaleido_dim_" + key)
         }
         store.removeObject(forKey: HomeModel.lifeSignatureKey)
         aiPermissions = .empty
+        self.permissionRevision = permissionRevision
         persistAIPermissionsLocally(.empty)
         store.set(false, forKey: Self.pendingAIPermissionsSyncKey)
         personaRevision += 1
@@ -88,9 +90,10 @@ final class MyProfileStore {
         personaRevision += 1
     }
 
-    func applyRevokedAIPermissionsLocally() {
+    func applyRevokedAIPermissionsLocally(revision: Int) {
         remotePermissionsSaveTask?.cancel()
         aiPermissions = .empty
+        permissionRevision = revision
         persistAIPermissionsLocally(.empty)
         store.set(false, forKey: Self.pendingAIPermissionsSyncKey)
     }
@@ -123,7 +126,10 @@ final class MyProfileStore {
         }
         if store.bool(forKey: Self.pendingAIPermissionsSyncKey) {
             do {
-                try await service.saveAIPermissionsRemote(aiPermissions)
+                permissionRevision = try await service.saveAIPermissionsRemote(
+                    aiPermissions,
+                    expectedRevision: permissionRevision
+                )
                 store.set(false, forKey: Self.pendingAIPermissionsSyncKey)
             } catch {
                 return
@@ -149,6 +155,7 @@ final class MyProfileStore {
             }
         }
         if let remotePermissions = remote.aiPermissions {
+            permissionRevision = remotePermissions.permissionRevision ?? 0
             let updated = ProfileAIPermissions(permissions: remotePermissions.permissions)
             if updated != aiPermissions {
                 aiPermissions = updated
@@ -157,7 +164,10 @@ final class MyProfileStore {
         } else if !aiPermissions.permissions.isEmpty {
             // 本地已有授权而远端尚无行时补建；空授权无需创建记录。
             do {
-                try await service.saveAIPermissionsRemote(aiPermissions)
+                permissionRevision = try await service.saveAIPermissionsRemote(
+                    aiPermissions,
+                    expectedRevision: permissionRevision
+                )
                 store.set(false, forKey: Self.pendingAIPermissionsSyncKey)
             } catch {
                 store.set(true, forKey: Self.pendingAIPermissionsSyncKey)
@@ -189,7 +199,10 @@ final class MyProfileStore {
             try? await Task.sleep(for: .seconds(1.5))
             guard !Task.isCancelled, let service else { return }
             do {
-                try await service.saveAIPermissionsRemote(updated)
+                permissionRevision = try await service.saveAIPermissionsRemote(
+                    updated,
+                    expectedRevision: permissionRevision
+                )
                 UserDefaults.standard.set(false, forKey: Self.pendingAIPermissionsSyncKey)
             } catch {
                 // 保留 pending 标记，下次进入主页自动补传。
@@ -201,9 +214,12 @@ final class MyProfileStore {
     private func hydratePersonaCache(from remote: SupabaseService.RemoteProfile) {
         var changed = false
         let knownKeys = ["personality", "skill", "like", "love", "family", "social"]
+        let grouped = Dictionary(grouping: remote.facts, by: \.dimension)
         for key in knownKeys {
             guard store.string(forKey: "kaleido_dim_" + key) == nil,
-                  let value = remote.dims[key],
+                  let facts = grouped[key] else { continue }
+            let value = facts.map(\.value).filter { !$0.isEmpty }.joined(separator: " · ")
+            guard
                   !value.isEmpty else { continue }
             store.set(value, forKey: "kaleido_dim_" + key)
             changed = true

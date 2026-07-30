@@ -15,6 +15,7 @@ import {
   validateKaleidoscopeInput,
   validateListInput,
 } from "../_shared/validate.ts";
+import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
 
 const kaleidoscopePrompt =
   `你是"万花筒"社区匹配器。根据用户画像和请求模式（similar/different），从候选旅人中选出最适合展示给用户的 1 位。
@@ -59,12 +60,11 @@ Deno.serve(async (req) => {
       case "kaleidoscope_draw": {
         const input = validateKaleidoscopeInput(body);
 
-        // Get user profile for matching context
-        const { data: profile } = await db
-          .from("profiles")
-          .select("dims")
-          .eq("id", user.id)
-          .maybeSingle();
+        const aiContext = await loadAuthorizedProfileContext(
+          db,
+          user.id,
+          "community",
+        );
 
         // Get recent draws to avoid repeats
         const { data: recentDraws } = await db
@@ -103,8 +103,8 @@ Deno.serve(async (req) => {
             model: runtimeConfig.structuredModel,
             maxTokens: 256,
             system: kaleidoscopePrompt,
-            prompt: `用户画像：${
-              JSON.stringify(profile?.dims ?? {})
+            prompt: `用户授权用于社区匹配的长期画像：${
+              aiContext.text || "（无）"
             }\n模式：${input.mode}\n候选旅人：${
               JSON.stringify(
                 candidates.map((t) => ({
@@ -169,6 +169,12 @@ Deno.serve(async (req) => {
           reason,
           match_score: matchScore,
           mode: input.mode,
+          ai_context: {
+            purpose: aiContext.purpose,
+            dimensions: aiContext.dimensions,
+            profile_revision: aiContext.profileRevision,
+            permission_revision: aiContext.permissionRevision,
+          },
         });
       }
 
