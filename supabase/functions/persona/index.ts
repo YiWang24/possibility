@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
           }`
           : `已授权画像内容：${context || "（暂无）"}`,
         schema: personaSchema,
+        trace: { name: "persona", userId: user.id },
       });
     } catch (llmError) {
       console.error("persona generation fell back to local:", llmError);

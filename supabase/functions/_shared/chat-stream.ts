@@ -1,6 +1,8 @@
 import { streamText } from "ai";
+import { propagateAttributes } from "@langfuse/tracing";
 import { deepseekProvider } from "./deepseek.ts";
 import { streamWithRetry } from "./stream-retry.ts";
+import { type LlmTrace, telemetryEnabled } from "./telemetry.ts";
 
 // 用 Vercel AI SDK 承接“认识自己”探索对话的流式回复，后端为 DeepSeek v4。
 //
@@ -21,6 +23,7 @@ export interface StreamChatReplyOptions {
   cancelSignal?: AbortSignal;
   maxAttempts?: number;
   attemptTimeoutMs?: number;
+  trace?: LlmTrace;
 }
 
 /**
@@ -30,24 +33,34 @@ export interface StreamChatReplyOptions {
 export function streamChatReply(
   options: StreamChatReplyOptions,
 ): Promise<string> {
-  return streamWithRetry({
-    maxAttempts: options.maxAttempts ?? 3,
-    attemptTimeoutMs: options.attemptTimeoutMs ?? 45_000,
-    cancelSignal: options.cancelSignal,
-    onDelta: options.onDelta,
-    runAttempt: async (emit, signal) => {
-      const result = streamText({
-        model: deepseekProvider()(options.model),
-        system: options.system,
-        messages: options.messages,
-        maxOutputTokens: options.maxOutputTokens,
-        abortSignal: signal,
-        onError: ({ error }) => console.error("streamText error:", error),
-      });
-      for await (const delta of result.textStream) {
-        if (signal.aborted) break;
-        emit(delta);
-      }
-    },
-  });
+  const run = () =>
+    streamWithRetry({
+      maxAttempts: options.maxAttempts ?? 3,
+      attemptTimeoutMs: options.attemptTimeoutMs ?? 45_000,
+      cancelSignal: options.cancelSignal,
+      onDelta: options.onDelta,
+      runAttempt: async (emit, signal) => {
+        const result = streamText({
+          model: deepseekProvider()(options.model),
+          system: options.system,
+          messages: options.messages,
+          maxOutputTokens: options.maxOutputTokens,
+          abortSignal: signal,
+          onError: ({ error }) => console.error("streamText error:", error),
+          telemetry: options.trace
+            ? { functionId: options.trace.callName ?? options.trace.name }
+            : undefined,
+        });
+        for await (const delta of result.textStream) {
+          if (signal.aborted) break;
+          emit(delta);
+        }
+      },
+    });
+  if (!telemetryEnabled || !options.trace) return run();
+  const { name, userId, sessionId, metadata } = options.trace;
+  return propagateAttributes(
+    { traceName: name, userId, sessionId, metadata },
+    run,
+  );
 }

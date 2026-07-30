@@ -81,6 +81,11 @@ Deno.serve(async (req) => {
       system: simulationPrompt,
       prompt,
       schema: simulationSchema,
+      trace: {
+        name: "simulate",
+        userId: user.id,
+        metadata: { time_horizon: input.time_horizon },
+      },
     });
 
     // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
@@ -110,6 +115,7 @@ Deno.serve(async (req) => {
           system: travelerGenPrompt,
           prompt: genPrompt,
           schema: generatedTravelersSchema,
+          trace: { name: "simulate-traveler-gen", userId: user.id },
         })
           .then((generated) =>
             generated && generated.travelers.length > 0

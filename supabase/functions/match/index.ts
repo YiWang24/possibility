@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
         JSON.stringify(userState)
       }\n\n候选旅人（只能使用这些 ID）：\n${JSON.stringify(travelers)}`,
       schema: matchSchema,
+      trace: { name: "match", userId: user.id },
     });
 
     const validIds = new Set(travelers.map(({ id }) => id));

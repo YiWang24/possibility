@@ -1,6 +1,15 @@
+import {
+  propagateAttributes,
+  startActiveObservation,
+} from "@langfuse/tracing";
 import { structuredOutput } from "../_shared/llm.ts";
 import { streamChatReply } from "../_shared/chat-stream.ts";
 import { requireUser } from "../_shared/auth.ts";
+import {
+  flushTraces,
+  type LlmTrace,
+  telemetryEnabled,
+} from "../_shared/telemetry.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
 import {
@@ -94,114 +103,167 @@ Deno.serve(async (req) => {
       ...history,
       { role: "user", content: input.message },
     ];
-    const signalPromise = structuredOutput<ChatSignal>({
-      model: runtimeConfig.diaryModel,
-      maxTokens: 1_024,
-      system: chatSignalPrompt,
-      prompt: conversationText(messages),
-      schema: chatSignalSchema,
-    }).then((signal) => ({ signal, degraded: false })).catch((error) => {
-      console.error("chat signal extraction failed:", error);
-      return { signal: fallbackSignal, degraded: true };
-    });
 
-    // 客户端断开时，用它中止仍在挂起的上游流式请求。
-    const cancelController = new AbortController();
-    let cancelled = false;
-    const body = new ReadableStream<Uint8Array>({
-      async start(controller) {
-        try {
-          // 用 Vercel AI SDK 流式生成回复：短超时 + 空则重试，避开偶发挂起窗口。
-          const assistantText = await streamChatReply({
-            model: runtimeConfig.chatModel,
-            system: frontDoorPrompt(conversation.topic),
-            messages,
-            maxOutputTokens: 1_024,
-            cancelSignal: cancelController.signal,
-            onDelta: (text) => {
-              if (!cancelled) controller.enqueue(sseEvent({ t: text }));
-            },
-          });
-          if (!assistantText.trim()) {
-            throw new HttpError(
-              502,
-              "MODEL_OUTPUT_EMPTY",
-              "AI 未返回有效内容。",
+    const llmTrace: LlmTrace = {
+      name: "chat",
+      userId: user.id,
+      sessionId: conversation.id,
+      metadata: { topic: conversation.topic },
+    };
+
+    // 单请求单 trace：根 span "chat" 包住信号抽取 + 流式回复两次 LLM 调用。
+    // 流式响应体在 Response 返回后才结束，根 span 需手动 end（endOnExit: false），
+    // 在流收尾时补 output 并 flush。
+    interface RootSpan {
+      update(fields: { output?: unknown }): unknown;
+      end(): void;
+    }
+
+    const buildResponse = (root?: RootSpan): Response => {
+      const finishTrace = async (output?: unknown) => {
+        if (!root) return;
+        if (output !== undefined) root.update({ output });
+        root.end();
+        await flushTraces();
+      };
+
+      const signalPromise = structuredOutput<ChatSignal>({
+        model: runtimeConfig.diaryModel,
+        maxTokens: 1_024,
+        system: chatSignalPrompt,
+        prompt: conversationText(messages),
+        schema: chatSignalSchema,
+        trace: { ...llmTrace, callName: "extract-chat-signal" },
+      }).then((signal) => ({ signal, degraded: false })).catch((error) => {
+        console.error("chat signal extraction failed:", error);
+        return { signal: fallbackSignal, degraded: true };
+      });
+
+      // 客户端断开时，用它中止仍在挂起的上游流式请求。
+      const cancelController = new AbortController();
+      let cancelled = false;
+      const body = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          try {
+            // 用 Vercel AI SDK 流式生成回复：短超时 + 空则重试，避开偶发挂起窗口。
+            const assistantText = await streamChatReply({
+              model: runtimeConfig.chatModel,
+              system: frontDoorPrompt(conversation.topic),
+              messages,
+              maxOutputTokens: 1_024,
+              cancelSignal: cancelController.signal,
+              trace: { ...llmTrace, callName: "generate-chat-reply" },
+              onDelta: (text) => {
+                if (!cancelled) controller.enqueue(sseEvent({ t: text }));
+              },
+            });
+            if (!assistantText.trim()) {
+              throw new HttpError(
+                502,
+                "MODEL_OUTPUT_EMPTY",
+                "AI 未返回有效内容。",
+              );
+            }
+
+            // 岔路口信号抽取走结构化路径，不能让它阻塞回复完成：
+            // 回复流结束后再给它一小段宽限期，超时则降级为 fallback，done 照常下发。
+            const signalResult = await raceSignal(signalPromise);
+            let { signal } = signalResult;
+            if (signal.high_risk) {
+              signal = {
+                ...signal,
+                crossroads: {
+                  ...signal.crossroads,
+                  ready: false,
+                },
+                conclusion: {
+                  ...signal.conclusion,
+                  ready: false,
+                },
+              };
+            }
+            await insertMessage(
+              db,
+              conversation.id,
+              "assistant",
+              assistantText,
+              { signal },
             );
-          }
-
-          // 岔路口信号抽取走结构化路径，不能让它阻塞回复完成：
-          // 回复流结束后再给它一小段宽限期，超时则降级为 fallback，done 照常下发。
-          const signalResult = await raceSignal(signalPromise);
-          let { signal } = signalResult;
-          if (signal.high_risk) {
-            signal = {
-              ...signal,
-              crossroads: {
-                ...signal.crossroads,
-                ready: false,
-              },
-              conclusion: {
-                ...signal.conclusion,
-                ready: false,
-              },
-            };
-          }
-          await insertMessage(
-            db,
-            conversation.id,
-            "assistant",
-            assistantText,
-            { signal },
-          );
-          const profile = await applyChatSignal(
-            db,
-            user.id,
-            conversation.id,
-            conversation.status,
-            signal,
-          );
-          if (!cancelled) {
-            // 对齐原型探索对话契约：is_enough 表示岔路口是否已足够清晰，
-            // next_actions 给出下一步入口；同时保留 crossroads/profile 原字段。
-            const nextActions = signal.conclusion.ready
-              ? signal.conclusion.next_step === "match"
-                ? [{ type: "match", label: "看看走过类似岔路口、结局不同的人" }]
-                : [{ type: "lab", label: "去人生实验室推演不同选择" }]
-              : [];
-            controller.enqueue(sseEvent({
-              done: true,
-              conversation_id: conversation.id,
-              crossroads: signal.crossroads,
-              is_enough: signal.crossroads.ready,
-              analysis: signal.crossroads.summary,
-              conclusion: signal.conclusion,
-              next_actions: nextActions,
-              profile,
-              high_risk: signal.high_risk,
+            const profile = await applyChatSignal(
+              db,
+              user.id,
+              conversation.id,
+              conversation.status,
+              signal,
+            );
+            if (!cancelled) {
+              // 对齐原型探索对话契约：is_enough 表示岔路口是否已足够清晰，
+              // next_actions 给出下一步入口；同时保留 crossroads/profile 原字段。
+              const nextActions = signal.conclusion.ready
+                ? signal.conclusion.next_step === "match"
+                  ? [{ type: "match", label: "看看走过类似岔路口、结局不同的人" }]
+                  : [{ type: "lab", label: "去人生实验室推演不同选择" }]
+                : [];
+              controller.enqueue(sseEvent({
+                done: true,
+                conversation_id: conversation.id,
+                crossroads: signal.crossroads,
+                is_enough: signal.crossroads.ready,
+                analysis: signal.crossroads.summary,
+                conclusion: signal.conclusion,
+                next_actions: nextActions,
+                profile,
+                high_risk: signal.high_risk,
+                signal_degraded: signalResult.degraded,
+              }, "done"));
+            }
+            await finishTrace({
+              reply: assistantText,
+              crossroads_ready: signal.crossroads.ready,
               signal_degraded: signalResult.degraded,
-            }, "done"));
+            });
+          } catch (error) {
+            console.error("chat stream failed:", error);
+            if (!cancelled) {
+              controller.enqueue(sseEvent({
+                error: {
+                  code: error instanceof HttpError
+                    ? error.code
+                    : "STREAM_ERROR",
+                  message: "回复中断，请稍后重试。",
+                },
+              }, "error"));
+            }
+            await finishTrace();
+          } finally {
+            if (!cancelled) controller.close();
           }
-        } catch (error) {
-          console.error("chat stream failed:", error);
-          if (!cancelled) {
-            controller.enqueue(sseEvent({
-              error: {
-                code: error instanceof HttpError ? error.code : "STREAM_ERROR",
-                message: "回复中断，请稍后重试。",
-              },
-            }, "error"));
-          }
-        } finally {
-          if (!cancelled) controller.close();
-        }
+        },
+        cancel() {
+          cancelled = true;
+          cancelController.abort();
+          finishTrace();
+        },
+      });
+      return sseResponse(body);
+    };
+
+    if (!telemetryEnabled) return buildResponse();
+    return propagateAttributes(
+      {
+        traceName: llmTrace.name,
+        userId: llmTrace.userId,
+        sessionId: llmTrace.sessionId,
+        metadata: llmTrace.metadata,
       },
-      cancel() {
-        cancelled = true;
-        cancelController.abort();
-      },
-    });
-    return sseResponse(body);
+      () =>
+        startActiveObservation("chat", (span) => {
+          span.update({
+            input: { topic: conversation.topic, message: input.message },
+          });
+          return buildResponse(span);
+        }, { endOnExit: false }),
+    );
   } catch (error) {
     return errorResponse(error);
   }

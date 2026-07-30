@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
       system: labChoicePrompt,
       prompt,
       schema: labChoiceSchema,
+      trace: { name: "lab-choices", userId: user.id },
     });
     await insertLabChoiceSet(db, user.id, input, result);
     return jsonResponse(result);

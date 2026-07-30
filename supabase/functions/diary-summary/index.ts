@@ -221,6 +221,11 @@ Deno.serve(async (req) => {
           topKeywords.join("、") || "无"
         }\n日记原文（可能被截断）：\n${transcripts}`,
         schema: diarySummarySchema,
+        trace: {
+          name: "diary-summary",
+          userId: user.id,
+          metadata: { period: input.period, ref: input.ref },
+        },
       });
       insight = result.insight;
       highlights = result.highlights.slice(0, 5);

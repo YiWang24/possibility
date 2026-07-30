@@ -1,6 +1,12 @@
 import { APICallError, generateObject, jsonSchema } from "ai";
+import { propagateAttributes } from "@langfuse/tracing";
 import { deepseekProvider } from "./deepseek.ts";
 import { HttpError } from "./errors.ts";
+import {
+  flushTraces,
+  type LlmTrace,
+  telemetryEnabled,
+} from "./telemetry.ts";
 
 /**
  * 结构化输出适配层：走 Vercel AI SDK（`ai` + `@ai-sdk/deepseek`），后端为 DeepSeek v4。
@@ -27,6 +33,29 @@ export async function structuredOutput<T>(
     system: string;
     prompt: string;
     schema: { type: "object"; [key: string]: unknown };
+    trace?: LlmTrace;
+  },
+): Promise<T> {
+  if (!telemetryEnabled || !options.trace) return generateWithRetry(options);
+  const { name, userId, sessionId, metadata } = options.trace;
+  try {
+    return await propagateAttributes(
+      { traceName: name, userId, sessionId, metadata },
+      () => generateWithRetry<T>(options),
+    ) as T;
+  } finally {
+    await flushTraces();
+  }
+}
+
+async function generateWithRetry<T>(
+  options: {
+    model: string;
+    maxTokens: number;
+    system: string;
+    prompt: string;
+    schema: { type: "object"; [key: string]: unknown };
+    trace?: LlmTrace;
   },
 ): Promise<T> {
   // DeepSeek 公网端点稳定，但仍给少量重试覆盖偶发的解析失败/网络抖动。
@@ -46,6 +75,9 @@ export async function structuredOutput<T>(
         maxOutputTokens: options.maxTokens,
         maxRetries: 0, // 重试由本函数控制
         abortSignal: controller.signal,
+        telemetry: options.trace
+          ? { functionId: options.trace.callName ?? options.trace.name }
+          : undefined,
       });
       return object as T;
     } catch (error) {
