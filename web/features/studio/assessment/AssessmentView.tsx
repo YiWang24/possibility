@@ -328,7 +328,7 @@ function ResultPhase({
     if (saving || savedToProfile) return;
     setSaving(true);
     try {
-      await callFunction("save-profile", saveProfilePayload(kind, result.tags));
+      await callFunction("save-profile", saveProfilePayload(kind, result));
       useData.getState().invalidateProfile();
       setSavedToProfile(true);
       show(`已写入你的画像：${result.tags.join(" · ")}`);

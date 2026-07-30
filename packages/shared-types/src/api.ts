@@ -5,6 +5,7 @@ export const EDGE_FUNCTIONS = [
   'analyze-diary',
   'save-profile',
   'get-profile',
+  'profile-privacy',
   'list-conversations',
   'list-diary',
   'diary-summary',

@@ -1,9 +1,30 @@
 .DS_Store
 
 # 环境变量文件（含敏感信息，禁止提交）
-.env
-.env.local
-.env.*.local
+# 用通配覆盖所有变体：.env.production / .env.development / .env.keys / web/.env.* 等。
+# 逐个枚举必然漏（web/.gitignore 只挡 .env*.local，web/.env.production 曾无人看管）。
+# 只放行模板；确需入库的其他 .env 变体用 git add -f 显式放行。
+.env*
+!**/.env.example
+
+# 签名凭据与私钥（本仓库公开：一旦提交即等同泄露，且必须轮换才能挽回）
+# Apple：Sign in with Apple / APNs 的 AuthKey_*.p8、证书、描述文件
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+GoogleService-Info.plist
+# Android：签名密钥库、Firebase 配置
+*.jks
+*.keystore
+keystore.properties
+google-services.json
+# 通用私钥与凭据文件
+*.pem
+*.key
+id_rsa*
+.netrc
 
 # Supabase / 后端
 supabase/.branches

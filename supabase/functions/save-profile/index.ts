@@ -7,9 +7,11 @@ import {
   readJson,
 } from "../_shared/errors.ts";
 import {
+  validateAIPermissionsInput,
   validateSaveCardGameInput,
   validateSaveDimensionInput,
 } from "../_shared/validate.ts";
+import { replaceProfileDimension } from "../_shared/db.ts";
 
 /**
  * POST /save-profile
@@ -17,6 +19,7 @@ import {
  * - action: "save_dimension" → save a single profile dimension (tags)
  * - action: "save_card_game" → save card game result
  * - action: "save_public_profile" → save public profile data
+ * - action: "save_ai_permissions" → save private, purpose-scoped AI consent
  */
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
@@ -33,82 +36,94 @@ Deno.serve(async (req) => {
     switch (action) {
       case "save_dimension": {
         const input = validateSaveDimensionInput(body);
-        const { error } = await db.from("profile_dimensions")
-          .upsert({
-            user_id: user.id,
+        if (input.source === "assessment") {
+          const raw = body as Record<string, unknown>;
+          const assessmentKind = typeof raw.assessment_kind === "string"
+            ? raw.assessment_kind.trim()
+            : input.dimension;
+          const answers = raw.assessment_answers ?? [];
+          const scores = raw.assessment_scores ?? {};
+          if (
+            assessmentKind.length < 1 ||
+            assessmentKind.length > 50 ||
+            !Array.isArray(answers) ||
+            answers.length > 200 ||
+            typeof scores !== "object" ||
+            scores === null ||
+            Array.isArray(scores) ||
+            JSON.stringify(scores).length > 20_000
+          ) {
+            throw new HttpError(400, "INVALID_INPUT", "测评结果格式无效。");
+          }
+          const { data, error } = await db.rpc(
+            "save_assessment_and_profile",
+            {
+              p_dimension: input.dimension,
+              p_values: input.tags,
+              p_assessment_kind: assessmentKind,
+              p_answers: answers,
+              p_scores: scores,
+              p_schema_version: 1,
+              p_expected_revision: null,
+            },
+          );
+          if (error) {
+            console.error("save assessment failed:", error.message);
+            throw new HttpError(500, "DATABASE_ERROR", "保存测评结果失败。");
+          }
+          return jsonResponse({
+            ok: true,
             dimension: input.dimension,
-            tags: input.tags,
-            source: input.source,
-          }, { onConflict: "user_id,dimension" });
-        if (error) {
-          console.error("save dimension failed:", error.message);
-          throw new HttpError(500, "DATABASE_ERROR", "保存维度失败。");
+            profile_revision: Number(data?.[0]?.profile_revision ?? 0),
+            assessment_run_id: data?.[0]?.assessment_run_id ?? null,
+          });
         }
-        // Also update the profiles.dims jsonb for legacy compat
-        const dimsUpdate: Record<string, string> = {};
-        dimsUpdate[input.dimension] = input.tags.slice(0, 5).join(" · ");
-        await db.rpc("apply_profile_update", {
-          p_dims: dimsUpdate,
-          p_portrait_delta: 2,
+        const snapshot = await replaceProfileDimension(db, {
+          dimension: input.dimension,
+          values: input.tags,
+          source: input.source,
+          confidence: 1,
+          userConfirmed: true,
+          portraitDelta: 2,
         });
-        return jsonResponse({ ok: true, dimension: input.dimension });
+        return jsonResponse({
+          ok: true,
+          dimension: input.dimension,
+          profile_revision: snapshot.profile_revision,
+        });
       }
 
       case "save_card_game": {
         const input = validateSaveCardGameInput(body);
-        const { error } = await db.from("card_game_results")
-          .upsert({
-            user_id: user.id,
-            kind: input.kind,
-            final_cards: input.final_cards,
-            rounds: input.rounds,
-            accepted: input.accepted,
-            traded: input.traded,
-          }, { onConflict: "user_id,kind" });
+        const { data: snapshot, error } = await db.rpc(
+          "save_card_game_and_profile",
+          {
+            p_kind: input.kind,
+            p_final_cards: input.final_cards,
+            p_rounds: input.rounds,
+            p_accepted: input.accepted,
+            p_traded: input.traded,
+            p_expected_revision: null,
+          },
+        );
         if (error) {
           console.error("save card game failed:", error.message);
           throw new HttpError(500, "DATABASE_ERROR", "保存卡牌结果失败。");
         }
-        // 关系专题同时写规范化画像维度，保留 card_game 来源；人生卡牌没有
-        // 对应的 profile_dimensions 枚举键，仅通过 profiles.dims.life 参与动态画像。
         const tags = input.final_cards.map((c) => c.name);
-        const dimKey = input.kind === "marriage" ? "love" : input.kind;
-        if (input.kind !== "life") {
-          const { error: dimensionError } = await db.from("profile_dimensions")
-            .upsert({
-              user_id: user.id,
-              dimension: dimKey,
-              tags,
-              source: "card_game",
-            }, { onConflict: "user_id,dimension" });
-          if (dimensionError) {
-            console.error(
-              "save card game dimension failed:",
-              dimensionError.message,
-            );
-            throw new HttpError(
-              500,
-              "DATABASE_ERROR",
-              "保存卡牌画像维度失败。",
-            );
-          }
-        }
-        const dimsUpdate: Record<string, string> = {};
-        dimsUpdate[dimKey] = tags.join(" · ");
-        const { error: profileError } = await db.rpc("apply_profile_update", {
-          p_dims: dimsUpdate,
-          p_portrait_delta: 3,
+        return jsonResponse({
+          ok: true,
+          kind: input.kind,
+          tags,
+          profile_revision: Number(snapshot?.[0]?.profile_revision ?? 0),
         });
-        if (profileError) {
-          console.error("save card game profile failed:", profileError.message);
-          throw new HttpError(500, "DATABASE_ERROR", "更新卡牌画像失败。");
-        }
-        return jsonResponse({ ok: true, kind: input.kind, tags });
       }
 
       case "save_public_profile": {
         const data = body as Record<string, unknown>;
         const profileData: Record<string, unknown> = { id: user.id };
+        const isV2 = data.profile_version === 2;
+        if (isV2) profileData.profile_version = 2;
         if (typeof data.name === "string") {
           profileData.name = data.name.slice(0, 50);
         }
@@ -132,8 +147,47 @@ Deno.serve(async (req) => {
         if (typeof data.visibility === "object" && data.visibility !== null) {
           profileData.visibility = data.visibility;
         }
-        const { error } = await db.from("public_profiles")
-          .upsert(profileData, { onConflict: "id" });
+        if (
+          isV2 &&
+          Number.isInteger(data.hue) &&
+          (data.hue as number) >= 0 &&
+          (data.hue as number) <= 4
+        ) {
+          profileData.hue = data.hue;
+        }
+        if (
+          isV2 &&
+          Number.isInteger(data.age) &&
+          (data.age as number) >= 0 &&
+          (data.age as number) <= 150
+        ) {
+          profileData.age = data.age;
+        }
+        if (isV2 && typeof data.city === "string") {
+          profileData.city = data.city.trim().slice(0, 100);
+        }
+        if (isV2 && typeof data.from_role === "string") {
+          profileData.from_role = data.from_role.trim().slice(0, 100);
+        }
+        if (isV2 && typeof data.to_role === "string") {
+          profileData.to_role = data.to_role.trim().slice(0, 100);
+        }
+        if (isV2 && typeof data.stage === "string") {
+          profileData.stage = data.stage.trim().slice(0, 100);
+        }
+        if (isV2 && typeof data.result === "string") {
+          profileData.result = data.result.trim().slice(0, 200);
+        }
+        if (isV2 && typeof data.story_intro === "string") {
+          profileData.story_intro = data.story_intro.trim().slice(0, 2_000);
+        }
+        if (isV2 && typeof data.story_full === "string") {
+          profileData.story_full = data.story_full.trim().slice(0, 12_000);
+        }
+        delete profileData.id;
+        const { error } = await db.rpc("save_public_profile", {
+          p_profile: profileData,
+        });
         if (error) {
           console.error("save public profile failed:", error.message);
           throw new HttpError(500, "DATABASE_ERROR", "保存公开资料失败。");
@@ -141,11 +195,52 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true });
       }
 
+      case "save_ai_permissions": {
+        const permissions = validateAIPermissionsInput(body);
+        const expectedRevision = (body as Record<string, unknown>)
+          .permission_revision;
+        if (
+          expectedRevision !== undefined &&
+          (!Number.isSafeInteger(expectedRevision) ||
+            Number(expectedRevision) < 0)
+        ) {
+          throw new HttpError(
+            400,
+            "INVALID_INPUT",
+            "permission_revision 无效。",
+          );
+        }
+        const { data: permissionRevision, error } = await db.rpc(
+          "replace_profile_ai_permissions",
+          {
+            p_permissions: permissions,
+            p_expected_revision: expectedRevision === undefined
+              ? null
+              : Number(expectedRevision),
+          },
+        );
+        if (error) {
+          if (error.code === "40001") {
+            throw new HttpError(
+              409,
+              "PERMISSION_REVISION_CONFLICT",
+              "AI 授权已在其他设备更新，请刷新后重试。",
+            );
+          }
+          console.error("save AI permissions failed:", error.message);
+          throw new HttpError(500, "DATABASE_ERROR", "保存 AI 授权失败。");
+        }
+        return jsonResponse({
+          ok: true,
+          permission_revision: Number(permissionRevision ?? 0),
+        });
+      }
+
       default:
         throw new HttpError(
           400,
           "INVALID_ACTION",
-          "action 必须是 save_dimension/save_card_game/save_public_profile 之一。",
+          "action 必须是 save_dimension/save_card_game/save_public_profile/save_ai_permissions 之一。",
         );
     }
   } catch (error) {

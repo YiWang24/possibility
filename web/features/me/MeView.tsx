@@ -11,7 +11,8 @@ import { TravelerAvatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/stores/auth";
 import { useData } from "@/stores/data";
-import { useMyProfile } from "@/stores/my-profile";
+import { myProfileRemotePayload, useMyProfile } from "@/stores/my-profile";
+import { callFunction } from "@/lib/supabase";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { hue } from "@/lib/theme";
 import type { TrajectoryNode } from "@/lib/models";
@@ -19,6 +20,7 @@ import { useHome } from "@/features/home/store";
 import { buildPersonaModel } from "@/features/home/persona";
 import { PersonaCanvas } from "@/features/home/PersonaCanvas";
 import { MeEditView, type MeEditMode } from "./MeEditView";
+import { ProfilePrivacyView } from "./ProfilePrivacyView";
 
 /* 动态画像单项（对齐 iOS MyProfileStore.PersonaItem） */
 export interface PersonaItem {
@@ -65,8 +67,9 @@ export function MeView() {
   const [editMode, setEditMode] = useState<MeEditMode | null>(null);
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [accountBusy, setAccountBusy] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
-  /* 挂载：加载本地/云端画像维度；已登录时用 public_profile 合并本地档案（保留本地非空字段） */
+  /* 挂载：加载画像，并分别恢复公开主页与私有 AI 授权。 */
   useEffect(() => {
     void loadPortrait();
   }, [loadPortrait]);
@@ -76,7 +79,40 @@ export function MeView() {
     void (async () => {
       const remote = await useData.getState().loadProfile();
       const pub = remote?.public_profile;
-      if (pub) useMyProfile.getState().applyRemote(pub);
+      if (pub) {
+        useMyProfile.getState().applyRemote(pub);
+        if ((pub.profile_version ?? 1) < 2) {
+          try {
+            await callFunction("save-profile", {
+              action: "save_public_profile",
+              ...myProfileRemotePayload(useMyProfile.getState().profile),
+            });
+            useData.getState().invalidateProfile();
+          } catch {
+            /* 本地缓存仍可用，下次进入主页重试迁移。 */
+          }
+        }
+      }
+      if (remote?.ai_permissions) {
+        useMyProfile.getState().applyRemotePermissions(
+          remote.ai_permissions.permissions,
+          remote.ai_permissions.permission_revision,
+        );
+      } else {
+        const localPermissions = useMyProfile.getState().aiPermissions;
+        if (Object.keys(localPermissions).length > 0) {
+          try {
+            await callFunction("save-profile", {
+              action: "save_ai_permissions",
+              permissions: localPermissions,
+              permission_revision: useMyProfile.getState().permissionRevision,
+            });
+            useData.getState().invalidateProfile();
+          } catch {
+            /* 本地授权仍保留，下次进入主页重试。 */
+          }
+        }
+      }
     })();
   }, [isAuthenticated]);
 
@@ -246,6 +282,13 @@ export function MeView() {
               </span>
             </div>
             <div className="h-px bg-line" />
+            <AccountRow
+              title="个人档案与 AI 隐私"
+              tint="text-brand"
+              busy={accountBusy}
+              onClick={() => setPrivacyOpen(true)}
+            />
+            <div className="h-px bg-line" />
 
             <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
             <div className="h-px bg-line" />
@@ -256,6 +299,7 @@ export function MeView() {
 
       {/* 编辑浮层 */}
       <MeEditView mode={editMode} personaItems={allPersonaItems} onClose={() => setEditMode(null)} />
+      <ProfilePrivacyView open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
 
       {/* 二次确认 */}
       <ConfirmDialog

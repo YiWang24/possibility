@@ -299,8 +299,11 @@ final class HomeModel {
         Task { [weak self] in
             guard let remote = try? await supabase.fetchRemoteProfile() else { return }
             guard let self else { return }
-            // 远端非空、本地为空的键补进来；本地已有的以本地为准（刚编辑过更新）
-            for (key, value) in remote.dims where !value.isEmpty && self.filledDims[key] == nil {
+            // 从权威原子事实聚合；本地已有的以本地为准（刚编辑过更新）
+            let grouped = Dictionary(grouping: remote.facts, by: \.dimension)
+            for (key, facts) in grouped {
+                let value = facts.map(\.value).filter { !$0.isEmpty }.joined(separator: " · ")
+                guard !value.isEmpty, self.filledDims[key] == nil else { continue }
                 self.filledDims[key] = value
                 self.store.set(value, forKey: Self.storePrefix + key)
             }
@@ -314,7 +317,14 @@ final class HomeModel {
     }
 
     /// 保存某维度的关键词选择 → 回填 + 本地持久化 + 云端落库（失败静默，本地已存）
-    func saveDimension(_ key: DimensionKey, keywords: [String], using supabase: SupabaseService? = nil) {
+    func saveDimension(
+        _ key: DimensionKey,
+        keywords: [String],
+        using supabase: SupabaseService? = nil,
+        assessmentKind: AssessmentKind? = nil,
+        assessmentAnswers: [Int]? = nil,
+        assessmentScores: [String: Int]? = nil
+    ) {
         let picked = Array(keywords.prefix(5))
         let text = picked.joined(separator: " · ")
         guard !text.isEmpty else { return }
@@ -324,17 +334,43 @@ final class HomeModel {
             Task { [weak self] in
                 // 先落库再重新生成云端形象（/persona 读服务端画像，需等新维度可见）；
                 // 连续填多个维度时经防抖合并，停止操作 ~2s 后才真正触发一次生成
-                try? await supabase.saveDimensionRemote(key: key, tags: picked)
+                try? await supabase.saveDimensionRemote(
+                    key: key,
+                    tags: picked,
+                    source: assessmentKind == nil ? "manual" : "assessment",
+                    assessmentKind: assessmentKind,
+                    assessmentAnswers: assessmentAnswers,
+                    assessmentScores: assessmentScores
+                )
                 self?.scheduleRefreshPersona(using: supabase)
             }
         }
     }
 
     /// 人格底色（大五测评 / MBTI 徽标写入）
-    func savePersonality(_ text: String) {
+    func savePersonality(
+        _ text: String,
+        using supabase: SupabaseService? = nil,
+        assessmentKind: AssessmentKind? = nil,
+        assessmentAnswers: [Int]? = nil,
+        assessmentScores: [String: Int]? = nil
+    ) {
         guard !text.isEmpty else { return }
         filledDims["personality"] = text
         store.set(text, forKey: Self.storePrefix + "personality")
+        if let supabase {
+            Task { [weak self] in
+                try? await supabase.saveDimensionRemote(
+                    dimension: "personality",
+                    tags: [text],
+                    source: assessmentKind == nil ? "manual" : "assessment",
+                    assessmentKind: assessmentKind,
+                    assessmentAnswers: assessmentAnswers,
+                    assessmentScores: assessmentScores
+                )
+                self?.scheduleRefreshPersona(using: supabase)
+            }
+        }
     }
 
     /// 五维画像卡（人格底色 + 四软维度）

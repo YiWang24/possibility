@@ -17,6 +17,7 @@ import { validateSimulateInputV2 } from "../_shared/validate.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { runInBackground } from "../_shared/background.ts";
 import { trackEvent } from "../_shared/track.ts";
+import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
 
 type TravelerCandidate = {
   id: number;
@@ -40,6 +41,7 @@ Deno.serve(async (req) => {
     trackEvent(user.id, ServerEvent.SIMULATION_REQUESTED, {
       years: input.years,
     });
+    const aiContext = await loadAuthorizedProfileContext(db, user.id, "lab");
 
     // 候选旅人：用于生成「相似旅人推荐」，模型只能从这些 id 中挑选。
     const { data: travelerRows } = await db
@@ -58,6 +60,10 @@ Deno.serve(async (req) => {
     if (input.carry_cards && input.carry_cards.length > 0) {
       prompt += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
     }
+    if (aiContext.text) {
+      prompt +=
+        `\n用户另行授权用于本次人生实验室的长期画像：\n${aiContext.text}`;
+    }
     prompt += `\n\n候选旅人（recommended_traveler_ids 只能取这些 id）：\n${
       JSON.stringify(candidates)
     }`;
@@ -73,6 +79,11 @@ Deno.serve(async (req) => {
       prompt,
       schema: simulationSchema,
       track: { userId: user.id, feature: "simulate" },
+      trace: {
+        name: "simulate",
+        userId: user.id,
+        metadata: { time_horizon: input.time_horizon },
+      },
     });
 
     // 过滤模型可能返回的无效/重复 id，保证前端拿到的都是真实旅人。
@@ -104,6 +115,7 @@ Deno.serve(async (req) => {
           schema: generatedTravelersSchema,
           // 后台社区扩容也在烧 token，成本报表必须能看见它。
           track: { userId: user.id, feature: "traveler_gen" },
+          trace: { name: "simulate-traveler-gen", userId: user.id },
         })
           .then((generated) =>
             generated && generated.travelers.length > 0
@@ -124,6 +136,12 @@ Deno.serve(async (req) => {
     return jsonResponse({
       ...result,
       recommended_travelers: [],
+      ai_context: {
+        purpose: aiContext.purpose,
+        dimensions: aiContext.dimensions,
+        profile_revision: aiContext.profileRevision,
+        permission_revision: aiContext.permissionRevision,
+      },
     });
   } catch (error) {
     return errorResponse(error, req);

@@ -246,7 +246,7 @@ final class SupabaseService {
                 .select().eq("id", value: uid).single().execute().value
         } catch {
             // 首次进入没有 profile 行：本地兜底，后续 upsert
-            profile = UserProfile(id: uid, portraitPct: AppConfig.Threshold.portraitInitialPct, dims: [:])
+            profile = UserProfile(id: uid, portraitPct: AppConfig.Threshold.portraitInitialPct)
         }
     }
 
@@ -453,45 +453,95 @@ final class SupabaseService {
         return (res.traveler.id, res.reason)
     }
 
-    /// POST /save-profile action=save_dimension：维度关键词落库（服务端同步 profiles.dims）
-    func saveDimensionRemote(key: DimensionKey, tags: [String]) async throws {
+    /// POST /save-profile action=save_dimension：画像事实落库；测评来源同时原子保存原始结果。
+    func saveDimensionRemote(
+        key: DimensionKey,
+        tags: [String],
+        source: String = "manual",
+        assessmentKind: AssessmentKind? = nil,
+        assessmentAnswers: [Int]? = nil,
+        assessmentScores: [String: Int]? = nil
+    ) async throws {
+        try await saveDimensionRemote(
+            dimension: key.rawValue,
+            tags: tags,
+            source: source,
+            assessmentKind: assessmentKind,
+            assessmentAnswers: assessmentAnswers,
+            assessmentScores: assessmentScores
+        )
+    }
+
+    /// 人格底色不属于 DimensionKey 的软维度枚举，使用字符串重载走同一后端契约。
+    func saveDimensionRemote(
+        dimension: String,
+        tags: [String],
+        source: String = "manual",
+        assessmentKind: AssessmentKind? = nil,
+        assessmentAnswers: [Int]? = nil,
+        assessmentScores: [String: Int]? = nil
+    ) async throws {
         struct Body: Encodable {
             let action = "save_dimension"
             let dimension: String
             let tags: [String]
-            let source = "manual"
+            let source: String
+            let assessmentKind: String?
+            let assessmentAnswers: [Int]?
+            let assessmentScores: [String: Int]?
+
+            enum CodingKeys: String, CodingKey {
+                case action, dimension, tags, source
+                case assessmentKind = "assessment_kind"
+                case assessmentAnswers = "assessment_answers"
+                case assessmentScores = "assessment_scores"
+            }
         }
         struct Response: Decodable { let ok: Bool }
-        _ = try await callFunction("save-profile", body: Body(dimension: key.rawValue, tags: tags), as: Response.self)
+        _ = try await callFunction(
+            "save-profile",
+            body: Body(
+                dimension: dimension,
+                tags: tags,
+                source: source,
+                assessmentKind: assessmentKind?.rawValue,
+                assessmentAnswers: assessmentAnswers,
+                assessmentScores: assessmentScores
+            ),
+            as: Response.self
+        )
         invalidateRemoteProfileCache()
     }
 
-    /// GET /get-profile：云端画像全量出参。
-    /// 旧调用方只用 portraitPct/dims 不受影响；新增字段解码失败时降级为空值，不让整体失败。
+    /// GET /get-profile：云端画像全量出参，事实表是唯一画像内容来源。
     struct RemoteProfile: Decodable {
         let portraitPct: Int
-        let dims: [String: String]
-        /// profile_dimensions 行：[{dimension, tags, source, updated_at}]
-        let dimensions: [RemoteProfileDimension]
+        let profileRevision: Int
+        let facts: [ProfileFact]
         /// card_game_results 行：[{kind, final_cards, rounds, accepted, traded}]
         let cardGames: [RemoteCardGame]
         /// public_profiles 行（未建档为 nil）
         let publicProfile: RemotePublicProfile?
+        /// profile_ai_permissions 私有行（未设置为 nil）
+        let aiPermissions: RemoteAIPermissions?
 
         enum CodingKeys: String, CodingKey {
-            case dims, dimensions
             case portraitPct = "portrait_pct"
+            case profileRevision = "profile_revision"
+            case facts
             case cardGames = "card_games"
             case publicProfile = "public_profile"
+            case aiPermissions = "ai_permissions"
         }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             portraitPct = try c.decode(Int.self, forKey: .portraitPct)
-            dims = try c.decode([String: String].self, forKey: .dims)
-            dimensions = (try? c.decodeIfPresent([RemoteProfileDimension].self, forKey: .dimensions)) ?? []
+            profileRevision = (try? c.decodeIfPresent(Int.self, forKey: .profileRevision)) ?? 0
+            facts = (try? c.decodeIfPresent([ProfileFact].self, forKey: .facts)) ?? []
             cardGames = (try? c.decodeIfPresent([RemoteCardGame].self, forKey: .cardGames)) ?? []
             publicProfile = try? c.decodeIfPresent(RemotePublicProfile.self, forKey: .publicProfile)
+            aiPermissions = try? c.decodeIfPresent(RemoteAIPermissions.self, forKey: .aiPermissions)
         }
     }
 
@@ -521,6 +571,165 @@ final class SupabaseService {
         let profile = try JSONDecoder().decode(RemoteProfile.self, from: data)
         remoteProfileCache = (profile, Date())
         return profile
+    }
+
+    // MARK: - 个人档案与 AI 隐私
+
+    func fetchProfilePrivacy() async throws -> ProfilePrivacySnapshot {
+        struct Body: Encodable { let action = "get" }
+        return try await callFunction(
+            "profile-privacy",
+            body: Body(),
+            as: ProfilePrivacySnapshot.self
+        )
+    }
+
+    /// 返回格式化后的可移植 JSON；服务端导出中包含事实来源、授权和最小化使用回执。
+    func exportProfileData() async throws -> String {
+        struct Body: Encodable { let action = "export" }
+        var req = URLRequest(url: AppConfig.functionURL("profile-privacy"))
+        req.httpMethod = "POST"
+        req.timeoutInterval = 180
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("Bearer \(try await jwt())", forHTTPHeaderField: "Authorization")
+        req.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.httpBody = try JSONEncoder().encode(Body())
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try Self.throwIfHTTPError(response, data: data)
+        let object = try JSONSerialization.jsonObject(with: data)
+        let pretty = try JSONSerialization.data(
+            withJSONObject: object,
+            options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        )
+        return String(decoding: pretty, as: UTF8.self)
+    }
+
+    func confirmProfileFact(_ id: UUID, expectedRevision: Int) async throws {
+        struct Body: Encodable {
+            let action = "confirm_fact"
+            let factId: UUID
+            let profileRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case action
+                case factId = "fact_id"
+                case profileRevision = "profile_revision"
+            }
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction(
+            "profile-privacy",
+            body: Body(factId: id, profileRevision: expectedRevision),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+    }
+
+    func reviewProfileProposal(
+        _ id: UUID,
+        accept: Bool,
+        expectedRevision: Int
+    ) async throws {
+        struct Body: Encodable {
+            let action = "review_proposal"
+            let proposalId: UUID
+            let accept: Bool
+            let profileRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case action, accept
+                case proposalId = "proposal_id"
+                case profileRevision = "profile_revision"
+            }
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction(
+            "profile-privacy",
+            body: Body(
+                proposalId: id,
+                accept: accept,
+                profileRevision: expectedRevision
+            ),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+    }
+
+    func deleteProfileDimension(_ dimension: String, expectedRevision: Int) async throws {
+        struct Body: Encodable {
+            let action = "delete_dimension"
+            let dimension: String
+            let profileRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case action, dimension
+                case profileRevision = "profile_revision"
+            }
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction(
+            "profile-privacy",
+            body: Body(dimension: dimension, profileRevision: expectedRevision),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+    }
+
+    func revokeAllProfileAIPermissions(expectedRevision: Int) async throws -> Int {
+        struct Body: Encodable {
+            let action = "revoke_all"
+            let permissionRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case action
+                case permissionRevision = "permission_revision"
+            }
+        }
+        struct Response: Decodable {
+            let ok: Bool
+            let permissionRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case ok
+                case permissionRevision = "permission_revision"
+            }
+        }
+        let response = try await callFunction(
+            "profile-privacy",
+            body: Body(permissionRevision: expectedRevision),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+        return response.permissionRevision
+    }
+
+    func clearPrivateProfile(expectedRevision: Int) async throws -> Int {
+        struct Body: Encodable {
+            let action = "clear_private"
+            let profileRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case action
+                case profileRevision = "profile_revision"
+            }
+        }
+        struct Response: Decodable {
+            struct Profile: Decodable {
+                let permissionRevision: Int
+                enum CodingKeys: String, CodingKey {
+                    case permissionRevision = "permission_revision"
+                }
+            }
+            let ok: Bool
+            let profile: Profile?
+        }
+        let response = try await callFunction(
+            "profile-privacy",
+            body: Body(profileRevision: expectedRevision),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+        return response.profile?.permissionRevision ?? 0
     }
 
     /// POST /list-diary：云端真实日记条目（analyze-diary 落库）
@@ -678,12 +887,11 @@ final class SupabaseService {
 
     // MARK: - Edge Functions（save-profile：卡牌局 / 公开主页）
 
-    /// POST /save-profile action=save_card_game：卡牌局结果上云（同 kind upsert 覆盖，
-    /// 服务端同步把 final_cards 名称写入 profiles.dims 对应维度）。
+    /// POST /save-profile action=save_card_game：卡牌结果与对应画像事实原子落库。
     /// - Parameters:
     ///   - kind: "life" | "marriage" | "family" | "social"
     ///   - finalCards: 1–9 张（id/name 必填）
-    /// - Returns: 服务端写入 dims 的标签（final_cards 名称）
+    /// - Returns: 服务端写入画像事实的标签（final_cards 名称）
     @discardableResult
     func saveCardGameRemote(
         kind: String,
@@ -746,5 +954,41 @@ final class SupabaseService {
     /// GET /get-profile 的 public_profile 字段（未建档为 nil）；Me 主页云端恢复用（复用缓存）
     func fetchPublicProfileRemote() async throws -> RemotePublicProfile? {
         try await fetchRemoteProfile().publicProfile
+    }
+
+    /// POST /save-profile action=save_ai_permissions：与公开 visibility 分离的私有 AI 授权。
+    func saveAIPermissionsRemote(
+        _ permissions: ProfileAIPermissions,
+        expectedRevision: Int
+    ) async throws -> Int {
+        struct Body: Encodable {
+            let action = "save_ai_permissions"
+            let permissions: [String: [String: Bool]]
+            let permissionRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case action, permissions
+                case permissionRevision = "permission_revision"
+            }
+        }
+        struct Response: Decodable {
+            let ok: Bool
+            let permissionRevision: Int
+
+            enum CodingKeys: String, CodingKey {
+                case ok
+                case permissionRevision = "permission_revision"
+            }
+        }
+        let response = try await callFunction(
+            "save-profile",
+            body: Body(
+                permissions: permissions.permissions,
+                permissionRevision: expectedRevision
+            ),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+        return response.permissionRevision
     }
 }

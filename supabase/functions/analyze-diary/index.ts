@@ -2,7 +2,10 @@ import { structuredOutput } from "../_shared/llm.ts";
 import { requireUser } from "../_shared/auth.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
-import { insertDiaryAnalysis, mergeProfileDimensions } from "../_shared/db.ts";
+import {
+  insertDiaryAnalysis,
+  proposeDiaryProfileFacts,
+} from "../_shared/db.ts";
 import { errorResponse, jsonResponse, readJson } from "../_shared/errors.ts";
 import { diaryPrompt } from "../_shared/prompts.ts";
 import { type DiaryOutput, diarySchema } from "../_shared/schemas.ts";
@@ -24,9 +27,15 @@ Deno.serve(async (req) => {
       prompt: input.transcript,
       schema: diarySchema,
       track: { userId: user.id, feature: "analyze_diary" },
+      trace: { name: "analyze-diary", userId: user.id },
     });
-    await insertDiaryAnalysis(db, user.id, input.transcript, result);
-    await mergeProfileDimensions(db, result.dim_updates);
+    const entryId = await insertDiaryAnalysis(
+      db,
+      user.id,
+      input.transcript,
+      result,
+    );
+    await proposeDiaryProfileFacts(db, entryId, result.dim_updates);
     // 服务端在日记写库成功后权威上报。iOS 仍发 PostHog / Sentry，但不重复写 app_events。
     // 只记录输入方式和正文长度这个派生值，正文绝不进埋点（§1）。
     trackEvent(user.id, ServerEvent.DIARY_CREATED, {
