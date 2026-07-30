@@ -22,5 +22,17 @@ xcuserdata/
 DerivedData/
 .build/
 
+# Android / Gradle
+android/.gradle/
+android/.idea/
+android/.kotlin/
+android/local.properties
+android/**/build/
+*.iml
+
+# Doppler 本地覆盖（doppler.yaml 入库，个人 fallback 不入）
+.doppler/
+
 # Claude/Agent 本地 worktree 与工具产物（不进仓库）
 .claude/
+.qoder/
