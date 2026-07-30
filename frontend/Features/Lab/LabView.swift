@@ -246,7 +246,7 @@ struct LabView: View {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 let distance = Double(index) - center
                 let normalized = center > 0 ? distance / center : 0
-                deckCard(item)
+                deckCard(item, index: index)
                     .rotationEffect(.degrees(fanned ? normalized * 16 : 0), anchor: .bottom)
                     .offset(x: fanned ? distance * step : 0,
                             y: fanned ? -5 + pow(abs(normalized), 1.35) * 23 + (frontCard == item.id ? -9 : 0) : 0)
@@ -278,11 +278,11 @@ struct LabView: View {
     }
 
     @ViewBuilder
-    private func deckCard(_ item: DeckItem) -> some View {
+    private func deckCard(_ item: DeckItem, index: Int) -> some View {
         switch item {
         case .choice(let choice):
             let isDragging = draggingChoice?.id == choice.id
-            ChoiceCardBody(choice: choice, isOn: model.pick == choice.name)
+            ChoiceCardBody(choice: choice, isOn: model.pick == choice.name, index: index)
                 .opacity(isDragging ? 0.22 : 1)
                 .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .onTapGesture {
@@ -318,11 +318,7 @@ struct LabView: View {
             }
         } label: {
             VStack(alignment: .leading, spacing: 0) {
-                Text("✍️").font(.system(size: 14))
-                    .frame(width: 27, height: 27)
-                    .background(Color(hex: 0xE35CC1, alpha: 0.12), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .strokeBorder(Color(hex: 0xE35CC1, alpha: 0.24), lineWidth: 1))
+                CardIconChip(icon: .custom, accent: Theme.magenta, emphasized: isOn)
                 Text("自定义选择").font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Color(hex: 0xE3D9F4)).padding(.top, 10)
                 Text("写下真正在考虑的那条路").font(.system(size: 10.5))
@@ -475,7 +471,7 @@ struct LabView: View {
     private var dragGhost: some View {
         if let choice = draggingChoice {
             HStack(spacing: 8) {
-                Text(choice.emoji)
+                CardIconMark(icon: choice.icon, size: 14).foregroundStyle(Theme.blue)
                 Text(choice.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
             }
             .padding(.horizontal, 18).padding(.vertical, 12)
@@ -535,7 +531,7 @@ struct LabView: View {
             if let message = model.toggleCarry(card.id) { toast.show(message) }
         } label: {
             VStack(alignment: .leading, spacing: 5) {
-                Text(card.glyph).font(.system(size: 15)).foregroundStyle(on ? Theme.blue : Theme.sub)
+                CardIconMark(icon: card.icon, size: 14).foregroundStyle(on ? Theme.blue : Theme.sub)
                 Text(card.name).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
                 Text(card.source).font(.system(size: 9.5)).foregroundStyle(Theme.faint)
             }
@@ -561,20 +557,22 @@ struct LabView: View {
 private struct ChoiceCardBody: View {
     let choice: LabModel.Choice
     let isOn: Bool
+    /// 扇形中的位次；LLM 没给可用颜色时用它轮转品牌点缀色，保证相邻卡不撞色
+    let index: Int
 
-    /// LLM 卡自带 CSS 颜色 → 卡面点缀色；解析失败回默认视觉
-    private var accent: Color? { Color(css: choice.color) }
-
-    /// 自定义卡右上光斑偏品红（原型 --stamp-glow 交替）；LLM 卡用其 color
-    private var stampGlow: Color {
-        if let accent { return accent.opacity(0.17) }
-        return choice.isCustom ? Color(hex: 0xE35CC1, alpha: 0.18) : Color(hex: 0x5E96FF, alpha: 0.16)
+    /// LLM 卡自带 CSS 颜色只作色相提示，吸附到品牌色板后再上卡面
+    private var accent: Color {
+        choice.isCustom
+            ? Theme.magenta
+            : Theme.cardAccent(near: Color(css: choice.color), index: index)
     }
+
+    /// 右上光斑（原型 --stamp-glow）取同一枚点缀色，卡面只有一个色源
+    private var stampGlow: Color { accent.opacity(0.17) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(choice.emoji).font(.system(size: 19))
-                .foregroundStyle(accent ?? Theme.ink)
+            CardIconChip(icon: choice.icon, accent: accent, emphasized: isOn)
             Text(choice.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                 .lineSpacing(3).padding(.top, 10)
             Text(choice.desc).font(.system(size: 10.5)).foregroundStyle(Theme.sub).lineSpacing(2).padding(.top, 6)

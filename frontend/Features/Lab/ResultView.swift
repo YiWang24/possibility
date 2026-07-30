@@ -227,7 +227,7 @@ private struct FloorTestPanel: View {
             ForEach(cards) { card in
                 VStack(alignment: .leading, spacing: 9) {
                     HStack(spacing: 8) {
-                        Text(card.glyph).font(.system(size: 13)).foregroundStyle(Color(hex: 0xFF9B77))
+                        CardIconMark(icon: card.icon, size: 13).foregroundStyle(Color(hex: 0xFF9B77))
                         Text(card.name).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
                     }
                     Text(card.risk).font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)

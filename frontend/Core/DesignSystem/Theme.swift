@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// 设计系统 · 色板与渐变 —— 与原型 CSS `:root` 变量一一对应。
 enum Theme {
@@ -110,6 +111,31 @@ enum Theme {
         hues[((index % hues.count) + hues.count) % hues.count]
     }
 
+    // MARK: - 卡面点缀色
+
+    /// LLM 卡的点缀色板。模型返回的 CSS 颜色只当色相提示用，一律吸附到这几档，
+    /// 否则一屏扇形卡会出现互不相干的随机彩虹色，正是「模型生成感」的来源之一。
+    static let cardAccents: [Color] = [blue, violetSoft, magenta, apricot, teal]
+
+    private static let cardAccentHues: [Double] = cardAccents.map { $0.hsb?.hue ?? 0 }
+
+    /// 把任意颜色吸附到最近的品牌点缀色。
+    /// 解析失败、或颜色接近中性灰（没有可用色相）时，按卡片位次轮转取色。
+    static func cardAccent(near color: Color?, index: Int) -> Color {
+        let rotated = cardAccents[((index % cardAccents.count) + cardAccents.count) % cardAccents.count]
+        guard let hsb = color?.hsb, hsb.saturation > 0.15, hsb.brightness > 0.12 else { return rotated }
+        let nearest = cardAccentHues.enumerated().min {
+            hueDistance($0.element, hsb.hue) < hueDistance($1.element, hsb.hue)
+        }
+        return nearest.map { cardAccents[$0.offset] } ?? rotated
+    }
+
+    /// 色相是环形的：0.98 与 0.02 只差 0.04，不是 0.96。
+    private static func hueDistance(_ lhs: Double, _ rhs: Double) -> Double {
+        let delta = abs(lhs - rhs)
+        return min(delta, 1 - delta)
+    }
+
     // MARK: - 圆角 / 阴影
 
     enum Radius {
@@ -122,6 +148,14 @@ enum Theme {
 // MARK: - Color(hex:)
 
 extension Color {
+    /// HSB 分量（均为 0...1）；无法转换时返回 nil。用于把外部颜色吸附到品牌色板。
+    var hsb: (hue: Double, saturation: Double, brightness: Double)? {
+        var hue: CGFloat = 0, saturation: CGFloat = 0, brightness: CGFloat = 0, alpha: CGFloat = 0
+        guard UIColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+        else { return nil }
+        return (Double(hue), Double(saturation), Double(brightness))
+    }
+
     init(hex: UInt32, alpha: Double = 1) {
         self.init(
             .sRGB,
