@@ -273,6 +273,8 @@ export const personaSchema = {
 export const diarySchema = {
   type: "object",
   properties: {
+    title: { type: "string", minLength: 1, maxLength: 48 },
+    entry_summary: { type: "string", minLength: 1, maxLength: 240 },
     emotions: {
       type: "array",
       minItems: 1,
@@ -323,7 +325,34 @@ export const diarySchema = {
       },
     },
   },
-  required: ["emotions", "keywords", "dim_updates"],
+  required: ["title", "entry_summary", "emotions", "keywords", "dim_updates"],
+  additionalProperties: false,
+} as const;
+
+export const layeredDiarySummarySchema = {
+  type: "object",
+  properties: {
+    insight: { type: "string", minLength: 1, maxLength: 800 },
+    highlights: {
+      type: "array",
+      maxItems: 5,
+      items: {
+        type: "object",
+        properties: {
+          text: { type: "string", minLength: 1, maxLength: 120 },
+          entry_ids: {
+            type: "array",
+            maxItems: 4,
+            uniqueItems: true,
+            items: { type: "string", minLength: 36, maxLength: 36 },
+          },
+        },
+        required: ["text", "entry_ids"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["insight", "highlights"],
   additionalProperties: false,
 } as const;
 
@@ -487,6 +516,8 @@ export type PersonaOutput = {
 };
 
 export type DiaryOutput = {
+  title: string;
+  entry_summary: string;
   emotions: string[];
   keywords: string[];
   dim_updates: Array<{ dimension: string; value: string }>;
@@ -495,6 +526,11 @@ export type DiaryOutput = {
 export type DiarySummaryOutput = {
   insight: string;
   highlights: string[];
+};
+
+export type LayeredDiarySummaryOutput = {
+  insight: string;
+  highlights: Array<{ text: string; entry_ids: string[] }>;
 };
 
 export type ChatSignal = {

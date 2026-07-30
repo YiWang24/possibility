@@ -1,6 +1,6 @@
 "use client";
 /* 首页「认识你自己」客户端状态仓 —— 移植 iOS HomeModel。
-   探索发问 / 语音日记（Web 改为文字输入 + 保留麦克风 UI）/ 动态画像维度 / 云端数字形象。
+   探索发问 / 动态画像维度 / 云端数字形象 / 真实日记概览。
    服务端画像经 useData（get-profile）拉取；本地维度用 localStorage 持久化（对齐 iOS UserDefaults）。 */
 
 import { create } from "zustand";
@@ -8,15 +8,7 @@ import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
 import { DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import type { ExploreTopic } from "@/lib/models";
-import { emotionEmoji } from "@/lib/emotions";
 import { personaModelFrom, type PersonaData, type PersonaModel } from "./persona";
-
-/** POST /analyze-diary 出参 */
-interface DiaryAnalysis {
-  emotions: string[];
-  keywords: string[];
-  dim_updates?: Record<string, string>;
-}
 
 /** POST /persona 出参（扁平 {job_id, status, persona, model_version}） */
 interface PersonaJob {
@@ -30,6 +22,7 @@ interface PersonaJob {
 interface RemoteDiaryEntry {
   id: number;
   emotions?: string[] | null;
+  local_date: string;
   created_at: string;
 }
 
@@ -41,10 +34,6 @@ export interface LifeSignatureCard {
 
 const STORE_PREFIX = "kaleido_dim_";
 const DIM_ORDER = ["personality", ...DIMENSION_KEYS] as const;
-
-/** demo：录音得到的预置 transcript（Web 端用户不输入时的兜底） */
-const SAMPLE_TRANSCRIPT =
-  "今天又在纠结要不要转产品。会议上帮团队理清了一个乱成一团的需求，那一刻很有成就感，但一想到要放弃做了六年的设计，还是会慌。";
 
 /* ---- localStorage 帮手（SSR 安全） ---- */
 function lsGet(key: string): string | null {
@@ -76,9 +65,7 @@ async function withTimeout<T>(ms: number, work: () => Promise<T>): Promise<T | n
   }
 }
 
-/* ---- 计时 / 防抖 / 取消 句柄（模块级，不进 state） ---- */
-let timerId: ReturnType<typeof setInterval> | null = null;
-let analyzeToken = 0;
+/* ---- 防抖句柄（模块级，不进 state） ---- */
 let personaDebounce: ReturnType<typeof setTimeout> | null = null;
 let lastPersonaSnapshot: string | null = null;
 
@@ -92,21 +79,6 @@ interface HomeState {
   canSend: () => boolean;
   trimmedQuestion: () => string;
 
-  /* 语音日记 */
-  isRecording: boolean;
-  elapsed: number;
-  analyzing: boolean;
-  analysis: DiaryAnalysis | null;
-  analysisError: string | null;
-  transcript: string;
-  lastTranscript: string | null;
-  toggleRecording: () => void;
-  setTranscript: (text: string) => void;
-  startAnalyze: () => void;
-  submitEditedTranscript: () => void;
-  retryAnalysis: () => void;
-  cancelAnalysis: () => void;
-
   /* 动态画像 */
   filledDims: Record<string, string>;
   remotePersona: PersonaData | null;
@@ -118,21 +90,9 @@ interface HomeState {
   lifeSignatureCards: () => LifeSignatureCard[];
   completion: () => { completed: number; total: number; percent: number };
 
-  /* 今日日记 / 探索天数 */
-  todayEmoji: string | null;
-  hasRemoteDiaryToday: boolean;
+  /* 探索天数 */
   exploredDays: number;
-  hasRecordedToday: () => boolean;
-  todayDisplayEmoji: () => string;
   loadDiaryOverview: () => Promise<void>;
-}
-
-/** yyyy-MM-dd（本地时区） */
-function dayString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 export const useHome = create<HomeState>()((set, get) => ({
@@ -153,69 +113,6 @@ export const useHome = create<HomeState>()((set, get) => ({
   clearQuestion: () => set({ question: "" }),
   trimmedQuestion: () => get().question.trim(),
   canSend: () => get().question.trim().length > 0,
-
-  /* ============ 语音日记 ============ */
-  isRecording: false,
-  elapsed: 0,
-  analyzing: false,
-  analysis: null,
-  analysisError: null,
-  transcript: "",
-  lastTranscript: null,
-
-  toggleRecording: () => {
-    if (get().isRecording) {
-      get().startAnalyze();
-      return;
-    }
-    if (timerId) clearInterval(timerId);
-    set({
-      isRecording: true,
-      elapsed: 0,
-      analysis: null,
-      analysisError: null,
-      transcript: "",
-    });
-    timerId = setInterval(() => {
-      if (!get().isRecording) return;
-      set({ elapsed: get().elapsed + 1 });
-    }, 1000);
-  },
-
-  setTranscript: (text) => set({ transcript: text }),
-
-  startAnalyze: () => {
-    if (get().analyzing) return;
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = null;
-    }
-    // Web 端无真实 STT：用户输入为准，未输入则回退 demo transcript
-    const typed = get().transcript.trim();
-    const transcript = typed.length >= 1 ? typed : SAMPLE_TRANSCRIPT;
-    set({ isRecording: false, transcript, lastTranscript: transcript });
-    void runAnalysis(transcript, set, get);
-  },
-
-  submitEditedTranscript: () => {
-    if (get().analyzing) return;
-    const text = get().transcript.trim();
-    if (!text) return;
-    set({ transcript: text, lastTranscript: text });
-    void runAnalysis(text, set, get);
-  },
-
-  retryAnalysis: () => {
-    if (get().analyzing) return;
-    const t = get().lastTranscript;
-    if (!t) return;
-    void runAnalysis(t, set, get);
-  },
-
-  cancelAnalysis: () => {
-    analyzeToken++;
-    set({ analyzing: false, analysisError: null });
-  },
 
   /* ============ 动态画像 ============ */
   filledDims: {},
@@ -310,18 +207,8 @@ export const useHome = create<HomeState>()((set, get) => ({
     return { completed, total, percent };
   },
 
-  /* ============ 今日日记 / 探索天数 ============ */
-  todayEmoji: null,
-  hasRemoteDiaryToday: false,
-  exploredDays: 47,
-
-  hasRecordedToday: () => get().analysis !== null || get().hasRemoteDiaryToday,
-
-  todayDisplayEmoji: () => {
-    const first = get().analysis?.emotions?.[0];
-    if (first) return emotionEmoji(first, "");
-    return get().todayEmoji ?? "";
-  },
+  /* ============ 探索天数 ============ */
+  exploredDays: 1,
 
   async loadDiaryOverview() {
     const res = await withTimeout(20000, () =>
@@ -330,14 +217,11 @@ export const useHome = create<HomeState>()((set, get) => ({
     if (!res) return;
     const rows = res.entries ?? [];
 
-    const emotionsByDay = new Map<string, string[]>();
     let earliest: Date | null = null;
     for (const row of rows) {
-      const created = new Date(row.created_at);
+      const created = new Date(`${row.local_date}T00:00:00`);
       if (Number.isNaN(created.getTime())) continue;
       if (!earliest || created < earliest) earliest = created;
-      const key = dayString(created);
-      if (!emotionsByDay.has(key)) emotionsByDay.set(key, row.emotions ?? []);
     }
 
     const today = new Date();
@@ -351,36 +235,13 @@ export const useHome = create<HomeState>()((set, get) => ({
       set({ exploredDays: 1 });
     }
 
-    const todayKey = dayString(today);
-    const todayEmotions = emotionsByDay.get(todayKey);
-    set({
-      hasRemoteDiaryToday: todayEmotions !== undefined,
-      todayEmoji: todayEmotions ? emotionEmoji(todayEmotions[0], "") : null,
-    });
   },
 }));
 
-/* ============ 私有：分析 / 形象生成 ============ */
+/* ============ 私有：形象生成 ============ */
 
 type SetFn = (partial: Partial<HomeState>) => void;
 type GetFn = () => HomeState;
-
-/** 单次提交 analyze-diary（最多等 50s；情绪/关键词绝不由客户端伪造，必须来自服务端） */
-async function runAnalysis(transcript: string, set: SetFn, get: GetFn) {
-  const token = ++analyzeToken;
-  set({ analyzing: true, analysisError: null });
-  const result = await withTimeout(50000, () =>
-    callFunction<DiaryAnalysis>("analyze-diary", { transcript, input_method: "text" }),
-  );
-  if (token !== analyzeToken) return; // 已被取消 / 覆盖
-  if (result) {
-    set({ analysis: result, analyzing: false });
-    useData.getState().invalidateProfile();
-    void get().loadDiaryOverview();
-  } else {
-    set({ analysis: null, analyzing: false, analysisError: "这次没能顺利分析，点「重试」再试一次。" });
-  }
-}
 
 /** 画像变化后重新生成云端形象；快照未变且已有形象时跳过（避免重复打 LLM） */
 async function refreshPersona(set: SetFn, get: GetFn) {

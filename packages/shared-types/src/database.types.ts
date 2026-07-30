@@ -218,30 +218,186 @@ export type Database = {
       }
       diary_entries: {
         Row: {
+          analysis: Json
+          analysis_model: string | null
+          analysis_provider: string | null
+          analyzed_at: string | null
+          attempt_count: number
+          audio_bytes: number | null
+          audio_deleted_at: string | null
+          audio_mime: string | null
           audio_path: string | null
+          content_version: number
           created_at: string
+          deleted_at: string | null
+          duration_ms: number | null
           emotions: string[] | null
+          entry_summary: string | null
+          entry_uuid: string
+          error_code: string | null
           id: number
           keywords: string[] | null
+          local_date: string
+          prompt_version: string | null
+          recorded_at: string
+          source: string
+          status: string
+          timezone: string
+          title: string | null
+          transcribed_at: string | null
           transcript: string | null
+          transcript_edited: string | null
+          transcript_language: string | null
+          transcript_raw: string | null
+          transcription_model: string | null
+          transcription_provider: string | null
+          updated_at: string
+          uploaded_at: string | null
           user_id: string
         }
         Insert: {
+          analysis?: Json
+          analysis_model?: string | null
+          analysis_provider?: string | null
+          analyzed_at?: string | null
+          attempt_count?: number
+          audio_bytes?: number | null
+          audio_deleted_at?: string | null
+          audio_mime?: string | null
           audio_path?: string | null
+          content_version?: number
           created_at?: string
+          deleted_at?: string | null
+          duration_ms?: number | null
           emotions?: string[] | null
+          entry_summary?: string | null
+          entry_uuid?: string
+          error_code?: string | null
           id?: number
           keywords?: string[] | null
+          local_date: string
+          prompt_version?: string | null
+          recorded_at?: string
+          source?: string
+          status?: string
+          timezone?: string
+          title?: string | null
+          transcribed_at?: string | null
           transcript?: string | null
+          transcript_edited?: string | null
+          transcript_language?: string | null
+          transcript_raw?: string | null
+          transcription_model?: string | null
+          transcription_provider?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
           user_id: string
         }
         Update: {
+          analysis?: Json
+          analysis_model?: string | null
+          analysis_provider?: string | null
+          analyzed_at?: string | null
+          attempt_count?: number
+          audio_bytes?: number | null
+          audio_deleted_at?: string | null
+          audio_mime?: string | null
           audio_path?: string | null
+          content_version?: number
           created_at?: string
+          deleted_at?: string | null
+          duration_ms?: number | null
           emotions?: string[] | null
+          entry_summary?: string | null
+          entry_uuid?: string
+          error_code?: string | null
           id?: number
           keywords?: string[] | null
+          local_date?: string
+          prompt_version?: string | null
+          recorded_at?: string
+          source?: string
+          status?: string
+          timezone?: string
+          title?: string | null
+          transcribed_at?: string | null
           transcript?: string | null
+          transcript_edited?: string | null
+          transcript_language?: string | null
+          transcript_raw?: string | null
+          transcription_model?: string | null
+          transcription_provider?: string | null
+          updated_at?: string
+          uploaded_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      diary_summaries: {
+        Row: {
+          active_day_count: number
+          attempt_count: number
+          created_at: string
+          data_cutoff_at: string | null
+          entry_count: number
+          error_code: string | null
+          generated_at: string | null
+          id: string
+          model: string | null
+          period_start: string
+          period_type: string
+          prompt_version: string | null
+          provider: string | null
+          schema_version: number
+          source_fingerprint: string | null
+          status: string
+          summary: Json
+          total_duration_ms: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active_day_count?: number
+          attempt_count?: number
+          created_at?: string
+          data_cutoff_at?: string | null
+          entry_count?: number
+          error_code?: string | null
+          generated_at?: string | null
+          id?: string
+          model?: string | null
+          period_start: string
+          period_type: string
+          prompt_version?: string | null
+          provider?: string | null
+          schema_version?: number
+          source_fingerprint?: string | null
+          status?: string
+          summary?: Json
+          total_duration_ms?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active_day_count?: number
+          attempt_count?: number
+          created_at?: string
+          data_cutoff_at?: string | null
+          entry_count?: number
+          error_code?: string | null
+          generated_at?: string | null
+          id?: string
+          model?: string | null
+          period_start?: string
+          period_type?: string
+          prompt_version?: string | null
+          provider?: string | null
+          schema_version?: number
+          source_fingerprint?: string | null
+          status?: string
+          summary?: Json
+          total_duration_ms?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -750,9 +906,32 @@ export type Database = {
         Args: { p_event: string; p_source: string; p_user_id: string }
         Returns: boolean
       }
+      delete_diary_job: { Args: { p_message_id: number }; Returns: boolean }
+      enqueue_diary_job: {
+        Args: {
+          p_delay_seconds?: number
+          p_entry_id?: string
+          p_job_key: string
+          p_period_start?: string
+          p_task_type: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       merge_anonymous_user: {
         Args: { p_new: string; p_old: string }
         Returns: undefined
+      }
+      purge_diary_jobs: { Args: { p_user_id: string }; Returns: number }
+      read_diary_jobs: {
+        Args: { p_quantity?: number; p_visibility_seconds?: number }
+        Returns: {
+          enqueued_at: string
+          message: Json
+          msg_id: number
+          read_ct: number
+          vt: string
+        }[]
       }
     }
     Enums: {

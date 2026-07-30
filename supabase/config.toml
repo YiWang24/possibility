@@ -64,6 +64,24 @@ verify_jwt = true
 [functions.analyze-diary]
 verify_jwt = true
 
+[functions.create-diary-entry]
+verify_jwt = true
+
+[functions.finalize-diary-entry]
+verify_jwt = true
+
+[functions.diary-audio-url]
+verify_jwt = true
+
+[functions.delete-diary-entry]
+verify_jwt = true
+
+[functions.delete-diary-audio]
+verify_jwt = true
+
+[functions.export-diary]
+verify_jwt = true
+
 [functions.save-profile]
 verify_jwt = true
 
@@ -78,6 +96,17 @@ verify_jwt = true
 
 [functions.diary-summary]
 verify_jwt = true
+
+[functions.retry-diary-entry]
+verify_jwt = true
+
+[functions.update-diary-transcript]
+verify_jwt = true
+
+# Internal queue consumer. Authentication is enforced with
+# x-diary-worker-secret inside the function.
+[functions.diary-worker]
+verify_jwt = false
 
 [functions.community]
 verify_jwt = true
