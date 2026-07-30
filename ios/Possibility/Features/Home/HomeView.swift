@@ -165,7 +165,7 @@ struct HomeView: View {
         guard kind == .bigfive else { return }
         var text = "大五：" + tags.prefix(3).joined(separator: " · ")
         if let mbti = MBTIStore.current { text += " · MBTI：\(mbti)" }
-        model.savePersonality(text)
+        model.savePersonality(text, using: supabase)
         toast.show("结果已写入人格底色 · 原始答案默认私密")
     }
 }

@@ -228,9 +228,27 @@ struct Unlock: Codable, Sendable {
 
 // MARK: - Edge Function 契约
 
+/// AI 响应随附的最小化授权披露：只包含用途与实际使用的维度键。
+struct AIContextDisclosure: Codable, Sendable {
+    let purpose: String
+    let dimensions: [String]
+    let profileRevision: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case purpose, dimensions
+        case profileRevision = "profile_revision"
+    }
+}
+
 /// POST /match 出参：3 位结局不同的旅人 + 可解释理由
 struct MatchResponse: Codable, Sendable {
     let matches: [Match]
+    let aiContext: AIContextDisclosure?
+
+    enum CodingKeys: String, CodingKey {
+        case matches
+        case aiContext = "ai_context"
+    }
 
     struct Match: Codable, Identifiable, Sendable {
         var id: Int { travelerId }
@@ -269,6 +287,7 @@ struct PersonaJob: Decodable, Sendable {
     let persona: Persona?
     /// 结构化模型版本；离线兜底为 "fallback"
     let modelVersion: String?
+    let aiContext: AIContextDisclosure?
 
     /// 数字形象参数（_shared/schemas.ts personaSchema）
     struct Persona: Codable, Sendable {
@@ -286,6 +305,7 @@ struct PersonaJob: Decodable, Sendable {
         case status, persona
         case jobId = "job_id"
         case modelVersion = "model_version"
+        case aiContext = "ai_context"
     }
 
     init(from decoder: Decoder) throws {
@@ -294,6 +314,7 @@ struct PersonaJob: Decodable, Sendable {
         status = try c.decode(String.self, forKey: .status)
         persona = try? c.decodeIfPresent(Persona.self, forKey: .persona)
         modelVersion = try? c.decodeIfPresent(String.self, forKey: .modelVersion)
+        aiContext = try? c.decodeIfPresent(AIContextDisclosure.self, forKey: .aiContext)
     }
 }
 
@@ -301,6 +322,12 @@ struct PersonaJob: Decodable, Sendable {
 struct LabChoiceResponse: Decodable, Sendable {
     let cards: [Card]
     let rationale: String
+    let aiContext: AIContextDisclosure?
+
+    enum CodingKeys: String, CodingKey {
+        case cards, rationale
+        case aiContext = "ai_context"
+    }
 
     struct Card: Decodable, Identifiable, Sendable {
         let id: String
@@ -458,6 +485,64 @@ struct RemoteProfileDimension: Decodable, Sendable {
     enum CodingKeys: String, CodingKey {
         case dimension, tags, source
         case updatedAt = "updated_at"
+    }
+}
+
+/// 私密画像的原子事实；来源和确认状态用于区分“本人确认”与“AI 推断”。
+struct ProfileFact: Codable, Identifiable, Sendable {
+    let id: UUID
+    let dimension: String
+    let value: String
+    let source: String
+    let sourceRef: String?
+    let confidence: Double
+    let userConfirmed: Bool
+    let status: String?
+    let observedAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, dimension, value, source, confidence, status
+        case sourceRef = "source_ref"
+        case userConfirmed = "user_confirmed"
+        case observedAt = "observed_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+/// 隐私中心显示的最小 AI 使用回执；不包含发送给模型的画像原文。
+struct ProfileAccessReceipt: Decodable, Identifiable, Sendable {
+    let id: Int
+    let purpose: String
+    let dimensions: [String]
+    let dimensionCount: Int
+    let factCount: Int
+    let profileRevision: Int
+    let createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, purpose, dimensions
+        case dimensionCount = "dimension_count"
+        case factCount = "fact_count"
+        case profileRevision = "profile_revision"
+        case createdAt = "created_at"
+    }
+}
+
+struct ProfilePrivacySnapshot: Decodable, Sendable {
+    let profileRevision: Int
+    let portraitPct: Int
+    let facts: [ProfileFact]
+    let permissions: [String: [String: Bool]]
+    let permissionUpdatedAt: String?
+    let accessReceipts: [ProfileAccessReceipt]
+
+    enum CodingKeys: String, CodingKey {
+        case facts, permissions
+        case profileRevision = "profile_revision"
+        case portraitPct = "portrait_pct"
+        case permissionUpdatedAt = "permission_updated_at"
+        case accessReceipts = "access_receipts"
     }
 }
 

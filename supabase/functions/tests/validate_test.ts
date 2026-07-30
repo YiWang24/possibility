@@ -1,5 +1,6 @@
 import { HttpError } from "../_shared/errors.ts";
 import {
+  validateAIPermissionsInput,
   validateBountyInput,
   validateBountyResponseInput,
   validateChatInput,
@@ -178,6 +179,24 @@ Deno.test("saveDimension rejects invalid dimension", () => {
 Deno.test("saveDimension rejects empty tags", () => {
   assertHttpError(
     () => validateSaveDimensionInput({ dimension: "skill", tags: [] }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("saveDimension only accepts user-authored sources", () => {
+  const assessment = validateSaveDimensionInput({
+    dimension: "personality",
+    tags: ["审慎"],
+    source: "assessment",
+  });
+  assert(assessment.source === "assessment");
+  assertHttpError(
+    () =>
+      validateSaveDimensionInput({
+        dimension: "skill",
+        tags: ["推断内容"],
+        source: "chat",
+      }),
     "INVALID_INPUT",
   );
 });
@@ -501,18 +520,46 @@ Deno.test("diary requires a closed input_method value", () => {
   );
 });
 
-Deno.test("saveDimension honors custom source and rejects >20 tags", () => {
+Deno.test("saveDimension honors assessment source and rejects >20 tags", () => {
   const input = validateSaveDimensionInput({
     dimension: "personality",
     tags: ["内向"],
-    source: "card_game",
+    source: "assessment",
   });
-  assert(input.source === "card_game");
+  assert(input.source === "assessment");
   assertHttpError(
     () =>
       validateSaveDimensionInput({
         dimension: "skill",
         tags: Array.from({ length: 21 }, (_, i) => `t${i}`),
+      }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("AI permissions accept known dimensions and scopes", () => {
+  const permissions = validateAIPermissionsInput({
+    permissions: {
+      personality: { persona: true, chat: false },
+      skill: { persona: true },
+    },
+  });
+  assert(permissions.personality.persona === true);
+  assert(permissions.personality.chat === false);
+});
+
+Deno.test("AI permissions reject unknown keys and non-boolean values", () => {
+  assertHttpError(
+    () =>
+      validateAIPermissionsInput({
+        permissions: { secret: { persona: true } },
+      }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () =>
+      validateAIPermissionsInput({
+        permissions: { skill: { persona: "yes" } },
       }),
     "INVALID_INPUT",
   );

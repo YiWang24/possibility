@@ -280,7 +280,20 @@ export const useHome = create<HomeState>()((set, get) => ({
     if (!text) return;
     set({ filledDims: { ...get().filledDims, personality: text } });
     lsSet(STORE_PREFIX + "personality", text);
-    scheduleRefreshPersona(set, get);
+    void (async () => {
+      try {
+        await callFunction("save-profile", {
+          action: "save_dimension",
+          dimension: "personality",
+          tags: [text],
+          source: "assessment",
+        });
+        useData.getState().invalidateProfile();
+      } catch {
+        /* 本地已存，失败静默 */
+      }
+      scheduleRefreshPersona(set, get);
+    })();
   },
 
   personaModel: () => {

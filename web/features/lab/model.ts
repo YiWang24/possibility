@@ -195,6 +195,11 @@ export interface LabChoiceCard {
 export interface LabChoiceResponse {
   cards: LabChoiceCard[];
   rationale: string;
+  ai_context?: {
+    purpose: "lab";
+    dimensions: string[];
+    profile_revision?: number;
+  };
 }
 
 export interface ScenarioOut {

@@ -70,6 +70,9 @@ verify_jwt = true
 [functions.get-profile]
 verify_jwt = true
 
+[functions.profile-privacy]
+verify_jwt = true
+
 [functions.list-conversations]
 verify_jwt = true
 

@@ -9,6 +9,7 @@ import { validateLabChoiceInput } from "../_shared/validate.ts";
 import { insertLabChoiceSet } from "../_shared/db.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { normalizeTopic, trackEvent } from "../_shared/track.ts";
+import { loadAuthorizedProfileContext } from "../_shared/profile-context.ts";
 
 /**
  * POST /lab-choices
@@ -31,16 +32,13 @@ Deno.serve(async (req) => {
     trackEvent(user.id, ServerEvent.LAB_CHOICES_REQUESTED, {
       topic: normalizeTopic(input.topic),
     });
-    const { data: profile } = await db
-      .from("profiles")
-      .select("dims")
-      .eq("id", user.id)
-      .maybeSingle();
+    const aiContext = await loadAuthorizedProfileContext(db, user.id, "lab");
 
     let prompt = `用户正在探索的问题：${input.question}`;
     if (input.topic) prompt += `\n话题：${input.topic}`;
-    if (profile?.dims) {
-      prompt += `\n已授权画像摘要：${JSON.stringify(profile.dims)}`;
+    if (aiContext.text) {
+      prompt +=
+        `\n用户另行授权用于本次人生实验室的长期画像：\n${aiContext.text}`;
     }
     if (input.constraints && input.constraints.length > 0) {
       prompt += `\n可承受条件/约束：${input.constraints.join("、")}`;
@@ -59,7 +57,14 @@ Deno.serve(async (req) => {
       trace: { name: "lab-choices", userId: user.id },
     });
     await insertLabChoiceSet(db, user.id, input, result);
-    return jsonResponse(result);
+    return jsonResponse({
+      ...result,
+      ai_context: {
+        purpose: aiContext.purpose,
+        dimensions: aiContext.dimensions,
+        profile_revision: aiContext.profileRevision,
+      },
+    });
   } catch (error) {
     return errorResponse(error, req);
   }

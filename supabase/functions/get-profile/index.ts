@@ -14,10 +14,10 @@ Deno.serve(async (req) => {
   try {
     const { user, db } = await requireUser(req);
 
-    // Fetch core profile (portrait_pct + dims)
+    // Fetch core profile snapshot + monotonic revision.
     const { data: profile, error: profileError } = await db
       .from("profiles")
-      .select("portrait_pct,dims")
+      .select("portrait_pct,dims,profile_revision")
       .eq("id", user.id)
       .maybeSingle();
     if (profileError) {
@@ -32,6 +32,18 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id);
     if (dimError) {
       console.error("get dimensions failed:", dimError.message);
+    }
+
+    const { data: facts, error: factError } = await db
+      .from("profile_facts")
+      .select(
+        "id,dimension,value,source,source_ref,confidence,user_confirmed,observed_at,updated_at",
+      )
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("updated_at", { ascending: false });
+    if (factError) {
+      console.error("get profile facts failed:", factError.message);
     }
 
     // Fetch card game results
@@ -53,12 +65,25 @@ Deno.serve(async (req) => {
       console.error("get public profile failed:", ppError.message);
     }
 
+    // Fetch private AI permissions separately from the publicly readable row.
+    const { data: aiPermissions, error: permissionError } = await db
+      .from("profile_ai_permissions")
+      .select("permissions,updated_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (permissionError) {
+      console.error("get AI permissions failed:", permissionError.message);
+    }
+
     return jsonResponse({
       portrait_pct: profile?.portrait_pct ?? 0,
       dims: profile?.dims ?? {},
+      profile_revision: Number(profile?.profile_revision ?? 0),
       dimensions: dimensions ?? [],
+      facts: facts ?? [],
       card_games: cardGames ?? [],
       public_profile: publicProfile ?? null,
+      ai_permissions: aiPermissions ?? null,
     });
   } catch (error) {
     return errorResponse(error, req);
