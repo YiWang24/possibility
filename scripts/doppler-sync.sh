@@ -13,9 +13,13 @@ if [ -n "$PROJECT_REF" ]; then
   REF_ARGS=(--project-ref "$PROJECT_REF")
 fi
 
+# CI 装的是 supabase 二进制；本地无全局安装时回退 npx
+SUPABASE="supabase"
+command -v supabase >/dev/null || SUPABASE="npx supabase"
+
 doppler secrets download --no-file --format env \
   --project possibility --config "$CONFIG" |
   grep -v -E '^(DOPPLER_|SUPABASE_)' |
-  npx supabase secrets set "${REF_ARGS[@]}" --env-file /dev/stdin
+  $SUPABASE secrets set "${REF_ARGS[@]}" --env-file /dev/stdin
 
 echo "✓ Doppler possibility/$CONFIG → Supabase Edge Functions Secrets"

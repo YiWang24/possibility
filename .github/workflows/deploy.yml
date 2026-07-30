@@ -16,10 +16,11 @@ jobs:
     name: db push + functions deploy
     runs-on: ubuntu-latest
 
+    # 唯一的 GitHub secret：Doppler 服务令牌（scoped 到 possibility/prd）。
+    # 其余凭据（SUPABASE_ACCESS_TOKEN / SUPABASE_DB_PASSWORD / SUPABASE_PROJECT_REF /
+    # DEEPSEEK_*）全部由 doppler run 注入。
     env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -28,30 +29,16 @@ jobs:
         with:
           version: latest
 
+      - uses: dopplerhq/cli-action@v3
+
       - name: 关联生产项目
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
+        run: doppler run --command 'supabase link --project-ref "$SUPABASE_PROJECT_REF"'
 
       - name: 推送数据库迁移
-        run: supabase db push
+        run: doppler run --command 'supabase db push'
 
-      - name: 同步 Edge Function 密钥
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          DEEPSEEK_BASE_URL: ${{ vars.DEEPSEEK_BASE_URL }}
-          DEEPSEEK_CHAT_MODEL: ${{ vars.DEEPSEEK_CHAT_MODEL }}
-          DEEPSEEK_STRUCTURED_MODEL: ${{ vars.DEEPSEEK_STRUCTURED_MODEL }}
-          DEEPSEEK_DIARY_MODEL: ${{ vars.DEEPSEEK_DIARY_MODEL }}
-        run: |
-          umask 077
-          {
-            printf 'DEEPSEEK_API_KEY=%s\n' "$DEEPSEEK_API_KEY"
-            printf 'DEEPSEEK_BASE_URL=%s\n' "${DEEPSEEK_BASE_URL:-https://api.deepseek.com}"
-            printf 'DEEPSEEK_CHAT_MODEL=%s\n' "${DEEPSEEK_CHAT_MODEL:-deepseek-v4-flash}"
-            printf 'DEEPSEEK_STRUCTURED_MODEL=%s\n' "${DEEPSEEK_STRUCTURED_MODEL:-deepseek-v4-pro}"
-            printf 'DEEPSEEK_DIARY_MODEL=%s\n' "${DEEPSEEK_DIARY_MODEL:-deepseek-v4-pro}"
-          } > supabase/.env.ci
-          supabase secrets set --env-file supabase/.env.ci --project-ref "$SUPABASE_PROJECT_ID"
-          rm -f supabase/.env.ci
+      - name: 同步 Edge Function 密钥（Doppler → Supabase）
+        run: doppler run --command 'bash scripts/doppler-sync.sh prd "$SUPABASE_PROJECT_REF"'
 
       - name: 部署 Edge Functions
-        run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID"
+        run: doppler run --command 'supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"'
