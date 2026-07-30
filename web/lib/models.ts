@@ -241,10 +241,12 @@ export interface Unlock {
 
 /** POST /match 出参：3 位结局不同的旅人 + 可解释理由 */
 export interface AIContextDisclosure {
-  purpose: "persona" | "chat" | "match" | "lab";
+  purpose: "persona" | "chat" | "match" | "lab" | "community";
   dimensions: string[];
   /** 本次 AI 上下文对应的画像版本；用于向用户解释和排查跨设备更新。 */
   profile_revision?: number;
+  /** 本次 AI 上下文对应的用途授权版本。 */
+  permission_revision?: number;
 }
 
 export interface MatchResponse {

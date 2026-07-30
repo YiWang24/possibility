@@ -123,49 +123,40 @@ export async function applyChatSignal(
       value.trim(),
     ]),
   )).filter(([, value]) => value.length > 0);
-  let snapshot: ProfileSnapshot | undefined;
-  for (const [index, [dimension, value]] of normalizedUpdates.entries()) {
-    snapshot = await replaceProfileDimension(db, {
+  for (const [dimension, value] of normalizedUpdates) {
+    await proposeProfileFact(db, {
       dimension,
-      values: [value],
-      source: "chat",
-      sourceRef: conversationId,
+      value,
+      sourceType: "chat",
+      sourceId: conversationId,
       confidence: 0.75,
-      userConfirmed: false,
-      portraitDelta: index === 0 ? signal.portrait_delta : 0,
     });
   }
-  return snapshot ??
-    await applyProfileUpdate(db, {}, signal.portrait_delta);
+  return await updateProfileProgress(db, signal.portrait_delta);
 }
 
 export type ProfileSnapshot = {
   portrait_pct: number;
-  dims: Record<string, string>;
   profile_revision: number;
 };
 
-async function applyProfileUpdate(
+async function updateProfileProgress(
   db: SupabaseClient,
-  dims: Record<string, string>,
   portraitDelta: number,
 ): Promise<ProfileSnapshot> {
-  const { data, error } = await db.rpc("apply_profile_update", {
-    p_dims: dims,
+  const { data, error } = await db.rpc("update_profile_progress", {
     p_portrait_delta: portraitDelta,
   });
   const row = (data as
     | Array<{
       portrait_pct: number;
-      dims: unknown;
-      profile_revision?: number;
+      profile_revision: number;
     }>
     | null)?.[0];
-  if (error || !row) dbFailure("apply profile update", error);
+  if (error || !row) dbFailure("update profile progress", error);
   return {
     portrait_pct: Number(row.portrait_pct),
-    dims: (row.dims as Record<string, string> | null) ?? {},
-    profile_revision: Number(row.profile_revision ?? 0),
+    profile_revision: Number(row.profile_revision),
   };
 }
 
@@ -174,7 +165,7 @@ export async function replaceProfileDimension(
   input: {
     dimension: string;
     values: string[];
-    source: "manual" | "assessment" | "card_game" | "chat" | "diary";
+    source: "manual";
     sourceRef?: string;
     confidence: number;
     userConfirmed: boolean;
@@ -195,16 +186,47 @@ export async function replaceProfileDimension(
   const row = (data as
     | Array<{
       portrait_pct: number;
-      dims: unknown;
       profile_revision: number;
     }>
     | null)?.[0];
   if (error || !row) dbFailure("replace profile dimension", error);
   return {
     portrait_pct: Number(row.portrait_pct),
-    dims: (row.dims as Record<string, string> | null) ?? {},
     profile_revision: Number(row.profile_revision),
   };
+}
+
+export async function proposeProfileFact(
+  db: SupabaseClient,
+  input: {
+    dimension: string;
+    value: string;
+    sourceType: "chat" | "diary" | "lab" | "simulation";
+    sourceId: string;
+    confidence: number;
+    sourceVersion?: number;
+    factKind?: string;
+    sensitivity?: "low" | "medium" | "high";
+    modelName?: string;
+    promptVersion?: string;
+  },
+): Promise<string> {
+  const { data, error } = await db.rpc("propose_profile_fact", {
+    p_dimension: input.dimension,
+    p_value: input.value,
+    p_source_type: input.sourceType,
+    p_source_id: input.sourceId,
+    p_confidence: input.confidence,
+    p_fact_kind: input.factKind ?? "self_description",
+    p_sensitivity: input.sensitivity ?? "low",
+    p_source_version: input.sourceVersion ?? 1,
+    p_model_name: input.modelName ?? null,
+    p_prompt_version: input.promptVersion ?? null,
+  });
+  if (error || typeof data !== "string") {
+    dbFailure("propose profile fact", error);
+  }
+  return data;
 }
 
 export async function insertSimulation(
@@ -237,14 +259,15 @@ export async function insertDiaryAnalysis(
   userId: string,
   transcript: string,
   result: DiaryOutput,
-): Promise<void> {
-  const { error } = await db.from("diary_entries").insert({
+): Promise<string> {
+  const { data, error } = await db.from("diary_entries").insert({
     user_id: userId,
     transcript,
     emotions: result.emotions,
     keywords: result.keywords,
-  });
-  if (error) dbFailure("insert diary", error);
+  }).select("id").single();
+  if (error || !data) dbFailure("insert diary", error);
+  return String(data.id);
 }
 
 export async function insertMatchResult(
@@ -279,18 +302,19 @@ export async function insertLabChoiceSet(
   if (error) dbFailure("insert lab choice set", error);
 }
 
-export async function mergeProfileDimensions(
+export async function proposeDiaryProfileFacts(
   db: SupabaseClient,
+  sourceId: string,
   updates: Array<{ dimension: string; value: string }>,
 ): Promise<void> {
   if (updates.length === 0) return;
   for (const { dimension, value } of updates) {
-    await replaceProfileDimension(db, {
+    await proposeProfileFact(db, {
       dimension,
-      values: [value],
-      source: "diary",
+      value,
+      sourceType: "diary",
+      sourceId,
       confidence: 0.7,
-      userConfirmed: false,
     });
   }
 }

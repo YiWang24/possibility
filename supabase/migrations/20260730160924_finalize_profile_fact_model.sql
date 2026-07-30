@@ -315,6 +315,9 @@ drop function if exists public.apply_profile_update(jsonb, integer);
 drop table public.profile_dimensions;
 alter table public.profiles drop column dims;
 
+create schema if not exists private;
+revoke all on schema private from public, anon, authenticated;
+
 create or replace function private.refresh_public_profile_facts(p_user_id uuid)
 returns void
 language sql
@@ -1422,7 +1425,7 @@ grant execute on function public.save_assessment_and_profile(
 grant execute on function public.save_public_profile(jsonb)
   to authenticated;
 
--- Rebuild anonymous-account merge for the final tables, including diary v2.
+-- Rebuild anonymous-account merge for the final profile tables.
 create or replace function public.merge_anonymous_user(p_old uuid, p_new uuid)
 returns void
 language plpgsql
@@ -1518,16 +1521,6 @@ begin
   update public.persona_jobs set user_id = p_new where user_id = p_old;
   update public.match_results set user_id = p_new where user_id = p_old;
   update public.lab_choice_sets set user_id = p_new where user_id = p_old;
-
-  delete from public.diary_summaries old_summary
-   where old_summary.user_id = p_old
-     and exists (
-       select 1 from public.diary_summaries new_summary
-       where new_summary.user_id = p_new
-         and new_summary.period_type = old_summary.period_type
-         and new_summary.period_start = old_summary.period_start
-     );
-  update public.diary_summaries set user_id = p_new where user_id = p_old;
 
   delete from public.unlocks old_unlock
    where old_unlock.user_id = p_old
