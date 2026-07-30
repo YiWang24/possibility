@@ -148,10 +148,24 @@ export function validateSimulateInput(value: unknown): SimulateInput {
   };
 }
 
-export function validateDiaryInput(value: unknown): { transcript: string } {
+export type DiaryInput = {
+  transcript: string;
+  inputMethod: "voice" | "text";
+};
+
+export function validateDiaryInput(value: unknown): DiaryInput {
   const body = object(value);
+  const inputMethod = string(body.input_method, "input_method", 16);
+  if (inputMethod !== "voice" && inputMethod !== "text") {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "input_method 必须是 voice 或 text。",
+    );
+  }
   return {
     transcript: string(body.transcript, "transcript", LIMITS.transcript)!,
+    inputMethod,
   };
 }
 

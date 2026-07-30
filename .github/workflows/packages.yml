@@ -1,0 +1,30 @@
+name: Packages
+
+on:
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/packages.yml'
+  workflow_dispatch:
+
+jobs:
+  typecheck:
+    name: 共享包类型检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: pnpm run packages:typecheck

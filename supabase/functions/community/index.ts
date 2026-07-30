@@ -116,6 +116,7 @@ Deno.serve(async (req) => {
               )
             }`,
             schema: kaleidoSchema,
+            track: { userId: user.id, feature: "kaleidoscope" },
             trace: {
               name: "community-kaleidoscope",
               userId: user.id,
@@ -275,6 +276,6 @@ Deno.serve(async (req) => {
         );
     }
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

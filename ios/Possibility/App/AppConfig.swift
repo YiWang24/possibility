@@ -28,6 +28,55 @@ enum AppConfig {
         supabaseURL.appendingPathComponent("functions/v1/\(name)")
     }
 
+    // MARK: - 埋点（docs/埋点方案.md）
+    //
+    // 与 Supabase 不同：这里**不设线上兜底值**。PostHog project token / Sentry DSN 是
+    // 项目级写入凭证，硬编码进仓库等于把上报端点公开给任何反编译者，脏数据无法回收。
+    // 缺省即「该 backend 不注册」——埋点降级，主流程照常。
+    // 注入路径：Config.xcconfig → project.yml info.properties → Info.plist。
+
+    enum Analytics {
+
+        /// PostHog project token（`phc_` 开头，非 personal API key）
+        static var posthogAPIKey: String {
+            plistString("POSTHOG_API_KEY") ?? ""
+        }
+
+        /// PostHog 上报域名。国内可达性差，若接了自建反代域名在此覆盖；
+        /// 缺省用 PostHog 美区云（EU 区改 https://eu.i.posthog.com）。
+        static var posthogHost: String {
+            plistString("POSTHOG_HOST") ?? "https://us.i.posthog.com"
+        }
+
+        /// Sentry DSN（形如 https://<key>@<org>.ingest.sentry.io/<project>）
+        static var sentryDSN: String {
+            plistString("SENTRY_DSN") ?? ""
+        }
+
+        /// Sentry / PostHog 的环境标签：Debug 构建的数据不该污染生产看板
+        static var environment: String {
+            #if DEBUG
+            return "development"
+            #else
+            return "production"
+            #endif
+        }
+
+        /// App 版本号，随事件上报（`app_events.app_version`）：定位「某版本才有的漏斗塌陷」
+        static var appVersion: String {
+            let short = plistString("CFBundleShortVersionString") ?? "0"
+            let build = plistString("CFBundleVersion") ?? "0"
+            return "\(short) (\(build))"
+        }
+
+        /// xcconfig 未注入时 Info.plist 里残留的是未展开的 `$(KEY)` 字面量，一并视作未配置
+        private static func plistString(_ key: String) -> String? {
+            guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String,
+                  !value.isEmpty, !value.hasPrefix("$(") else { return nil }
+            return value
+        }
+    }
+
     // MARK: - 价格（demo mock 支付；生产切 StoreKit 2）
 
     enum Price {

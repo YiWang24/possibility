@@ -67,6 +67,8 @@ final class CardGameEngine {
         reasonAbandon = ""
         phase = .select
         saveProgress()
+        // 打在真正开一局处：进介绍页不算，恢复存档进 result 也不会走到这里
+        Analytics.shared.track(.cardGameStarted)
     }
 
     /// 选牌开关；满 9 张时返回提示
@@ -172,6 +174,11 @@ final class CardGameEngine {
         current = nil
         phase = held.count == 3 ? .result : .draw
         saveProgress()
+        // 状态机唯一进入 result 的边，天然只走一次：
+        // 结果页 onAppear / 存档恢复 / 云同步重试都会重复，不能在那些地方打
+        if phase == .result {
+            Analytics.shared.track(.cardGameCompleted(roundCount: round))
+        }
     }
 
     func returnToDraw() {

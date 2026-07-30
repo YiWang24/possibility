@@ -2,6 +2,11 @@ name: CI
 
 on:
   pull_request:
+    paths:
+      - 'supabase/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 jobs:
@@ -40,3 +45,11 @@ jobs:
             -v ON_ERROR_STOP=1 \
             -h 127.0.0.1 -p 54322 -U postgres -d postgres \
             -f supabase/tests/rls_test.sql
+
+      # 安全 advisor 门禁：只对 ERROR 失败，WARN 仅打印。
+      # 靠 schema 即可判定（RLS 未开、public 下的 security definer 等），跑本地实例即可，
+      # 无需 SUPABASE_ACCESS_TOKEN / link。价值是拦住迁移「新引入」的高危项，
+      # 而不是被存量 WARN 卡住合并。
+      - name: 安全体检（Advisors）
+        run: supabase db advisors --local --type security --level warn --fail-on error
+

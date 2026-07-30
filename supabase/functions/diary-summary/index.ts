@@ -221,6 +221,7 @@ Deno.serve(async (req) => {
           topKeywords.join("、") || "无"
         }\n日记原文（可能被截断）：\n${transcripts}`,
         schema: diarySummarySchema,
+        track: { userId: user.id, feature: "diary_summary" },
         trace: {
           name: "diary-summary",
           userId: user.id,
@@ -268,6 +269,6 @@ Deno.serve(async (req) => {
       highlights,
     });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

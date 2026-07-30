@@ -17,7 +17,12 @@ export type ConversationRow = {
   topic: string;
   status: string;
   crossroads?: unknown;
+  // 岔路口形成耗时（crossroad_formed.time_to_form_ms）需要对话起点，故一并取回。
+  created_at: string;
 };
+
+// 对话行的固定投影：新增列必须同时出现在这里和 ConversationRow，否则埋点静默拿到 undefined。
+const CONVERSATION_COLUMNS = "id,user_id,topic,status,crossroads,created_at";
 
 export type StoredMessage = {
   role: "user" | "assistant";
@@ -40,7 +45,7 @@ export async function getOrCreateConversation(
 ): Promise<ConversationRow> {
   if (conversationId) {
     const { data, error } = await db.from("conversations")
-      .select("id,user_id,topic,status,crossroads")
+      .select(CONVERSATION_COLUMNS)
       .eq("id", conversationId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -57,7 +62,7 @@ export async function getOrCreateConversation(
 
   const { data, error } = await db.from("conversations")
     .insert({ user_id: userId, topic })
-    .select("id,user_id,topic,status,crossroads")
+    .select(CONVERSATION_COLUMNS)
     .single();
   if (error || !data) dbFailure("create conversation", error);
   return data as ConversationRow;

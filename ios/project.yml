@@ -13,6 +13,14 @@ packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
     from: 2.0.0
+  # 埋点 Layer 2：PostHog（客户端行为 / 漏斗 / 留存看板）
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    from: 3.68.3
+  # 埋点 Layer 3：Sentry（崩溃 + 事件面包屑，崩前行为可回放）
+  Sentry:
+    url: https://github.com/getsentry/sentry-cocoa
+    from: 9.23.0
 targets:
   Possibility:
     type: application
@@ -25,6 +33,10 @@ targets:
     dependencies:
       - package: Supabase
         product: Supabase
+      - package: PostHog
+        product: PostHog
+      - package: Sentry
+        product: Sentry
     # Base.xcconfig 已入库，内部 #include? 本地 Config.xcconfig（含密钥，不入库）。
     # 走 configFiles 而非手工在 Xcode 里点选，xcodegen 重生成工程后不会丢。
     configFiles:
@@ -43,6 +55,11 @@ targets:
           - UIInterfaceOrientationPortrait
         SUPABASE_URL: "$(SUPABASE_URL)"
         SUPABASE_ANON_KEY: "$(SUPABASE_ANON_KEY)"
+        # 埋点密钥同样走 Config.xcconfig 注入，不进仓库（见 Config.xcconfig.example）。
+        # 留空时对应 backend 自动不注册，App 正常运行 —— 埋点缺失不能拖垮主流程。
+        POSTHOG_API_KEY: "$(POSTHOG_API_KEY)"
+        POSTHOG_HOST: "$(POSTHOG_HOST)"
+        SENTRY_DSN: "$(SENTRY_DSN)"
         NSMicrophoneUsageDescription: 录制语音日记需要使用麦克风。
         NSSpeechRecognitionUsageDescription: 将语音日记转写为文字需要使用语音识别。
         NSAppTransportSecurity:

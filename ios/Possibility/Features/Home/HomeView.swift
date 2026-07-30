@@ -41,7 +41,7 @@ struct HomeView: View {
         .screenBackground()
         .onAppear { model.loadPortrait(using: supabase) }
         .task { await model.loadDiaryOverview(using: supabase) }
-        .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0) }
+        .fullScreenCover(item: $chatLaunch) { ChatView(launch: $0, entryPoint: .home) }
         .fullScreenCover(item: $diaryLaunch) { launch in
             DiaryDetailView(
                 launch: launch,

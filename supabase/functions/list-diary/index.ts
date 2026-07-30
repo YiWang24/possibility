@@ -37,6 +37,6 @@ Deno.serve(async (req) => {
       total: count ?? 0,
     });
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

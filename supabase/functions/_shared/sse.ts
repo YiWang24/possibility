@@ -7,7 +7,10 @@ export function sseEvent(data: unknown, event?: string): Uint8Array {
   return encoder.encode(`${prefix}data: ${JSON.stringify(data)}\n\n`);
 }
 
-export function sseResponse(stream: ReadableStream<Uint8Array>): Response {
+export function sseResponse(
+  stream: ReadableStream<Uint8Array>,
+  requestId?: string,
+): Response {
   return new Response(stream, {
     headers: {
       ...corsHeaders,
@@ -15,6 +18,7 @@ export function sseResponse(stream: ReadableStream<Uint8Array>): Response {
       "Cache-Control": "no-cache, no-transform",
       "Connection": "keep-alive",
       "X-Accel-Buffering": "no",
+      ...(requestId ? { "X-Request-ID": requestId } : {}),
     },
   });
 }

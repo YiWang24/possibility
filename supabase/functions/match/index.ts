@@ -12,6 +12,8 @@ import { matchPrompt } from "../_shared/prompts.ts";
 import { type MatchOutput, matchSchema } from "../_shared/schemas.ts";
 import { validateMatchInput } from "../_shared/validate.ts";
 import { insertMatchResult } from "../_shared/db.ts";
+import { ServerEvent } from "../_shared/events.ts";
+import { trackEvent } from "../_shared/track.ts";
 
 type TravelerForMatch = {
   id: number;
@@ -30,6 +32,9 @@ Deno.serve(async (req) => {
   try {
     const userState = validateMatchInput(await readJson(req));
     const { user, db } = await requireUser(req);
+    // 请求侧先打点：match_requested 是漏斗分母，失败的请求同样要计入，
+    // 否则「有多少人走到匹配这一步」会被上游故障系统性低估。
+    trackEvent(user.id, ServerEvent.MATCH_REQUESTED);
     const { data, error } = await db.from("travelers")
       .select("id,name,quote,bio,tags,dims,trajectory")
       .order("id");
@@ -57,6 +62,7 @@ Deno.serve(async (req) => {
         JSON.stringify(userState)
       }\n\n候选旅人（只能使用这些 ID）：\n${JSON.stringify(travelers)}`,
       schema: matchSchema,
+      track: { userId: user.id, feature: "match" },
       trace: { name: "match", userId: user.id },
     });
 
@@ -74,8 +80,12 @@ Deno.serve(async (req) => {
       );
     }
     await insertMatchResult(db, user.id, userState, result);
+    // 校验通过才算「返回了可用匹配」——上面那些 502 分支不该计入分子。
+    trackEvent(user.id, ServerEvent.MATCH_CONDITIONS_READY, {
+      candidate_count: result.matches.length,
+    });
     return jsonResponse(result);
   } catch (error) {
-    return errorResponse(error);
+    return errorResponse(error, req);
   }
 });

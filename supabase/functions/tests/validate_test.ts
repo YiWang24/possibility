@@ -83,10 +83,17 @@ Deno.test("simulate validates year range", () => {
 
 Deno.test("diary enforces transcript size", () => {
   assert(
-    validateDiaryInput({ transcript: "今天有些焦虑" }).transcript.length > 0,
+    validateDiaryInput({
+      transcript: "今天有些焦虑",
+      input_method: "voice",
+    }).transcript.length > 0,
   );
   assertHttpError(
-    () => validateDiaryInput({ transcript: "x".repeat(20_001) }),
+    () =>
+      validateDiaryInput({
+        transcript: "x".repeat(20_001),
+        input_method: "text",
+      }),
     "INPUT_TOO_LONG",
   );
 });
@@ -472,7 +479,24 @@ Deno.test("simulate enforces the 1..10 year boundary", () => {
 
 Deno.test("diary rejects empty transcript", () => {
   assertHttpError(
-    () => validateDiaryInput({ transcript: "   " }),
+    () => validateDiaryInput({ transcript: "   ", input_method: "text" }),
+    "INVALID_INPUT",
+  );
+});
+
+Deno.test("diary requires a closed input_method value", () => {
+  assert(
+    validateDiaryInput({
+      transcript: "今天有些焦虑",
+      input_method: "text",
+    }).inputMethod === "text",
+  );
+  assertHttpError(
+    () => validateDiaryInput({ transcript: "内容", input_method: "keyboard" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateDiaryInput({ transcript: "内容" }),
     "INVALID_INPUT",
   );
 });

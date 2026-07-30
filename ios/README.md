@@ -15,6 +15,7 @@ ios/
 ├─ Possibility/             ← app target 源码根，与 target 同名
 │  ├─ App/                  入口 PossibilityApp · 配置 AppConfig · 导航 Navigation
 │  ├─ Core/
+│  │  ├─ Analytics/         三层埋点门面 · PostHog · Sentry · app_events 缓冲
 │  │  ├─ DesignSystem/      Theme · 组件 · 四个签名动画（Orb/Kaleidoscope/Dial/Waveform）
 │  │  ├─ Models/            数据模型 · DemoData（断网兜底种子）
 │  │  ├─ Network/           SupabaseService · ChatStreamClient（SSE 流式）
@@ -41,7 +42,11 @@ ios/
 1. 复制 `Config/Config.xcconfig.example` → `Config/Config.xcconfig`（真实文件已被 `.gitignore` 忽略）。
 2. 填入本地 `SUPABASE_URL`（如 `http://127.0.0.1:54321`）与对应 `SUPABASE_ANON_KEY`。
 3. 无需手工点选 —— `Config/Base.xcconfig` 已 `#include?` 该文件，project.yml 的 `configFiles`
-   指向 Base.xcconfig，Info.plist 的两个键也由 project.yml 生成。重跑 `xcodegen generate` 即生效。
+   指向 Base.xcconfig，Info.plist 的配置键也由 project.yml 生成。重跑 `xcodegen generate` 即生效。
+
+PostHog / Sentry 为可选观测后端：在同一 `Config.xcconfig` 中填写
+`POSTHOG_API_KEY`、`POSTHOG_HOST`、`SENTRY_DSN`。留空时 App 正常运行，
+自有 `app_events` 事实表仍会采集。
 
 未配置 xcconfig 时，`AppConfig` 回落到线上项目 `https://gxmruqzcyahjlktshpkh.supabase.co`。
 
@@ -49,7 +54,8 @@ ios/
 
 ## 依赖
 
-- Swift Package：`supabase-swift`（在 Xcode 中 Add Package Dependencies 引入 `Supabase`）。
+- Swift Package：`supabase-swift`、`posthog-ios`、`sentry-cocoa`
+  （均由 `project.yml` 声明，不要在 Xcode 中手工增删）。
 - 后端：Supabase（`supabase db push` 建表 + 灌 `seed.sql`，`functions deploy` 部署 Edge Functions）。
   离线或后端未就绪时，前端自动使用 `DemoData` 的 5 位种子旅人，社区 / 匹配 / 主页仍可演示。
 
