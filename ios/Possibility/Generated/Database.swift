@@ -676,6 +676,42 @@ internal enum PublicSchema {
       case userId = "user_id"
     }
   }
+  internal struct ProfileAiPermissionsSelect: Codable, Hashable, Sendable {
+    internal let createdAt: String
+    internal let permissions: AnyJSON
+    internal let updatedAt: String
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case permissions = "permissions"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct ProfileAiPermissionsInsert: Codable, Hashable, Sendable {
+    internal let createdAt: String?
+    internal let permissions: AnyJSON?
+    internal let updatedAt: String?
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case permissions = "permissions"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct ProfileAiPermissionsUpdate: Codable, Hashable, Sendable {
+    internal let createdAt: String?
+    internal let permissions: AnyJSON?
+    internal let updatedAt: String?
+    internal let userId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case permissions = "permissions"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
   internal struct ProfileDimensionsSelect: Codable, Hashable, Sendable {
     internal let createdAt: String
     internal let dimension: String
@@ -730,17 +766,103 @@ internal enum PublicSchema {
       case userId = "user_id"
     }
   }
+  internal struct ProfileFactsSelect: Codable, Hashable, Sendable {
+    internal let confidence: Decimal
+    internal let createdAt: String
+    internal let dimension: String
+    internal let id: UUID
+    internal let observedAt: String
+    internal let source: String
+    internal let sourceRef: String?
+    internal let status: String
+    internal let updatedAt: String
+    internal let userConfirmed: Bool
+    internal let userId: UUID
+    internal let value: String
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case dimension = "dimension"
+      case id = "id"
+      case observedAt = "observed_at"
+      case source = "source"
+      case sourceRef = "source_ref"
+      case status = "status"
+      case updatedAt = "updated_at"
+      case userConfirmed = "user_confirmed"
+      case userId = "user_id"
+      case value = "value"
+    }
+  }
+  internal struct ProfileFactsInsert: Codable, Hashable, Sendable {
+    internal let confidence: Decimal?
+    internal let createdAt: String?
+    internal let dimension: String
+    internal let id: UUID?
+    internal let observedAt: String?
+    internal let source: String?
+    internal let sourceRef: String?
+    internal let status: String?
+    internal let updatedAt: String?
+    internal let userConfirmed: Bool?
+    internal let userId: UUID
+    internal let value: String
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case dimension = "dimension"
+      case id = "id"
+      case observedAt = "observed_at"
+      case source = "source"
+      case sourceRef = "source_ref"
+      case status = "status"
+      case updatedAt = "updated_at"
+      case userConfirmed = "user_confirmed"
+      case userId = "user_id"
+      case value = "value"
+    }
+  }
+  internal struct ProfileFactsUpdate: Codable, Hashable, Sendable {
+    internal let confidence: Decimal?
+    internal let createdAt: String?
+    internal let dimension: String?
+    internal let id: UUID?
+    internal let observedAt: String?
+    internal let source: String?
+    internal let sourceRef: String?
+    internal let status: String?
+    internal let updatedAt: String?
+    internal let userConfirmed: Bool?
+    internal let userId: UUID?
+    internal let value: String?
+    internal enum CodingKeys: String, CodingKey {
+      case confidence = "confidence"
+      case createdAt = "created_at"
+      case dimension = "dimension"
+      case id = "id"
+      case observedAt = "observed_at"
+      case source = "source"
+      case sourceRef = "source_ref"
+      case status = "status"
+      case updatedAt = "updated_at"
+      case userConfirmed = "user_confirmed"
+      case userId = "user_id"
+      case value = "value"
+    }
+  }
   internal struct ProfilesSelect: Codable, Hashable, Sendable {
     internal let createdAt: String
     internal let dims: AnyJSON
     internal let id: UUID
     internal let portraitPct: Int16
+    internal let profileRevision: Int64
     internal let updatedAt: String
     internal enum CodingKeys: String, CodingKey {
       case createdAt = "created_at"
       case dims = "dims"
       case id = "id"
       case portraitPct = "portrait_pct"
+      case profileRevision = "profile_revision"
       case updatedAt = "updated_at"
     }
   }
@@ -749,12 +871,14 @@ internal enum PublicSchema {
     internal let dims: AnyJSON?
     internal let id: UUID
     internal let portraitPct: Int16?
+    internal let profileRevision: Int64?
     internal let updatedAt: String?
     internal enum CodingKeys: String, CodingKey {
       case createdAt = "created_at"
       case dims = "dims"
       case id = "id"
       case portraitPct = "portrait_pct"
+      case profileRevision = "profile_revision"
       case updatedAt = "updated_at"
     }
   }
@@ -763,38 +887,60 @@ internal enum PublicSchema {
     internal let dims: AnyJSON?
     internal let id: UUID?
     internal let portraitPct: Int16?
+    internal let profileRevision: Int64?
     internal let updatedAt: String?
     internal enum CodingKeys: String, CodingKey {
       case createdAt = "created_at"
       case dims = "dims"
       case id = "id"
       case portraitPct = "portrait_pct"
+      case profileRevision = "profile_revision"
       case updatedAt = "updated_at"
     }
   }
   internal struct PublicProfilesSelect: Codable, Hashable, Sendable {
     internal let advice: AnyJSON
+    internal let age: Int16?
     internal let avatarUrl: String?
     internal let bio: String
+    internal let city: String
     internal let createdAt: String
+    internal let fromRole: String
+    internal let hue: Int16
     internal let id: UUID
     internal let name: String
+    internal let profileVersion: Int16
     internal let quote: String
+    internal let result: String
     internal let services: AnyJSON
+    internal let stage: String
+    internal let storyFull: String
+    internal let storyIntro: String
     internal let tags: [String]
+    internal let toRole: String
     internal let trajectory: AnyJSON
     internal let updatedAt: String
     internal let visibility: AnyJSON
     internal enum CodingKeys: String, CodingKey {
       case advice = "advice"
+      case age = "age"
       case avatarUrl = "avatar_url"
       case bio = "bio"
+      case city = "city"
       case createdAt = "created_at"
+      case fromRole = "from_role"
+      case hue = "hue"
       case id = "id"
       case name = "name"
+      case profileVersion = "profile_version"
       case quote = "quote"
+      case result = "result"
       case services = "services"
+      case stage = "stage"
+      case storyFull = "story_full"
+      case storyIntro = "story_intro"
       case tags = "tags"
+      case toRole = "to_role"
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
       case visibility = "visibility"
@@ -802,27 +948,47 @@ internal enum PublicSchema {
   }
   internal struct PublicProfilesInsert: Codable, Hashable, Sendable {
     internal let advice: AnyJSON?
+    internal let age: Int16?
     internal let avatarUrl: String?
     internal let bio: String?
+    internal let city: String?
     internal let createdAt: String?
+    internal let fromRole: String?
+    internal let hue: Int16?
     internal let id: UUID
     internal let name: String?
+    internal let profileVersion: Int16?
     internal let quote: String?
+    internal let result: String?
     internal let services: AnyJSON?
+    internal let stage: String?
+    internal let storyFull: String?
+    internal let storyIntro: String?
     internal let tags: [String]?
+    internal let toRole: String?
     internal let trajectory: AnyJSON?
     internal let updatedAt: String?
     internal let visibility: AnyJSON?
     internal enum CodingKeys: String, CodingKey {
       case advice = "advice"
+      case age = "age"
       case avatarUrl = "avatar_url"
       case bio = "bio"
+      case city = "city"
       case createdAt = "created_at"
+      case fromRole = "from_role"
+      case hue = "hue"
       case id = "id"
       case name = "name"
+      case profileVersion = "profile_version"
       case quote = "quote"
+      case result = "result"
       case services = "services"
+      case stage = "stage"
+      case storyFull = "story_full"
+      case storyIntro = "story_intro"
       case tags = "tags"
+      case toRole = "to_role"
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
       case visibility = "visibility"
@@ -830,27 +996,47 @@ internal enum PublicSchema {
   }
   internal struct PublicProfilesUpdate: Codable, Hashable, Sendable {
     internal let advice: AnyJSON?
+    internal let age: Int16?
     internal let avatarUrl: String?
     internal let bio: String?
+    internal let city: String?
     internal let createdAt: String?
+    internal let fromRole: String?
+    internal let hue: Int16?
     internal let id: UUID?
     internal let name: String?
+    internal let profileVersion: Int16?
     internal let quote: String?
+    internal let result: String?
     internal let services: AnyJSON?
+    internal let stage: String?
+    internal let storyFull: String?
+    internal let storyIntro: String?
     internal let tags: [String]?
+    internal let toRole: String?
     internal let trajectory: AnyJSON?
     internal let updatedAt: String?
     internal let visibility: AnyJSON?
     internal enum CodingKeys: String, CodingKey {
       case advice = "advice"
+      case age = "age"
       case avatarUrl = "avatar_url"
       case bio = "bio"
+      case city = "city"
       case createdAt = "created_at"
+      case fromRole = "from_role"
+      case hue = "hue"
       case id = "id"
       case name = "name"
+      case profileVersion = "profile_version"
       case quote = "quote"
+      case result = "result"
       case services = "services"
+      case stage = "stage"
+      case storyFull = "story_full"
+      case storyIntro = "story_intro"
       case tags = "tags"
+      case toRole = "to_role"
       case trajectory = "trajectory"
       case updatedAt = "updated_at"
       case visibility = "visibility"

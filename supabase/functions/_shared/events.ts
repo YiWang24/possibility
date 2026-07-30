@@ -27,6 +27,10 @@ export const ServerEvent = {
   SIMULATION_REQUESTED: "simulation_requested",
   DIARY_CREATED: "diary_created",
 
+  // —— 隐私审计 ——
+  /// 只记录某次 AI 调用使用了哪些获授权维度键，不记录画像内容或用户原文。
+  PROFILE_AI_CONTEXT_USED: "profile_ai_context_used",
+
   // —— 成本 ——
   /// 每次 LLM 调用的用量与延迟。第三方埋点工具不管这件事，
   /// 但它直接决定单位经济模型（单用户成本 / 付费用户毛利）。

@@ -317,7 +317,7 @@ struct ProfileStudioView: View {
         if kind == .bigfive {
             var text = "大五：" + tags.prefix(3).joined(separator: " · ")
             if let mbti { text += " · MBTI：\(mbti)" }
-            home.savePersonality(text)
+            home.savePersonality(text, using: supabase)
         } else if let key = kind.targetDimension {
             home.saveDimension(key, keywords: tags, using: supabase)
         }
@@ -331,9 +331,12 @@ struct ProfileStudioView: View {
         mbti = type
         let bigfive = AssessmentModel(kind: .bigfive)
         if bigfive.result != nil {
-            home.savePersonality("大五：" + bigfive.resultTags.prefix(3).joined(separator: " · ") + " · MBTI：\(type)")
+            home.savePersonality(
+                "大五：" + bigfive.resultTags.prefix(3).joined(separator: " · ") + " · MBTI：\(type)",
+                using: supabase
+            )
         } else {
-            home.savePersonality("MBTI：\(type)")
+            home.savePersonality("MBTI：\(type)", using: supabase)
         }
         toast.show("已添加 MBTI：\(type)")
     }

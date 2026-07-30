@@ -65,6 +65,14 @@ begin
   exception
     when insufficient_privilege then null;
   end;
+
+  -- AI 授权不是公开主页内容，匿名角色连 SELECT 权限都没有。
+  begin
+    perform count(*) from public.profile_ai_permissions;
+    raise exception 'anon AI permissions read unexpectedly succeeded';
+  exception
+    when insufficient_privilege then null;
+  end;
 end
 $$;
 reset role;
@@ -157,6 +165,12 @@ values (
 
 insert into public.public_profiles (id, name, quote)
 values ('11111111-1111-4111-8111-111111111111', '测试用户A', '人生如棋');
+
+insert into public.profile_ai_permissions (user_id, permissions)
+values (
+  '11111111-1111-4111-8111-111111111111',
+  '{"skill":{"persona":true},"like":{"persona":false}}'::jsonb
+);
 
 insert into public.kaleidoscope_draws (user_id, mode, traveler_id)
 values ('11111111-1111-4111-8111-111111111111', 'similar', 1);
@@ -452,6 +466,13 @@ begin
     raise exception 'profiles.dims object check not enforced';
   exception when check_violation then null; end;
 
+  -- profile_ai_permissions.permissions 必须是对象。
+  begin
+    update public.profile_ai_permissions set permissions = '[]'::jsonb
+    where user_id = '11111111-1111-4111-8111-111111111111';
+    raise exception 'profile_ai_permissions object check not enforced';
+  exception when check_violation then null; end;
+
   -- UNIQUE(user_id, dimension)
   begin
     insert into public.profile_dimensions (user_id, dimension, tags)
@@ -522,6 +543,9 @@ begin
   if (select count(*) from public.diary_summary_cache) <> 0 then
     raise exception 'cross-user diary_summary_cache leaked';
   end if;
+  if (select count(*) from public.profile_ai_permissions) <> 0 then
+    raise exception 'cross-user profile_ai_permissions leaked';
+  end if;
   if (
     select count(*) from public.profiles
     where id = '11111111-1111-4111-8111-111111111111'
@@ -573,6 +597,15 @@ begin
     insert into public.persona_jobs (user_id)
     values ('11111111-1111-4111-8111-111111111111');
     raise exception 'cross-user persona_job write unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
+
+  begin
+    insert into public.profile_ai_permissions (user_id, permissions)
+    values (
+      '11111111-1111-4111-8111-111111111111',
+      '{"skill":{"persona":true}}'::jsonb
+    );
+    raise exception 'cross-user AI permissions write unexpectedly succeeded';
   exception when insufficient_privilege then null; end;
 
   begin
@@ -939,3 +972,6 @@ end
 $$;
 
 rollback;
+
+-- Keep the profile privacy contract in the same database test entrypoint.
+\ir profile_privacy_rls_test.sql

@@ -189,3 +189,79 @@ final class ChatFlowContractTests: XCTestCase {
         XCTAssertEqual(done.conclusion?.reason, "需要不同路径的现实证据")
     }
 }
+
+final class ProfilePrivacyTests: XCTestCase {
+    func testAIPermissionsDefaultDenyAndExplicitAllow() {
+        var permissions = ProfileAIPermissions.empty
+        XCTAssertFalse(permissions.allows("skill", scope: ProfileAIPermissions.personaScope))
+
+        permissions.setAllowed(
+            true,
+            dimension: "skill",
+            scope: ProfileAIPermissions.personaScope
+        )
+        XCTAssertTrue(permissions.allows("skill", scope: ProfileAIPermissions.personaScope))
+        XCTAssertFalse(permissions.allows("like", scope: ProfileAIPermissions.personaScope))
+    }
+
+    func testV1RemoteProfileDoesNotEraseLocalExtendedFields() {
+        let local = MyProfile.defaultProfile
+        let remote = RemotePublicProfile(
+            profileVersion: 1,
+            name: "云端昵称",
+            hue: 0,
+            age: 0,
+            city: "",
+            fromRole: "",
+            toRole: ""
+        )
+
+        let merged = local.merging(remote: remote)
+        XCTAssertEqual(merged.name, "云端昵称")
+        XCTAssertEqual(merged.hue, local.hue)
+        XCTAssertEqual(merged.meta.age, local.meta.age)
+        XCTAssertEqual(merged.meta.city, local.meta.city)
+    }
+
+    func testV2RemoteProfileRestoresExtendedFields() {
+        let remote = RemotePublicProfile(
+            profileVersion: 2,
+            name: "云端昵称",
+            hue: 2,
+            age: 31,
+            city: "多伦多",
+            fromRole: "设计师",
+            toRole: "AI 产品经理",
+            stage: "探索第 2 年",
+            result: "完成三个真实项目",
+            storyIntro: "新的故事摘要",
+            storyFull: "新的完整故事"
+        )
+
+        let merged = MyProfile.defaultProfile.merging(remote: remote)
+        XCTAssertEqual(merged.hue, 2)
+        XCTAssertEqual(merged.meta.age, 31)
+        XCTAssertEqual(merged.meta.city, "多伦多")
+        XCTAssertEqual(merged.meta.to, "AI 产品经理")
+        XCTAssertEqual(merged.meta.intro, "新的故事摘要")
+        XCTAssertEqual(merged.meta.full, "新的完整故事")
+    }
+
+    func testV2RemoteProfileCanClearPublishedCollections() {
+        let remote = RemotePublicProfile(
+            profileVersion: 2,
+            tags: [],
+            trajectory: [],
+            services: [],
+            advice: [],
+            visibility: [:]
+        )
+
+        let merged = MyProfile.defaultProfile.merging(remote: remote)
+        XCTAssertTrue(merged.tags.isEmpty)
+        XCTAssertTrue(merged.traj.isEmpty)
+        XCTAssertTrue(merged.services.isEmpty)
+        XCTAssertTrue(merged.adviceModules.isEmpty)
+        XCTAssertTrue(merged.visibility.isEmpty)
+    }
+}

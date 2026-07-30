@@ -433,6 +433,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_ai_permissions: {
+        Row: {
+          created_at: string
+          permissions: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          permissions?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          permissions?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profile_dimensions: {
         Row: {
           created_at: string
@@ -463,12 +484,58 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_facts: {
+        Row: {
+          confidence: number
+          created_at: string
+          dimension: string
+          id: string
+          observed_at: string
+          source: string
+          source_ref: string | null
+          status: string
+          updated_at: string
+          user_confirmed: boolean
+          user_id: string
+          value: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          dimension: string
+          id?: string
+          observed_at?: string
+          source?: string
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id: string
+          value: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          dimension?: string
+          id?: string
+          observed_at?: string
+          source?: string
+          source_ref?: string | null
+          status?: string
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           dims: Json
           id: string
           portrait_pct: number
+          profile_revision: number
           updated_at: string
         }
         Insert: {
@@ -476,6 +543,7 @@ export type Database = {
           dims?: Json
           id: string
           portrait_pct?: number
+          profile_revision?: number
           updated_at?: string
         }
         Update: {
@@ -483,6 +551,7 @@ export type Database = {
           dims?: Json
           id?: string
           portrait_pct?: number
+          profile_revision?: number
           updated_at?: string
         }
         Relationships: []
@@ -490,42 +559,72 @@ export type Database = {
       public_profiles: {
         Row: {
           advice: Json
+          age: number | null
           avatar_url: string | null
           bio: string
+          city: string
           created_at: string
+          from_role: string
+          hue: number
           id: string
           name: string
+          profile_version: number
           quote: string
+          result: string
           services: Json
+          stage: string
+          story_full: string
+          story_intro: string
           tags: string[]
+          to_role: string
           trajectory: Json
           updated_at: string
           visibility: Json
         }
         Insert: {
           advice?: Json
+          age?: number | null
           avatar_url?: string | null
           bio?: string
+          city?: string
           created_at?: string
+          from_role?: string
+          hue?: number
           id: string
           name?: string
+          profile_version?: number
           quote?: string
+          result?: string
           services?: Json
+          stage?: string
+          story_full?: string
+          story_intro?: string
           tags?: string[]
+          to_role?: string
           trajectory?: Json
           updated_at?: string
           visibility?: Json
         }
         Update: {
           advice?: Json
+          age?: number | null
           avatar_url?: string | null
           bio?: string
+          city?: string
           created_at?: string
+          from_role?: string
+          hue?: number
           id?: string
           name?: string
+          profile_version?: number
           quote?: string
+          result?: string
           services?: Json
+          stage?: string
+          story_full?: string
+          story_intro?: string
           tags?: string[]
+          to_role?: string
           trajectory?: Json
           updated_at?: string
           visibility?: Json
@@ -744,15 +843,57 @@ export type Database = {
         Returns: {
           dims: Json
           portrait_pct: number
+          profile_revision: number
         }[]
       }
       can_insert_app_event: {
         Args: { p_event: string; p_source: string; p_user_id: string }
         Returns: boolean
       }
+      clear_private_profile: {
+        Args: { p_expected_revision?: number }
+        Returns: {
+          dims: Json
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      confirm_profile_fact: {
+        Args: { p_expected_revision?: number; p_fact_id: string }
+        Returns: {
+          dims: Json
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      delete_profile_dimension: {
+        Args: { p_dimension: string; p_expected_revision?: number }
+        Returns: {
+          dims: Json
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
       merge_anonymous_user: {
         Args: { p_new: string; p_old: string }
         Returns: undefined
+      }
+      replace_profile_dimension: {
+        Args: {
+          p_confidence?: number
+          p_dimension: string
+          p_expected_revision?: number
+          p_portrait_delta?: number
+          p_source?: string
+          p_source_ref?: string
+          p_user_confirmed?: boolean
+          p_values: string[]
+        }
+        Returns: {
+          dims: Json
+          portrait_pct: number
+          profile_revision: number
+        }[]
       }
     }
     Enums: {

@@ -2,7 +2,16 @@
 // 结构化输出 schema 的自洽性，以及 SSE 事件编码契约。
 // 这些逻辑一旦出错会直接破坏 AI 集成的真实业务表现，故独立于校验器单测。
 
-import { fallbackPersona, FORM_DEFS, hashSeed } from "../_shared/persona.ts";
+import {
+  authorizedPersonaContext,
+  fallbackPersona,
+  FORM_DEFS,
+  hashSeed,
+} from "../_shared/persona.ts";
+import {
+  authorizedFactsContext,
+  authorizedProfileContext,
+} from "../_shared/profile-permissions.ts";
 import { frontDoorPrompt } from "../_shared/prompts.ts";
 import { filterRecommendedTravelerIds } from "../_shared/recommend.ts";
 import { sseEvent } from "../_shared/sse.ts";
@@ -51,6 +60,13 @@ Deno.test("front-door prompt requires an answer before product routing", () => {
   );
 });
 
+Deno.test("front-door prompt distinguishes authorized history from current facts", () => {
+  const prompt = frontDoorPrompt("职业", "我擅长（skill）：拆解复杂问题");
+  assert(prompt.includes("拆解复杂问题"));
+  assert(prompt.includes("当前对话原文与用户纠正始终优先"));
+  assert(prompt.includes("不要把旧资料说成用户此刻仍然如此"));
+});
+
 // ==================== Persona 离线兜底 ====================
 
 Deno.test("persona fallback is deterministic for the same input", () => {
@@ -97,6 +113,125 @@ Deno.test("persona empty input still yields a valid persona", () => {
   const p = fallbackPersona("");
   assert(p.seed === hashSeed("屿岸·持续探索"), "empty input uses default seed");
   assert(Object.values(FORM_DEFS).some((d) => d.name === p.shape));
+});
+
+Deno.test("persona context is default-deny and purpose-scoped", () => {
+  const dims = {
+    skill: "理清复杂需求",
+    like: "徒步",
+    private_note: "不应进入模型",
+  };
+  assert(
+    authorizedPersonaContext(dims, {}) === "",
+    "missing permission row must deny every dimension",
+  );
+  const context = authorizedPersonaContext(dims, {
+    skill: { persona: true },
+    like: { chat: true },
+    private_note: { persona: false },
+  });
+  assert(context.includes("skill"));
+  assert(context.includes("理清复杂需求"));
+  assert(!context.includes("徒步"));
+  assert(!context.includes("不应进入模型"));
+});
+
+Deno.test("saved profile context uses independent default-deny scopes", () => {
+  const dims = {
+    personality: "偏好先观察再行动",
+    skill: "理清复杂需求",
+    like: "徒步",
+    life: "稳定现金流",
+    unknown: "不能进入模型",
+  };
+  const permissions = {
+    personality: { chat: true, match: false },
+    skill: { match: true },
+    like: { lab: true },
+    life: { persona: true },
+    unknown: { chat: true, match: true, lab: true, persona: true },
+  };
+
+  const chat = authorizedProfileContext(dims, permissions, "chat");
+  assert(chat.dimensions.join(",") === "personality");
+  assert(chat.text.includes("先观察再行动"));
+  assert(!chat.text.includes("理清复杂需求"));
+  assert(!chat.text.includes("不能进入模型"));
+
+  const match = authorizedProfileContext(dims, permissions, "match");
+  assert(match.dimensions.join(",") === "skill");
+
+  const lab = authorizedProfileContext(dims, permissions, "lab");
+  assert(lab.dimensions.join(",") === "like");
+
+  const persona = authorizedProfileContext(dims, permissions, "persona");
+  assert(persona.dimensions.join(",") === "life");
+});
+
+Deno.test("fact context distinguishes confirmed facts from AI inferences", () => {
+  const facts = [
+    {
+      id: "fact-confirmed",
+      dimension: "skill",
+      value: "拆解复杂问题",
+      source: "manual",
+      confidence: 1,
+      user_confirmed: true,
+    },
+    {
+      id: "fact-inferred",
+      dimension: "like",
+      value: "可能喜欢徒步",
+      source: "chat",
+      confidence: 0.72,
+      user_confirmed: false,
+    },
+    {
+      id: "fact-private",
+      dimension: "family",
+      value: "不能泄露",
+      source: "diary",
+      confidence: 0.9,
+      user_confirmed: false,
+    },
+  ];
+  const context = authorizedFactsContext(
+    facts,
+    {
+      skill: { chat: true },
+      like: { chat: true },
+      family: { chat: false },
+    },
+    "chat",
+    17,
+  );
+
+  assert(context.profileRevision === 17);
+  assert(context.dimensions.join(",") === "skill,like");
+  assert(context.factIds.join(",") === "fact-confirmed,fact-inferred");
+  assert(context.text.includes("用户已确认"));
+  assert(context.text.includes("待用户确认，来源 chat，置信度 72%"));
+  assert(!context.text.includes("不能泄露"));
+});
+
+Deno.test("fact context is default-deny and excludes unknown dimensions", () => {
+  const facts = [{
+    id: "unknown",
+    dimension: "private_note",
+    value: "secret",
+    source: "manual",
+    confidence: 1,
+    user_confirmed: true,
+  }];
+  const context = authorizedFactsContext(
+    facts,
+    { private_note: { persona: true } },
+    "persona",
+    3,
+  );
+  assert(context.text === "");
+  assert(context.dimensions.length === 0);
+  assert(context.factIds.length === 0);
 });
 
 // ==================== 旅人推荐过滤 ====================
@@ -190,6 +325,9 @@ Deno.test("chat signal exposes an explicit AI conclusion recommendation", () => 
   assert(conclusion.required.includes("reason"));
   assert(conclusion.properties.next_step.enum.includes("match"));
   assert(conclusion.properties.next_step.enum.includes("lab"));
+  const dimension =
+    chatSignalSchema.properties.profile_updates.items.properties.dimension;
+  assert(dimension.enum.join(",") === "skill,like,love,family,social");
 });
 
 Deno.test("persona schema bounds match fallback output contract", () => {

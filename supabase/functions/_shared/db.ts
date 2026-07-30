@@ -103,7 +103,7 @@ export async function applyChatSignal(
   conversationId: string,
   currentStatus: string,
   signal: ChatSignal,
-): Promise<{ portrait_pct: number; dims: Record<string, string> }> {
+): Promise<ProfileSnapshot> {
   const conversationUpdate = signal.crossroads.ready
     ? { status: "crossroads", crossroads: signal.crossroads }
     : currentStatus === "open"
@@ -117,27 +117,93 @@ export async function applyChatSignal(
     if (conversationError) dbFailure("update conversation", conversationError);
   }
 
-  const newDims = Object.fromEntries(
-    signal.profile_updates.map(({ dimension, value }) => [dimension, value]),
-  );
-  return applyProfileUpdate(db, newDims, signal.portrait_delta);
+  const normalizedUpdates = Object.entries(Object.fromEntries(
+    signal.profile_updates.map(({ dimension, value }) => [
+      dimension,
+      value.trim(),
+    ]),
+  )).filter(([, value]) => value.length > 0);
+  let snapshot: ProfileSnapshot | undefined;
+  for (const [index, [dimension, value]] of normalizedUpdates.entries()) {
+    snapshot = await replaceProfileDimension(db, {
+      dimension,
+      values: [value],
+      source: "chat",
+      sourceRef: conversationId,
+      confidence: 0.75,
+      userConfirmed: false,
+      portraitDelta: index === 0 ? signal.portrait_delta : 0,
+    });
+  }
+  return snapshot ??
+    await applyProfileUpdate(db, {}, signal.portrait_delta);
 }
+
+export type ProfileSnapshot = {
+  portrait_pct: number;
+  dims: Record<string, string>;
+  profile_revision: number;
+};
 
 async function applyProfileUpdate(
   db: SupabaseClient,
   dims: Record<string, string>,
   portraitDelta: number,
-): Promise<{ portrait_pct: number; dims: Record<string, string> }> {
+): Promise<ProfileSnapshot> {
   const { data, error } = await db.rpc("apply_profile_update", {
     p_dims: dims,
     p_portrait_delta: portraitDelta,
   });
-  const row = (data as Array<{ portrait_pct: number; dims: unknown }> | null)
-    ?.[0];
+  const row = (data as
+    | Array<{
+      portrait_pct: number;
+      dims: unknown;
+      profile_revision?: number;
+    }>
+    | null)?.[0];
   if (error || !row) dbFailure("apply profile update", error);
   return {
     portrait_pct: Number(row.portrait_pct),
     dims: (row.dims as Record<string, string> | null) ?? {},
+    profile_revision: Number(row.profile_revision ?? 0),
+  };
+}
+
+export async function replaceProfileDimension(
+  db: SupabaseClient,
+  input: {
+    dimension: string;
+    values: string[];
+    source: "manual" | "assessment" | "card_game" | "chat" | "diary";
+    sourceRef?: string;
+    confidence: number;
+    userConfirmed: boolean;
+    portraitDelta?: number;
+    expectedRevision?: number;
+  },
+): Promise<ProfileSnapshot> {
+  const { data, error } = await db.rpc("replace_profile_dimension", {
+    p_dimension: input.dimension,
+    p_values: input.values,
+    p_source: input.source,
+    p_source_ref: input.sourceRef ?? null,
+    p_confidence: input.confidence,
+    p_user_confirmed: input.userConfirmed,
+    p_portrait_delta: input.portraitDelta ?? 0,
+    p_expected_revision: input.expectedRevision ?? null,
+  });
+  const row = (data as
+    | Array<{
+      portrait_pct: number;
+      dims: unknown;
+      profile_revision: number;
+    }>
+    | null)?.[0];
+  if (error || !row) dbFailure("replace profile dimension", error);
+  return {
+    portrait_pct: Number(row.portrait_pct),
+    dims: (row.dims as Record<string, string> | null) ?? {},
+    profile_revision: Number(row.profile_revision),
   };
 }
 
@@ -218,10 +284,15 @@ export async function mergeProfileDimensions(
   updates: Array<{ dimension: string; value: string }>,
 ): Promise<void> {
   if (updates.length === 0) return;
-  const dims = Object.fromEntries(
-    updates.map(({ dimension, value }) => [dimension, value]),
-  );
-  await applyProfileUpdate(db, dims, 0);
+  for (const { dimension, value } of updates) {
+    await replaceProfileDimension(db, {
+      dimension,
+      values: [value],
+      source: "diary",
+      confidence: 0.7,
+      userConfirmed: false,
+    });
+  }
 }
 
 // 响应回传给前端的旅人对象（对齐 iOS Traveler 模型：is_similar snake_case）。

@@ -331,10 +331,20 @@ final class HomeModel {
     }
 
     /// 人格底色（大五测评 / MBTI 徽标写入）
-    func savePersonality(_ text: String) {
+    func savePersonality(_ text: String, using supabase: SupabaseService? = nil) {
         guard !text.isEmpty else { return }
         filledDims["personality"] = text
         store.set(text, forKey: Self.storePrefix + "personality")
+        if let supabase {
+            Task { [weak self] in
+                try? await supabase.saveDimensionRemote(
+                    dimension: "personality",
+                    tags: [text],
+                    source: "assessment"
+                )
+                self?.scheduleRefreshPersona(using: supabase)
+            }
+        }
     }
 
     /// 五维画像卡（人格底色 + 四软维度）

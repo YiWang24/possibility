@@ -10,7 +10,13 @@ import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
 import { hue } from "@/lib/theme";
-import { useMyProfile, myProfileRemotePayload, type MyProfile } from "@/stores/my-profile";
+import {
+  AI_SCOPE_OPTIONS,
+  useMyProfile,
+  myProfileRemotePayload,
+  type MyProfile,
+  type ProfileAIPermissions,
+} from "@/stores/my-profile";
 import type { PersonaItem } from "./MeView";
 
 export type MeEditMode = "basic" | "story" | "advice" | "service" | "persona";
@@ -20,7 +26,7 @@ const MODE_META: Record<MeEditMode, { title: string; subtitle: string; save: str
   story: { title: "编辑我的故事", subtitle: "修改故事内容和人生时间线", save: "保存故事", toast: "已保存故事" },
   advice: { title: "编辑经验与建议", subtitle: "自由组合标题、内容与链接", save: "保存建议", toast: "已保存建议" },
   service: { title: "编辑提供服务", subtitle: "设置服务内容、价格和公开状态", save: "保存服务", toast: "已保存服务" },
-  persona: { title: "设置动态画像", subtitle: "选择主页允许公开的画像内容", save: "保存展示设置", toast: "已保存展示设置" },
+  persona: { title: "设置动态画像", subtitle: "分别设置公开展示与 AI 使用授权", save: "保存权限设置", toast: "已保存权限设置" },
 };
 
 export function MeEditView({
@@ -52,6 +58,9 @@ function EditSheet({
   const meta = MODE_META[mode];
 
   const [draft, setDraft] = useState<MyProfile>(() => useMyProfile.getState().profile);
+  const [aiPermissions, setAIPermissions] = useState<ProfileAIPermissions>(
+    () => useMyProfile.getState().aiPermissions,
+  );
   const [tagsText, setTagsText] = useState(() => draft.tags.join("，"));
   const [ageText, setAgeText] = useState(() => String(draft.meta.age));
 
@@ -72,13 +81,27 @@ function EditSheet({
     }
     // 本地整体写回（localStorage 持久化）
     useMyProfile.getState().setProfile(updated);
+    if (mode === "persona") {
+      useMyProfile.getState().setAIPermissions(aiPermissions);
+    }
     // 云端同步（失败静默：本地已保存，下次成功保存自然同步）
     void (async () => {
       try {
-        await callFunction("save-profile", {
-          action: "save_public_profile",
-          ...myProfileRemotePayload(updated),
-        });
+        const writes: Promise<unknown>[] = [
+          callFunction("save-profile", {
+            action: "save_public_profile",
+            ...myProfileRemotePayload(updated),
+          }),
+        ];
+        if (mode === "persona") {
+          writes.push(
+            callFunction("save-profile", {
+              action: "save_ai_permissions",
+              permissions: aiPermissions,
+            }),
+          );
+        }
+        await Promise.all(writes);
         useData.getState().invalidateProfile();
       } catch {
         /* 静默 */
@@ -135,7 +158,15 @@ function EditSheet({
           {mode === "story" && <StoryEditor draft={draft} setDraft={setDraft} patch={patch} patchMeta={patchMeta} />}
           {mode === "advice" && <AdviceEditor draft={draft} setDraft={setDraft} />}
           {mode === "service" && <ServiceEditor draft={draft} setDraft={setDraft} />}
-          {mode === "persona" && <PersonaEditor draft={draft} personaItems={personaItems} setDraft={setDraft} />}
+          {mode === "persona" && (
+            <PersonaEditor
+              draft={draft}
+              aiPermissions={aiPermissions}
+              personaItems={personaItems}
+              setDraft={setDraft}
+              setAIPermissions={setAIPermissions}
+            />
+          )}
         </div>
 
         {/* 保存栏 */}
@@ -420,34 +451,66 @@ function ServiceEditor({
 
 function PersonaEditor({
   draft,
+  aiPermissions,
   personaItems,
   setDraft,
+  setAIPermissions,
 }: {
   draft: MyProfile;
+  aiPermissions: ProfileAIPermissions;
   personaItems: PersonaItem[];
   setDraft: React.Dispatch<React.SetStateAction<MyProfile>>;
+  setAIPermissions: React.Dispatch<React.SetStateAction<ProfileAIPermissions>>;
 }) {
-  const toggle = (key: string, on: boolean) =>
+  const togglePublic = (key: string, on: boolean) =>
     setDraft((d) => ({ ...d, visibility: { ...d.visibility, [key]: on } }));
+  const toggleAI = (key: string, scope: string, on: boolean) =>
+    setAIPermissions((current) => ({
+      ...current,
+      [key]: { ...(current[key] ?? {}), [scope]: on },
+    }));
 
   return (
     <div className="flex flex-col gap-3.5">
-      <SectionTitle title="动态画像展示" note="开启后即在主页展示" />
+      <SectionTitle title="动态画像权限" note="公开展示与 AI 使用分别授权" />
       {personaItems.map((item) => (
-        <div key={item.key} className="flex items-center gap-3 rounded-[14px] border border-line bg-card px-3.5 py-3">
+        <div key={item.key} className="flex flex-col gap-3 rounded-[14px] border border-line bg-card px-3.5 py-3">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-[13px] font-semibold text-ink">{item.label}</span>
             <span className="truncate text-[11px] text-sub">{item.value}</span>
           </div>
-          <Toggle on={draft.visibility[item.key] ?? false} onChange={(v) => toggle(item.key, v)} />
+          <div className="flex items-center justify-between gap-4 text-[11.5px] text-sub">
+            <span>公开展示</span>
+            <Toggle
+              on={draft.visibility[item.key] ?? false}
+              onChange={(v) => togglePublic(item.key, v)}
+            />
+          </div>
+          <div className="h-px bg-line" />
+          <span className="text-[10.5px] font-semibold text-faint">AI 使用范围</span>
+          <div className="grid grid-cols-1 gap-2.5">
+            {AI_SCOPE_OPTIONS.map((scope) => (
+              <div key={scope.key} className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 flex-col">
+                  <span className="text-[11.5px] text-sub">{scope.label}</span>
+                  <span className="text-[9.5px] text-faint">{scope.detail}</span>
+                </div>
+                <Toggle
+                  on={aiPermissions[item.key]?.[scope.key] === true}
+                  onChange={(v) => toggleAI(item.key, scope.key, v)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       ))}
-      <span className="text-[10.5px] text-faint">原始答案与未开启的画像内容不会出现在主页。</span>
+      <span className="text-[10.5px] text-faint">
+        每种 AI 用途独立授权，未开启的维度不会发送给对应模型；公开展示与 AI 授权互不影响。
+      </span>
     </div>
   );
 }
 
 function newId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
-  return `advice-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  return crypto.randomUUID();
 }
