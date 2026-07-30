@@ -3,7 +3,7 @@
    服务端状态经此拉取缓存；UI/客户端状态留在各页面组件（二者分治）。
    拉取失败一律回退 demo 种子（断网兜底，技术设计文档 §13）。 */
 import { create } from "zustand";
-import { bootstrap, callFunction, supabase } from "@/lib/supabase";
+import { callFunction, supabase } from "@/lib/supabase";
 import {
   PORTRAIT_INITIAL_PCT,
   PRICE_UNLOCK_PROFILE,
@@ -31,13 +31,8 @@ function errMessage(err: unknown): string {
 /** get-profile 会话缓存 TTL（对齐 iOS remoteProfileCacheTTL = 60s） */
 const PROFILE_CACHE_TTL_MS = 60_000;
 
-/** 当前会话 user id（无会话时先补匿名登录） */
+/** 当前会话 user id（匿名登录已停用：无会话即未登录，调用方直接跳过取数） */
 async function currentUserId(): Promise<string | null> {
-  try {
-    await bootstrap();
-  } catch {
-    return null;
-  }
   const { data } = await supabase().auth.getSession();
   return data.session?.user.id ?? null;
 }

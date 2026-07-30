@@ -1,7 +1,7 @@
 "use client";
 /* 我的公开主页 —— 移植 iOS MeView.swift（原型 #scr-me · renderMyProfile）。
    hero（头像 / 徽章 / 转型条 / 标签 / 编辑）→ 4 tab：动态画像 / 我的故事 / 经验与建议 / 提供服务，
-   末尾账号区（登录状态 / 登录 / 退出 / 注销）。编辑为关键动作：游客先经 AuthGate 登录。 */
+   末尾账号区（登录邮箱 / 退出 / 注销）。冷启动无会话由 AuthWall 拦下，此页必然已登录。 */
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,7 +9,7 @@ import { PageContainer } from "@/components/shell/PageContainer";
 import { PageHeader, SectionHeader, TagPill } from "@/components/ui/Basics";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
-import { useAuth, phoneDisplay } from "@/stores/auth";
+import { useAuth } from "@/stores/auth";
 import { useData } from "@/stores/data";
 import { useMyProfile } from "@/stores/my-profile";
 import { useAuthGate } from "@/components/auth/AuthGate";
@@ -51,8 +51,8 @@ const TAB_ITEMS: { key: string; label: string }[] = [
 export function MeView() {
   const showToast = useToast((s) => s.show);
   const profile = useMyProfile((s) => s.profile);
-  const { require: requireAuth, openLogin, isAnonymous } = useAuthGate();
-  const phone = useAuth((s) => s.phone);
+  const { require: requireAuth, isAuthenticated } = useAuthGate();
+  const email = useAuth((s) => s.email);
   const signOut = useAuth((s) => s.signOut);
   const deleteAccount = useAuth((s) => s.deleteAccount);
 
@@ -72,13 +72,13 @@ export function MeView() {
   }, [loadPortrait]);
 
   useEffect(() => {
-    if (isAnonymous) return;
+    if (!isAuthenticated) return;
     void (async () => {
       const remote = await useData.getState().loadProfile();
       const pub = remote?.public_profile;
       if (pub) useMyProfile.getState().applyRemote(pub);
     })();
-  }, [isAnonymous]);
+  }, [isAuthenticated]);
 
   const lifeCards = useMemo(() => {
     const life = cardGames?.find((g) => g.kind === "life");
@@ -117,7 +117,7 @@ export function MeView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.visibility, allPersonaItems]);
 
-  /* 编辑公开主页是关键动作：游客先登录，成功后继续打开编辑页 */
+  /* 编辑公开主页是关键动作：会话过期时先补登录，成功后继续打开编辑页 */
   const requestEdit = (mode: MeEditMode) => requireAuth(() => setEditMode(mode));
 
   const doSignOut = async () => {
@@ -126,7 +126,7 @@ export function MeView() {
     setConfirm(null);
     await signOut();
     setAccountBusy(false);
-    showToast("已退出登录，切换为游客模式");
+    showToast("已退出登录");
   };
 
   const doDelete = async () => {
@@ -239,31 +239,17 @@ export function MeView() {
         <div className="mt-6 flex flex-col gap-3">
           <SectionHeader title="账号" />
           <div className="kaleido-card flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3.5">
-              <span className="text-[13px] text-sub">登录状态</span>
-              <span
-                className={`text-[13px] font-semibold ${isAnonymous ? "text-faint" : "text-[#8EE7C8]"}`}
-              >
-                {isAnonymous ? "游客模式" : phoneDisplay(phone) ?? "已登录"}
+            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+              <span className="shrink-0 text-[13px] text-sub">登录邮箱</span>
+              <span className="truncate text-[13px] font-semibold text-[#8EE7C8]">
+                {email ?? "已登录"}
               </span>
             </div>
             <div className="h-px bg-line" />
 
-            {isAnonymous ? (
-              <>
-                <AccountRow title="登录 / 注册" tint="text-brand" busy={accountBusy} onClick={() => openLogin()} />
-                <div className="flex items-start gap-1.5 px-4 pb-3.5 text-[10.5px] text-faint">
-                  <span>ⓘ</span>
-                  <span>游客数据保存在本机对应的匿名账号里，登录后自动并入正式账号。</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
-                <div className="h-px bg-line" />
-                <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
-              </>
-            )}
+            <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
+            <div className="h-px bg-line" />
+            <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
           </div>
         </div>
       </PageContainer>
@@ -278,7 +264,7 @@ export function MeView() {
         message={
           confirm === "delete"
             ? "注销后账号与全部数据将被永久删除，且无法恢复。"
-            : "退出后将切换为游客模式，本机匿名数据仍会保留。"
+            : "退出后需要重新登录才能继续使用，账号数据不受影响。"
         }
         confirmLabel={confirm === "delete" ? "永久删除我的账号" : "退出登录"}
         destructive={confirm === "delete"}

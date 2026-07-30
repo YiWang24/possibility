@@ -87,7 +87,7 @@ struct ChatStreamClient: Sendable {
     /// - `data:` 累积 JSON；空行触发派发
     func stream(_ request: ChatRequest) -> AsyncThrowingStream<ChatStreamEvent, Error> {
         let requestId = UUID().uuidString
-        AsyncThrowingStream { continuation in
+        return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
                     let urlRequest = try await makeRequest(request, requestId: requestId)

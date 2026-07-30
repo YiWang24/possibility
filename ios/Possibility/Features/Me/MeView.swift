@@ -370,11 +370,12 @@ struct MeView: View {
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
     }
 
-    // MARK: 账号（登录状态 / 登录 / 退出 / 注销 —— 技术设计文档 §登录系统）
+    // MARK: 账号（登录邮箱 / 退出 / 注销 —— 技术设计文档 §登录系统）
+    //
+    // 冷启动无会话由 RootView 的登录墙拦下，能走到本页就必然已登录，无需游客分支。
 
     private var accountStatusText: String {
-        if supabase.isAnonymous { return "游客模式" }
-        if let phone = supabase.phoneDisplay { return phone }
+        if let email = supabase.emailDisplay { return email }
         if supabase.isAppleLinked { return "Apple 账号" }
         return "已登录"
     }
@@ -383,44 +384,30 @@ struct MeView: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "账号")
             VStack(spacing: 0) {
-                HStack {
-                    Text("登录状态").font(.system(size: 13)).foregroundStyle(Theme.sub)
-                    Spacer()
+                HStack(spacing: 12) {
+                    Text("登录邮箱").font(.system(size: 13)).foregroundStyle(Theme.sub)
+                    Spacer(minLength: 0)
                     Text(accountStatusText)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(supabase.isAnonymous ? Theme.faint : Color(hex: 0x8EE7C8))
+                        .foregroundStyle(Color(hex: 0x8EE7C8))
+                        .lineLimit(1).truncationMode(.middle)
                 }
                 .padding(.horizontal, 16).padding(.vertical, 14)
 
                 Divider().overlay(Theme.line)
 
-                if supabase.isAnonymous {
-                    accountRow("登录 / 注册", tint: Theme.blue) {
-                        // 空续接：仅弹登录页；成功后 authStateChanges 刷新状态行。
-                        // trigger 传 nil：这是用户主动点「登录/注册」，事件清单的
-                        // AuthTrigger 里没有对应取值，不硬塞成 profile_edit 之类。
-                        authGate.require(supabase, trigger: nil) {}
+                accountRow("退出登录", tint: Theme.sub) {
+                    guard !accountBusy else { return }
+                    accountBusy = true
+                    Task {
+                        await supabase.signOut()
+                        accountBusy = false
+                        toast.show("已退出登录")
                     }
-                    HStack(spacing: 6) {
-                        Image(systemName: "info.circle").font(.system(size: 10))
-                        Text("游客数据保存在本机对应的匿名账号里，登录后自动并入正式账号。")
-                    }
-                    .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-                    .padding(.horizontal, 16).padding(.bottom, 13)
-                } else {
-                    accountRow("退出登录", tint: Theme.sub) {
-                        guard !accountBusy else { return }
-                        accountBusy = true
-                        Task {
-                            await supabase.signOut()
-                            accountBusy = false
-                            toast.show("已退出登录，切换为游客模式")
-                        }
-                    }
-                    Divider().overlay(Theme.line)
-                    accountRow("注销账号", tint: Theme.orange) {
-                        showDeleteConfirm = true
-                    }
+                }
+                Divider().overlay(Theme.line)
+                accountRow("注销账号", tint: Theme.orange) {
+                    showDeleteConfirm = true
                 }
             }
             .kaleidoCard()
