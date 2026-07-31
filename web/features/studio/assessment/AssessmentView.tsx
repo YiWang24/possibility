@@ -102,7 +102,7 @@ export function AssessmentView({ kind }: { kind: AssessmentKind }) {
   };
 
   return (
-    <div className="flex h-dvh flex-col screen-bg md:h-[calc(100dvh-74px)]">
+    <div className="flex min-h-dvh flex-col screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
       {/* 顶栏 */}
       <div className="border-b border-line">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
@@ -176,7 +176,7 @@ function IntroPhase({
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-4 pb-[26px]">
           <div className="text-[9.5px] font-semibold tracking-[2.6px] text-brand">
             {cfg.kicker}
@@ -231,7 +231,7 @@ function QuizPhase({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-6 px-6 pt-8 pb-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <span className="text-[11px] tracking-[2px] text-faint">
@@ -341,7 +341,7 @@ function ResultPhase({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-5 pb-6">
           {/* 标题 */}
           <div className="flex flex-col gap-1.5">

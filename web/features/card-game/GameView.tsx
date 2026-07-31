@@ -116,7 +116,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
 
   if (!engine) {
     return (
-      <div className="flex min-h-dvh items-center justify-center screen-bg px-6 md:min-h-[calc(100dvh-74px)]">
+      <div className="flex min-h-dvh items-center justify-center screen-bg px-6 md:min-h-[calc(100dvh-var(--nav-h))]">
         {loadError
           ? (
             <div className="w-full max-w-sm rounded-card border border-line bg-card p-5 text-center">
@@ -260,7 +260,7 @@ function GameBody({
   };
 
   return (
-    <div className="flex h-dvh flex-col screen-bg md:h-[calc(100dvh-74px)]">
+    <div className="flex min-h-dvh flex-col screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
       {/* 顶栏 */}
       <div className="border-b border-line">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
@@ -324,7 +324,7 @@ function GameBody({
           )}
           {phase === "result" && (
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="no-scrollbar flex-1 overflow-y-auto">
+              <div className="flex-1">
                 {cfg.kind === "life" ? <LifeResult engine={engine} /> : <RelationResult engine={engine} />}
               </div>
               {saveError && (
@@ -377,7 +377,7 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
   const accent = cfg.accent;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-[14px] pb-[26px]">
           {/* 顶部扇形装饰牌（原型 .linear-spread） */}
           <div className="relative mx-auto mt-3 h-24 w-[220px]">
@@ -458,7 +458,7 @@ function SelectPhase({
   const accent = cfg.accent;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-3 px-[22px] pt-[14px] pb-6">
           <div className="flex items-start justify-between">
             <div>
@@ -596,7 +596,7 @@ function DrawPhase({
   const currentPressureColor = pressureColor(engine);
   const stage = engine.stageMeta;
   return (
-    <div className="no-scrollbar flex-1 overflow-y-auto">
+    <div className="flex-1">
       <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-4 pb-[26px]">
         <div>
           <div className="text-[9.5px] font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
@@ -682,7 +682,7 @@ function DecisionPhase({
   const currentPressureColor = pressureColor(engine);
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col items-center gap-[15px] px-6 pt-4 pb-5">
           <span className="rounded-chip bg-raised px-3 py-[5px] text-[10.5px] font-semibold text-sub">
             第 {engine.round + 1} 轮 ·{" "}
@@ -788,7 +788,7 @@ function TradePhase({
   const accent = cfg.accent;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-[14px] px-[22px] pt-4 pb-5">
           <div>
             <div className="text-[9px] font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>

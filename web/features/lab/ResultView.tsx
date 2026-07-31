@@ -54,9 +54,9 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
   const active = specs[tab];
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
+    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
       {/* 顶栏 */}
-      <div className="sticky top-0 z-10 border-b border-line bg-paper/70 backdrop-blur-md md:top-[74px]">
+      <div className="sticky top-0 z-10 border-b border-line bg-paper/70 backdrop-blur-md md:top-[var(--nav-h)]">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-[22px] py-3">
           <button
             onClick={onBack}

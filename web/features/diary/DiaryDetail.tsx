@@ -304,8 +304,8 @@ export function DiaryDetail() {
   };
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[74px]">
+    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
+      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[var(--nav-h)]">
         <div className="mx-auto flex w-full max-w-measure items-center gap-[13px] px-[22px] pt-3 pb-2.5">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">

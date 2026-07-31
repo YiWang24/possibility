@@ -99,7 +99,7 @@ export function HubView() {
   };
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
+    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
       {/* 顶栏 */}
       <div className="border-b border-line">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">

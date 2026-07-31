@@ -41,7 +41,9 @@ export function Foot({
   onClick: () => void;
 }) {
   return (
-    <div className="border-t border-line px-5 pt-3 pb-[14px]">
+    /* sticky 而不是 flex 尾项：页面已改成文档流，底部操作栏靠粘在视口底沿保持在手边，
+       不再需要「外层 h-dvh + 内容区 overflow-y-auto」那套页面里套页面的结构。 */
+    <div className="sticky bottom-0 z-20 border-t border-line bg-paper/85 px-5 pb-[14px] pt-3 backdrop-blur">
       <div className="mx-auto w-full max-w-measure">
         <button
           disabled={!enabled}

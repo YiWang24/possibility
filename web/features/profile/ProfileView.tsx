@@ -73,7 +73,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
   if (!traveler) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center md:min-h-[calc(100dvh-74px)]">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center md:min-h-[calc(100dvh-var(--nav-h))]">
         <p className="text-[14px] text-sub">没有找到这位旅人。</p>
         <button
           onClick={() => router.back()}
@@ -86,9 +86,9 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
   }
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
+    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
       {/* 顶栏 */}
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur md:top-[74px]">
+      <div className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur md:top-[var(--nav-h)]">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">

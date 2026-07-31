@@ -9,6 +9,8 @@
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
+import { PageShell } from "@/components/shell/PageShell";
+import { PersonaRail } from "@/features/home/PersonaRail";
 import type { RemoteConversation } from "@/lib/models";
 import { ChatModel, type ChatEntryPoint } from "./store";
 import { MessageBubble, ThinkingBubble } from "./MessageBubble";
@@ -94,81 +96,103 @@ export function ChatView({
   const showThinking = model.isStreaming && lastMessage?.text === "";
 
   return (
-    <div className="flex min-h-dvh flex-col screen-bg md:min-h-[calc(100dvh-74px)]">
-      {/* 顶栏 —— 内容与消息列、输入栏同一根中轴线，否则桌面上三者各对各的边。
-          桌面上让开全站 navbar 的 74px，否则粘在视口顶端会被 navbar 盖住。 */}
-      <div className="sticky top-0 z-30 border-b border-line bg-paper/80 px-[22px] py-3 backdrop-blur md:top-[74px]">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3">
-          <BackButton onClick={() => router.back()} />
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[16px] font-semibold tracking-[0.8px] text-ink">
-              {model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
-            </span>
-            <span className="text-[11px] text-faint">和你的动态画像一起想清楚</span>
+    <div className="screen-bg">
+      {/* 桌面把画像钉在右轨：这段对话正是在改写它，让用户边说边看见。
+          iOS 一次只能一屏，画像与对话必须分开；桌面没有这个约束。 */}
+      <PageShell
+        rail={
+          <PersonaRail
+            caption="这次探索会喂给你的动态画像。说得越具体，它长得越像你。"
+            footer={
+              model.crossroads?.summary ? (
+                <div className="kaleido-card p-4">
+                  <div className="text-eyebrow text-faint">已澄清的岔路口</div>
+                  <p className="mt-2 text-[12.5px] leading-[1.75] text-sub">
+                    {model.crossroads.summary}
+                  </p>
+                </div>
+              ) : null
+            }
+          />
+        }
+        header={
+          <div className="flex items-center gap-3">
+            <BackButton onClick={() => router.back()} />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[16px] font-semibold tracking-[0.8px] text-ink xl:text-[19px]">
+                {model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
+              </span>
+              <span className="text-[11px] text-faint">和你的动态画像一起想清楚</span>
+            </div>
+            <div className="flex-1" />
+            {model.historyEntries.length > 0 ? (
+              <HistoryButton onClick={() => model.setShowHistory(true)} />
+            ) : null}
           </div>
-          <div className="flex-1" />
-          {model.historyEntries.length > 0 ? (
-            <HistoryButton onClick={() => model.setShowHistory(true)} />
-          ) : null}
-        </div>
-      </div>
+        }
+      >
+        {/* 消息流走文档流，滚动条是页面的那一条。
+            原实现是 h-dvh + flex-1 overflow-y-auto —— iOS「固定头 / 滚动体 / 固定尾」
+            的直译，在 web 上表现为页面里套一个页面。
+            min-h 让短对话时输入栏仍落在视口底部，长对话时它 sticky 跟随。
+            16rem ≈ 顶栏 74 + 外壳上边距 56 + 页头 70 + 分栏间距 40，
+            让主栏底沿正好压在首屏折线上，sticky 才有东西可粘。 */}
+        <div className="flex min-h-[calc(100dvh-16rem)] flex-col">
+          <div className="flex-1">
+            {model.messages.map((msg) => (msg.text ? <MessageBubble key={msg.id} message={msg} /> : null))}
 
-      {/* 消息流 */}
-      <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="mx-auto w-full max-w-measure px-5 py-3">
-          {model.messages.map((msg) => (msg.text ? <MessageBubble key={msg.id} message={msg} /> : null))}
+            {showThinking ? <ThinkingBubble /> : null}
 
-          {showThinking ? <ThinkingBubble /> : null}
+            {model.canRetry ? (
+              <div className="pt-2.5">
+                <button
+                  onClick={() => model.retry()}
+                  className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#AFC7FF] px-[15px] py-[9px] rounded-chip bg-[#5E96FF]/10 border border-[#6FA5FF]/30 transition active:scale-[0.96]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M20 11a8 8 0 1 0-1.5 5M20 5v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  重新发送
+                </button>
+              </div>
+            ) : null}
 
-          {model.canRetry ? (
-            <div className="pt-2.5">
-              <button
-                onClick={() => model.retry()}
-                className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#AFC7FF] px-[15px] py-[9px] rounded-chip bg-[#5E96FF]/10 border border-[#6FA5FF]/30 transition active:scale-[0.96]"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M20 11a8 8 0 1 0-1.5 5M20 5v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                重新发送
-              </button>
-            </div>
-          ) : null}
-
-          {model.showActionChips ? (
-            <ActionChips
-              confirmLabel={model.confirmLabel}
-              correctLabel={model.correctLabel}
-              onConfirm={() => model.confirmInsight()}
-              onCorrect={() => model.requestCorrection()}
-            />
-          ) : null}
-
-          {model.showNextPanel ? (
-            <div className="pt-3.5">
-              <ChatNextPanel
-                showSummaryLink
-                preferredPath={model.recommendedNextStep}
-                matchedTravelers={model.matchedTravelers}
-                matchReasons={model.matchReasons}
-                onGoLab={goLab}
-                onGoSimilar={goSimilar}
-                shareText={model.shareText}
-                onOpenSummary={() => model.setShowSummary(true)}
+            {model.showActionChips ? (
+              <ActionChips
+                confirmLabel={model.confirmLabel}
+                correctLabel={model.correctLabel}
+                onConfirm={() => model.confirmInsight()}
+                onCorrect={() => model.requestCorrection()}
               />
-            </div>
-          ) : null}
+            ) : null}
 
-          <div ref={bottomRef} className="h-2" />
+            {model.showNextPanel ? (
+              <div className="pt-3.5">
+                <ChatNextPanel
+                  showSummaryLink
+                  preferredPath={model.recommendedNextStep}
+                  matchedTravelers={model.matchedTravelers}
+                  matchReasons={model.matchReasons}
+                  onGoLab={goLab}
+                  onGoSimilar={goSimilar}
+                  shareText={model.shareText}
+                  onOpenSummary={() => model.setShowSummary(true)}
+                />
+              </div>
+            ) : null}
+
+            <div ref={bottomRef} className="h-2" />
+          </div>
+
+          {/* 输入栏贴主栏底沿而不是视口底沿 —— 桌面上右轨不该被一条通栏输入条压住 */}
+          <InputBar
+            value={model.input}
+            disabled={model.isStreaming}
+            onChange={(t) => model.setInput(t)}
+            onSend={() => model.send(model.input)}
+          />
         </div>
-      </div>
-
-      {/* 输入栏 */}
-      <InputBar
-        value={model.input}
-        disabled={model.isStreaming}
-        onChange={(t) => model.setInput(t)}
-        onSend={() => model.send(model.input)}
-      />
+      </PageShell>
 
       {model.showHistory ? <ChatHistorySheet model={model} onClose={() => model.setShowHistory(false)} /> : null}
       {model.showSummary ? (
