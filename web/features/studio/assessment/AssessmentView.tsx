@@ -105,7 +105,7 @@ export function AssessmentView({ kind }: { kind: AssessmentKind }) {
     <div className="flex h-dvh flex-col screen-bg md:h-[calc(100dvh-74px)]">
       {/* 顶栏 */}
       <div className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-5 pt-[14px] pb-3">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
           <BackButton onClick={back} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[15.5px] font-bold text-ink">{cfg.title}</div>
@@ -177,7 +177,7 @@ function IntroPhase({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-6 pt-4 pb-[26px]">
+        <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-4 pb-[26px]">
           <div className="text-[9.5px] font-semibold tracking-[2.6px] text-brand">
             {cfg.kicker}
           </div>
@@ -232,7 +232,7 @@ function QuizPhase({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-6 px-6 pt-8 pb-6">
+        <div className="mx-auto flex w-full max-w-measure flex-col gap-6 px-6 pt-8 pb-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <span className="text-[11px] tracking-[2px] text-faint">
               第 {index + 1} / {cfg.items.length} 题
@@ -342,7 +342,7 @@ function ResultPhase({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-6 pt-5 pb-6">
+        <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-5 pb-6">
           {/* 标题 */}
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] tracking-[2px] text-faint">{cfg.resultSub}</span>
@@ -380,7 +380,7 @@ function ResultPhase({
       </div>
 
       <div className="border-t border-line px-5 pt-3 pb-[14px]">
-        <div className="mx-auto flex w-full max-w-[680px] gap-3">
+        <div className="mx-auto flex w-full max-w-measure gap-3">
           <button
             onClick={() => router.push("/studio")}
             className="flex-1 rounded-chip border border-line py-[15px] text-[13.5px] font-semibold text-sub transition active:scale-[0.97]"

@@ -306,7 +306,7 @@ export function DiaryDetail() {
   return (
     <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
       <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[74px]">
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-[13px] px-[22px] pt-3 pb-2.5">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-[13px] px-[22px] pt-3 pb-2.5">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
             <div className="text-[16px] font-semibold tracking-[0.8px] text-ink">语音日记</div>
@@ -321,7 +321,7 @@ export function DiaryDetail() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[680px] px-5 pb-10">
+      <div className="mx-auto w-full max-w-measure px-5 pb-10">
         <div className="mt-2.5 flex gap-[5px] rounded-[14px] border border-line bg-white/[0.045] p-1">
           {TABS.map((tab) => {
             const active = view === tab.kind;

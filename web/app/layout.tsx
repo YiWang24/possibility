@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { AppShell } from "@/components/shell/AppShell";
 import { Providers } from "@/components/shell/Providers";
 import {
   BRAND_STAGE,
@@ -58,21 +57,23 @@ export const metadata: Metadata = {
     : undefined,
 };
 
+/* maximumScale: 1 是从 iOS WebView 带过来的习惯，在网页上会禁掉双指缩放，
+   属于 WCAG 1.4.4 违规；桌面端更没有理由锁死缩放。 */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   themeColor: BRAND_STAGE,
   colorScheme: "dark",
 };
 
+/* 根布局只负责 html/body 与全站 Provider。导航外壳挂在 (app) route group 的
+   layout 里，而不是这里 —— 否则将来任何一条落在 (app) 之外的路由（独立落地页、
+   分享页…）都会被迫套上主导航。 */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" className="dark">
       <body>
-        <Providers>
-          <AppShell>{children}</AppShell>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

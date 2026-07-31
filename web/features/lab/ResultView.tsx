@@ -57,7 +57,7 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
     <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
       {/* 顶栏 */}
       <div className="sticky top-0 z-10 border-b border-line bg-paper/70 backdrop-blur-md md:top-[74px]">
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-[22px] py-3">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-[22px] py-3">
           <button
             onClick={onBack}
             aria-label="返回"
@@ -74,7 +74,7 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-[680px] px-5 pt-4 pb-10">
+      <div className="mx-auto w-full max-w-measure px-5 pt-4 pb-10">
         {/* 头部说明 + 分段控件 */}
         <p className="text-[12px] leading-[1.7] text-sub">
           「<span className="font-bold text-ink">{data.question}</span>

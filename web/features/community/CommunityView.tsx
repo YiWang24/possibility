@@ -45,35 +45,51 @@ export function CommunityView() {
     );
   }, [travelers, search]);
 
+  const primaryAction = () => {
+    if (tab === 0) setShowDraw(true);
+    else require(() => setShowCompose(true));
+  };
+  const actionLabel = tab === 0 ? "万花筒抽一位旅人" : "发布悬赏";
+  const actionIcon = tab === 0 ? <MiniOrb /> : <PlusIcon />;
+
   return (
     <>
       {/* 页眉 */}
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex items-end justify-between gap-6">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] tracking-[3.5px] text-faint">KALEIDOSCOPE</span>
-          <h1 className="text-[27px] font-bold tracking-[0.8px] text-ink">万花筒社区</h1>
+          <span className="text-eyebrow text-faint">KALEIDOSCOPE</span>
+          <h1 className="text-display font-bold text-ink">万花筒社区</h1>
         </div>
-        <p
-          className="max-w-[190px] whitespace-pre-line text-right font-serif text-[10.5px] leading-[1.7] tracking-[0.35px] text-sub"
-        >
-          {tab === 0 ? "人生如逆旅，我亦是行人。" : "未来不是被我们预见的，\n而是被我们亲手促成的。"}
+        <p className="max-w-[190px] whitespace-pre-line text-right font-serif text-[10.5px] leading-[1.7] tracking-[0.35px] text-sub xl:max-w-[240px] xl:text-[12px]">
+          {tab === 0
+            ? "人生如逆旅，我亦是行人。"
+            : "未来不是被我们预见的，\n而是被我们亲手促成的。"}
         </p>
       </div>
 
-      {/* 双 tab */}
-      <div className="mt-4 flex items-baseline gap-6">
-        <TabButton label="为你推荐" on={tab === 0} onClick={() => setTab(0)} />
-        <TabButton label="悬赏贴" on={tab === 1} onClick={() => setTab(1)} />
+      {/* 双 tab —— 桌面把主动作从浮动 FAB 提到同一行，页面顶部即可触达 */}
+      <div className="mt-4 flex items-center justify-between gap-6 lg:mt-8">
+        <div className="flex items-baseline gap-6">
+          <TabButton label="为你推荐" on={tab === 0} onClick={() => setTab(0)} />
+          <TabButton label="悬赏贴" on={tab === 1} onClick={() => setTab(1)} />
+        </div>
+        <button
+          onClick={primaryAction}
+          className="hidden shrink-0 items-center gap-2 rounded-chip bg-btn-g px-5 py-2.5 text-[13px] font-semibold tracking-[0.5px] text-white shadow-[0_8px_18px_rgba(79,125,255,0.4)] transition hover:brightness-110 active:scale-[0.97] md:flex"
+        >
+          {actionIcon}
+          {actionLabel}
+        </button>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 lg:mt-7">
         {tab === 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 lg:gap-5">
             <SearchBar value={search} onChange={setSearch} />
             {filteredTravelers.length === 0 ? (
               <EmptyState text="没有匹配的旅人，换个关键词试试。" />
             ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-5 2xl:grid-cols-4">
                 {filteredTravelers.map((t) => (
                   <TravelerCard key={t.id} traveler={t} href={`/traveler/${t.id}`} />
                 ))}
@@ -81,7 +97,7 @@ export function CommunityView() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:gap-5 xl:grid-cols-3">
             {bounties.map((b) => (
               <BountyCard key={b.id} bounty={b} onClick={() => router.push(`/bounty/${b.id}`)} />
             ))}
@@ -89,25 +105,13 @@ export function CommunityView() {
         )}
       </div>
 
-      {/* FAB：固定右下，移动端上移避开 TabBar */}
+      {/* FAB：仅移动端；桌面已提到页眉，浮动按钮在大屏上是移动端习惯 */}
       <button
-        onClick={() => {
-          if (tab === 0) setShowDraw(true);
-          else require(() => setShowCompose(true));
-        }}
-        className="fixed bottom-[100px] right-5 z-40 flex items-center gap-2 rounded-chip bg-btn-g px-5 py-3 text-[13.5px] font-semibold tracking-[0.5px] text-white shadow-[0_10px_22px_rgba(79,125,255,0.55)] transition active:scale-[0.96] md:bottom-8 md:right-8"
+        onClick={primaryAction}
+        className="fixed bottom-[100px] right-5 z-40 flex items-center gap-2 rounded-chip bg-btn-g px-5 py-3 text-[13.5px] font-semibold tracking-[0.5px] text-white shadow-[0_10px_22px_rgba(79,125,255,0.55)] transition active:scale-[0.96] md:hidden"
       >
-        {tab === 0 ? (
-          <>
-            <MiniOrb />
-            万花筒抽一位旅人
-          </>
-        ) : (
-          <>
-            <PlusIcon />
-            发布悬赏
-          </>
-        )}
+        {actionIcon}
+        {actionLabel}
       </button>
 
       <AnimatePresence>
@@ -140,7 +144,8 @@ function TabButton({ label, on, onClick }: { label: string; on: boolean; onClick
 
 function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center gap-2 rounded-chip border border-line bg-white/5 px-[14px] py-2.5">
+    /* 搜索框不跟着看板一路拉到 1536px —— 单行输入拉太宽反而难扫读 */
+    <div className="flex w-full items-center gap-2 rounded-chip border border-line bg-white/5 px-[14px] py-2.5 transition focus-within:border-brand/50 md:max-w-[420px]">
       <svg width="13" height="13" viewBox="0 0 15 15" fill="none" className="shrink-0 text-faint" aria-hidden>
         <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
         <path d="M10 10 13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

@@ -42,7 +42,7 @@ export function Foot({
 }) {
   return (
     <div className="border-t border-line px-5 pt-3 pb-[14px]">
-      <div className="mx-auto w-full max-w-[680px]">
+      <div className="mx-auto w-full max-w-measure">
         <button
           disabled={!enabled}
           onClick={onClick}

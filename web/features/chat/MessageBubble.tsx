@@ -39,7 +39,8 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex pt-3.5 ${isUser ? "justify-end pl-10" : "justify-start pr-10"}`}>
       <div
-        className={`max-w-[300px] px-4 py-[13px] leading-[1.55] whitespace-pre-wrap break-words ${
+        /* 300px 是手机行宽；桌面 768px 消息列里会把每句话都压成窄条 */
+        className={`max-w-[300px] px-4 py-[13px] leading-[1.55] whitespace-pre-wrap break-words md:max-w-[82%] ${
           isUser
             ? "text-white text-[14.5px] bg-[linear-gradient(135deg,#3E77F2,#2A50D6)] rounded-[20px] rounded-br-[6px]"
             : "text-ink text-[14px] bg-card border border-line rounded-[20px] rounded-bl-[6px]"

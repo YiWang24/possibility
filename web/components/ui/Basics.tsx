@@ -75,12 +75,31 @@ export function GhostButton({ title, onClick }: { title: string; onClick?: () =>
   );
 }
 
-/* 页眉：eyebrow + 大标题 */
-export function PageHeader({ eyebrow, title }: { eyebrow: string; title: string }) {
+/* 页眉：eyebrow + 大标题（+ 可选副文案 / 右侧动作区）。
+   字号走 text-display 流体字阶：手机仍是 27px，桌面放大到 40px，
+   固定 px 标题在宽屏上会让整页读起来像被放大的手机截图。 */
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  /** 右侧动作区：桌面上把移动端的浮动按钮收编成正经的页眉按钮 */
+  actions?: ReactNode;
+}) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <div className="text-[11px] tracking-[3.5px] text-faint">{eyebrow}</div>
-      <h1 className="text-[27px] font-bold tracking-[0.8px] text-ink">{title}</h1>
+    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-8">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="text-eyebrow text-faint">{eyebrow}</div>
+        <h1 className="text-display font-bold text-ink">{title}</h1>
+        {description && (
+          <p className="mt-1 max-w-[52ch] text-[13px] leading-[1.8] text-sub">{description}</p>
+        )}
+      </div>
+      {actions && <div className="flex shrink-0 items-center gap-2.5">{actions}</div>}
     </div>
   );
 }
@@ -98,8 +117,8 @@ export function SectionHeader({
   onTrailing?: () => void;
 }) {
   return (
-    <div className="flex items-baseline justify-between">
-      <h2 className="text-[15px] font-semibold tracking-[0.9px] text-ink">{title}</h2>
+    <div className="flex items-baseline justify-between gap-4">
+      <h2 className="text-section font-semibold text-ink">{title}</h2>
       {trailing &&
         (onTrailing ? (
           <button

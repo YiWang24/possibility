@@ -275,217 +275,232 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
   return (
     <>
       <PageContainer>
-        <PageHeader eyebrow="LIFE LAB" title="人生实验室" />
+        <PageHeader
+          eyebrow="LIFE LAB"
+          title="人生实验室"
+          description="设定一个问题与时间尺度，选出你的那张牌，看看这条路会把你带到哪里。"
+        />
 
-        {/* 问题卡 */}
-        <div className="kaleido-card mt-[18px] px-5 py-[18px]">
-          <div className="text-[11px] tracking-[2.5px] text-faint">当前探索问题</div>
-          {editing ? (
-            <div className="mt-2 flex flex-col gap-2.5">
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                rows={3}
-                className="w-full resize-none rounded-[14px] border border-brand/40 bg-[#060810]/50 px-[14px] py-3 text-[14px] leading-[1.6] text-ink focus:outline-none"
-              />
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setEditing(false)} className="text-[12.5px] text-faint">
-                  取消
-                </button>
-                <button
-                  onClick={saveEdit}
-                  className="rounded-chip bg-btn-g px-5 py-2 text-[12.5px] font-semibold text-white"
-                >
-                  确定
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <p className="mt-2 text-[16.5px] font-bold leading-[1.6] text-ink">{question}</p>
-              <div className="mt-2.5 flex justify-end">
-                <button
-                  onClick={() => {
-                    setDraft(question);
-                    setEditing(true);
-                  }}
-                  className="text-[12px] text-brand"
-                >
-                  更换问题 ›
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* 时间旋钮 */}
-        <div ref={dialWrapRef} className="mt-[30px] flex justify-center">
-          <DialView horizonKey={horizonKey} onChange={setHorizonKey} pick={pick} isHot={isHotDial} />
-        </div>
-
-        {/* 预设档位 */}
-        <div className="no-scrollbar mt-[18px] flex gap-2 overflow-x-auto">
-          {PRESET_HORIZON_KEYS.map((key) => {
-            const h = horizonByKey(key);
-            const on = key === horizonKey;
-            return (
-              <button
-                key={key}
-                onClick={() => setHorizonKey(key)}
-                className={`shrink-0 rounded-chip border px-[14px] py-2 text-[12px] tabular-nums transition ${
-                  on
-                    ? "bg-btn-g font-semibold text-white border-[#6FA5FF]/60"
-                    : "bg-raised text-sub border-line"
-                }`}
-              >
-                {h.label}
-              </button>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-center text-[11px] tracking-[1px] text-faint">
-          拖动旋钮，从 7 天到 10 年任意停留
-        </p>
-
-        {/* 选择卡扇形牌堆 */}
-        <div className="mt-6 flex flex-col gap-2.5">
-          <SectionHeader title="我的选择卡" trailing="点选或拖进上方转盘" />
-          <GestureHint />
-          {choicesLoading && (
-            <div className="flex w-fit items-center gap-2 rounded-chip border border-[#6FA5FF]/22 bg-[#5E96FF]/8 px-3 py-1.5">
-              <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-              <span className="text-[10px] text-sub">正在根据当前问题生成专属选择卡……</span>
-            </div>
-          )}
-          {!choicesLoading && remoteChoices.length === 0 && (
-            <button onClick={() => void loadChoices()} className="w-fit text-[11.5px] font-semibold text-brand">
-              重新生成选择卡
-            </button>
-          )}
-
-          {showCustomEditor && (
-            <CustomEditor
-              name={customName}
-              desc={customDesc}
-              onName={setCustomName}
-              onDesc={setCustomDesc}
-              onCancel={() => {
-                setShowCustomEditor(false);
-                if (frontCard === "__create__") setFrontCard(null);
-              }}
-              onAdd={addCustomChoice}
-            />
-          )}
-
-          {/* 牌堆 */}
-          <div
-            className="relative mx-auto w-full"
-            style={{ height: total > 7 ? 194 : 178 }}
-          >
-            {deckItems.map((item, index) => {
-              const distance = index - center;
-              const normalized = center > 0 ? distance / center : 0;
-              const id = item.kind === "choice" ? item.choice.id : "__create__";
-              const lifted = frontCard === id;
-              const x = fanned ? distance * stepPx : 0;
-              const y = fanned ? -5 + Math.pow(Math.abs(normalized), 1.35) * 23 + (lifted ? -9 : 0) : 0;
-              const rot = fanned ? normalized * 16 : 0;
-              const scale = lifted && fanned ? 1.035 : 1;
-              return (
-                <div
-                  key={id}
-                  className="absolute bottom-2 left-1/2 transition-transform duration-500 ease-out"
-                  style={{
-                    transformOrigin: "bottom center",
-                    transform: `translateX(-50%) translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`,
-                    zIndex: deckZ(item, distance),
-                  }}
-                >
-                  {item.kind === "choice" ? (
-                    <ChoiceCardBody
-                      choice={item.choice}
-                      isOn={pick === item.choice.name}
-                      index={index}
-                      dragging={dragChoice?.id === item.choice.id}
-                      onSelect={() => selectChoice(item.choice)}
-                      onRemove={item.choice.isCustom ? () => removeCustomChoice(item.choice.name) : undefined}
-                      onDragStart={(px, py) => {
-                        setDragChoice(item.choice);
-                        setDragPoint({ x: px, y: py });
-                        setIsHotDial(overDial(px, py));
-                      }}
-                      onDragMove={(px, py) => {
-                        setDragPoint({ x: px, y: py });
-                        setIsHotDial(overDial(px, py));
-                      }}
-                      onDragEnd={(px, py) => {
-                        if (overDial(px, py)) {
-                          selectChoice(item.choice);
-                          toast(`「${item.choice.name}」已放入实验室`);
-                        }
-                        setDragChoice(null);
-                        setIsHotDial(false);
-                      }}
-                    />
-                  ) : (
-                    <CreateCard
-                      active={showCustomEditor && frontCard === "__create__"}
-                      onClick={() => {
-                        setPick(null);
-                        setFrontCard("__create__");
-                        setShowCustomEditor(true);
-                      }}
-                    />
-                  )}
+        {/* 桌面拆成两栏：左「设定条件」（问题 + 时间尺度），右「做出选择」（牌堆 + 底线 + 推演）。
+            整条流程纵向排下来在 1440px 屏上要滚三屏，分栏后一屏可见，
+            拖牌进转盘的命中判定走 getBoundingClientRect，跨栏依然成立。 */}
+        <div className="mt-[18px] grid grid-cols-1 items-start gap-8 lg:mt-9 lg:grid-cols-2 lg:gap-10 xl:gap-14">
+          <div className="flex min-w-0 flex-col">
+            {/* 问题卡 */}
+            <div className="kaleido-card px-5 py-[18px] xl:px-7 xl:py-6">
+              <div className="text-[11px] tracking-[2.5px] text-faint">当前探索问题</div>
+              {editing ? (
+                <div className="mt-2 flex flex-col gap-2.5">
+                  <textarea
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    rows={3}
+                    className="w-full resize-none rounded-[14px] border border-brand/40 bg-[#060810]/50 px-[14px] py-3 text-[14px] leading-[1.6] text-ink focus:outline-none"
+                  />
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => setEditing(false)} className="text-[12.5px] text-faint">
+                      取消
+                    </button>
+                    <button
+                      onClick={saveEdit}
+                      className="rounded-chip bg-btn-g px-5 py-2 text-[12.5px] font-semibold text-white"
+                    >
+                      确定
+                    </button>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+              ) : (
+                <>
+                  <p className="mt-2 text-[16.5px] font-bold leading-[1.6] text-ink">{question}</p>
+                  <div className="mt-2.5 flex justify-end">
+                    <button
+                      onClick={() => {
+                        setDraft(question);
+                        setEditing(true);
+                      }}
+                      className="text-[12px] text-brand"
+                    >
+                      更换问题 ›
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
 
-        {/* 底线卡 */}
-        <div className="mt-6 flex flex-col gap-3.5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-bold text-ink">什么要一起带走？</h2>
-            <span className="text-[12px] tabular-nums">
-              <span className="font-bold text-brand">{carry.length}</span>
-              <span className="text-faint">/3</span>
-            </span>
+            {/* 时间旋钮 */}
+            <div ref={dialWrapRef} className="mt-[30px] flex justify-center">
+              <DialView horizonKey={horizonKey} onChange={setHorizonKey} pick={pick} isHot={isHotDial} />
+            </div>
+
+            {/* 预设档位 */}
+            <div className="no-scrollbar mt-[18px] flex gap-2 overflow-x-auto">
+              {PRESET_HORIZON_KEYS.map((key) => {
+                const h = horizonByKey(key);
+                const on = key === horizonKey;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setHorizonKey(key)}
+                    className={`shrink-0 rounded-chip border px-[14px] py-2 text-[12px] tabular-nums transition ${
+                      on
+                        ? "bg-btn-g font-semibold text-white border-[#6FA5FF]/60"
+                        : "bg-raised text-sub border-line"
+                    }`}
+                  >
+                    {h.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-center text-[11px] tracking-[1px] text-faint">
+              拖动旋钮，从 7 天到 10 年任意停留
+            </p>
           </div>
-          <div className="no-scrollbar -mx-[22px] flex gap-[9px] overflow-x-auto px-[22px]">
-            {CARRY_CARDS.map((card) => {
-              const on = carry.includes(card.id);
-              return (
-                <button
-                  key={card.id}
-                  onClick={() => toggleCarry(card.id)}
-                  className="flex w-[130px] shrink-0 flex-col items-start gap-1.5 rounded-[14px] border px-3 py-3 text-left transition active:scale-[0.97]"
-                  style={{
-                    background: on ? "rgba(94,150,255,0.1)" : "var(--color-card)",
-                    borderColor: on ? "rgba(111,165,255,0.65)" : "var(--color-line)",
-                    borderWidth: on ? 1.4 : 1,
-                  }}
-                >
-                  <span className={on ? "text-brand" : "text-sub"}>
-                    <CardIconMark icon={card.icon} size={14} />
-                  </span>
-                  <span className="text-[12.5px] font-semibold text-ink">{card.name}</span>
-                  <span className="text-[9.5px] text-faint">{card.source}</span>
+
+          <div className="flex min-w-0 flex-col">
+            {/* 选择卡扇形牌堆 */}
+            <div className="flex flex-col gap-2.5">
+              {/* 桌面分栏后转盘在左侧而非上方，文案去掉方位词 */}
+              <SectionHeader title="我的选择卡" trailing="点选，或拖进转盘" />
+              <GestureHint />
+              {choicesLoading && (
+                <div className="flex w-fit items-center gap-2 rounded-chip border border-[#6FA5FF]/22 bg-[#5E96FF]/8 px-3 py-1.5">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                  <span className="text-[10px] text-sub">正在根据当前问题生成专属选择卡……</span>
+                </div>
+              )}
+              {!choicesLoading && remoteChoices.length === 0 && (
+                <button onClick={() => void loadChoices()} className="w-fit text-[11.5px] font-semibold text-brand">
+                  重新生成选择卡
                 </button>
-              );
-            })}
+              )}
+
+              {showCustomEditor && (
+                <CustomEditor
+                  name={customName}
+                  desc={customDesc}
+                  onName={setCustomName}
+                  onDesc={setCustomDesc}
+                  onCancel={() => {
+                    setShowCustomEditor(false);
+                    if (frontCard === "__create__") setFrontCard(null);
+                  }}
+                  onAdd={addCustomChoice}
+                />
+              )}
+
+              {/* 牌堆 */}
+              <div
+                className="relative mx-auto w-full"
+                style={{ height: total > 7 ? 194 : 178 }}
+              >
+                {deckItems.map((item, index) => {
+                  const distance = index - center;
+                  const normalized = center > 0 ? distance / center : 0;
+                  const id = item.kind === "choice" ? item.choice.id : "__create__";
+                  const lifted = frontCard === id;
+                  const x = fanned ? distance * stepPx : 0;
+                  const y = fanned ? -5 + Math.pow(Math.abs(normalized), 1.35) * 23 + (lifted ? -9 : 0) : 0;
+                  const rot = fanned ? normalized * 16 : 0;
+                  const scale = lifted && fanned ? 1.035 : 1;
+                  return (
+                    <div
+                      key={id}
+                      className="absolute bottom-2 left-1/2 transition-transform duration-500 ease-out"
+                      style={{
+                        transformOrigin: "bottom center",
+                        transform: `translateX(-50%) translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`,
+                        zIndex: deckZ(item, distance),
+                      }}
+                    >
+                      {item.kind === "choice" ? (
+                        <ChoiceCardBody
+                          choice={item.choice}
+                          isOn={pick === item.choice.name}
+                          index={index}
+                          dragging={dragChoice?.id === item.choice.id}
+                          onSelect={() => selectChoice(item.choice)}
+                          onRemove={item.choice.isCustom ? () => removeCustomChoice(item.choice.name) : undefined}
+                          onDragStart={(px, py) => {
+                            setDragChoice(item.choice);
+                            setDragPoint({ x: px, y: py });
+                            setIsHotDial(overDial(px, py));
+                          }}
+                          onDragMove={(px, py) => {
+                            setDragPoint({ x: px, y: py });
+                            setIsHotDial(overDial(px, py));
+                          }}
+                          onDragEnd={(px, py) => {
+                            if (overDial(px, py)) {
+                              selectChoice(item.choice);
+                              toast(`「${item.choice.name}」已放入实验室`);
+                            }
+                            setDragChoice(null);
+                            setIsHotDial(false);
+                          }}
+                        />
+                      ) : (
+                        <CreateCard
+                          active={showCustomEditor && frontCard === "__create__"}
+                          onClick={() => {
+                            setPick(null);
+                            setFrontCard("__create__");
+                            setShowCustomEditor(true);
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 底线卡 */}
+            <div className="mt-6 flex flex-col gap-3.5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[15px] font-bold text-ink">什么要一起带走？</h2>
+                <span className="text-[12px] tabular-nums">
+                  <span className="font-bold text-brand">{carry.length}</span>
+                  <span className="text-faint">/3</span>
+                </span>
+              </div>
+              {/* 手机横滑，桌面换成折行网格 —— 出血横滑条在宽屏上会把末张卡切在栏外 */}
+              <div className="no-scrollbar -mx-[22px] flex gap-[9px] overflow-x-auto px-[22px] lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0 xl:grid-cols-3">
+                {CARRY_CARDS.map((card) => {
+                  const on = carry.includes(card.id);
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => toggleCarry(card.id)}
+                      className="flex w-[130px] shrink-0 flex-col items-start gap-1.5 rounded-[14px] border px-3 py-3 text-left transition active:scale-[0.97] lg:w-auto"
+                      style={{
+                        background: on ? "rgba(94,150,255,0.1)" : "var(--color-card)",
+                        borderColor: on ? "rgba(111,165,255,0.65)" : "var(--color-line)",
+                        borderWidth: on ? 1.4 : 1,
+                      }}
+                    >
+                      <span className={on ? "text-brand" : "text-sub"}>
+                        <CardIconMark icon={card.icon} size={14} />
+                      </span>
+                      <span className="text-[12.5px] font-semibold text-ink">{card.name}</span>
+                      <span className="text-[9.5px] text-faint">{card.source}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 开始推演 */}
+            <div className="mt-[26px]">
+              <PrimaryButton title="开始推演" wide enabled={!!pick && !loading} onClick={runSim} />
+            </div>
+            <p className="mt-3.5 text-center text-[11px] leading-[1.7] text-faint">
+              推演基于你的动态画像与 1,842 位相似旅人的真实经历
+              <br />
+              它不是预言，是一面镜子
+            </p>
           </div>
         </div>
-
-        {/* 开始推演 */}
-        <div className="mt-[26px]">
-          <PrimaryButton title="开始推演" wide enabled={!!pick && !loading} onClick={runSim} />
-        </div>
-        <p className="mt-3.5 text-center text-[11px] leading-[1.7] text-faint">
-          推演基于你的动态画像与 1,842 位相似旅人的真实经历
-          <br />
-          它不是预言，是一面镜子
-        </p>
       </PageContainer>
 
       {/* 拖拽浮标 */}

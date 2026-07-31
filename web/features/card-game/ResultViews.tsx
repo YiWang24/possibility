@@ -13,7 +13,7 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
   const accent = cfg.accent;
   const cards = engine.heldCards;
   return (
-    <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-4 px-6 pt-[22px] pb-5">
+    <div className="mx-auto flex w-full max-w-measure flex-col items-center gap-4 px-6 pt-[22px] pb-5">
       <motion.div
         initial={{ scale: 0.6, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -79,7 +79,7 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
 export function LifeResult({ engine }: { engine: CardGameEngine }) {
   const a = useMemo(() => engine.lifeAnalysis(), [engine]);
   return (
-    <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-4 px-6 pt-[22px] pb-5">
+    <div className="mx-auto flex w-full max-w-measure flex-col items-center gap-4 px-6 pt-[22px] pb-5">
       {/* 光球 */}
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}

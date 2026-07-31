@@ -41,29 +41,40 @@ export function HomeView() {
   return (
     <PageContainer>
       {/* 问候 */}
-      <div className="flex items-end justify-between">
+      <header className="flex items-end justify-between gap-6">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] tracking-[3px] text-faint">{todayText()}</span>
-          <h1 className="text-[27px] font-bold tracking-[0.8px] text-ink">
+          <span className="text-eyebrow text-faint">{todayText()}</span>
+          <h1 className="text-display font-bold text-ink">
             {greeting()}，{USER_NAME}
           </h1>
         </div>
-        <div className="flex flex-col items-end gap-0.5">
+        <div className="flex shrink-0 flex-col items-end gap-0.5">
           <span className="text-[12px] text-sub">已探索</span>
-          <span className="text-aurora text-[16px] font-bold">第 {exploredDays} 天</span>
+          <span className="text-aurora text-[16px] font-bold xl:text-[19px]">
+            第 {exploredDays} 天
+          </span>
+        </div>
+      </header>
+
+      {/* 每日三件事：手机保持 日记 → 发问 → 卡牌 的纵向顺序（与 iOS 一致），
+          桌面用显式栅格定位改成「左列 日记 + 卡牌 / 右列 发问」两栏。
+          用 col-start/row-start 而不是套一层 flex 容器，DOM 顺序才不会被布局绑架。 */}
+      <div className="mt-[18px] grid grid-cols-1 items-start gap-[18px] lg:mt-8 lg:grid-cols-2 lg:gap-6 xl:gap-8">
+        <div className="lg:col-start-1 lg:row-start-1">
+          <DiaryCard />
+        </div>
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <AskCard />
+        </div>
+        {/* 发问卡跨两行会把行高撑开，self-end 让卡牌入口底边与它对齐，
+            富余空间收成一条刻意的基线而不是一块散着的空白 */}
+        <div className="lg:col-start-1 lg:row-start-2 lg:self-end">
+          <LifeEntryButton />
         </div>
       </div>
 
-      <div className="mt-[18px]">
-        <DiaryCard />
-      </div>
-      <div className="mt-[22px]">
-        <AskCard />
-      </div>
-      <div className="mt-3.5">
-        <LifeEntryButton />
-      </div>
-      <div className="mt-6">
+      {/* 画像通栏 —— 六维行需要宽度，塞进右轨会挤成两列窄条 */}
+      <div className="mt-6 lg:mt-12">
         <PortraitSection />
       </div>
     </PageContainer>

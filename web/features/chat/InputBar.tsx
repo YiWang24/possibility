@@ -14,7 +14,7 @@ export function InputBar({
 }) {
   return (
     <div className="border-t border-line bg-paper/80 backdrop-blur px-[18px] pt-3 pb-2">
-      <div className="mx-auto flex w-full max-w-[760px] items-center gap-2.5">
+      <div className="mx-auto flex w-full max-w-measure items-center gap-2.5">
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
