@@ -35,7 +35,10 @@ jobs:
         run: doppler run --command 'supabase link --project-ref "$SUPABASE_PROJECT_REF"'
 
       - name: 推送数据库迁移
-        run: doppler run --command 'supabase db push'
+        # Parallel PRs can merge migrations whose timestamps precede the
+        # latest version already applied remotely. Include every migration
+        # missing from remote history instead of rejecting that valid order.
+        run: doppler run --command 'supabase db push --include-all'
 
       # 错误上报（docs/埋点方案.md Layer 3）的 SENTRY_DSN / SENTRY_ENVIRONMENT 也走这条通道：
       # doppler-sync.sh 只排除 DOPPLER_/SUPABASE_ 前缀，其余键全量同步，无需在此逐个列举。
