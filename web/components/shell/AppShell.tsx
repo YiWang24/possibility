@@ -134,7 +134,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="移动端主导航"
           className="fixed inset-x-0 bottom-0 z-50 px-2.5 pb-[max(8px,env(safe-area-inset-bottom))] md:hidden"
         >
-          <NavigationMenu viewport={false} className="max-w-none">
+          {/* 底栏四个标签原本挤成一坨、grid-cols-4 铺不开，有两层原因：
+              1) NavigationMenu 根节点自带 max-w-max。用 max-w-[100%] 而不是
+                 max-w-none —— className 走 tailwind-merge 合并，任意值形式才会
+                 被识别成同一组并顶掉基类里的 max-w-max。
+              2) Radix 在根节点与 ul 之间插了一个无样式 div，它作为 flex item
+                 收缩到内容宽，ul 的 w-full 于是只占到这个 194px 的 100%。
+                 [&>div]:w-full 把这一层撑开，栅格才真的有 370px 可分。 */}
+          <NavigationMenu viewport={false} className="w-full max-w-[100%] [&>div]:w-full">
             <NavigationMenuList className="grid w-full grid-cols-4 gap-0 rounded-[22px] border border-white/[0.08] bg-paper/88 p-1.5 shadow-[0_16px_50px_rgb(0_0_0/0.5)] backdrop-blur-2xl">
               {TABS.map((tab) => {
                 const active = isActive(pathname, tab.key);
