@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Possibility">
+  <defs>
+    <linearGradient id="aurora" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5e96ff"/>
+      <stop offset="0.4" stop-color="#8f7bff"/>
+      <stop offset="0.75" stop-color="#e35cc1"/>
+      <stop offset="1" stop-color="#ff7a4d"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="#05070d"/>
+  <!-- 四角星 —— 取自 iOS App 图标的 sparkle 母题，16px 下仍然立得住 -->
+  <path
+    d="M32 9c2.4 12.3 9.3 19.2 21.6 21.6C41.3 33 34.4 39.9 32 52.2 29.6 39.9 22.7 33 10.4 30.6 22.7 28.2 29.6 21.3 32 9Z"
+    fill="url(#aurora)"/>
+</svg>
