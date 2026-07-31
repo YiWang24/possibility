@@ -57,3 +57,4 @@ android/**/build/
 # Claude/Agent 本地 worktree 与工具产物（不进仓库）
 .claude/
 .qoder/
+.gstack/
