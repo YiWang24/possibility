@@ -17,15 +17,36 @@ const TABS = [
   { key: "me", href: "/me", label: "我的主页" },
 ];
 
-function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+const PRIMARY_ROUTES = new Set(TABS.map((tab) => tab.href));
+
+const SECTION_ROUTES: Record<string, string[]> = {
+  home: ["/", "/chat", "/diary", "/assessment", "/card-game", "/studio"],
+  lab: ["/lab"],
+  community: ["/community", "/bounty", "/traveler"],
+  me: ["/me"],
+};
+
+function matchesRoute(pathname: string, route: string) {
+  return route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
+}
+
+function isActive(pathname: string, key: string) {
+  return SECTION_ROUTES[key]?.some((route) => matchesRoute(pathname, route)) ?? false;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const showMobileNav = PRIMARY_ROUTES.has(pathname);
 
   return (
     <div className="min-h-dvh screen-bg">
+      <a
+        href="#main-content"
+        className="sr-only fixed left-4 top-3 z-[60] rounded-lg bg-raised px-4 py-2 text-sm text-ink shadow-lg focus:not-sr-only"
+      >
+        跳到主要内容
+      </a>
+
       {/* 桌面顶部导航：品牌、主导航与一句轻量状态各占一列，主导航始终居中。 */}
       <header className="sticky top-0 z-50 hidden border-b border-white/[0.06] bg-paper/78 backdrop-blur-2xl md:block">
         <div className="relative mx-auto grid h-[74px] w-full max-w-[1280px] grid-cols-[150px_1fr_150px] items-center px-5 lg:grid-cols-[190px_1fr_190px] lg:px-8">
@@ -46,10 +67,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <NavigationMenu viewport={false} className="mx-auto max-w-none">
+          <NavigationMenu
+            viewport={false}
+            aria-label="主导航"
+            className="mx-auto max-w-none"
+          >
             <NavigationMenuList className="gap-0.5 rounded-[18px] border border-white/[0.07] bg-white/[0.035] p-1 shadow-[inset_0_1px_0_rgb(255_255_255/0.035),0_12px_36px_rgb(0_0_0/0.16)]">
               {TABS.map((tab) => {
-                const active = isActive(pathname, tab.href);
+                const active = isActive(pathname, tab.key);
                 return (
                   <NavigationMenuItem key={tab.key}>
                     <NavigationMenuLink
@@ -90,40 +115,54 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* 内容区 */}
-      <main className="flex-1 min-w-0 pb-[86px] md:pb-0">{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={cn(
+          "min-h-dvh min-w-0 outline-none md:min-h-[calc(100dvh-74px)]",
+          showMobileNav ? "pb-[86px] md:pb-0" : "pb-0"
+        )}
+      >
+        {children}
+      </main>
 
-      {/* 移动端保留底部导航，位置更符合单手操作。 */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 px-2.5 pb-[max(8px,env(safe-area-inset-bottom))] md:hidden">
-        <NavigationMenu viewport={false} className="max-w-none">
-          <NavigationMenuList className="grid w-full grid-cols-4 gap-0 rounded-[22px] border border-white/[0.08] bg-paper/88 p-1.5 shadow-[0_16px_50px_rgb(0_0_0/0.5)] backdrop-blur-2xl">
-            {TABS.map((tab) => {
-              const active = isActive(pathname, tab.href);
-              return (
-                <NavigationMenuItem key={tab.key}>
-                  <NavigationMenuLink
-                    asChild
-                    active={active}
-                    className={cn(
-                      "flex min-h-[54px] w-full flex-col items-center justify-center gap-0.5 rounded-[16px] p-0 text-[9px] text-faint outline-none transition-all duration-200",
-                      "hover:bg-white/[0.04] hover:text-sub focus-visible:ring-2 focus-visible:ring-brand/45",
-                      active &&
-                        "bg-raised/75 text-brand shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] data-[active=true]:bg-raised/75 data-[active=true]:text-brand data-[active=true]:hover:bg-raised/75 data-[active=true]:hover:text-brand"
-                    )}
-                  >
-                    <Link
-                      href={tab.href}
-                      aria-current={active ? "page" : undefined}
+      {/* 移动端只在一级页面保留底部导航，详情与沉浸流程使用自己的返回栏。 */}
+      {showMobileNav && (
+        <nav
+          aria-label="移动端主导航"
+          className="fixed inset-x-0 bottom-0 z-50 px-2.5 pb-[max(8px,env(safe-area-inset-bottom))] md:hidden"
+        >
+          <NavigationMenu viewport={false} className="max-w-none">
+            <NavigationMenuList className="grid w-full grid-cols-4 gap-0 rounded-[22px] border border-white/[0.08] bg-paper/88 p-1.5 shadow-[0_16px_50px_rgb(0_0_0/0.5)] backdrop-blur-2xl">
+              {TABS.map((tab) => {
+                const active = isActive(pathname, tab.key);
+                return (
+                  <NavigationMenuItem key={tab.key}>
+                    <NavigationMenuLink
+                      asChild
+                      active={active}
+                      className={cn(
+                        "flex min-h-[54px] w-full flex-col items-center justify-center gap-0.5 rounded-[16px] p-0 text-[9px] text-faint outline-none transition-all duration-200",
+                        "hover:bg-white/[0.04] hover:text-sub focus-visible:ring-2 focus-visible:ring-brand/45",
+                        active &&
+                          "bg-raised/75 text-brand shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] data-[active=true]:bg-raised/75 data-[active=true]:text-brand data-[active=true]:hover:bg-raised/75 data-[active=true]:hover:text-brand"
+                      )}
                     >
-                      <TabIcon name={tab.key} active={active} size={22} />
-                      <span>{tab.label}</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              );
-            })}
-          </NavigationMenuList>
-        </NavigationMenu>
-      </nav>
+                      <Link
+                        href={tab.href}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        <TabIcon name={tab.key} active={active} size={22} />
+                        <span>{tab.label}</span>
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                );
+              })}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </nav>
+      )}
     </div>
   );
 }
