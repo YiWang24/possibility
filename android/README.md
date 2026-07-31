@@ -19,7 +19,7 @@ cd android
 ```
 
 - 构建环境必须注入 Supabase URL 与 anon key；CI 从 GitHub Actions secrets 读取，本地推荐经 Doppler 注入
-- 本地联调：`SUPABASE_URL=http://10.0.2.2:54321 SUPABASE_ANON_KEY=<local> ./gradlew assembleDebug`
+- 本地联调：通过 HTTPS tunnel 暴露本机 Supabase，再用 `SUPABASE_URL=<https-url> SUPABASE_ANON_KEY=<local> ./gradlew assembleDebug` 注入；调试包同样禁止明文 HTTP
 - 也可以通过 `-PSUPABASE_URL=... -PSUPABASE_ANON_KEY=...` 注入；Gradle 属性优先于环境变量
 - 配置经 `BuildConfig.SUPABASE_URL` / `BuildConfig.SUPABASE_ANON_KEY` 读取（见 `app/build.gradle.kts`），仓库不提供生产配置回退值
 

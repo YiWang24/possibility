@@ -8,7 +8,7 @@ plugins {
 // Supabase 配置必须由构建环境注入。优先读取 Gradle 属性，其次读取环境变量：
 // doppler run -- ./gradlew assembleDebug
 // ./gradlew assembleDebug -PSUPABASE_URL=... -PSUPABASE_ANON_KEY=...
-// 模拟器访问宿主机 supabase start 时使用 http://10.0.2.2:54321。
+// 本地联调也必须注入 HTTPS 端点，避免调试包放宽全局明文流量策略。
 val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
   .orElse(providers.environmentVariable("SUPABASE_URL"))
   .getOrElse("")

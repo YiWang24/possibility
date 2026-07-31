@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- debug 变体允许明文 HTTP，用于访问本机 supabase start（http://10.0.2.2:54321） -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-    <application
-        android:usesCleartextTraffic="true"
-        tools:ignore="UnusedAttribute"
-        tools:replace="android:usesCleartextTraffic" />
-</manifest>
