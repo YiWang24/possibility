@@ -1,7 +1,13 @@
 /* 站点级常量 —— 与 lib/config.ts 同策略：env 优先，缺省回落生产域名。
-   预览部署想覆盖时设 NEXT_PUBLIC_SITE_URL 即可，无需改代码。 */
+   预览部署想覆盖时设 NEXT_PUBLIC_SITE_URL 即可，无需改代码。
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.maybeio.com";
+   用 apex 而不是 www：两者只能有一个是主域，另一个吃 308。实测那一跳要 700~960ms
+   （Chrome 冷缓存：输 apex 时 LCP 1329ms，其中跳转占 961ms；直连 www 只要 658ms），
+   而手输和口头传播用的都是 maybeio.com，所以让 apex 直服务、www 去跳。
+   这里改的是 canonical / sitemap / OG 的绝对地址，Vercel 侧的主域要同步设成 apex，
+   否则等于让每个访客都吃一次反向跳转。 */
+
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://maybeio.com";
 
 export const SITE_NAME = "Possibility · 万花筒";
 export const SITE_SHORT_NAME = "Possibility";
