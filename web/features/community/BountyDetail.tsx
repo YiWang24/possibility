@@ -9,7 +9,8 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { BackButton } from "@/features/card-game/ui";
 import { TravelerAvatar } from "@/components/ui/Avatar";
-import { TagPill } from "@/components/ui/Basics";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { callFunction } from "@/lib/supabase";
@@ -142,8 +143,8 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-bold tracking-[0.5px] text-ink">悬赏详情</div>
-            <div className="text-[10.5px] text-faint">
+            <div className="text-subtitle font-bold tracking-[0.5px] text-ink">悬赏详情</div>
+            <div className="text-micro text-faint">
               {statusText} · {responseCount}
             </div>
           </div>
@@ -154,7 +155,7 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
-              <TagPill key={tag} text={tag} />
+              <Badge key={tag}>{tag}</Badge>
             ))}
           </div>
         )}
@@ -170,42 +171,42 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
             imageSrc={mockAvatarByText(publisherName)}
           />
           <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-ink">{publisherName}</span>
-            <span className="text-[11px] text-faint">{publisherMeta}</span>
+            <span className="text-body font-semibold text-ink">{publisherName}</span>
+            <span className="text-caption text-faint">{publisherMeta}</span>
           </div>
         </div>
 
         {/* 杏色悬赏卡 */}
         <div
-          className="flex items-center justify-between rounded-[18px] px-[17px] py-[15px] shadow-[0_10px_20px_rgba(255,176,103,0.22)]"
+          className="flex items-center justify-between rounded-tile px-[17px] py-[15px] shadow-[0_10px_20px_rgba(255,176,103,0.22)]"
           style={{
             background: "linear-gradient(135deg,#FFC98A 0%,#FFB067 55%,#F08E4E 100%)",
           }}
         >
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10.5px] text-[#2B1A08]/75">本帖悬赏</span>
+            <span className="text-micro text-[#2B1A08]/75">本帖悬赏</span>
             {usesDemo ? (
               <span className="text-[24px] font-extrabold text-[#2B1A08]">¥{demo.amount}</span>
             ) : (
-              <span className="text-[17px] font-extrabold text-[#2B1A08]">
+              <span className="text-title font-extrabold text-[#2B1A08]">
                 {rewardText || bountyDisplayAmount({ id: bountyId, question, reward: rewardText, responses: "" })}
               </span>
             )}
           </div>
-          <span className="text-[11.5px] font-medium text-[#2B1A08]/80">{statusText}</span>
+          <span className="text-caption font-medium text-[#2B1A08]/80">{statusText}</span>
         </div>
 
         {/* 问题详情 */}
         <div className="kaleido-card flex flex-col gap-2.5 p-4">
-          <span className="text-[13.5px] font-bold text-ink">TA 想了解的具体情况</span>
-          <p className="whitespace-pre-line text-[12.5px] leading-[1.7] text-sub">{detailText}</p>
+          <span className="text-body font-bold text-ink">TA 想了解的具体情况</span>
+          <p className="whitespace-pre-line text-footnote leading-[1.7] text-sub">{detailText}</p>
         </div>
 
         {/* 亲历者回应 */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-[13.5px] font-bold text-ink">亲历者回应</span>
-            <span className="text-[11px] text-faint">{responseCount}</span>
+            <span className="text-body font-bold text-ink">亲历者回应</span>
+            <span className="text-caption text-faint">{responseCount}</span>
           </div>
           <Replies
             usesDemo={usesDemo}
@@ -217,7 +218,7 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
         </div>
 
         {sent && (
-          <div className="rounded-[13px] border border-[#3ED9A4]/30 bg-[#3ED9A4]/8 p-[13px] text-[11.5px] leading-[1.6] text-[#8EE7C8]">
+          <div className="rounded-field border border-teal/30 bg-teal/8 p-[13px] text-caption leading-[1.6] text-teal-lite">
             你的名片与补充说明已发送，发帖人可以查看你的经历并与你联系。
           </div>
         )}
@@ -226,15 +227,9 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
       {/* 底部动作栏 */}
       <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
         <div className="mx-auto w-full max-w-measure px-5 py-3">
-          <button
-            onClick={onSend}
-            disabled={sent}
-            className={`w-full rounded-chip py-[15px] text-[14px] font-semibold text-white transition active:scale-[0.97] ${
-              sent ? "bg-raised" : "bg-btn-g"
-            }`}
-          >
+          <Button size="lg" className="w-full" onClick={onSend} disabled={sent}>
             {sent ? "名片已发送 ✓" : "发送我的名片"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -299,7 +294,7 @@ function Replies({
     );
   }
   return (
-    <div className="rounded-[14px] bg-raised p-[13px] text-[12px] text-faint">
+    <div className="rounded-tile bg-raised p-[13px] text-footnote text-faint">
       {loaded ? "回应暂时加载失败，请稍后再试。" : "正在加载回应…"}
     </div>
   );
@@ -307,7 +302,7 @@ function Replies({
 
 function EmptyReplies() {
   return (
-    <div className="rounded-[14px] bg-raised p-[13px] text-[12px] text-faint">
+    <div className="rounded-tile bg-raised p-[13px] text-footnote text-faint">
       还没有旅人回应，成为第一个分享经历的人吧。
     </div>
   );
@@ -325,14 +320,14 @@ function ReplyRow({
   hueIndex: number;
 }) {
   return (
-    <div className="flex items-start gap-[11px] rounded-[14px] bg-raised p-[13px]">
+    <div className="flex items-start gap-[11px] rounded-tile bg-raised p-[13px]">
       <TravelerAvatar initial={name.slice(0, 1)} hueIndex={hueIndex} size={34} imageSrc={mockAvatarByText(name)} />
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-[12.5px] font-semibold text-ink">{name}</span>
-          <span className="text-[10px] text-brand">{role}</span>
+          <span className="text-footnote font-semibold text-ink">{name}</span>
+          <span className="text-micro text-brand">{role}</span>
         </div>
-        <p className="text-[12px] leading-[1.6] text-sub">{text}</p>
+        <p className="text-footnote leading-[1.6] text-sub">{text}</p>
       </div>
     </div>
   );
@@ -390,46 +385,40 @@ function CardModal({
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-chip bg-white/20 md:hidden" />
         <div className="flex flex-col gap-3.5">
-          <h2 className="text-[17px] font-bold text-ink">发送我的名片</h2>
+          <h2 className="text-title font-bold text-ink">发送我的名片</h2>
 
-          <div className="flex flex-col gap-2.5 rounded-[16px] border border-line bg-card p-3.5">
+          <div className="flex flex-col gap-2.5 rounded-tile border border-line bg-card p-3.5">
             <div className="flex items-center gap-[11px]">
               <TravelerAvatar initial={profile.name.slice(0, 1)} hueIndex={profile.hue} size={42} />
               <div className="flex flex-col gap-0.5">
-                <span className="text-[14px] font-bold text-ink">{profile.name}</span>
-                <span className="text-[11.5px] text-sub">{profile.bio}</span>
+                <span className="text-callout font-bold text-ink">{profile.name}</span>
+                <span className="text-caption text-sub">{profile.bio}</span>
               </div>
             </div>
             {profile.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {profile.tags.map((tag) => (
-                  <TagPill key={tag} text={tag} />
+                  <Badge key={tag}>{tag}</Badge>
                 ))}
               </div>
             )}
           </div>
 
-          <span className="text-[11.5px] text-sub">补充一句话，让对方知道你为什么能回答</span>
+          <span className="text-caption text-sub">补充一句话，让对方知道你为什么能回答</span>
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             placeholder="例如：我去年完成了相似转型，可以分享第一份工作的准备过程。"
-            className="w-full resize-none rounded-[13px] border border-line bg-raised px-3 py-3 text-[12.5px] text-ink placeholder:text-faint focus:border-[#5E96FF]/50 focus:outline-none"
+            className="w-full resize-none rounded-field border border-line bg-raised px-3 py-3 text-footnote text-ink placeholder:text-faint focus:border-brand/50 focus:outline-none"
           />
-          <p className="text-[10.5px] leading-[1.6] text-faint">
+          <p className="text-micro leading-[1.6] text-faint">
             发送后，你的回应会和公开画像一起展示在这条悬赏下，所有旅人可见；请不要在补充说明中留下联系方式。
           </p>
 
-          <button
-            onClick={confirm}
-            disabled={sending}
-            className={`w-full rounded-chip py-[14px] text-[14px] font-semibold text-white transition active:scale-[0.97] ${
-              sending ? "bg-raised" : "bg-btn-g"
-            }`}
-          >
+          <Button size="lg" className="w-full" onClick={confirm} disabled={sending}>
             {sending ? "发送中…" : "确认发送名片"}
-          </button>
+          </Button>
         </div>
       </motion.div>
     </motion.div>

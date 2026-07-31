@@ -5,7 +5,8 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { TagPill } from "@/components/ui/Basics";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 
@@ -90,8 +91,8 @@ export function BountyCompose({
         <div className="mx-auto mb-4 h-1 w-10 rounded-chip bg-white/20 md:hidden" />
         <div className="flex flex-col gap-3.5">
           <div>
-            <h2 className="text-[17px] font-bold text-ink">发布悬赏</h2>
-            <p className="mt-1 text-[11.5px] text-sub">向亲历者征集真实经历，而不是抽象建议。</p>
+            <h2 className="text-title font-bold text-ink">发布悬赏</h2>
+            <p className="mt-1 text-caption text-sub">向亲历者征集真实经历，而不是抽象建议。</p>
           </div>
 
           <Field label="你想问什么？（必填，≤200 字）">
@@ -126,7 +127,7 @@ export function BountyCompose({
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {tags.map((tag, i) => (
-                <TagPill key={`${tag}-${i}`} text={tag} />
+                <Badge key={`${tag}-${i}`}>{tag}</Badge>
               ))}
             </div>
           )}
@@ -143,13 +144,9 @@ export function BountyCompose({
 
           {errorText && <Hint text={errorText} />}
 
-          <button
-            onClick={submit}
-            disabled={!canSubmit}
-            className="mt-1 w-full rounded-chip bg-btn-g py-[14px] text-[14px] font-semibold text-white transition active:scale-[0.97] disabled:bg-raised disabled:opacity-100"
-          >
+          <Button size="lg" className="mt-1 w-full" onClick={submit} disabled={!canSubmit}>
             {submitting ? "发布中…" : "发布悬赏"}
-          </button>
+          </Button>
         </div>
       </motion.div>
     </motion.div>
@@ -159,7 +156,7 @@ export function BountyCompose({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-[11.5px] text-sub">{label}</span>
+      <span className="text-caption text-sub">{label}</span>
       {children}
     </label>
   );
@@ -182,11 +179,11 @@ function ComposeInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={rows}
-      className="w-full resize-none rounded-[13px] border border-line bg-raised px-3 py-3 text-[12.5px] text-ink placeholder:text-faint focus:border-[#5E96FF]/50 focus:outline-none"
+      className="w-full resize-none rounded-field border border-line bg-raised px-3 py-3 text-footnote text-ink placeholder:text-faint focus:border-brand/50 focus:outline-none"
     />
   );
 }
 
 function Hint({ text }: { text: string }) {
-  return <p className="text-[11px] text-apricot">{text}</p>;
+  return <p className="text-caption text-apricot">{text}</p>;
 }

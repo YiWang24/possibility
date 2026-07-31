@@ -9,6 +9,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { HueBandHeader } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { useData } from "@/stores/data";
 import { bountyDisplayAmount, bountyRewardGoal, type Bounty, type Traveler } from "@/lib/models";
@@ -60,7 +62,7 @@ export function CommunityView() {
           <span className="text-eyebrow text-faint">KALEIDOSCOPE</span>
           <h1 className="text-display font-bold text-ink">万花筒社区</h1>
         </div>
-        <p className="max-w-[190px] whitespace-pre-line text-right font-serif text-[10.5px] leading-[1.7] tracking-[0.35px] text-sub xl:max-w-[240px] xl:text-[12px]">
+        <p className="max-w-[190px] whitespace-pre-line text-right font-serif text-micro leading-[1.7] tracking-[0.35px] text-sub xl:max-w-[240px] xl:text-footnote">
           {tab === 0
             ? "人生如逆旅，我亦是行人。"
             : "未来不是被我们预见的，\n而是被我们亲手促成的。"}
@@ -73,13 +75,10 @@ export function CommunityView() {
           <TabButton label="为你推荐" on={tab === 0} onClick={() => setTab(0)} />
           <TabButton label="悬赏贴" on={tab === 1} onClick={() => setTab(1)} />
         </div>
-        <button
-          onClick={primaryAction}
-          className="hidden shrink-0 items-center gap-2 rounded-chip bg-btn-g px-5 py-2.5 text-[13px] font-semibold tracking-[0.5px] text-white shadow-[0_8px_18px_rgba(79,125,255,0.4)] transition hover:brightness-110 active:scale-[0.97] md:flex"
-        >
+        <Button onClick={primaryAction} className="hidden tracking-[0.5px] md:flex">
           {actionIcon}
           {actionLabel}
-        </button>
+        </Button>
       </div>
 
       <div className="mt-4 lg:mt-7">
@@ -106,13 +105,13 @@ export function CommunityView() {
       </div>
 
       {/* FAB：仅移动端；桌面已提到页眉，浮动按钮在大屏上是移动端习惯 */}
-      <button
+      <Button
         onClick={primaryAction}
-        className="fixed bottom-[100px] right-5 z-40 flex items-center gap-2 rounded-chip bg-btn-g px-5 py-3 text-[13.5px] font-semibold tracking-[0.5px] text-white shadow-[0_10px_22px_rgba(79,125,255,0.55)] transition active:scale-[0.96] md:hidden"
+        className="fixed bottom-[100px] right-5 z-40 tracking-[0.5px] md:hidden"
       >
         {actionIcon}
         {actionLabel}
-      </button>
+      </Button>
 
       <AnimatePresence>
         {showDraw && <KaleidoscopeDraw onClose={() => setShowDraw(false)} />}
@@ -133,7 +132,7 @@ function TabButton({ label, on, onClick }: { label: string; on: boolean; onClick
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1.5">
       <span
-        className={`transition ${on ? "text-[17px] font-bold text-ink" : "text-[15px] text-faint"}`}
+        className={`transition ${on ? "text-title font-bold text-ink" : "text-lead text-faint"}`}
       >
         {label}
       </span>
@@ -154,7 +153,7 @@ function SearchBar({ value, onChange }: { value: string; onChange: (v: string) =
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="搜索旅人、介绍或标签"
-        className="min-w-0 flex-1 bg-transparent text-[13px] text-ink placeholder:text-faint focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent text-body text-ink placeholder:text-faint focus:outline-none"
       />
       {value && (
         <button
@@ -185,16 +184,16 @@ function TravelerCard({ traveler, href }: { traveler: Traveler; href: string }) 
         imageSrc={mockAvatarById(traveler.id)}
       />
       <div className="flex flex-col gap-1.5 px-3.5 pb-3.5 pt-5">
-        <span className="text-[13.5px] font-semibold text-ink">{traveler.name}</span>
-        <p className="text-[11.5px] leading-relaxed text-sub">{traveler.quote}</p>
+        <span className="text-body font-semibold text-ink">{traveler.name}</span>
+        <p className="text-caption leading-relaxed text-sub">{traveler.quote}</p>
         {traveler.tags.length > 0 && (
           <div className="mt-0.5 flex flex-wrap gap-1.5">
             {traveler.tags.slice(0, 3).map((tag) => (
-              <SmallTag key={tag} text={tag} />
+              <Badge key={tag} size="sm">{tag}</Badge>
             ))}
           </div>
         )}
-        <span className="mt-1 text-[11.5px] font-medium text-brand">查看详情 ›</span>
+        <span className="mt-1 text-caption font-medium text-brand">查看详情 ›</span>
       </div>
     </Link>
   );
@@ -212,39 +211,31 @@ function BountyCard({ bounty, onClick }: { bounty: Bounty; onClick: () => void }
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {tags.slice(0, 3).map((tag) => (
-            <SmallTag key={tag} text={tag} />
+            <Badge key={tag} size="sm">{tag}</Badge>
           ))}
         </div>
       )}
-      <p className={`text-[13px] font-semibold leading-[1.5] text-ink ${tags.length ? "mt-[11px]" : ""}`}>
+      <p className={`text-body font-semibold leading-[1.5] text-ink ${tags.length ? "mt-[11px]" : ""}`}>
         {bounty.question}
       </p>
-      {goal && <p className="mt-2 line-clamp-2 text-[10.5px] font-medium text-sub">{goal}</p>}
+      {goal && <p className="mt-2 line-clamp-2 text-micro font-medium text-sub">{goal}</p>}
       <div className="mt-3 h-px w-full bg-line" />
       <div className="mt-2.5 flex w-full items-end justify-between gap-1.5">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[8.5px] font-medium text-faint">悬赏金</span>
-          <span className="text-[16px] font-bold tabular-nums text-apricot">
+          <span className="text-micro font-medium text-faint">悬赏金</span>
+          <span className="text-subtitle font-bold tabular-nums text-apricot">
             {bountyDisplayAmount(bounty)}
           </span>
         </div>
-        <span className="max-w-[45%] text-right text-[9.5px] text-faint">{bounty.responses}</span>
+        <span className="max-w-[45%] text-right text-micro text-faint">{bounty.responses}</span>
       </div>
     </button>
   );
 }
 
-function SmallTag({ text }: { text: string }) {
-  return (
-    <span className="rounded-chip bg-[#5E96FF]/10 px-[7px] py-1 text-[9.5px] font-medium text-[#AFC8FF]">
-      {text}
-    </span>
-  );
-}
-
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-card border border-line bg-raised px-4 py-8 text-center text-[12.5px] text-faint">
+    <div className="rounded-card border border-line bg-raised px-4 py-8 text-center text-footnote text-faint">
       {text}
     </div>
   );

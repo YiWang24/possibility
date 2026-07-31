@@ -101,10 +101,10 @@ export function ChatView({
         <div className="mx-auto flex w-full max-w-measure items-center gap-3">
           <BackButton onClick={() => router.back()} />
           <div className="flex flex-col gap-0.5">
-            <span className="text-[16px] font-semibold tracking-[0.8px] text-ink">
+            <span className="text-subtitle font-semibold tracking-[0.8px] text-ink">
               {model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
             </span>
-            <span className="text-[11px] text-faint">和你的动态画像一起想清楚</span>
+            <span className="text-caption text-faint">和你的动态画像一起想清楚</span>
           </div>
           <div className="flex-1" />
           {model.historyEntries.length > 0 ? (
@@ -124,7 +124,7 @@ export function ChatView({
             <div className="pt-2.5">
               <button
                 onClick={() => model.retry()}
-                className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#AFC7FF] px-[15px] py-[9px] rounded-chip bg-[#5E96FF]/10 border border-[#6FA5FF]/30 transition active:scale-[0.96]"
+                className="inline-flex items-center gap-1.5 text-footnote font-semibold text-brand-lite px-[15px] py-[9px] rounded-chip bg-brand/10 border border-brand-bright/30 transition active:scale-[0.96]"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path d="M20 11a8 8 0 1 0-1.5 5M20 5v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

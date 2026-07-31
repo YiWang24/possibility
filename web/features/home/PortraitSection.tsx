@@ -4,7 +4,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SectionHeader } from "@/components/ui/Basics";
+import { SectionHeader } from "@/components/ui/page-header";
 import { hue } from "@/lib/theme";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import { useData } from "@/stores/data";
@@ -74,10 +74,10 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
 
       {/* 尼采引文 */}
       <div className="relative border-l border-sub/30 pl-3.5 pt-1 xl:max-w-[68ch]">
-        <p className="font-serif text-[12px] leading-[1.9] text-sub xl:text-[13px]">
+        <p className="font-serif text-footnote leading-[1.9] text-sub xl:text-body">
           我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：“离每个人最远的，就是他自己。”——对于我们自己，我们不是“知者”……
         </p>
-        <p className="mt-1 text-right text-[11px] text-faint">——尼采《道德的系谱》</p>
+        <p className="mt-1 text-right text-caption text-faint">——尼采《道德的系谱》</p>
       </div>
 
       {/* 画像卡 */}
@@ -92,20 +92,20 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
 
         {/* 人生底牌签名 */}
         {signatureCards.length > 0 && (
-          <div className="mt-3.5 rounded-[16px] border border-line bg-raised p-3.5">
+          <div className="mt-3.5 rounded-tile border border-line bg-raised p-3.5">
             <div className="flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-ink">我的人生底牌</span>
-              <span className="text-[10.5px] text-faint">已参与数字形象生成</span>
+              <span className="text-body font-semibold text-ink">我的人生底牌</span>
+              <span className="text-micro text-faint">已参与数字形象生成</span>
             </div>
             <div className="mt-2.5 flex gap-2">
               {signatureCards.map((card) => (
                 <div
                   key={card.name}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-[12px] border border-[#AEAEFF]/25 py-3 text-white"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-field border border-[#AEAEFF]/25 py-3 text-white"
                   style={{ background: hue(0).gradient, opacity: 0.9 }}
                 >
-                  <span className="text-[13px]">{card.glyph}</span>
-                  <span className="truncate text-[12px] font-medium">{card.name}</span>
+                  <span className="text-body">{card.glyph}</span>
+                  <span className="truncate text-footnote font-medium">{card.name}</span>
                 </div>
               ))}
             </div>
@@ -120,7 +120,7 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
               style={{ width: `${completion.percent}%` }}
             />
           </div>
-          <span className="text-[11px] tabular-nums text-sub">
+          <span className="text-caption tabular-nums text-sub">
             {completion.completed}/{completion.total} · {completion.percent}%
           </span>
         </div>
@@ -133,7 +133,7 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
               <button
                 key={dim.id}
                 onClick={() => handleTap(dim)}
-                className="flex items-center gap-3 rounded-[16px] border px-4 py-3.5 text-left transition active:scale-[0.98]"
+                className="flex items-center gap-3 rounded-tile border px-4 py-3.5 text-left transition active:scale-[0.98]"
                 style={{
                   background: isTodo ? "rgba(94,150,255,0.06)" : "var(--color-raised)",
                   borderColor: isTodo ? "rgba(94,150,255,0.4)" : "var(--color-line)",
@@ -141,20 +141,20 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
                 }}
               >
                 <span
-                  className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[12px] text-[15px]"
+                  className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-field text-lead"
                   style={{ background: `${dim.tint}26`, color: dim.tint }}
                 >
                   {dim.icon}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-semibold text-ink">{dim.label}</div>
+                  <div className="text-body font-semibold text-ink">{dim.label}</div>
                   <div
-                    className={`truncate text-[11.5px] ${isTodo ? "text-brand" : "text-sub"}`}
+                    className={`truncate text-caption ${isTodo ? "text-brand" : "text-sub"}`}
                   >
                     {dim.value ?? "尚未填写"}
                   </div>
                 </div>
-                <span className="text-[14px] text-faint">›</span>
+                <span className="text-callout text-faint">›</span>
               </button>
             );
           })}

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthGate } from "@/components/auth/AuthGate";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import {
   createVoiceDiary,
@@ -76,7 +78,7 @@ function DayCell({
   const filled = count > 0;
   return (
     <div className="flex flex-col items-center gap-1.5">
-      <div className="relative flex h-[30px] w-[30px] items-center justify-center rounded-full text-[15px]">
+      <div className="relative flex h-[30px] w-[30px] items-center justify-center rounded-full text-lead">
         <span
           className="absolute inset-0 rounded-full"
           style={{
@@ -86,16 +88,16 @@ function DayCell({
           }}
         />
         {today && (
-          <span className="absolute -inset-0.5 rounded-full border-2 border-dashed border-[#5E96FF]/55" />
+          <span className="absolute -inset-0.5 rounded-full border-2 border-dashed border-brand/55" />
         )}
         <span className="relative">{emoji || "·"}</span>
         {count > 1 && (
-          <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-[#5E96FF] px-1 text-center text-[8px] font-bold leading-4 text-white">
+          <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-brand px-1 text-center text-[8px] font-bold leading-4 text-white">
             {count}
           </span>
         )}
       </div>
-      <span className={`text-[10px] ${today ? "text-brand" : "text-faint"}`}>{label}</span>
+      <span className={`text-micro ${today ? "text-brand" : "text-faint"}`}>{label}</span>
     </div>
   );
 }
@@ -249,8 +251,8 @@ export function DiaryCard() {
             className="flex items-center gap-[7px] transition active:scale-[0.97]"
             aria-label="查看全部语音日记"
           >
-            <span className="text-[14.5px] font-semibold text-ink">我的语音日记</span>
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border border-white/18 bg-white/6 text-[14px] text-white/80">
+            <span className="text-callout font-semibold text-ink">我的语音日记</span>
+            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full border border-white/18 bg-white/6 text-callout text-white/80">
               ›
             </span>
           </button>
@@ -258,7 +260,7 @@ export function DiaryCard() {
             <button
               onClick={() => requireAuth(() => void recorder.start())}
               disabled={saving || recorder.state === "requesting"}
-              className="rounded-chip bg-[#5E96FF]/12 px-3 py-1.5 text-[12.5px] font-medium text-brand disabled:opacity-50"
+              className="rounded-chip bg-brand/12 px-3 py-1.5 text-footnote font-medium text-brand disabled:opacity-50"
             >
               {recorder.state === "requesting" ? "请求麦克风…" : "◉ 记录今日"}
             </button>
@@ -288,7 +290,7 @@ export function DiaryCard() {
 
         {recorder.isRecording && (
           <div
-            className="flex flex-col gap-2.5 rounded-[14px] p-3.5"
+            className="flex flex-col gap-2.5 rounded-tile p-3.5"
             style={{
               background:
                 "linear-gradient(90deg, rgba(94,150,255,0.14), rgba(227,92,193,0.10))",
@@ -306,28 +308,25 @@ export function DiaryCard() {
                   />
                 ))}
               </div>
-              <span className="w-[38px] font-mono text-[12px] tabular-nums text-lime">
+              <span className="w-[38px] font-mono text-footnote tabular-nums text-lime">
                 {formatElapsed(recorder.durationMs)}
               </span>
-              <button
-                onClick={() => void finishRecording()}
-                className="rounded-chip bg-btn-g px-3.5 py-[7px] text-[12.5px] font-medium text-white"
-              >
+              <Button size="sm" onClick={() => void finishRecording()}>
                 完成
-              </button>
+              </Button>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10.5px] text-faint">
+              <span className="text-micro text-faint">
                 {recorder.state === "paused" ? "录音已暂停" : "正在记录你的声音"}
               </span>
               <div className="flex items-center gap-3">
                 <button
                   onClick={recorder.state === "paused" ? recorder.resume : recorder.pause}
-                  className="text-[10.5px] text-brand"
+                  className="text-micro text-brand"
                 >
                   {recorder.state === "paused" ? "继续" : "暂停"}
                 </button>
-                <button onClick={recorder.cancel} className="text-[10.5px] text-faint">
+                <button onClick={recorder.cancel} className="text-micro text-faint">
                   放弃
                 </button>
               </div>
@@ -340,13 +339,13 @@ export function DiaryCard() {
             {saving && (
               <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
             )}
-            <span className="min-w-0 flex-1 text-[11.5px] leading-relaxed text-sub">
+            <span className="min-w-0 flex-1 text-caption leading-relaxed text-sub">
               {recorder.error ?? saveError ?? phaseText}
             </span>
             {phase === "failed" && pending && (
               <button
                 onClick={() => void saveRecording(pendingRef.current ?? pending)}
-                className="shrink-0 text-[11.5px] font-medium text-brand"
+                className="shrink-0 text-caption font-medium text-brand"
               >
                 重试
               </button>
@@ -354,7 +353,7 @@ export function DiaryCard() {
             {recorder.error && (
               <button
                 onClick={recorder.clearError}
-                className="shrink-0 text-[11.5px] text-faint"
+                className="shrink-0 text-caption text-faint"
               >
                 知道了
               </button>
@@ -365,7 +364,7 @@ export function DiaryCard() {
         {!recorder.isRecording && !saving && latestToday && (
           <div className="flex flex-col gap-2 pt-1">
             <div className="h-px w-full bg-line" />
-            <span className="text-[11px] text-faint">
+            <span className="text-caption text-faint">
               {latestToday.status === "ready"
                 ? "这次记录里，我听见了"
                 : statusText(latestToday.status)}
@@ -375,22 +374,17 @@ export function DiaryCard() {
                 {latestToday.emotions.map((emotion) => (
                   <span
                     key={`emotion-${emotion}`}
-                    className="rounded-chip bg-lime px-[11px] py-1 text-[11.5px] font-semibold text-[#0B0F18]"
+                    className="rounded-chip bg-lime px-[11px] py-1 text-caption font-semibold text-[#0B0F18]"
                   >
                     {entryEmoji(latestToday)} {emotion}
                   </span>
                 ))}
                 {latestToday.keywords.map((keyword) => (
-                  <span
-                    key={`keyword-${keyword}`}
-                    className="rounded-chip border border-[#5E96FF]/30 bg-[#5E96FF]/13 px-[11px] py-1 text-[11.5px] text-[#9DBCFF]"
-                  >
-                    {keyword}
-                  </span>
+                  <Badge key={`keyword-${keyword}`}>{keyword}</Badge>
                 ))}
               </div>
             )}
-            <button onClick={() => router.push("/diary")} className="self-end text-[11px] text-brand">
+            <button onClick={() => router.push("/diary")} className="self-end text-caption text-brand">
               查看详情 ›
             </button>
           </div>

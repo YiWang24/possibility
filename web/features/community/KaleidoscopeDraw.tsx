@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { HueBandHeader } from "@/components/ui/Avatar";
-import { TagPill } from "@/components/ui/Basics";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { callFunction } from "@/lib/supabase";
 import { mockAvatarById } from "@/lib/theme";
 import { DEMO_TRAVELERS } from "@/lib/demo-data";
@@ -198,7 +199,7 @@ export function KaleidoscopeDraw({ onClose }: { onClose: () => void }) {
     >
       <button
         onClick={onClose}
-        className="absolute right-5 top-6 text-[12.5px] text-faint transition active:scale-95"
+        className="absolute right-5 top-6 text-footnote text-faint transition active:scale-95"
       >
         关闭 ✕
       </button>
@@ -206,8 +207,8 @@ export function KaleidoscopeDraw({ onClose }: { onClose: () => void }) {
       <div className="flex w-full max-w-[420px] flex-1 flex-col items-center justify-center gap-8 py-6">
         {/* 文案 */}
         <div className="flex flex-col items-center gap-2 text-center">
-          <h2 className="text-[20px] font-bold tracking-[0.8px] text-ink">{title}</h2>
-          {sub && <p className="text-[12px] leading-relaxed text-sub">{sub}</p>}
+          <h2 className="text-heading font-bold tracking-[0.8px] text-ink">{title}</h2>
+          {sub && <p className="text-footnote leading-relaxed text-sub">{sub}</p>}
         </div>
 
         {/* 主内容 */}
@@ -234,7 +235,7 @@ export function KaleidoscopeDraw({ onClose }: { onClose: () => void }) {
           {phase === "spinning" && (
             <div className="flex flex-col items-center gap-5">
               <KaleidoscopeWheel spinning />
-              <span className="text-[12px] tracking-[1.5px] text-faint">
+              <span className="text-footnote tracking-[1.5px] text-faint">
                 光在旋转，人生在折叠……
               </span>
             </div>
@@ -246,24 +247,18 @@ export function KaleidoscopeDraw({ onClose }: { onClose: () => void }) {
         {/* 底部动作 */}
         <div className="flex w-full flex-col items-center gap-3">
           {phase === "choose" && (
-            <button
-              onClick={spin}
-              className="w-full rounded-chip bg-btn-g py-[15px] text-[15px] font-semibold text-white shadow-[0_8px_14px_rgba(79,125,255,0.6)] transition active:scale-[0.97]"
-            >
+            <Button size="lg" className="w-full" onClick={spin}>
               开始转动 · 抽一位旅人
-            </button>
+            </Button>
           )}
           {phase === "result" && drawn && (
             <>
-              <button
-                onClick={() => router.push(`/traveler/${drawn.id}`)}
-                className="w-full rounded-chip bg-btn-g py-[15px] text-[15px] font-semibold text-white shadow-[0_8px_14px_rgba(79,125,255,0.6)] transition active:scale-[0.97]"
-              >
+              <Button size="lg" className="w-full" onClick={() => router.push(`/traveler/${drawn.id}`)}>
                 查看 TA 的主页
-              </button>
+              </Button>
               <button
                 onClick={reset}
-                className="text-[12.5px] text-faint transition active:scale-95"
+                className="text-footnote text-faint transition active:scale-95"
               >
                 再转一次
               </button>
@@ -291,9 +286,9 @@ function ModeCard({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center rounded-[20px] border px-[14px] py-5 text-center transition active:scale-[0.97] ${
+      className={`flex flex-col items-center rounded-card border px-[14px] py-5 text-center transition active:scale-[0.97] ${
         on
-          ? "-translate-y-0.5 border-[#6FA5FF]/70"
+          ? "-translate-y-0.5 border-brand-bright/70"
           : "border-line bg-card"
       }`}
       style={
@@ -306,8 +301,8 @@ function ModeCard({
       }
     >
       <span className="text-[22px]">{emoji}</span>
-      <span className="mt-2.5 text-[13.5px] font-semibold text-ink">{title}</span>
-      <span className="mt-1.5 whitespace-pre-line text-[11px] leading-relaxed text-sub">{desc}</span>
+      <span className="mt-2.5 text-body font-semibold text-ink">{title}</span>
+      <span className="mt-1.5 whitespace-pre-line text-caption leading-relaxed text-sub">{desc}</span>
     </button>
   );
 }
@@ -318,7 +313,7 @@ function ResultCard({ traveler }: { traveler: Traveler }) {
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      className="w-full max-w-[340px] overflow-hidden rounded-[24px] border border-line bg-card shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+      className="w-full max-w-[340px] overflow-hidden rounded-card border border-line bg-card shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
     >
       <HueBandHeader
         initial={traveler.initial}
@@ -328,12 +323,12 @@ function ResultCard({ traveler }: { traveler: Traveler }) {
         imageSrc={mockAvatarById(traveler.id)}
       />
       <div className="flex flex-col gap-2 px-5 pb-5 pt-7">
-        <span className="text-[16px] font-semibold text-ink">{traveler.name}</span>
-        <p className="text-[13px] leading-relaxed text-sub">「{traveler.quote}」</p>
+        <span className="text-subtitle font-semibold text-ink">{traveler.name}</span>
+        <p className="text-body leading-relaxed text-sub">「{traveler.quote}」</p>
         {traveler.tags.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1.5">
             {traveler.tags.map((tag) => (
-              <TagPill key={tag} text={tag} />
+              <Badge key={tag}>{tag}</Badge>
             ))}
           </div>
         )}

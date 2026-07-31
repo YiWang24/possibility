@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { PrimaryButton } from "@/components/ui/Basics";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { DIMENSIONS, type DimensionKey } from "@/lib/dimensions";
 
@@ -130,13 +130,13 @@ export function DimensionSheet({
 
               {/* 01 关键词 */}
               <div className="mt-5 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[14px] font-semibold">
+                <div className="flex items-center gap-1.5 text-callout font-semibold">
                   <span className="text-brand">01</span>
                   <span className="text-ink">{cfg.question}</span>
                 </div>
                 <button
                   onClick={() => setBatch((b) => (b + 1) % cfg.batches.length)}
-                  className="shrink-0 text-[12px] text-brand"
+                  className="shrink-0 text-footnote text-brand"
                 >
                   换一批 ↻
                 </button>
@@ -149,7 +149,7 @@ export function DimensionSheet({
                     <button
                       key={word}
                       onClick={() => toggle(word, isCustom)}
-                      className="rounded-chip border px-[15px] py-2 text-[12.5px] transition active:scale-[0.96]"
+                      className="rounded-chip border px-[15px] py-2 text-footnote transition active:scale-[0.96]"
                       style={
                         on
                           ? {
@@ -174,7 +174,7 @@ export function DimensionSheet({
               </div>
 
               {/* 图例 */}
-              <div className="mt-3 flex items-center gap-4 text-[11px] text-faint">
+              <div className="mt-3 flex items-center gap-4 text-caption text-faint">
                 <span className="flex items-center gap-1.5">
                   <span className="h-[7px] w-[7px] rounded-full bg-brand-deep" />
                   系统推荐
@@ -189,7 +189,7 @@ export function DimensionSheet({
               <div className="mt-3 flex flex-col gap-2.5">
                 <button
                   onClick={() => setShowCustomInput((v) => !v)}
-                  className="self-start text-[12.5px] text-brand"
+                  className="self-start text-footnote text-brand"
                 >
                   ＋ 自己输入一个关键词
                 </button>
@@ -200,20 +200,17 @@ export function DimensionSheet({
                       onChange={(e) => setCustomText(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addCustom()}
                       placeholder="输入一个最像你的词"
-                      className="flex-1 rounded-chip border border-line bg-raised px-3.5 py-2.5 text-[13px] text-ink placeholder:text-faint focus:outline-none"
+                      className="flex-1 rounded-chip border border-line bg-raised px-3.5 py-2.5 text-body text-ink placeholder:text-faint focus:outline-none"
                     />
-                    <button
-                      onClick={addCustom}
-                      className="rounded-chip bg-btn-g px-4 py-2.5 text-[12.5px] font-semibold text-white"
-                    >
+                    <Button onClick={addCustom}>
                       添加
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
 
               {/* 02 小工具 */}
-              <div className="mt-[22px] flex items-center gap-1.5 text-[14px] font-semibold">
+              <div className="mt-[22px] flex items-center gap-1.5 text-callout font-semibold">
                 <span className="text-brand">02</span>
                 <span className="text-ink">或者，用小工具继续探索</span>
               </div>
@@ -223,16 +220,16 @@ export function DimensionSheet({
                   <button
                     key={tool.name}
                     onClick={() => launchTool(tool)}
-                    className="relative flex items-center gap-3 overflow-hidden rounded-[18px] border border-white/10 px-[15px] py-3.5 text-left transition active:scale-[0.98]"
+                    className="relative flex items-center gap-3 overflow-hidden rounded-tile border border-white/10 px-[15px] py-3.5 text-left transition active:scale-[0.98]"
                     style={{
                       background: `radial-gradient(150px circle at 100% 0%, rgba(255,255,255,0.12), transparent), ${tool.tint}`,
                     }}
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="text-[13.5px] font-semibold text-ink">{tool.name}</div>
-                      <div className="mt-1 text-[11px] leading-relaxed text-sub">{tool.desc}</div>
+                      <div className="text-body font-semibold text-ink">{tool.name}</div>
+                      <div className="mt-1 text-caption leading-relaxed text-sub">{tool.desc}</div>
                     </div>
-                    <span className="shrink-0 rounded-chip bg-white/8 px-[9px] py-[3px] text-[10.5px] text-[#9DBCFF]">
+                    <span className="shrink-0 rounded-chip bg-white/8 px-[9px] py-[3px] text-micro text-brand-lite">
                       {tool.duration}
                     </span>
                   </button>
@@ -240,7 +237,9 @@ export function DimensionSheet({
               </div>
 
               <div className="mt-[22px]">
-                <PrimaryButton title="保存到我的画像" enabled={canSave} onClick={save} />
+                <Button size="lg" className="w-full" disabled={!canSave} onClick={save}>
+                  保存到我的画像
+                </Button>
               </div>
             </div>
           </motion.div>

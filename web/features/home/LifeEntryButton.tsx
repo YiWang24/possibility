@@ -9,7 +9,7 @@ export function LifeEntryButton() {
   return (
     <button
       onClick={() => router.push("/card-game")}
-      className="flex w-full items-center gap-3 rounded-[16px] border border-[#8F7BFF]/30 px-4 py-3.5 text-left transition active:scale-[0.98]"
+      className="flex w-full items-center gap-3 rounded-tile border border-violet-soft/30 px-4 py-3.5 text-left transition active:scale-[0.98]"
       style={{
         background:
           "linear-gradient(135deg, rgba(26,35,80,0.6), rgba(43,27,45,0.4))",
@@ -27,15 +27,15 @@ export function LifeEntryButton() {
         />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] tracking-[1px] text-[#9DBCFF]">四套卡牌探索 · 3–8 分钟</div>
-        <div className="mt-[3px] text-[13.5px] font-semibold text-ink">
+        <div className="text-micro tracking-[1px] text-brand-lite">四套卡牌探索 · 3–8 分钟</div>
+        <div className="mt-[3px] text-body font-semibold text-ink">
           人生卡牌：你最后会留下什么？
         </div>
-        <div className="mt-[3px] text-[11px] text-sub">
+        <div className="mt-[3px] text-caption text-sub">
           人生、婚姻、家庭、人际交往 · 选择一套开始
         </div>
       </div>
-      <span className="text-[15px] text-faint">›</span>
+      <span className="text-lead text-faint">›</span>
     </button>
   );
 }

@@ -37,11 +37,11 @@ function PathCell({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex flex-col items-start p-[11px] rounded-[14px] text-left transition active:scale-[0.97] ${className ?? ""}`}
+      className={`flex-1 flex flex-col items-start p-[11px] rounded-tile text-left transition active:scale-[0.97] ${className ?? ""}`}
     >
-      <span className="text-[15px] text-ink">{icon}</span>
-      <span className="text-[11.5px] font-semibold text-ink mt-[7px]">{title}</span>
-      <span className="text-[9px] leading-[1.5] text-faint mt-[3px]">{note}</span>
+      <span className="text-lead text-ink">{icon}</span>
+      <span className="text-caption font-semibold text-ink mt-[7px]">{title}</span>
+      <span className="text-micro leading-[1.5] text-faint mt-[3px]">{note}</span>
     </button>
   );
 }
@@ -50,7 +50,7 @@ function ChatTravelerCard({ traveler, reason }: { traveler: Traveler; reason?: s
   const h = hue(traveler.hue);
   return (
     <div
-      className="relative w-[136px] h-[136px] p-3 rounded-[17px] bg-card overflow-hidden flex flex-col items-start text-left"
+      className="relative w-[136px] h-[136px] p-3 rounded-tile bg-card overflow-hidden flex flex-col items-start text-left"
       style={{ border: `1px solid ${h.accent}52` }}
     >
       <div
@@ -64,12 +64,12 @@ function ChatTravelerCard({ traveler, reason }: { traveler: Traveler; reason?: s
           size={32}
           imageSrc={traveler.id > 0 ? mockAvatarById(traveler.id) : null}
         />
-        <span className="text-[12.5px] font-semibold text-ink truncate">{traveler.name}</span>
+        <span className="text-footnote font-semibold text-ink truncate">{traveler.name}</span>
       </div>
-      <p className="relative z-10 text-[10px] leading-[1.5] text-sub mt-2.5 line-clamp-3">{reason ?? traveler.quote}</p>
+      <p className="relative z-10 text-micro leading-[1.5] text-sub mt-2.5 line-clamp-3">{reason ?? traveler.quote}</p>
       <div className="flex-1" />
       {traveler.tags[0] ? (
-        <span className="relative z-10 text-[9.5px] text-[#B8CDFF] truncate">{traveler.tags[0]}</span>
+        <span className="relative z-10 text-micro text-brand-lite truncate">{traveler.tags[0]}</span>
       ) : null}
     </div>
   );
@@ -114,36 +114,36 @@ export function ChatNextPanel({
 
   return (
     <div
-      className="rounded-[20px] p-3.5 flex flex-col"
+      className="rounded-card p-3.5 flex flex-col"
       style={{
         background: "linear-gradient(135deg,rgba(94,150,255,0.11),rgba(143,123,255,0.055))",
         border: "1px solid rgba(111,165,255,0.2)",
       }}
     >
-      <span className="text-[9px] tracking-[1.6px] text-[#91B1FF]">{eyebrow}</span>
-      <span className="text-[13.5px] font-semibold text-ink mt-[5px]">{title}</span>
+      <span className="text-micro tracking-[1.6px] text-brand-lite">{eyebrow}</span>
+      <span className="text-body font-semibold text-ink mt-[5px]">{title}</span>
 
       {preferredPath !== "match" ? (
         <button
           onClick={onGoLab}
-          className="mt-[11px] text-left p-[11px] rounded-[14px] transition active:scale-[0.98]"
+          className="mt-[11px] text-left p-[11px] rounded-tile transition active:scale-[0.98]"
           style={{
             background: "linear-gradient(135deg,rgba(62,112,232,0.28),rgba(107,85,211,0.18))",
             border: "1px solid rgba(111,165,255,0.34)",
           }}
         >
-          <span className="text-[15px] text-ink block">◉</span>
-          <span className="text-[11.5px] font-semibold text-ink mt-[7px] block">去人生实验室</span>
-          <span className="text-[9px] leading-[1.5] text-faint mt-[3px] block">带着当前问题，推演几种可能</span>
+          <span className="text-lead text-ink block">◉</span>
+          <span className="text-caption font-semibold text-ink mt-[7px] block">去人生实验室</span>
+          <span className="text-micro leading-[1.5] text-faint mt-[3px] block">带着当前问题，推演几种可能</span>
         </button>
       ) : null}
 
       {preferredPath === "lab" ? (
         <div className="mt-2 flex gap-2">{shareCell}</div>
       ) : matchedTravelers.length === 0 && preferredPath === "match" ? (
-        <div className="mt-[11px] flex items-center gap-2.5 p-[13px] rounded-[14px] bg-white/[0.045] border border-line">
-          <span className="w-3.5 h-3.5 rounded-full border-2 border-[#91B1FF] border-t-transparent animate-spin" />
-          <span className="text-[11px] text-sub">正在为你找走过相似处境的人…</span>
+        <div className="mt-[11px] flex items-center gap-2.5 p-[13px] rounded-tile bg-white/[0.045] border border-line">
+          <span className="w-3.5 h-3.5 rounded-full border-2 border-brand-lite border-t-transparent animate-spin" />
+          <span className="text-caption text-sub">正在为你找走过相似处境的人…</span>
         </div>
       ) : matchedTravelers.length === 0 ? (
         <div className="mt-2 flex gap-2">
@@ -158,7 +158,7 @@ export function ChatNextPanel({
         </div>
       ) : (
         <>
-          <span className="text-[9px] tracking-[1.6px] text-[#91B1FF] mt-[13px]">看看走过这条路的人</span>
+          <span className="text-micro tracking-[1.6px] text-brand-lite mt-[13px]">看看走过这条路的人</span>
           <div className="flex gap-2.5 mt-[9px]">
             {matchedTravelers.slice(0, 2).map((t) =>
               t.id > 0 ? (
@@ -177,7 +177,7 @@ export function ChatNextPanel({
       )}
 
       {showSummaryLink ? (
-        <button onClick={onOpenSummary} className="mt-[11px] text-[10px] text-[#9DBCFF] self-center">
+        <button onClick={onOpenSummary} className="mt-[11px] text-micro text-brand-lite self-center">
           先查看完整总结 →
         </button>
       ) : null}
