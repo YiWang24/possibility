@@ -136,9 +136,9 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
   };
 
   return (
-    <div className="min-h-dvh screen-bg">
+    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
       {/* 顶栏 */}
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur">
+      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[74px]">
         <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">

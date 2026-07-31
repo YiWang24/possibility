@@ -22,7 +22,7 @@ export default async function ChatPage({
   const id = pick(params.id);
 
   return (
-    <Suspense fallback={<div className="min-h-dvh screen-bg" />}>
+    <Suspense fallback={<div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]" />}>
       <ChatView topic={topic} question={question} id={id} entryPoint="home" />
     </Suspense>
   );

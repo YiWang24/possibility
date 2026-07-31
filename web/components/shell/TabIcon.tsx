@@ -1,11 +1,19 @@
 "use client";
 
 /* 4 个 Tab 的线性图标（对齐 iOS SF Symbols 语义） */
-export function TabIcon({ name, active }: { name: string; active: boolean }) {
+export function TabIcon({
+  name,
+  active,
+  size = 24,
+}: {
+  name: string;
+  active: boolean;
+  size?: number;
+}) {
   const stroke = active ? "#5E96FF" : "#5A6172";
   const common = {
-    width: 24,
-    height: 24,
+    width: size,
+    height: size,
     viewBox: "0 0 24 24",
     fill: "none",
     stroke,

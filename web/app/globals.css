@@ -11,6 +11,17 @@
   --color-faint: #5a6172;
   --color-line: rgb(255 255 255 / 0.08);
 
+  /* shadcn 语义色 —— 映射到现有万花筒主题 */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-popover: var(--color-card);
+  --color-popover-foreground: var(--color-ink);
+  --color-accent: var(--color-raised);
+  --color-accent-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-sub);
+  --color-border: var(--color-line);
+  --color-ring: var(--color-brand);
+
   /* 品牌色 */
   --color-brand: #5e96ff;
   --color-brand-deep: #2f63e8;
