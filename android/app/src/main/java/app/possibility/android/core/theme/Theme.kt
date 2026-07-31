@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
 
 /** 设计系统 · 色板与渐变 —— 与 ios/Possibility/Core/DesignSystem/Theme.swift 一一对应。 */
@@ -142,3 +143,26 @@ fun Modifier.kaleidoCard(radius: androidx.compose.ui.unit.Dp = Theme.Radius.card
         .clip(RoundedCornerShape(radius))
         .background(Theme.card)
         .border(1.dp, Theme.line, RoundedCornerShape(radius))
+
+/**
+ * 全出血：抵消父级的水平内边距，让内容左右各扩展 [horizontal]。
+ * Compose 不允许负内边距（会抛 IllegalArgumentException），改用 layout 放大测量宽度并左移放置，
+ * 对外仍上报父级原始宽度，等价于 SwiftUI 的负 padding。
+ */
+fun Modifier.fullBleedHorizontal(horizontal: androidx.compose.ui.unit.Dp): Modifier =
+    this.layout { measurable, constraints ->
+        val extraPx = (horizontal * 2).roundToPx()
+        val expanded = constraints.copy(
+            minWidth = (constraints.minWidth + extraPx).coerceAtLeast(0),
+            maxWidth = if (constraints.maxWidth == androidx.compose.ui.unit.Constraints.Infinity) {
+                constraints.maxWidth
+            } else {
+                constraints.maxWidth + extraPx
+            },
+        )
+        val placeable = measurable.measure(expanded)
+        val reportedWidth = (placeable.width - extraPx).coerceAtLeast(0)
+        layout(reportedWidth, placeable.height) {
+            placeable.place(-horizontal.roundToPx(), 0)
+        }
+    }

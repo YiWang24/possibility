@@ -9,12 +9,18 @@ plugins {
 // doppler run -- ./gradlew assembleDebug
 // ./gradlew assembleDebug -PSUPABASE_URL=... -PSUPABASE_ANON_KEY=...
 // 本地联调也必须注入 HTTPS 端点，避免调试包放宽全局明文流量策略。
+// 缺省回落到线上 Supabase 项目（anon key 受 RLS 约束、可公开），与 iOS AppConfig 一致。
+val defaultSupabaseUrl = "https://gxmruqzcyahjlktshpkh.supabase.co"
+val defaultSupabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4bXJ1cXpjeWFoamxrdHNocGtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NjM3NjMsImV4cCI6MjEwMDQzOTc2M30.ANJKh_D-kh_4yTeE_AfvIExUaLo3S5I0jOvHSOTOQg4"
 val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
   .orElse(providers.environmentVariable("SUPABASE_URL"))
-  .getOrElse("")
+  .getOrElse(defaultSupabaseUrl)
+  .ifEmpty { defaultSupabaseUrl }
 val supabaseAnonKey = providers.gradleProperty("SUPABASE_ANON_KEY")
   .orElse(providers.environmentVariable("SUPABASE_ANON_KEY"))
-  .getOrElse("")
+  .getOrElse(defaultSupabaseAnonKey)
+  .ifEmpty { defaultSupabaseAnonKey }
 
 android {
   namespace = "app.possibility.android"
