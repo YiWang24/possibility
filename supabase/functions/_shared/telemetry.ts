@@ -5,29 +5,20 @@ import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-ho
 import { LangfuseSpanProcessor } from "@langfuse/otel";
 import { registerTelemetry } from "ai";
 import { LangfuseVercelAiSdkIntegration } from "@langfuse/vercel-ai-sdk";
+import { telemetryEnabled } from "./telemetry-config.ts";
 
 // Langfuse 可观测层：AI SDK 7 回调式 telemetry + OTel span 导出。
 // 未配置 LANGFUSE_* 时整体禁用（本地/测试零开销），业务代码无需感知。
 // Deno Edge 无 NodeSDK：手动装 BasicTracerProvider + AsyncLocalStorage 上下文，
 // 保证流式响应体内创建的 generation span 仍归属请求级 trace。
 
-declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
-
-/** LLM 调用的 trace 归属信息，由各 Edge Function 传入共享层。 */
-export interface LlmTrace {
-  /** trace 名称，用 Edge Function 名（如 "chat"、"analyze-diary"），便于筛选。 */
-  name: string;
-  /** 观测点名称：同一 trace 内有多次 LLM 调用时用它区分（如 "chat-reply"/"chat-signal"），缺省用 name。 */
-  callName?: string;
-  userId?: string;
-  /** 会话分组：chat 用 conversation.id，其余无会话概念可省略。 */
-  sessionId?: string;
-  metadata?: Record<string, string>;
+interface EdgeRuntimeLike {
+  waitUntil(p: Promise<unknown>): void;
 }
 
-export const telemetryEnabled = Boolean(
-  Deno.env.get("LANGFUSE_PUBLIC_KEY") && Deno.env.get("LANGFUSE_SECRET_KEY"),
-);
+// 只想问「遥测开着吗」的调用方请直接 import telemetry-config.ts —— 从这里拿同样拿得到，
+// 但会连带把下面整条 OTel 装配链求值一遍。此处转出口只为兼容既有 import。
+export { type LlmTrace, telemetryEnabled } from "./telemetry-config.ts";
 
 let processor: LangfuseSpanProcessor | undefined;
 
@@ -75,8 +66,11 @@ export async function flushTraces(): Promise<void> {
   const exportDone = processor.forceFlush().catch((error) => {
     console.warn("langfuse flush failed:", error);
   });
-  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime) {
-    EdgeRuntime.waitUntil(exportDone);
+  const edgeRuntime = Reflect.get(globalThis, "EdgeRuntime") as
+    | EdgeRuntimeLike
+    | undefined;
+  if (edgeRuntime !== undefined) {
+    edgeRuntime.waitUntil(exportDone);
   } else {
     await exportDone;
   }

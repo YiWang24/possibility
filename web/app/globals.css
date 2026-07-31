@@ -77,6 +77,23 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* 会话恢复期的首屏分支（见 AuthWall / app/layout.tsx 的 authHintScript）。
+   SSR 产物里「未登录」和「已登录」两个分支都在，靠 <html data-auth> 选一个显示。
+   包装层用 display:contents，不给两边的布局多插一层盒子。
+
+   缺省两个都不显示，是刻意的：App Router 下拿不到真正解析阻塞的内联脚本
+   （React 会把它转成 __next_s 队列，等框架 chunk 加载后才跑），所以不能假定
+   data-auth 一定赶在首绘之前落地。中性缺省的最坏情况只是空等一下 —— 和改之前
+   那枚色环一样 —— 但绝不会先闪一个错的分支再换掉。 */
+[data-auth-branch] {
+  display: none;
+}
+
+html[data-auth="out"] [data-auth-branch="out"],
+html[data-auth="in"] [data-auth-branch="in"] {
+  display: contents;
+}
+
 /* 桌面滚动条：默认的浅色滚动条在深色底上非常刺眼 */
 @media (pointer: fine) {
   * {

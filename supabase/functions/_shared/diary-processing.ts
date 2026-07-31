@@ -11,7 +11,7 @@ import {
   type DiaryProfileUpdate,
   profileUpdatesFromAnalysis,
 } from "./diary-profile-proposals.ts";
-import { structuredOutput } from "./llm.ts";
+import { structuredOutput } from "./llm-lazy.ts";
 import { diaryPrompt, layeredDiarySummaryPrompt } from "./prompts.ts";
 import {
   type DiaryOutput,
