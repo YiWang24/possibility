@@ -40,17 +40,19 @@ export const runtimeConfig = {
   get deepseekBaseUrl(): string {
     return env("DEEPSEEK_BASE_URL", "https://api.deepseek.com");
   },
-  // 对话流式：低延迟优先，默认 flash。
+  // 三个槽位统一默认 deepseek-v4-flash（延迟/成本优先）。仍保留三个独立变量：
+  // 换模型时按场景灰度是最小改动，不必再改代码。
+  // 对话流式。
   get chatModel(): string {
     return env("DEEPSEEK_CHAT_MODEL", "deepseek-v4-flash");
   },
-  // 结构化生成（simulate/match/persona/community/lab-choices）：质量优先，默认 pro。
+  // 结构化生成（simulate/match/persona/community/lab-choices）。
   get structuredModel(): string {
-    return env("DEEPSEEK_STRUCTURED_MODEL", "deepseek-v4-pro");
+    return env("DEEPSEEK_STRUCTURED_MODEL", "deepseek-v4-flash");
   },
-  // 日记/信号抽取（analyze-diary/diary-summary/chat signal）：质量优先，默认 pro。
+  // 日记/信号抽取（analyze-diary/diary-summary/chat signal）。
   get diaryModel(): string {
-    return env("DEEPSEEK_DIARY_MODEL", "deepseek-v4-pro");
+    return env("DEEPSEEK_DIARY_MODEL", "deepseek-v4-flash");
   },
   get azureSpeechKey(): string {
     return env("AZURE_SPEECH_KEY");
