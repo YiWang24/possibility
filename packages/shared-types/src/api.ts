@@ -14,6 +14,7 @@ export const EDGE_FUNCTIONS = [
   'save-profile',
   'card-game-catalog',
   'card-game-session',
+  'card-game-result',
   'get-profile',
   'profile-privacy',
   'list-conversations',

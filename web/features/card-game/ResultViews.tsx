@@ -3,15 +3,86 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import type { CardGameAiNarrativeResponse } from "@possibility/shared-types";
 import type { CardGameEngine } from "./engine";
 import { ResultBlock, withAlpha } from "./ui";
 import { ValueCardFace } from "./ValueCardFace";
 
+interface NarrativeProps {
+  aiResult: CardGameAiNarrativeResponse | null;
+  onRetry?: () => void;
+}
+
+function AiResultNotice({ aiResult, onRetry }: NarrativeProps) {
+  if (!onRetry && !aiResult) return null;
+  const status = aiResult?.status ?? "pending";
+  const ready = status === "ready";
+  const failed = status === "failed";
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-[13px] border px-3.5 py-3 md:flex-row md:items-center md:justify-between"
+      style={{
+        borderColor: ready
+          ? "rgba(62,217,164,0.22)"
+          : failed
+            ? "rgba(255,154,138,0.24)"
+            : "rgba(143,123,255,0.24)",
+        background: ready
+          ? "rgba(62,217,164,0.055)"
+          : failed
+            ? "rgba(255,106,92,0.055)"
+            : "rgba(143,123,255,0.06)",
+      }}
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 text-[10.5px] font-semibold text-ink">
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              status === "generating" || status === "pending" ? "animate-pulse" : ""
+            }`}
+            style={{
+              background: ready ? "#3ED9A4" : failed ? "#FF9A8A" : "#8F7BFF",
+            }}
+          />
+          {ready
+            ? "AI 深度解读已完成"
+            : failed
+              ? "当前显示稳定的规则解读"
+              : status === "generating"
+                ? "AI 正在理解这一局的取舍"
+                : "正在验证并保存本局证据"}
+        </div>
+        <p className="mt-1 text-[9.5px] leading-[1.65] text-faint">
+          {ready
+            ? "文案基于本局选择与理由生成；最终卡牌、分数和行为事实仍由规则引擎决定。"
+            : failed
+              ? "AI 暂时不可用不会影响结果；最终卡牌和规则分析均已保留。"
+              : "规则结果已经可以阅读。AI 只补充个性化反思，不会改变游戏判定。"}
+        </p>
+      </div>
+      {failed && aiResult?.retryable && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="shrink-0 self-start rounded-chip border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[10px] font-semibold text-ink transition active:scale-[0.97] md:self-auto"
+        >
+          重试 AI 解读
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* 婚姻 / 家庭 / 人际结果（原型 renderRelationshipResult） */
-export function RelationResult({ engine }: { engine: CardGameEngine }) {
+export function RelationResult({
+  engine,
+  aiResult,
+  onRetry,
+}: { engine: CardGameEngine } & NarrativeProps) {
   const cfg = engine.config;
   const accent = cfg.accent;
   const cards = engine.heldCards;
+  const narrative = aiResult?.narrative;
   const forcedTrades = engine.traded.filter((entry) =>
     entry.decisionSource === "pressure_forced"
   ).length;
@@ -32,12 +103,16 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
         {cfg.glyph}
       </motion.div>
       <h2 className="text-center text-[19px] font-bold text-ink">
-        {cfg.title.slice(0, 2)}中，你最关心这 {engine.finalCardCount} 点
+        {narrative?.headline ?? `${cfg.title.slice(0, 2)}中，你最关心这 ${engine.finalCardCount} 点`}
       </h2>
       <p className="text-center text-[12px] leading-[1.8] text-sub">
-        {engine.groupNarrative}
-        <br />
-        它们来自多轮情境与交换，不是固定答案，而是你此刻真实的优先级。
+        {narrative?.summary ?? engine.groupNarrative}
+        {!narrative && (
+          <>
+            <br />
+            它们来自多轮情境与交换，不是固定答案，而是你此刻真实的优先级。
+          </>
+        )}
       </p>
 
       <div className="grid w-full grid-cols-3 gap-2.5 lg:gap-4">
@@ -53,6 +128,27 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
           </motion.div>
         ))}
       </div>
+
+      <div className="w-full">
+        <AiResultNotice aiResult={aiResult} onRetry={onRetry} />
+      </div>
+
+      {narrative && (
+        <div className="grid w-full gap-3 md:grid-cols-2">
+          <ResultBlock kicker="AI REFLECTION · 本局观察" tint="#8F7BFF" className="md:col-span-2">
+            <p className="text-[12px] leading-[1.85] text-ink/92">{narrative.truth.text}</p>
+          </ResultBlock>
+          <ResultBlock kicker="INNER TENSION · 内在张力" tint="#E35CC1">
+            <p className="text-[11.5px] leading-[1.8] text-sub">{narrative.tension.text}</p>
+          </ResultBlock>
+          <ResultBlock kicker="POSSIBLE BLIND SPOT · 可能的盲点" tint="#FF7A4D">
+            <p className="text-[11.5px] leading-[1.8] text-sub">{narrative.blind_spot.text}</p>
+          </ResultBlock>
+          <ResultBlock kicker="带回现实的问题" tint="#9DBCFF" className="md:col-span-2">
+            <p className="text-[12px] leading-[1.8] text-ink/90">{narrative.reflection_question.text}</p>
+          </ResultBlock>
+        </div>
+      )}
 
       <div className="w-full rounded-[16px] border border-line bg-card p-[15px]">
         <div className="text-[9px] font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
@@ -72,8 +168,13 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
 }
 
 /* 人生卡牌结果（原型 renderLifeResult：真相 / 原话线索 / 光谱 / 张力 / 盲点 / 反问） */
-export function LifeResult({ engine }: { engine: CardGameEngine }) {
+export function LifeResult({
+  engine,
+  aiResult,
+  onRetry,
+}: { engine: CardGameEngine } & NarrativeProps) {
   const a = useMemo(() => engine.lifeAnalysis(), [engine]);
+  const narrative = aiResult?.narrative;
   const forcedTrades = engine.traded.filter((entry) =>
     entry.decisionSource === "pressure_forced"
   ).length;
@@ -95,9 +196,11 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
             <div className="text-[9.5px] font-semibold tracking-[2px] text-faint">
               你的动态数字人 · 新切面
             </div>
-            <div className="text-aurora mt-2 text-[24px] font-extrabold lg:text-[30px]">{a.title}</div>
+            <div className="text-aurora mt-2 text-[24px] font-extrabold lg:text-[30px]">
+              {narrative?.headline ?? a.title}
+            </div>
             <p className="mt-2 max-w-[42ch] text-[11.5px] leading-[1.75] text-sub">
-              这不是在判断你好或不好，而是在看代价出现时，你最先保护了什么。
+              {narrative?.summary ?? "这不是在判断你好或不好，而是在看代价出现时，你最先保护了什么。"}
             </p>
           </div>
         </div>
@@ -122,9 +225,13 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
         </div>
       </section>
 
+      <AiResultNotice aiResult={aiResult} onRetry={onRetry} />
+
       <div className="grid gap-4 md:grid-cols-2">
         <ResultBlock kicker="THE TRUTH BENEATH · 内心真相" tint="#8F7BFF" className="md:col-span-2">
-          <p className="text-[12px] leading-[1.85] text-ink/92 lg:text-[13px]">{a.truth}</p>
+          <p className="text-[12px] leading-[1.85] text-ink/92 lg:text-[13px]">
+            {narrative?.truth.text ?? a.truth}
+          </p>
           <p className="text-[9.5px] text-faint">
             判断来自你留下、放下和为之接受挫折的牌，而不只是最终结果。
           </p>
@@ -166,15 +273,21 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
 
         <ResultBlock kicker="INNER TENSION · 内在张力" tint="#E35CC1">
           <div className="text-[13px] font-bold text-ink">你想拥有的，和你会拿去交换的</div>
-          <p className="text-[11.5px] leading-[1.8] text-sub">{a.tension}</p>
+          <p className="text-[11.5px] leading-[1.8] text-sub">
+            {narrative?.tension.text ?? a.tension}
+          </p>
         </ResultBlock>
 
         <ResultBlock kicker="POSSIBLE BLIND SPOT · 可能的盲点" tint="#FF7A4D">
-          <p className="text-[11.5px] leading-[1.8] text-sub">{a.blindspot}</p>
+          <p className="text-[11.5px] leading-[1.8] text-sub">
+            {narrative?.blind_spot.text ?? a.blindspot}
+          </p>
         </ResultBlock>
 
         <ResultBlock kicker="留给真实生活的一个问题" tint="#9DBCFF">
-          <p className="text-[12px] leading-[1.8] text-ink/90">{a.reflection}</p>
+          <p className="text-[12px] leading-[1.8] text-ink/90">
+            {narrative?.reflection_question.text ?? a.reflection}
+          </p>
         </ResultBlock>
       </div>
 
