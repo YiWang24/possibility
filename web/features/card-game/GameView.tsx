@@ -288,6 +288,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
                 {loadError}
               </p>
               <button
+                type="button"
                 className="mt-4 rounded-chip bg-raised px-5 py-2 text-[12px] font-semibold text-ink"
                 onClick={() => router.back()}
               >
@@ -520,6 +521,7 @@ function GameBody({
                     </div>
                     <p className="mt-1.5 text-[10.5px] leading-[1.7] text-sub">{saveError}</p>
                     <button
+                      type="button"
                       onClick={close}
                       className="mt-2 text-[11.5px] font-semibold text-ink underline-offset-2 active:opacity-70"
                     >
@@ -571,7 +573,7 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
             <div className="grid gap-2.5 md:grid-cols-3 lg:grid-cols-1">
               {cfg.rules.map(([title, copy], idx) => (
                 <div
-                  key={idx}
+                  key={`${title}:${copy}`}
                   className="card-game-panel flex items-start gap-3 p-3.5"
                 >
                   <span
@@ -933,6 +935,7 @@ function DecisionPhase({
         <div className="mx-auto flex w-full max-w-[800px] gap-3">
           {engine.canAccept && (
             <button
+              type="button"
               onClick={() => {
                 const scenarioKey = engine.current?.key;
                 act(() => engine.accept());
@@ -947,6 +950,7 @@ function DecisionPhase({
             </button>
           )}
           <button
+            type="button"
             disabled={!engine.canTrade}
             onClick={() => act(() => engine.beginTrade())}
             className="flex-1 rounded-chip py-[14px] text-[13.5px] font-semibold transition active:scale-[0.97]"
@@ -1025,6 +1029,7 @@ function TradePhase({
               const palette = valueCardPalette(card.group, accent);
               return (
                 <button
+                  type="button"
                   key={card.id}
                   onClick={() =>
                     act(() => {

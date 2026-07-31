@@ -606,8 +606,8 @@ export function initialCardGameState(catalog: CardGameCatalog): CardGameState {
 
 function stableOrder(seed: number, round: number, scenarioKey: string): number {
   let hash = (seed ^ Math.imul(round + 1, 0x9e3779b1)) >>> 0;
-  for (let index = 0; index < scenarioKey.length; index += 1) {
-    hash ^= scenarioKey.charCodeAt(index);
+  for (const character of scenarioKey) {
+    hash ^= character.codePointAt(0) ?? 0;
     hash = Math.imul(hash, 16_777_619) >>> 0;
   }
   return hash;

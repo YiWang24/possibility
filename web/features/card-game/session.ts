@@ -108,7 +108,7 @@ export class CardGameSessionCoordinator {
         catalog_version: catalogVersion,
         session_id: crypto.randomUUID(),
         client_session_id: crypto.randomUUID(),
-        seed: crypto.getRandomValues(new Uint32Array(1))[0] & 0x7fff_ffff,
+        seed: crypto.getRandomValues(new Uint32Array(1))[0] & 0x7fffffff,
         server_state_version: 0,
         last_synced_sequence: 0,
         pending_actions: [],

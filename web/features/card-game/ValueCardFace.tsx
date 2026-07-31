@@ -30,6 +30,26 @@ export function valueCardPalette(
   };
 }
 
+function valueCardSurface(
+  palette: ValueCardPalette,
+  selected: boolean,
+): CSSProperties {
+  const washOpacity = selected ? 0.24 : 0.14;
+  const borderOpacity = selected ? 0.88 : 0.42;
+  return {
+    background: `
+      radial-gradient(circle at 18% 12%, ${withAlpha(palette.secondary, 0.2)}, transparent 30%),
+      radial-gradient(circle at 88% 92%, ${withAlpha(palette.primary, 0.18)}, transparent 38%),
+      linear-gradient(145deg, ${withAlpha(palette.primary, washOpacity)}, transparent 48%),
+      linear-gradient(155deg, ${palette.deep}, #0C1020 76%)
+    `,
+    borderColor: withAlpha(palette.primary, borderOpacity),
+    boxShadow: selected
+      ? `0 0 0 1px ${withAlpha(palette.primary, 0.28)}, 0 16px 38px ${withAlpha(palette.primary, 0.22)}, inset 0 1px 0 rgba(255,255,255,0.1)`
+      : `0 12px 30px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.07)`,
+  };
+}
+
 export function ValueCardFace({
   card,
   accent,
@@ -47,18 +67,7 @@ export function ValueCardFace({
 }) {
   const palette = valueCardPalette(card.group, accent);
   const isResult = variant === "result";
-  const surface: CSSProperties = {
-    background: `
-      radial-gradient(circle at 18% 12%, ${withAlpha(palette.secondary, 0.2)}, transparent 30%),
-      radial-gradient(circle at 88% 92%, ${withAlpha(palette.primary, 0.18)}, transparent 38%),
-      linear-gradient(145deg, ${withAlpha(palette.primary, selected ? 0.24 : 0.14)}, transparent 48%),
-      linear-gradient(155deg, ${palette.deep}, #0C1020 76%)
-    `,
-    borderColor: withAlpha(palette.primary, selected ? 0.88 : 0.42),
-    boxShadow: selected
-      ? `0 0 0 1px ${withAlpha(palette.primary, 0.28)}, 0 16px 38px ${withAlpha(palette.primary, 0.22)}, inset 0 1px 0 rgba(255,255,255,0.1)`
-      : `0 12px 30px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.07)`,
-  };
+  const surface = valueCardSurface(palette, selected);
 
   return (
     <div
@@ -128,7 +137,7 @@ export function ValueCardFace({
           </div>
         </div>
 
-        <div className={isResult ? "mt-3 w-full" : "mt-3 w-full"}>
+        <div className="mt-3 w-full">
           <div className={`truncate font-semibold text-white ${isResult ? "text-[12.5px] lg:text-[14px]" : "text-[12.5px]"}`}>
             {card.name}
           </div>

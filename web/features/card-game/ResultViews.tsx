@@ -133,8 +133,8 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
         {a.voiceQuotes.length > 0 && (
           <ResultBlock kicker="YOUR OWN WORDS · 你亲口说出的线索" tint="#3ED9A4" className="md:col-span-2">
             <div className="grid w-full gap-2.5 md:grid-cols-2">
-              {a.voiceQuotes.map((quote, i) => (
-                <div key={i} className="w-full rounded-[10px] bg-white/[0.035] p-3">
+              {a.voiceQuotes.map((quote) => (
+                <div key={`${quote.label}:${quote.text}`} className="w-full rounded-[10px] bg-white/[0.035] p-3">
                   <div className="text-[10.5px] font-semibold text-[#8EE7C8]">{quote.label}</div>
                   <div className="mt-1 text-[11.5px] italic leading-[1.7] text-sub">“{quote.text}”</div>
                 </div>
@@ -146,7 +146,7 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
 
         <ResultBlock kicker="你的心理倾向光谱" tint="#8F7BFF">
           {a.spectrum.map((row, i) => (
-            <div key={i} className="w-full">
+            <div key={`${row.left}:${row.right}`} className="w-full">
               <div className="flex justify-between text-[10px] text-faint">
                 <span>{row.left}</span><span>{row.right}</span>
               </div>
