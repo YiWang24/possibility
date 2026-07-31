@@ -6,7 +6,7 @@ import {
   entryJobKey,
   summaryJobKey,
 } from "./diary-queue.ts";
-import { structuredOutput } from "./llm.ts";
+import { structuredOutput } from "./llm-lazy.ts";
 import { diaryPrompt, layeredDiarySummaryPrompt } from "./prompts.ts";
 import {
   type DiaryOutput,
