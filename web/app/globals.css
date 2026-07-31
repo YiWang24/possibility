@@ -83,6 +83,23 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* 会话恢复期的首屏分支（见 AuthWall / app/layout.tsx 的 authHintScript）。
+   SSR 产物里「未登录」和「已登录」两个分支都在，靠 <html data-auth> 选一个显示。
+   包装层用 display:contents，不给两边的布局多插一层盒子。
+
+   缺省两个都不显示，是刻意的：App Router 下拿不到真正解析阻塞的内联脚本
+   （React 会把它转成 __next_s 队列，等框架 chunk 加载后才跑），所以不能假定
+   data-auth 一定赶在首绘之前落地。中性缺省的最坏情况只是空等一下 —— 和改之前
+   那枚色环一样 —— 但绝不会先闪一个错的分支再换掉。 */
+[data-auth-branch] {
+  display: none;
+}
+
+html[data-auth="out"] [data-auth-branch="out"],
+html[data-auth="in"] [data-auth-branch="in"] {
+  display: contents;
+}
+
 /* 桌面滚动条：默认的浅色滚动条在深色底上非常刺眼 */
 @media (pointer: fine) {
   * {
@@ -187,11 +204,12 @@ body {
 }
 
 /* 隐藏滚动条（横向 chips/牌堆） */
-@utility no-scrollbar {
+.no-scrollbar {
   scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* 光球 conic 色环 */
@@ -222,6 +240,59 @@ body {
       transparent
     ),
     var(--color-paper);
+}
+
+/* 人生卡牌：桌面采用沉浸式牌桌，移动端仍保持单列可滚动流程。 */
+@utility card-game-stage {
+  background:
+    radial-gradient(ellipse 58% 42% at 50% 102%, rgb(111 72 255 / 0.2), transparent 68%),
+    radial-gradient(circle at 18% 8%, rgb(64 94 210 / 0.13), transparent 34%),
+    linear-gradient(rgb(255 255 255 / 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.018) 1px, transparent 1px),
+    #070914;
+  background-size: auto, auto, 44px 44px, 44px 44px, auto;
+}
+
+@utility card-game-surface {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(147 134 255 / 0.18);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 50% 110%, rgb(116 74 255 / 0.13), transparent 44%),
+    linear-gradient(145deg, rgb(17 20 38 / 0.96), rgb(8 10 22 / 0.98));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035), 0 22px 60px rgb(0 0 0 / 0.25);
+}
+
+@utility card-game-panel {
+  border: 1px solid rgb(255 255 255 / 0.075);
+  border-radius: 14px;
+  background: rgb(15 18 33 / 0.78);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.025);
+}
+
+@utility card-game-back {
+  background:
+    radial-gradient(circle at 50% 45%, rgb(143 123 255 / 0.24), transparent 31%),
+    linear-gradient(135deg, rgb(45 50 94 / 0.98), rgb(18 21 46 / 0.98));
+  box-shadow: inset 0 0 0 5px rgb(8 10 24 / 0.3), inset 0 0 0 6px rgb(143 123 255 / 0.2);
+}
+
+@keyframes card-game-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.96) rotate(45deg); }
+  50% { opacity: 1; transform: scale(1.04) rotate(45deg); }
+}
+
+@utility animate-card-game-pulse {
+  animation: card-game-pulse 2.8s ease-in-out infinite;
+}
+
+@media (max-width: 1099px) {
+  .card-game-surface {
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 
 /* 熔岩灯 blob 漂移 */

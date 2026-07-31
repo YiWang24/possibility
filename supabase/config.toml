@@ -147,6 +147,9 @@ verify_jwt = false
 [functions.card-game-session]
 verify_jwt = true
 
+[functions.card-game-result]
+verify_jwt = true
+
 [functions.get-profile]
 verify_jwt = true
 
