@@ -164,7 +164,7 @@ select public.sync_card_game_session_v2(
   '55555555-5555-4555-8555-555555555555',
   '77777777-7777-4777-8777-777777777777',
   0,
-  '[
+  $actions$[
     {
       "sequence": 1,
       "action_type": "confirm_selection",
@@ -222,8 +222,8 @@ select public.sync_card_game_session_v2(
       "pressure_before": 1,
       "pressure_after": 1
     }
-  ]'::jsonb,
-  '{
+  ]$actions$::jsonb,
+  $state${
     "phase": "result",
     "selected_card_keys": ["family","friend","lover","confidence","kindness","talent","iq","trust","forgive"],
     "held_card_keys": ["family","friend","lover"],
@@ -233,7 +233,7 @@ select public.sync_card_game_session_v2(
     "accept_count": 0,
     "trade_count": 3,
     "pressure": 1
-  }'::jsonb
+  }$state$::jsonb
 );
 
 select public.complete_card_game_session_v2(

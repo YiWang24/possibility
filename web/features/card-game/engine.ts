@@ -46,8 +46,12 @@ export interface StorageLike {
 const memoryMap = new Map<string, string>();
 const memoryStorage: StorageLike = {
   getItem: (k) => memoryMap.get(k) ?? null,
-  setItem: (k, v) => void memoryMap.set(k, v),
-  removeItem: (k) => void memoryMap.delete(k),
+  setItem: (k, v) => {
+    memoryMap.set(k, v);
+  },
+  removeItem: (k) => {
+    memoryMap.delete(k);
+  },
 };
 
 export function defaultStorage(): StorageLike {

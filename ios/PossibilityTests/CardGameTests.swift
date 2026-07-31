@@ -102,14 +102,14 @@ final class CardGameTests: XCTestCase {
         }
     }
 
-    func testPressureCapBlocksAcceptUntilCardsAreTraded() {
+    func testPressureCapBlocksAcceptUntilCardsAreTraded() throws {
         let engine = CardGameEngine(kind: .life, store: store)
         engine.start()
         engine.config.cards.prefix(engine.initialSelectCount).forEach {
             _ = engine.toggleSelect($0.id)
         }
         engine.confirmSelection()
-        engine.draw(try! XCTUnwrap(engine.scenarioOptions.first))
+        engine.draw(try XCTUnwrap(engine.scenarioOptions.first))
         engine.pressure = engine.pressureMax
 
         XCTAssertFalse(engine.canAccept)
@@ -168,7 +168,7 @@ final class CardGameTests: XCTestCase {
         XCTAssertFalse(CardGameLocalRecord.hasProgress(.social, store: store))
     }
 
-    func testServerRulesDriveCountsWithoutChangingEngineCode() {
+    func testServerRulesDriveCountsWithoutChangingEngineCode() throws {
         let base = CardGameData.config(.life)
         let rules = CardGameCatalog.Rules(
             initialSelectCount: 5,
@@ -212,7 +212,7 @@ final class CardGameTests: XCTestCase {
         }
         engine.confirmSelection()
         XCTAssertEqual(engine.scenarioOptions.count, 2)
-        engine.draw(try! XCTUnwrap(engine.scenarioOptions.first))
+        engine.draw(try XCTUnwrap(engine.scenarioOptions.first))
         engine.beginTrade()
         engine.heldCards.prefix(engine.discardPerTrade).forEach {
             _ = engine.toggleTrade($0.id)
