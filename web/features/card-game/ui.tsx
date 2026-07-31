@@ -15,22 +15,6 @@ export function withAlpha(hex: string, alpha: number): string {
 /** 压力等级 1–4 颜色（iOS pressureColor） */
 export const PRESSURE_COLORS = ["#7CABFF", "#D9B563", "#FF9A6B", "#F06A6A"];
 
-/** 圆形返回按钮（iOS topBar chevron） */
-export function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="返回"
-      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-raised text-ink transition active:scale-95"
-    >
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
-        <path d="M9.5 3 5 7.5 9.5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
-
 /** 底部主按钮条（iOS foot） */
 export function Foot({
   title,
@@ -42,7 +26,10 @@ export function Foot({
   onClick: () => void;
 }) {
   return (
-    <div className="border-t border-white/[0.07] bg-[#090b17]/82 px-5 pt-3 pb-[14px] backdrop-blur-xl">
+    /* sticky：测评页已改成文档流（不再是「外层 h-dvh + 内容 overflow-y-auto」
+       那套页面里套页面的结构），底部操作栏得自己粘在视口底沿才留得住。
+       卡牌局仍是固定高度牌桌，sticky 在那里无副作用。视觉沿用 main 的新样式。 */
+    <div className="sticky bottom-0 z-20 border-t border-white/[0.07] bg-[#090b17]/82 px-5 pb-[14px] pt-3 backdrop-blur-xl">
       <div className="mx-auto w-full max-w-[800px]">
         <button
           type="button"

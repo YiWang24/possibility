@@ -27,6 +27,13 @@ interface FocusShellProps {
   footer?: React.ReactNode;
   /** 阶段态用：不是独立路由时铺成全屏浮层，盖住 /lab 自己的内容 */
   overlay?: boolean;
+  /** 任务条中段的上下文（轮次、已选张数等）。窄屏隐藏，避免把任务名挤没 */
+  meta?: React.ReactNode;
+  /** 固定视口高度。牌桌这类「一屏内的交互台面」需要它；
+      文档式任务流（测评）不要，那会退回内部滚动条。 */
+  fullHeight?: boolean;
+  /** 覆盖底衬（卡牌局用 card-game-stage 而不是通用 screen-bg） */
+  stageClassName?: string;
 }
 
 export function FocusShell({
@@ -39,15 +46,16 @@ export function FocusShell({
   exitLabel = "退出",
   footer,
   overlay = false,
+  meta,
+  fullHeight = false,
+  stageClassName = "screen-bg",
 }: FocusShellProps) {
+  const frame = overlay
+    ? `fixed inset-0 z-[70] flex flex-col overflow-y-auto ${stageClassName}`
+    : `flex flex-col ${fullHeight ? "h-dvh" : "min-h-dvh"} ${stageClassName}`;
+
   return (
-    <div
-      className={
-        overlay
-          ? "fixed inset-0 z-[70] flex flex-col overflow-y-auto screen-bg"
-          : "flex min-h-dvh flex-col screen-bg"
-      }
-    >
+    <div className={frame}>
       {/* 任务条：没有 border-b，靠留白与视口顶端分隔，避免又长成一条 navbar */}
       <div className="shell-gutter mx-auto flex w-full max-w-shell shrink-0 items-center gap-4 pb-2 pt-5 md:pt-6">
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -59,8 +67,14 @@ export function FocusShell({
           ) : null}
         </div>
 
+        {meta ? (
+          <div className="hidden min-w-0 flex-1 items-center gap-6 text-[10.5px] text-faint lg:flex">
+            {meta}
+          </div>
+        ) : null}
+
         {typeof progress === "number" ? (
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+          <div className="flex min-w-0 items-center justify-end gap-3">
             <div className="hidden h-1 w-[min(240px,28vw)] overflow-hidden rounded-chip bg-raised sm:block">
               <div
                 className="h-full rounded-chip bg-aurora transition-all duration-300"
@@ -71,7 +85,7 @@ export function FocusShell({
               <span className="shrink-0 text-[11px] tabular-nums text-faint">{progressLabel}</span>
             ) : null}
           </div>
-        ) : (
+        ) : meta ? null : (
           <div className="flex-1" />
         )}
 
@@ -85,7 +99,7 @@ export function FocusShell({
         </button>
       </div>
 
-      <div className="flex w-full flex-1 flex-col">{children}</div>
+      <div className="flex w-full min-h-0 flex-1 flex-col">{children}</div>
 
       {footer ? <div className="sticky bottom-0 z-20 shrink-0">{footer}</div> : null}
     </div>
