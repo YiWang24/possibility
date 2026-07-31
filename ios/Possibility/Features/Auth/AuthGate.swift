@@ -19,7 +19,7 @@ final class AuthGateCenter {
     private var pendingTrigger: AuthTrigger?
 
     /// 未登录则弹登录页并记住待办动作；已登录直接执行。
-    /// - Parameter trigger: 如实反映触发登录的动作（docs/埋点方案.md §3.2）；
+    /// - Parameter trigger: 如实反映触发登录的动作（docs/engineering/埋点方案.md §3.2）；
     ///   事件清单里没有对应取值的入口传 nil —— 不上报好过错报成别的动作。
     func require(_ supabase: SupabaseService,
                  trigger: AuthTrigger?,

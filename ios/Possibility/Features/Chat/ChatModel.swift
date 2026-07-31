@@ -11,7 +11,7 @@ import Observation
 // 确定可达；用户在纠正追问后给出自己的改写时，再把完整上下文交给 /chat。
 // 岔路口成形后用 crossroads.match_query 调 /match。
 
-/// 对话入口来源（chat_started.entry_point · docs/埋点方案.md §3.1）。
+/// 对话入口来源（chat_started.entry_point · docs/engineering/埋点方案.md §3.1）。
 /// 没有默认值：新增入口时必须显式声明自己是谁，避免全部被记成首页。
 enum ChatEntryPoint: String, Sendable {
     case home      // 首页发问卡

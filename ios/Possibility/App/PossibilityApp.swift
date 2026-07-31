@@ -35,7 +35,7 @@ struct PossibilityApp: App {
     }
 }
 
-// MARK: - 埋点装配（docs/埋点方案.md §0 三层）
+// MARK: - 埋点装配（docs/engineering/埋点方案.md §0 三层）
 
 /// 注册三个上报后端 + 维护「是否首次打开」。
 ///

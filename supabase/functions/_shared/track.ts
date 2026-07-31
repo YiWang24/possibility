@@ -1,4 +1,4 @@
-// 服务端埋点落库（docs/埋点方案.md Layer 1 · 事件清单见 events.ts）。
+// 服务端埋点落库（docs/engineering/埋点方案.md Layer 1 · 事件清单见 events.ts）。
 //
 // 铁律：埋点绝不能影响主流程。
 // 本模块所有导出都返回 void 且不抛错——调用点写一行就走，失败只留 console.error。

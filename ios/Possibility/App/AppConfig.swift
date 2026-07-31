@@ -28,7 +28,7 @@ enum AppConfig {
         supabaseURL.appendingPathComponent("functions/v1/\(name)")
     }
 
-    // MARK: - 埋点（docs/埋点方案.md）
+    // MARK: - 埋点（docs/engineering/埋点方案.md）
     //
     // 与 Supabase 不同：这里**不设线上兜底值**。PostHog project token / Sentry DSN 是
     // 项目级写入凭证，硬编码进仓库等于把上报端点公开给任何反编译者，脏数据无法回收。

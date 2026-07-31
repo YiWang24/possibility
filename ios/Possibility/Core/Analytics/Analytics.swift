@@ -1,12 +1,12 @@
 import Foundation
 
-// MARK: - 埋点门面（契约层 · 见 docs/埋点方案.md）
+// MARK: - 埋点门面（契约层 · 见 docs/engineering/埋点方案.md）
 //
 // 调用侧只依赖本文件与 AnalyticsEvent.swift；具体上报实现（PostHog / app_events / Sentry）
 // 通过 AnalyticsBackend 注册进来。这样调用点不感知第三方 SDK，也便于测试替换。
 
 /// 埋点属性值：显式枚举而非 Any，保证 Sendable 且序列化行为可预期。
-/// 只允许 string / int / double / bool —— 与 docs/埋点方案.md §1 一致。
+/// 只允许 string / int / double / bool —— 与 docs/engineering/埋点方案.md §1 一致。
 enum AnalyticsValue: Sendable, Equatable {
     case string(String)
     case int(Int)

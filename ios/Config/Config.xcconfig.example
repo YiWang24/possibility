@@ -16,7 +16,7 @@ SUPABASE_ANON_KEY = your-supabase-anon-key
 // 本地开发（supabase start）可改用本机地址：
 // SUPABASE_URL = http:/$()/127.0.0.1:54321
 
-// ── 埋点（docs/埋点方案.md）────────────────────────────────────────────
+// ── 埋点（docs/engineering/埋点方案.md）────────────────────────────────────────────
 //
 // 三个值都留空也能正常跑：对应 backend 不注册，事件只写 Supabase app_events。
 // 这些是**写入凭证**，硬编码进仓库等于把上报端点公开给任何反编译者，

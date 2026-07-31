@@ -44,7 +44,7 @@ function conversationText(
 }
 
 /**
- * 岔路口形成（docs/埋点方案.md §3.1）——整个产品最关键的中间态指标。
+ * 岔路口形成（docs/engineering/埋点方案.md §3.1）——整个产品最关键的中间态指标。
  *
  * 判定条件：`signal.crossroads.ready === true` 且本轮之前会话状态还是 'open'，
  * 即 conversations 从 open 跃迁到 crossroads 的那一次。

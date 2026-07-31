@@ -3,7 +3,7 @@ import CryptoKit
 import OSLog
 import Sentry
 
-// MARK: - Layer 3：Sentry（docs/埋点方案.md §0）
+// MARK: - Layer 3：Sentry（docs/engineering/埋点方案.md §0）
 //
 // Sentry 不是分析工具，这里也不把它当分析工具用。它的价值是**崩溃现场的上下文**：
 // 每个埋点事件挂成一条 breadcrumb，崩溃报告里就能直接读出「用户崩前做了什么」——
@@ -32,7 +32,7 @@ struct SentryBackend: AnalyticsBackend {
             // 埋点事件本身就会占掉不少 breadcrumb 额度，默认 100 条容易把
             // 真正有用的早期步骤挤掉；放宽到 200 条覆盖一次完整付费漏斗。
             options.maxBreadcrumbs = 200
-            // 不采集 IP / cookie 等默认 PII —— docs/埋点方案.md §1 的约束同样适用于崩溃上报
+            // 不采集 IP / cookie 等默认 PII —— docs/engineering/埋点方案.md §1 的约束同样适用于崩溃上报
             options.sendDefaultPii = false
             // 卡顿也当问题看：AI 流式回复期间主线程被阻塞是这个产品的高发故障
             options.enableAppHangTracking = true

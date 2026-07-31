@@ -1,4 +1,4 @@
--- funnel.sql — 核心付费漏斗各环节转化（docs/埋点方案.md §3.1 / §5）
+-- funnel.sql — 核心付费漏斗各环节转化（docs/engineering/埋点方案.md §3.1 / §5）
 --
 -- 用途：回答「用户在哪一步掉下去的」。链路取自 §3.1 的价值链：
 --   app_opened → chat_started → crossroad_formed → paywall_viewed → purchase_completed

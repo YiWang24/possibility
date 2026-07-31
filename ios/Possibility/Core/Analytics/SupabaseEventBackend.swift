@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import Supabase
 
-// MARK: - Layer 1：Supabase app_events（docs/埋点方案.md §0 / §4）
+// MARK: - Layer 1：Supabase app_events（docs/engineering/埋点方案.md §0 / §4）
 //
 // 这是兜底的事实表：PostHog Cloud 在国内网络可达性不稳定，一旦上报失败数据永久丢失；
 // app_events 又是唯一能和 match_results / unlocks 等业务表 JOIN 的地方。
@@ -208,7 +208,7 @@ private actor EventBuffer {
     }
 }
 
-// MARK: - 行结构（docs/埋点方案.md §4）
+// MARK: - 行结构（docs/engineering/埋点方案.md §4）
 
 /// 一条待发事件 + 它已经试过几次。值类型，所有「修改」都返回新实例。
 private struct PendingEvent {

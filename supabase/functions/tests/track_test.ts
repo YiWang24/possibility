@@ -2,7 +2,7 @@
 //
 // 这里守两条底线，它们比「事件有没有记上」重要得多：
 // 1. 埋点失败绝不能影响主流程——任何 sink 故障都必须被吞掉，调用点照常往下走。
-// 2. PII / 正文绝不能进属性（docs/埋点方案.md §1）。
+// 2. PII / 正文绝不能进属性（docs/engineering/埋点方案.md §1）。
 // 其余（usage 归一化、llm_request 属性形状）是成本报表正确性的前提，一并覆盖。
 
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2.110.0";

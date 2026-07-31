@@ -1,4 +1,4 @@
-// 服务端错误上报（docs/埋点方案.md Layer 3）。
+// 服务端错误上报（docs/engineering/埋点方案.md Layer 3）。
 //
 // 为什么手写 envelope 而不是引 @sentry/deno：本项目的 Edge Function 只需要
 // 「把未预期的异常送出去」这一件事。官方 SDK 会拉进一整套 integrations 与全局
