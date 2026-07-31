@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PageShell } from "@/components/shell/PageShell";
+import { PersonaRail } from "@/features/home/PersonaRail";
 import { BackButton } from "@/features/card-game/ui";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -304,24 +306,31 @@ export function DiaryDetail() {
   };
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[var(--nav-h)]">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-[13px] px-[22px] pt-3 pb-2.5">
-          <BackButton onClick={() => router.back()} />
-          <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-semibold tracking-[0.8px] text-ink">语音日记</div>
-            <div className="text-[11px] text-faint">听见每天的自己，也看见长期变化</div>
+    <div className="screen-bg">
+      {/* 日记同样把画像钉在右轨：每天说的话正是喂给画像的原料。
+          原实现是 660px 的窄条居中在 1800px 屏上（利用率 37%），
+          且自带第二条 sticky 顶栏与全站顶栏抢层级。 */}
+      <PageShell
+        rail={
+          <PersonaRail caption="你每天留下的声音会汇进这里 —— 日记是画像最诚实的原料。" />
+        }
+        header={
+          <div className="flex items-center gap-[13px]">
+            <BackButton onClick={() => router.back()} />
+            <div className="min-w-0 flex-1">
+              <div className="text-[16px] font-semibold tracking-[0.8px] text-ink xl:text-[19px]">语音日记</div>
+              <div className="text-[11px] text-faint">听见每天的自己，也看见长期变化</div>
+            </div>
+            <button
+              onClick={() => void downloadExport()}
+              className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-[10.5px] text-sub"
+            >
+              导出
+            </button>
           </div>
-          <button
-            onClick={() => void downloadExport()}
-            className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-[10.5px] text-sub"
-          >
-            导出
-          </button>
-        </div>
-      </div>
-
-      <div className="mx-auto w-full max-w-measure px-5 pb-10">
+        }
+      >
+        <div className="w-full">
         <div className="mt-2.5 flex gap-[5px] rounded-[14px] border border-line bg-white/[0.045] p-1">
           {TABS.map((tab) => {
             const active = view === tab.kind;
@@ -397,7 +406,8 @@ export function DiaryDetail() {
             />
           )}
         </div>
-      </div>
+        </div>
+      </PageShell>
     </div>
   );
 }

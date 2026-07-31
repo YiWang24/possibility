@@ -11,9 +11,10 @@
    diary 都会引它）。画像本就是横贯全站的资产而不是首页的私有物，所以放在
    features/home 下由各页 import，而不是把 useHome 反向塞进 components/。 */
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
+import { useData } from "@/stores/data";
 import { useHome } from "./store";
 import { PersonaStage } from "./PersonaStage";
 
@@ -33,14 +34,24 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
   const filledDims = useHome((s) => s.filledDims);
   const remotePersona = useHome((s) => s.remotePersona);
   const loadPortrait = useHome((s) => s.loadPortrait);
+  const cardGames = useData((s) => s.profile?.card_games);
 
   /* 轨会出现在非首页，那些页面不会自己拉画像 —— 这里兜底。store 内部幂等 */
   useEffect(() => {
     void loadPortrait();
   }, [loadPortrait]);
 
-  const model = useHome.getState().personaModel();
-  const completion = useHome.getState().completion();
+  /* 与首页 hero 同理：这些是 store 的派生方法，getState() 不产生订阅关系，
+     依赖的源必须显式订阅，否则轨里的形象与完成度不会跟着更新。 */
+  const model = useMemo(
+    () => useHome.getState().personaModel(),
+    [filledDims, remotePersona, cardGames],
+  );
+  const completion = useMemo(() => useHome.getState().completion(), [filledDims]);
+  const hasLifeCards = useMemo(
+    () => useHome.getState().lifeSignatureCards().length >= 3,
+    [cardGames],
+  );
   const lit = new Set(highlight);
 
   return (
@@ -50,7 +61,7 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
           model={model}
           userName={USER_NAME}
           summary={remotePersona?.summary}
-          hasLifeCards={useHome.getState().lifeSignatureCards().length >= 3}
+          hasLifeCards={hasLifeCards}
           size="rail"
         />
 

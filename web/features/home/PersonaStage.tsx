@@ -9,17 +9,24 @@
 import { PersonaCanvas } from "./PersonaCanvas";
 import type { PersonaModel } from "./persona";
 
-/** 舞台形态：hero 撑第一屏，card 是原来卡片内的尺寸，rail 是轨内缩略 */
-export type StageSize = "hero" | "card" | "rail";
+/** 舞台形态：hero 撑第一屏，card 是原来卡片内的尺寸，rail 是轨内缩略，
+    fill 交给父容器定高（首页 hero 的右栏要跟左栏等高）。 */
+export type StageSize = "hero" | "card" | "rail" | "fill";
 
 const STAGE_HEIGHT: Record<StageSize, string> = {
   hero: "h-[300px] md:h-[380px] xl:h-[440px]",
   card: "h-[216px]",
   rail: "h-[168px]",
+  fill: "h-full",
 };
 
 /** 小尺寸下 caption 与徽标要跟着收，否则会盖住形象本身 */
-const COMPACT: Record<StageSize, boolean> = { hero: false, card: false, rail: true };
+const COMPACT: Record<StageSize, boolean> = {
+  hero: false,
+  card: false,
+  rail: true,
+  fill: false,
+};
 
 export function PersonaStage({
   model,
@@ -85,7 +92,7 @@ export function PersonaStage({
       <div className="absolute bottom-3.5 left-4 right-4">
         <div
           className={
-            size === "hero"
+            size === "hero" || size === "fill"
               ? "text-[15px] font-semibold text-ink xl:text-[17px]"
               : "text-[12.5px] font-semibold text-ink"
           }
@@ -95,7 +102,7 @@ export function PersonaStage({
         {!compact && (
           <div
             className={
-              size === "hero"
+              size === "fill" || size === "hero"
                 ? "line-clamp-2 text-[11.5px] text-sub"
                 : "line-clamp-2 text-[9.5px] text-faint"
             }
