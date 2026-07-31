@@ -12,7 +12,9 @@ import { telemetryEnabled } from "./telemetry-config.ts";
 // Deno Edge 无 NodeSDK：手动装 BasicTracerProvider + AsyncLocalStorage 上下文，
 // 保证流式响应体内创建的 generation span 仍归属请求级 trace。
 
-declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
+interface EdgeRuntimeLike {
+  waitUntil(p: Promise<unknown>): void;
+}
 
 // 只想问「遥测开着吗」的调用方请直接 import telemetry-config.ts —— 从这里拿同样拿得到，
 // 但会连带把下面整条 OTel 装配链求值一遍。此处转出口只为兼容既有 import。
@@ -64,8 +66,11 @@ export async function flushTraces(): Promise<void> {
   const exportDone = processor.forceFlush().catch((error) => {
     console.warn("langfuse flush failed:", error);
   });
-  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime) {
-    EdgeRuntime.waitUntil(exportDone);
+  const edgeRuntime = Reflect.get(globalThis, "EdgeRuntime") as
+    | EdgeRuntimeLike
+    | undefined;
+  if (edgeRuntime !== undefined) {
+    edgeRuntime.waitUntil(exportDone);
   } else {
     await exportDone;
   }

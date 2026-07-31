@@ -85,7 +85,7 @@ function LoginWall() {
             用邮箱注册一个可以找回的身份，换设备也能接着往下走。
           </p>
           <p className="hidden max-w-[42ch] border-l border-sub/25 pl-5 font-serif text-[12.5px] leading-[1.9] text-faint lg:ml-10 lg:block">
-            离每个人最远的，就是他自己。
+            <span className="block">离每个人最远的，就是他自己。</span>
             <span className="mt-1 block text-[11px]">——尼采《道德的系谱》</span>
           </p>
         </header>
