@@ -30,6 +30,98 @@ values (
   'audio/webm'
 );
 
+insert into public.memory_proposals (
+  user_id,
+  dimension,
+  value,
+  normalized_value,
+  source_type,
+  source_id,
+  confidence,
+  dedupe_key
+)
+values (
+  '66666666-6666-4666-8666-666666666666',
+  'skill',
+  '产品策略',
+  '产品策略',
+  'diary',
+  '66666666-1111-4111-8111-111111111111',
+  0.7,
+  'diary-proposal-before-edit'
+);
+
+update public.diary_entries
+   set content_version = content_version + 1
+ where entry_uuid = '66666666-1111-4111-8111-111111111111';
+
+do $$
+begin
+  if exists (
+    select 1 from public.memory_proposals
+     where dedupe_key = 'diary-proposal-before-edit'
+  ) then
+    raise exception 'editing a diary must remove its stale pending proposals';
+  end if;
+end
+$$;
+
+insert into public.diary_entries (
+  user_id,
+  entry_uuid,
+  source,
+  status,
+  recorded_at,
+  local_date,
+  timezone,
+  transcript
+)
+values (
+  '66666666-6666-4666-8666-666666666666',
+  '66666666-2222-4222-8222-222222222222',
+  'text',
+  'ready',
+  '2026-07-31T03:00:00Z',
+  '2026-07-30',
+  'America/Toronto',
+  '这条日记将被删除。'
+);
+
+insert into public.memory_proposals (
+  user_id,
+  dimension,
+  value,
+  normalized_value,
+  source_type,
+  source_id,
+  confidence,
+  dedupe_key
+)
+values (
+  '66666666-6666-4666-8666-666666666666',
+  'like',
+  '安静地散步',
+  '安静地散步',
+  'diary',
+  '66666666-2222-4222-8222-222222222222',
+  0.7,
+  'diary-proposal-before-delete'
+);
+
+delete from public.diary_entries
+ where entry_uuid = '66666666-2222-4222-8222-222222222222';
+
+do $$
+begin
+  if exists (
+    select 1 from public.memory_proposals
+     where dedupe_key = 'diary-proposal-before-delete'
+  ) then
+    raise exception 'deleting a diary must remove its pending proposals';
+  end if;
+end
+$$;
+
 insert into public.diary_summaries (
   user_id,
   period_type,

@@ -6,6 +6,11 @@ import {
   entryJobKey,
   summaryJobKey,
 } from "./diary-queue.ts";
+import {
+  buildDiaryProfileProposalRows,
+  type DiaryProfileUpdate,
+  profileUpdatesFromAnalysis,
+} from "./diary-profile-proposals.ts";
 import { structuredOutput } from "./llm-lazy.ts";
 import { diaryPrompt, layeredDiarySummaryPrompt } from "./prompts.ts";
 import {
@@ -39,6 +44,7 @@ type EntryRow = {
   entry_summary: string | null;
   emotions: string[] | null;
   keywords: string[] | null;
+  analysis: Record<string, unknown>;
   content_version: number;
   attempt_count: number;
   updated_at: string;
@@ -82,6 +88,32 @@ async function sha256(value: string): Promise<string> {
     .join("");
 }
 
+async function storeDiaryProfileProposals(
+  userId: string,
+  entryId: string,
+  sourceVersion: number,
+  updates: DiaryProfileUpdate[],
+): Promise<void> {
+  const rows = await buildDiaryProfileProposalRows(
+    userId,
+    entryId,
+    sourceVersion,
+    updates,
+    {
+      modelName: runtimeConfig.diaryModel,
+      promptVersion: ANALYSIS_PROMPT_VERSION,
+    },
+  );
+  if (rows.length === 0) return;
+  const { error } = await serviceClient().from("memory_proposals").upsert(
+    rows,
+    { onConflict: "user_id,dedupe_key", ignoreDuplicates: true },
+  );
+  if (error) {
+    throw new DiaryProcessingError("DIARY_PROFILE_PROPOSAL_SAVE_FAILED");
+  }
+}
+
 export function entryFingerprint(entries: EntryRow[]): Promise<string> {
   return sha256(
     entries
@@ -122,7 +154,7 @@ async function loadEntry(userId: string, entryId: string): Promise<EntryRow> {
     .select(
       "entry_uuid,user_id,status,local_date,audio_path,audio_mime,audio_bytes," +
         "duration_ms,transcript,transcript_raw,transcript_edited,title," +
-        "entry_summary,emotions,keywords,content_version,attempt_count," +
+        "entry_summary,emotions,keywords,analysis,content_version,attempt_count," +
         "updated_at,deleted_at",
     )
     .eq("user_id", userId)
@@ -257,7 +289,15 @@ export async function processEntryAnalysis(job: DiaryJob): Promise<void> {
     throw new DiaryProcessingError("DIARY_JOB_ENTRY_ID_MISSING", false);
   }
   const entry = await loadEntry(job.user_id, job.entry_id);
-  if (entry.status === "ready" && entry.entry_summary) return;
+  if (entry.status === "ready" && entry.entry_summary) {
+    await storeDiaryProfileProposals(
+      entry.user_id,
+      entry.entry_uuid,
+      entry.content_version,
+      profileUpdatesFromAnalysis(entry.analysis),
+    );
+    return;
+  }
   const transcript = finalText(entry);
   if (!transcript) {
     throw new DiaryProcessingError("TRANSCRIPT_EMPTY", false);
@@ -322,6 +362,12 @@ export async function processEntryAnalysis(job: DiaryJob): Promise<void> {
   if (updated.error || !updated.data) {
     throw new DiaryProcessingError("DIARY_ANALYSIS_SAVE_FAILED");
   }
+  await storeDiaryProfileProposals(
+    entry.user_id,
+    entry.entry_uuid,
+    entry.content_version,
+    result.dim_updates,
+  );
   trackEvent(entry.user_id, ServerEvent.DIARY_CREATED, {
     input_method: "voice",
     content_chars: transcript.length,
@@ -361,7 +407,7 @@ async function loadPeriodEntries(
     .select(
       "entry_uuid,user_id,status,local_date,audio_path,audio_mime,audio_bytes," +
         "duration_ms,transcript,transcript_raw,transcript_edited,title," +
-        "entry_summary,emotions,keywords,content_version,attempt_count," +
+        "entry_summary,emotions,keywords,analysis,content_version,attempt_count," +
         "updated_at,deleted_at",
     )
     .eq("user_id", userId)
