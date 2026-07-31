@@ -192,6 +192,112 @@ export type Database = {
           },
         ]
       }
+      card_game_actions: {
+        Row: {
+          action_type: string
+          card_keys: string[]
+          created_at: string
+          id: number
+          pressure_after: number | null
+          pressure_before: number | null
+          reason_abandon: string | null
+          reason_cannot_accept: string | null
+          scenario_key: string | null
+          sequence: number
+          session_id: string
+        }
+        Insert: {
+          action_type: string
+          card_keys?: string[]
+          created_at?: string
+          id?: never
+          pressure_after?: number | null
+          pressure_before?: number | null
+          reason_abandon?: string | null
+          reason_cannot_accept?: string | null
+          scenario_key?: string | null
+          sequence: number
+          session_id: string
+        }
+        Update: {
+          action_type?: string
+          card_keys?: string[]
+          created_at?: string
+          id?: never
+          pressure_after?: number | null
+          pressure_before?: number | null
+          reason_abandon?: string | null
+          reason_cannot_accept?: string | null
+          scenario_key?: string | null
+          sequence?: number
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_game_actions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "card_game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_game_catalog_versions: {
+        Row: {
+          analysis_key: string
+          catalog: Json
+          catalog_schema_version: number
+          content_hash: string | null
+          created_at: string
+          created_by: string | null
+          engine_key: string
+          game_id: string
+          id: string
+          is_current: boolean
+          published_at: string | null
+          status: string
+          version: number
+        }
+        Insert: {
+          analysis_key?: string
+          catalog: Json
+          catalog_schema_version?: number
+          content_hash?: string | null
+          created_at?: string
+          created_by?: string | null
+          engine_key?: string
+          game_id: string
+          id?: string
+          is_current?: boolean
+          published_at?: string | null
+          status?: string
+          version: number
+        }
+        Update: {
+          analysis_key?: string
+          catalog?: Json
+          catalog_schema_version?: number
+          content_hash?: string | null
+          created_at?: string
+          created_by?: string | null
+          engine_key?: string
+          game_id?: string
+          id?: string
+          is_current?: boolean
+          published_at?: string | null
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_game_catalog_versions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "card_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_game_results: {
         Row: {
           accepted: Json
@@ -222,6 +328,193 @@ export type Database = {
           rounds?: number
           traded?: Json
           user_id?: string
+        }
+        Relationships: []
+      }
+      card_game_runs: {
+        Row: {
+          ai_snapshot: Json
+          analysis_key: string
+          analysis_schema_version: number
+          completed_at: string
+          discarded_card_keys: string[]
+          display_snapshot: Json
+          final_card_keys: string[]
+          game_id: string
+          game_version_id: string
+          id: string
+          initial_card_keys: string[]
+          metrics: Json
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          ai_snapshot: Json
+          analysis_key: string
+          analysis_schema_version: number
+          completed_at?: string
+          discarded_card_keys: string[]
+          display_snapshot: Json
+          final_card_keys: string[]
+          game_id: string
+          game_version_id: string
+          id?: string
+          initial_card_keys: string[]
+          metrics: Json
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          ai_snapshot?: Json
+          analysis_key?: string
+          analysis_schema_version?: number
+          completed_at?: string
+          discarded_card_keys?: string[]
+          display_snapshot?: Json
+          final_card_keys?: string[]
+          game_id?: string
+          game_version_id?: string
+          id?: string
+          initial_card_keys?: string[]
+          metrics?: Json
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_game_runs_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "card_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_game_runs_game_version_id_game_id_fkey"
+            columns: ["game_version_id", "game_id"]
+            isOneToOne: false
+            referencedRelation: "card_game_catalog_versions"
+            referencedColumns: ["id", "game_id"]
+          },
+          {
+            foreignKeyName: "card_game_runs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
+            referencedRelation: "card_game_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_game_sessions: {
+        Row: {
+          accept_count: number
+          client_session_id: string
+          completed_at: string | null
+          current_scenario_key: string | null
+          game_id: string
+          game_version_id: string
+          held_card_keys: string[]
+          id: string
+          last_action_seq: number
+          phase: string
+          pressure: number
+          round_count: number
+          seed: number
+          seen_scenario_keys: string[]
+          selected_card_keys: string[]
+          started_at: string
+          state_version: number
+          status: string
+          trade_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accept_count?: number
+          client_session_id: string
+          completed_at?: string | null
+          current_scenario_key?: string | null
+          game_id: string
+          game_version_id: string
+          held_card_keys?: string[]
+          id: string
+          last_action_seq?: number
+          phase?: string
+          pressure?: number
+          round_count?: number
+          seed: number
+          seen_scenario_keys?: string[]
+          selected_card_keys?: string[]
+          started_at?: string
+          state_version?: number
+          status?: string
+          trade_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accept_count?: number
+          client_session_id?: string
+          completed_at?: string | null
+          current_scenario_key?: string | null
+          game_id?: string
+          game_version_id?: string
+          held_card_keys?: string[]
+          id?: string
+          last_action_seq?: number
+          phase?: string
+          pressure?: number
+          round_count?: number
+          seed?: number
+          seen_scenario_keys?: string[]
+          selected_card_keys?: string[]
+          started_at?: string
+          state_version?: number
+          status?: string
+          trade_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_game_sessions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "card_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_game_sessions_game_version_id_game_id_fkey"
+            columns: ["game_version_id", "game_id"]
+            isOneToOne: false
+            referencedRelation: "card_game_catalog_versions"
+            referencedColumns: ["id", "game_id"]
+          },
+        ]
+      }
+      card_games: {
+        Row: {
+          created_at: string
+          game_key: string
+          id: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          game_key: string
+          id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          game_key?: string
+          id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1189,12 +1482,32 @@ export type Database = {
           profile_revision: number
         }[]
       }
+      complete_card_game_session_v2: {
+        Args: {
+          p_expected_state_version: number
+          p_run: Json
+          p_session_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       confirm_profile_fact: {
         Args: { p_expected_revision?: number; p_fact_id: string }
         Returns: {
           portrait_pct: number
           profile_revision: number
         }[]
+      }
+      create_card_game_session_v2: {
+        Args: {
+          p_catalog_version: number
+          p_client_session_id: string
+          p_game_key: string
+          p_seed: number
+          p_session_id: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       delete_diary_job: { Args: { p_message_id: number }; Returns: boolean }
       delete_profile_dimension: {
@@ -1233,6 +1546,10 @@ export type Database = {
           p_value: string
         }
         Returns: string
+      }
+      publish_card_game_catalog_v1: {
+        Args: { p_game_key: string; p_version: number }
+        Returns: Json
       }
       purge_diary_jobs: { Args: { p_user_id: string }; Returns: number }
       read_diary_jobs: {
@@ -1313,6 +1630,16 @@ export type Database = {
           portrait_pct: number
           profile_revision: number
         }[]
+      }
+      sync_card_game_session_v2: {
+        Args: {
+          p_actions: Json
+          p_expected_state_version: number
+          p_session_id: string
+          p_state: Json
+          p_user_id: string
+        }
+        Returns: Json
       }
       update_profile_progress: {
         Args: { p_portrait_delta?: number }

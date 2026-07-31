@@ -12,6 +12,8 @@ export const EDGE_FUNCTIONS = [
   'retry-diary-entry',
   'update-diary-transcript',
   'save-profile',
+  'card-game-catalog',
+  'card-game-session',
   'get-profile',
   'profile-privacy',
   'list-conversations',

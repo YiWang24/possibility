@@ -15,6 +15,18 @@ struct CardGameHubView: View {
     @State private var completedKinds: Set<CardGameKind> = []
     @State private var progressKinds: Set<CardGameKind> = []
     @State private var didSyncRemote = false
+    @State private var manifest: [CardGameManifestResponse.Item] = []
+
+    private var userScope: String? { supabase.userId?.uuidString }
+    private var availableGames: [CardGameManifestResponse.Item] {
+        manifest.isEmpty ? Self.fallbackManifest : manifest
+    }
+    private var availableKinds: [CardGameKind] {
+        availableGames.compactMap(\.kind)
+    }
+    private var lifeItem: CardGameManifestResponse.Item? {
+        availableGames.first { $0.kind == .life }
+    }
 
     var body: some View {
         NavigationStack(path: $gamePath) {
@@ -23,13 +35,23 @@ struct CardGameHubView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         hero
-                        lifePrimary
-                        Text("关系专题 · 各约 3 分钟")
+                        if availableKinds.contains(.life) {
+                            lifePrimary
+                        }
+                        Text("更多专题")
                             .font(.system(size: 11)).tracking(1).foregroundStyle(Theme.faint)
                             .padding(.top, 4)
-                        gameOption(.marriage, sub: "婚姻中，你最后会守住什么？")
-                        gameOption(.family, sub: "家庭里，你最想守住的三点")
-                        gameOption(.social, sub: "人际交往中，你的真实优先级")
+                        ForEach(availableGames.filter { $0.kind != .life }) { item in
+                            if let kind = item.kind {
+                                gameOption(
+                                    kind,
+                                    title: item.title,
+                                    sub: item.introCopy,
+                                    accent: Self.accentValue(item.accent),
+                                    glyph: item.glyph
+                                )
+                            }
+                        }
                     }
                     .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 34)
                 }
@@ -44,7 +66,13 @@ struct CardGameHubView: View {
                     .navigationBarBackButtonHidden(true)
             }
         }
-        .task { await syncRemoteGames() }
+        .task {
+            if let remoteManifest = try? await supabase.fetchCardGameManifest(),
+               !remoteManifest.isEmpty {
+                manifest = remoteManifest
+            }
+            await syncRemoteGames()
+        }
     }
 
     // MARK: 云端回读（真实优先 + 静默兜底）
@@ -53,19 +81,27 @@ struct CardGameHubView: View {
     /// 本地已有记录以本地为准（不覆盖）。失败静默，不影响页面。
     @MainActor
     private func syncRemoteGames() async {
-        completedKinds = CardGameLocalRecord.doneKinds
-        progressKinds = CardGameLocalRecord.progressKinds
+        _ = try? await supabase.jwt()
+        completedKinds = CardGameLocalRecord.doneKinds(
+            among: availableKinds,
+            scope: userScope
+        )
+        progressKinds = CardGameLocalRecord.progressKinds(
+            among: availableKinds,
+            scope: userScope
+        )
         guard !didSyncRemote else { return }
         didSyncRemote = true
         // 本地各 kind 均已完成时无需回读
-        guard completedKinds.count < CardGameKind.allCases.count else { return }
+        guard completedKinds.count < availableKinds.count else { return }
         guard let remote = try? await supabase.fetchRemoteProfile() else { return }
         for game in remote.cardGames {
             guard let kind = CardGameKind(rawValue: game.kind),
+                  availableKinds.contains(kind),
                   !game.finalCards.isEmpty,
-                  !CardGameLocalRecord.isDone(kind) else { continue }
+                  !CardGameLocalRecord.isDone(kind, scope: userScope) else { continue }
             restoreLocalCache(kind: kind, cards: game.finalCards)
-            CardGameLocalRecord.markDone(kind)
+            CardGameLocalRecord.markDone(kind, scope: userScope)
             completedKinds.insert(kind)
         }
     }
@@ -73,17 +109,16 @@ struct CardGameHubView: View {
     /// 远端最终卡组 → 本地展示模型：life 写人生底牌签名，其余写画像维度关键词
     @MainActor
     private func restoreLocalCache(kind: CardGameKind, cards: [CardGameCardPayload]) {
-        switch kind {
-        case .life:
+        if kind == .life {
             guard home.lifeSignatureCards.isEmpty else { return }
-            let signature = cards.prefix(3).map {
+            let signature = cards.map {
                 HomeModel.LifeSignatureCard(glyph: $0.glyph ?? "✦", name: $0.name)
             }
             if let data = try? JSONEncoder().encode(Array(signature)) {
                 UserDefaults.standard.set(data, forKey: HomeModel.lifeSignatureKey)
             }
             home.loadLifeSignature()
-        default:
+        } else {
             guard let key = kind.targetDimension,
                   home.selectedKeywords(for: key).isEmpty else { return }
             // 不传 supabase：仅回填本地，不反向覆盖云端
@@ -109,7 +144,7 @@ struct CardGameHubView: View {
     }
 
     private var hero: some View {
-        Text("每套卡牌都会让你在有限的底牌里做选择。留下的三张，会成为画像的一部分。")
+        Text("每套卡牌都会让你在有限的底牌里做选择。最终留下的牌，会成为画像的一部分。")
             .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(20)
@@ -139,7 +174,7 @@ struct CardGameHubView: View {
                             .foregroundStyle(Color(hex: 0xB6A8FF))
                         Text("人生卡牌：你最后会留下什么？")
                             .font(.system(size: 15.5, weight: .bold)).foregroundStyle(Theme.ink)
-                        Text("从 18 张底牌带走 9 张，在命运加码中留下最后 3 张")
+                        Text(lifeItem?.introCopy ?? CardGameData.life.introCopy)
                             .font(.system(size: 11)).foregroundStyle(Theme.sub)
                     }
                     Spacer()
@@ -203,19 +238,24 @@ struct CardGameHubView: View {
 
     // MARK: 关系卡牌选项
 
-    private func gameOption(_ kind: CardGameKind, sub: String) -> some View {
-        let cfg = CardGameData.config(kind)
+    private func gameOption(
+        _ kind: CardGameKind,
+        title: String,
+        sub: String,
+        accent: UInt32,
+        glyph: String
+    ) -> some View {
         return Button {
             launch(kind)
         } label: {
             HStack(spacing: 13) {
-                Text(cfg.glyph).font(.system(size: 17))
-                    .foregroundStyle(Color(hex: cfg.accent))
+                Text(glyph).font(.system(size: 17))
+                    .foregroundStyle(Color(hex: accent))
                     .frame(width: 40, height: 40)
-                    .background(Color(hex: cfg.accent, alpha: 0.13), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .background(Color(hex: accent, alpha: 0.13), in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(cfg.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
-                    Text(sub).font(.system(size: 11)).foregroundStyle(Theme.sub)
+                    Text(title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
+                    Text(sub).font(.system(size: 11)).foregroundStyle(Theme.sub).lineLimit(2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if completedKinds.contains(kind) || progressKinds.contains(kind) {
@@ -226,7 +266,7 @@ struct CardGameHubView: View {
             .padding(.horizontal, 15).padding(.vertical, 14)
             .background(Theme.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(Color(hex: cfg.accent, alpha: 0.24), lineWidth: 1))
+                .strokeBorder(Color(hex: accent, alpha: 0.24), lineWidth: 1))
         }
         .buttonStyle(PressScaleStyle())
         .accessibilityIdentifier("card-game-\(kind.rawValue)")
@@ -239,9 +279,35 @@ struct CardGameHubView: View {
     private func closeGame() {
         guard !gamePath.isEmpty else { return }
         gamePath.removeLast()
-        completedKinds = CardGameLocalRecord.doneKinds
-        progressKinds = CardGameLocalRecord.progressKinds
+        completedKinds = CardGameLocalRecord.doneKinds(
+            among: availableKinds,
+            scope: userScope
+        )
+        progressKinds = CardGameLocalRecord.progressKinds(
+            among: availableKinds,
+            scope: userScope
+        )
     }
+
+    private static func accentValue(_ value: String) -> UInt32 {
+        UInt32(value.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16)
+            ?? 0x8F7BFF
+    }
+
+    private static let fallbackManifest: [CardGameManifestResponse.Item] =
+        CardGameKind.allCases.enumerated().map { index, kind in
+            let config = CardGameData.config(kind)
+            return CardGameManifestResponse.Item(
+                gameKey: kind.rawValue,
+                title: config.title,
+                introCopy: config.introCopy,
+                accent: String(format: "#%06X", config.accent),
+                glyph: config.glyph,
+                version: config.catalogVersion,
+                contentHash: config.contentHash ?? "built-in",
+                sortOrder: index
+            )
+        }
 }
 
 #Preview {

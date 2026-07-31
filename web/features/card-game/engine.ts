@@ -6,6 +6,7 @@
  * 纯 TS，无 React 依赖，可单测；持久化通过可注入的 StorageLike（默认 localStorage）。
  */
 
+import { cardGameScenarioOptions } from "@possibility/shared-types";
 import {
   type CardGameConfig,
   type CardGameKind,
@@ -13,7 +14,6 @@ import {
   type GameScenario,
   CARD_GAME_KINDS,
   cardGameConfig,
-  lifeRoundMeta,
   scenariosForTradeCount,
 } from "./data";
 
@@ -61,6 +61,33 @@ export function defaultStorage(): StorageLike {
   return memoryStorage;
 }
 
+export function userScopedCardGameStorage(
+  userId: string,
+  base: StorageLike = defaultStorage(),
+): StorageLike {
+  const scoped = (key: string) => `card_game_user:${userId}:${key}`;
+  return {
+    getItem(key) {
+      const value = base.getItem(scoped(key));
+      if (value !== null) return value;
+      // One-time migration of the pre-v2 unscoped cache to the currently
+      // authenticated user. Removing it prevents later account contamination.
+      const legacy = base.getItem(key);
+      if (legacy !== null) {
+        base.setItem(scoped(key), legacy);
+        base.removeItem(key);
+      }
+      return legacy;
+    },
+    setItem(key, value) {
+      base.setItem(scoped(key), value);
+    },
+    removeItem(key) {
+      base.removeItem(scoped(key));
+    },
+  };
+}
+
 function doneKey(kind: CardGameKind) {
   return `kaleido_cardgame_done_${kind}`;
 }
@@ -87,11 +114,17 @@ export const CardGameLocalRecord = {
   hasProgress(kind: CardGameKind, store: StorageLike = defaultStorage()): boolean {
     return this.progressData(kind, store) !== null;
   },
-  doneKinds(store: StorageLike = defaultStorage()): Set<CardGameKind> {
-    return new Set(CARD_GAME_KINDS.filter((k) => this.isDone(k, store)));
+  doneKinds(
+    store: StorageLike = defaultStorage(),
+    kinds: readonly CardGameKind[] = CARD_GAME_KINDS,
+  ): Set<CardGameKind> {
+    return new Set(kinds.filter((k) => this.isDone(k, store)));
   },
-  progressKinds(store: StorageLike = defaultStorage()): Set<CardGameKind> {
-    return new Set(CARD_GAME_KINDS.filter((k) => this.hasProgress(k, store)));
+  progressKinds(
+    store: StorageLike = defaultStorage(),
+    kinds: readonly CardGameKind[] = CARD_GAME_KINDS,
+  ): Set<CardGameKind> {
+    return new Set(kinds.filter((k) => this.hasProgress(k, store)));
   },
 };
 
@@ -149,11 +182,54 @@ export class CardGameEngine {
   tradePick: string[] = [];
   reasonCannotAccept = "";
   reasonAbandon = "";
+  scenarioSeed = 0;
 
-  constructor(kind: CardGameKind, store: StorageLike = defaultStorage()) {
-    this.config = cardGameConfig(kind);
-    this.store = store;
+  constructor(
+    kind: CardGameKind,
+    configOrStore?: CardGameConfig | StorageLike,
+    store: StorageLike = defaultStorage(),
+  ) {
+    if (
+      configOrStore &&
+      "getItem" in configOrStore &&
+      "setItem" in configOrStore
+    ) {
+      this.config = cardGameConfig(kind);
+      this.store = configOrStore;
+    } else {
+      this.config = configOrStore ?? cardGameConfig(kind);
+      this.store = store;
+    }
     this.restoreProgress();
+  }
+
+  get initialSelectCount(): number {
+    return this.config.dynamicRules?.initial_select_count ?? 9;
+  }
+
+  get finalCardCount(): number {
+    return this.config.dynamicRules?.final_card_count ?? 3;
+  }
+
+  get discardPerTrade(): number {
+    return this.config.dynamicRules?.discard_per_trade ?? 2;
+  }
+
+  get scenarioChoiceCount(): number {
+    return this.config.dynamicRules?.scenario_choice_count ?? 5;
+  }
+
+  get pressureMin(): number {
+    return this.config.dynamicRules?.pressure.min ?? 1;
+  }
+
+  get pressureMax(): number {
+    return this.config.dynamicRules?.pressure.max ??
+      this.config.severityMeta.length;
+  }
+
+  get pressureInitial(): number {
+    return this.config.dynamicRules?.pressure.initial ?? 1;
   }
 
   card(id: string): GameCard {
@@ -165,7 +241,14 @@ export class CardGameEngine {
   }
 
   get severityMeta(): { name: string; copy: string } {
-    return this.config.severityMeta[this.pressure - 1];
+    const index = Math.max(
+      0,
+      Math.min(
+        this.config.severityMeta.length - 1,
+        this.pressure - this.pressureMin,
+      ),
+    );
+    return this.config.severityMeta[index];
   }
 
   /** 顶部进度（原型 lifeGameProgress） */
@@ -178,7 +261,10 @@ export class CardGameEngine {
       case "result":
         return 1;
       default: {
-        const released = (9 - this.held.length) / 6;
+        const releasable = this.initialSelectCount - this.finalCardCount;
+        const released = releasable === 0
+          ? 1
+          : (this.initialSelectCount - this.held.length) / releasable;
         return Math.min(0.96, 0.16 + released * 0.72 + Math.min(this.round, 8) * 0.015 + extra);
       }
     }
@@ -192,7 +278,7 @@ export class CardGameEngine {
     this.accepted = [];
     this.traded = [];
     this.round = 0;
-    this.pressure = 1;
+    this.pressure = this.pressureInitial;
     this.acceptStreak = 0;
     this.seenTitles = new Set();
     this.current = null;
@@ -208,20 +294,20 @@ export class CardGameEngine {
     const i = this.selected.indexOf(id);
     if (i >= 0) {
       this.selected.splice(i, 1);
-    } else if (this.selected.length < 9) {
+    } else if (this.selected.length < this.initialSelectCount) {
       this.selected.push(id);
     } else {
-      return "这一局只能带走 9 张底牌";
+      return `这一局只能带走 ${this.initialSelectCount} 张底牌`;
     }
     this.saveProgress();
     return null;
   }
 
   confirmSelection() {
-    if (this.selected.length !== 9) return;
+    if (this.selected.length !== this.initialSelectCount) return;
     this.held = [...this.selected];
     this.round = 0;
-    this.pressure = 1;
+    this.pressure = this.pressureInitial;
     this.acceptStreak = 0;
     this.seenTitles = new Set();
     this.phase = "draw";
@@ -230,6 +316,37 @@ export class CardGameEngine {
 
   /** 抽牌候选（原型 stageOptions：优先压力邻近、未出现过的情境） */
   get scenarioOptions(): GameScenario[] {
+    if (this.config.sourceCatalog) {
+      const byKey = new Map(
+        this.config.scenarioRounds.flat().map((scenario) => [
+          scenario.key,
+          scenario,
+        ]),
+      );
+      return cardGameScenarioOptions(
+        this.config.sourceCatalog,
+        {
+          phase: this.phase === "intro" ? "select" : this.phase,
+          selected_card_keys: [...this.selected],
+          held_card_keys: [...this.held],
+          seen_scenario_keys: [...this.seenTitles].flatMap((title) => {
+            const scenario = this.config.scenarioRounds
+              .flat()
+              .find((candidate) => candidate.title === title);
+            return scenario?.key ? [scenario.key] : [];
+          }),
+          current_scenario_key: this.current?.key ?? null,
+          round_count: this.round,
+          accept_count: this.accepted.length,
+          trade_count: this.traded.length,
+          pressure: this.pressure,
+        },
+        this.scenarioSeed,
+      ).flatMap((scenario) => {
+        const mapped = byKey.get(scenario.key);
+        return mapped ? [mapped] : [];
+      });
+    }
     const pool = scenariosForTradeCount(this.config, this.traded.length);
     const candidates = pool.map((scenario, index) => ({
       scenario,
@@ -242,7 +359,9 @@ export class CardGameEngine {
       if (a.seen !== b.seen) return a.seen - b.seen;
       return a.order - b.order;
     });
-    return candidates.slice(0, 5).map((c) => c.scenario);
+    return candidates.slice(0, this.scenarioChoiceCount).map((c) =>
+      c.scenario
+    );
   }
 
   draw(scenario: GameScenario) {
@@ -253,14 +372,15 @@ export class CardGameEngine {
   }
 
   get canTrade(): boolean {
-    return this.held.length - 2 >= 3;
+    return this.held.length - this.discardPerTrade >= this.finalCardCount;
   }
 
   accept() {
     if (!this.current) return;
     this.accepted.push({ round: this.round, scenario: this.current, severity: this.pressure });
     this.acceptStreak += 1;
-    this.pressure = Math.min(4, this.pressure + 1);
+    const delta = this.config.dynamicRules?.pressure.accept_delta ?? 1;
+    this.pressure = Math.min(this.pressureMax, this.pressure + delta);
     this.finishRound();
   }
 
@@ -276,17 +396,17 @@ export class CardGameEngine {
     const i = this.tradePick.indexOf(id);
     if (i >= 0) {
       this.tradePick.splice(i, 1);
-    } else if (this.tradePick.length < 2) {
+    } else if (this.tradePick.length < this.discardPerTrade) {
       this.tradePick.push(id);
     } else {
-      return "这一轮需要交换 2 张底牌";
+      return `这一轮需要交换 ${this.discardPerTrade} 张底牌`;
     }
     this.saveProgress();
     return null;
   }
 
   confirmTrade() {
-    if (this.tradePick.length !== 2 || !this.current) return;
+    if (this.tradePick.length !== this.discardPerTrade || !this.current) return;
     this.traded.push({
       round: this.round,
       scenario: this.current,
@@ -297,14 +417,18 @@ export class CardGameEngine {
     this.held = this.held.filter((id) => !this.tradePick.includes(id));
     this.tradePick = [];
     this.acceptStreak = 0;
-    this.pressure = Math.max(1, this.pressure - 1);
+    const delta = this.config.dynamicRules?.pressure.trade_delta ?? -1;
+    this.pressure = Math.max(
+      this.pressureMin,
+      Math.min(this.pressureMax, this.pressure + delta),
+    );
     this.finishRound();
   }
 
   private finishRound() {
     this.round += 1;
     this.current = null;
-    this.phase = this.held.length === 3 ? "result" : "draw";
+    this.phase = this.held.length === this.finalCardCount ? "result" : "draw";
     this.saveProgress();
   }
 
@@ -325,10 +449,17 @@ export class CardGameEngine {
 
   /** life 三段轮次信息（其余游戏返回轮次文案） */
   get stageMeta(): { age: string; name: string } {
-    if (this.config.kind !== "life") {
-      return { age: `第 ${this.round + 1} 轮`, name: this.config.title };
+    if (this.config.stageMeta?.length) {
+      const stage = [...this.config.stageMeta]
+        .filter((candidate) =>
+          candidate.activateAfterTrades <= this.traded.length
+        )
+        .sort((a, b) =>
+          b.activateAfterTrades - a.activateAfterTrades
+        )[0];
+      if (stage) return { age: stage.age, name: stage.name };
     }
-    return lifeRoundMeta[Math.min(this.traded.length, lifeRoundMeta.length - 1)];
+    return { age: `第 ${this.round + 1} 轮`, name: this.config.title };
   }
 
   /* ==== 结果保存 ==== */
@@ -503,22 +634,29 @@ export class CardGameEngine {
       !isSubset(s.selected, validCardIDs) ||
       !isSubset(s.held, validCardIDs) ||
       !isSubset(s.tradePick, heldSet) ||
-      s.selected.length > 9 ||
-      s.held.length > 9 ||
-      s.pressure < 1 ||
-      s.pressure > 4 ||
+      s.selected.length > this.initialSelectCount ||
+      s.held.length > this.initialSelectCount ||
+      s.pressure < this.pressureMin ||
+      s.pressure > this.pressureMax ||
       s.round < 0 ||
       s.acceptStreak < 0 ||
-      (s.phase === "result" && s.held.length !== 3) ||
-      (s.phase !== "select" && s.selected.length !== 9) ||
-      (s.phase !== "select" && s.held.length < 3) ||
+      (s.phase === "result" &&
+        s.held.length !== this.finalCardCount) ||
+      (s.phase !== "select" &&
+        s.selected.length !== this.initialSelectCount) ||
+      (s.phase !== "select" &&
+        s.held.length < this.finalCardCount) ||
       (s.phase !== "select" && !isSubset(s.held, new Set(s.selected))) ||
-      (s.phase !== "select" && s.held.length !== 9 - s.traded.length * 2) ||
+      (s.phase !== "select" &&
+        s.held.length !==
+          this.initialSelectCount -
+            s.traded.length * this.discardPerTrade) ||
       new Set(tradedIDs).size !== tradedIDs.length ||
       tradedIDs.some((id) => heldSet.has(id)) ||
       s.round !== s.accepted.length + s.traded.length ||
       (requiresCurrent && s.currentTitle == null) ||
-      (s.phase === "trade" && s.tradePick.length > 2)
+      (s.phase === "trade" &&
+        s.tradePick.length > this.discardPerTrade)
     ) {
       return false;
     }
@@ -530,7 +668,7 @@ export class CardGameEngine {
         !scenarioByTitle.has(e.title) ||
         !Number.isInteger(e.severity) ||
         e.severity < 1 ||
-        e.severity > 4
+        e.severity > this.pressureMax
       ) {
         return false;
       }
@@ -542,8 +680,8 @@ export class CardGameEngine {
         typeof e.title !== "string" ||
         !scenarioByTitle.has(e.title) ||
         !Array.isArray(e.ids) ||
-        e.ids.length !== 2 ||
-        new Set(e.ids).size !== 2 ||
+        e.ids.length !== this.discardPerTrade ||
+        new Set(e.ids).size !== this.discardPerTrade ||
         !isSubset(e.ids, validCardIDs) ||
         typeof e.cannotAccept !== "string" ||
         typeof e.abandon !== "string"

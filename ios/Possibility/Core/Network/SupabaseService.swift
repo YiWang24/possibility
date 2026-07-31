@@ -889,6 +889,186 @@ final class SupabaseService {
         return try await callFunction("community", body: Body(bountyId: bountyId), as: BountyDetailResponse.self)
     }
 
+    // MARK: - Versioned card-game catalogs
+
+    func fetchCardGameManifest() async throws -> [CardGameManifestResponse.Item] {
+        let cacheKey = "card_game_manifest_v1"
+        var request = URLRequest(url: AppConfig.functionURL("card-game-catalog"))
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+        request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try Self.throwIfHTTPError(response, data: data)
+            let manifest = try JSONDecoder().decode(CardGameManifestResponse.self, from: data)
+            guard manifest.schemaVersion == 1 else { throw CocoaError(.coderInvalidValue) }
+            UserDefaults.standard.set(data, forKey: cacheKey)
+            return manifest.games.sorted { $0.sortOrder < $1.sortOrder }
+        } catch {
+            if let data = UserDefaults.standard.data(forKey: cacheKey),
+               let cached = try? JSONDecoder().decode(CardGameManifestResponse.self, from: data) {
+                return cached.games.sorted { $0.sortOrder < $1.sortOrder }
+            }
+            throw error
+        }
+    }
+
+    func loadCardGameCatalog(kind: CardGameKind, version requestedVersion: Int? = nil) async throws
+        -> CardGameCatalogEnvelope {
+        let version: Int
+        let expectedHash: String?
+        if let requestedVersion {
+            version = requestedVersion
+            expectedHash = nil
+        } else {
+            let manifest = try await fetchCardGameManifest()
+            guard let current = manifest.first(where: { $0.gameKey == kind.rawValue }) else {
+                throw CocoaError(.fileNoSuchFile)
+            }
+            version = current.version
+            expectedHash = current.contentHash
+        }
+
+        let prefix = "card_game_catalog_v1_\(kind.rawValue)_\(version)"
+        if let expectedHash,
+           let cached = UserDefaults.standard.data(forKey: "\(prefix)_\(expectedHash)"),
+           let envelope = try? JSONDecoder().decode(CardGameCatalogEnvelope.self, from: cached) {
+            return envelope
+        }
+
+        var components = URLComponents(
+            url: AppConfig.functionURL("card-game-catalog"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "game", value: kind.rawValue),
+            URLQueryItem(name: "version", value: String(version)),
+        ]
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+        request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            try Self.throwIfHTTPError(response, data: data)
+            let envelope = try JSONDecoder().decode(CardGameCatalogEnvelope.self, from: data)
+            _ = try CardGameConfig(envelope: envelope)
+            UserDefaults.standard.set(
+                data,
+                forKey: "\(prefix)_\(envelope.contentHash)"
+            )
+            return envelope
+        } catch {
+            let keyPrefix = "\(prefix)_"
+            if let key = UserDefaults.standard.dictionaryRepresentation().keys
+                .first(where: { $0.hasPrefix(keyPrefix) }),
+               let data = UserDefaults.standard.data(forKey: key),
+               let cached = try? JSONDecoder().decode(CardGameCatalogEnvelope.self, from: data) {
+                return cached
+            }
+            throw error
+        }
+    }
+
+    func startCardGameSession(
+        sessionId: UUID,
+        clientSessionId: UUID,
+        kind: CardGameKind,
+        catalogVersion: Int,
+        seed: UInt32
+    ) async throws -> RemoteCardGameSession {
+        struct Body: Encodable {
+            let operation = "start"
+            let sessionId: UUID
+            let clientSessionId: UUID
+            let gameKey: String
+            let catalogVersion: Int
+            let seed: UInt32
+
+            enum CodingKeys: String, CodingKey {
+                case operation, seed
+                case sessionId = "session_id"
+                case clientSessionId = "client_session_id"
+                case gameKey = "game_key"
+                case catalogVersion = "catalog_version"
+            }
+        }
+        struct Response: Decodable {
+            let ok: Bool
+            let session: RemoteCardGameSession
+        }
+        return try await callFunction(
+            "card-game-session",
+            body: Body(
+                sessionId: sessionId,
+                clientSessionId: clientSessionId,
+                gameKey: kind.rawValue,
+                catalogVersion: catalogVersion,
+                seed: seed
+            ),
+            as: Response.self
+        ).session
+    }
+
+    func syncCardGameSession(
+        sessionId: UUID,
+        expectedStateVersion: Int,
+        actions: [CardGameSyncAction]
+    ) async throws -> RemoteCardGameSession {
+        struct Body: Encodable {
+            let operation = "sync"
+            let sessionId: UUID
+            let expectedStateVersion: Int
+            let actions: [CardGameSyncAction]
+
+            enum CodingKeys: String, CodingKey {
+                case operation, actions
+                case sessionId = "session_id"
+                case expectedStateVersion = "expected_state_version"
+            }
+        }
+        struct Response: Decodable {
+            let ok: Bool
+            let session: RemoteCardGameSession
+        }
+        return try await callFunction(
+            "card-game-session",
+            body: Body(
+                sessionId: sessionId,
+                expectedStateVersion: expectedStateVersion,
+                actions: actions
+            ),
+            as: Response.self
+        ).session
+    }
+
+    func completeCardGameSession(
+        sessionId: UUID,
+        expectedStateVersion: Int
+    ) async throws {
+        struct Body: Encodable {
+            let operation = "complete"
+            let sessionId: UUID
+            let expectedStateVersion: Int
+
+            enum CodingKeys: String, CodingKey {
+                case operation
+                case sessionId = "session_id"
+                case expectedStateVersion = "expected_state_version"
+            }
+        }
+        struct Response: Decodable { let ok: Bool }
+        _ = try await callFunction(
+            "card-game-session",
+            body: Body(
+                sessionId: sessionId,
+                expectedStateVersion: expectedStateVersion
+            ),
+            as: Response.self
+        )
+        invalidateRemoteProfileCache()
+    }
+
     // MARK: - Edge Functions（save-profile：卡牌局 / 公开主页）
 
     /// POST /save-profile action=save_card_game：卡牌结果与对应画像事实原子落库。

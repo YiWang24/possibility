@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - 卡牌游戏（原型 #lifeGame / #relationshipGame / #valueGame 通用界面）
 //
-// intro → 选 9 张（竖向列表）→ 抽情境（扇形背面牌，翻牌）→ 决策 → 交换 → 结果。
+// intro → 选择初始牌 → 抽情境（扇形背面牌，翻牌）→ 决策 → 交换 → 结果。
 
 struct CardGameView: View {
     let kind: CardGameKind
@@ -21,6 +21,9 @@ struct CardGameView: View {
     @State private var isSaving = false
     @State private var saveError: String?
     @State private var didSyncResult = false
+    @State private var sessionSync: CardGameSessionCoordinator?
+    @State private var isCatalogLoading = true
+    @State private var catalogLoadError: String?
 
     init(kind: CardGameKind, home: HomeModel, onExit: (() -> Void)? = nil) {
         self.kind = kind
@@ -46,6 +49,36 @@ struct CardGameView: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .animation(.easeOut(duration: 0.25), value: engine.phaseKey)
+        .overlay {
+            if isCatalogLoading {
+                ZStack {
+                    Theme.paper.opacity(0.92).ignoresSafeArea()
+                    ProgressView("加载最新牌库…")
+                        .tint(accent)
+                        .foregroundStyle(Theme.sub)
+                }
+            } else if let catalogLoadError {
+                ZStack {
+                    Theme.paper.opacity(0.96).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        Text("牌库加载失败")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(Theme.ink)
+                        Text(catalogLoadError)
+                            .font(.system(size: 12))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(Theme.sub)
+                        Button("返回卡牌大厅") { close() }
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(Theme.ink)
+                            .padding(.horizontal, 18).padding(.vertical, 10)
+                            .background(Theme.raised, in: Capsule())
+                    }
+                    .padding(22)
+                }
+            }
+        }
+        .task(id: kind.rawValue) { await loadCatalog() }
         .onDisappear {
             if !didSyncResult { engine.saveProgress() }
         }
@@ -58,14 +91,66 @@ struct CardGameView: View {
         case .intro:
             return (cfg.title, "一次关于取舍的模拟", "准备开始")
         case .select:
-            return ("选择\(cfg.title.prefix(2))底牌", "向下滑动浏览全部 \(cfg.cards.count) 张", "已选 \(engine.selected.count)/9")
+            return (
+                "选择\(cfg.title.prefix(2))底牌",
+                "向下滑动浏览全部 \(cfg.cards.count) 张",
+                "已选 \(engine.selected.count)/\(engine.initialSelectCount)"
+            )
         case .trade:
-            return ("交换底牌", "选择 2 张牌作为代价", "已选 \(engine.tradePick.count)/2")
+            return (
+                "交换底牌",
+                "选择 \(engine.discardPerTrade) 张牌作为代价",
+                "已选 \(engine.tradePick.count)/\(engine.discardPerTrade)"
+            )
         case .result:
             return ("这一局的回望", "结果默认仅自己可见", "完成")
         default:
             let stage = engine.stageMeta
             return (stage.age, "\(stage.name) · 持有 \(engine.held.count) 张底牌", "第 \(engine.round + 1) 轮")
+        }
+    }
+
+    @MainActor
+    private func loadCatalog() async {
+        defer { isCatalogLoading = false }
+        do {
+            let pinned = await CardGameSessionCoordinator.pinnedCatalogVersion(
+                kind: kind,
+                using: supabase
+            )
+            let envelope = try await supabase.loadCardGameCatalog(
+                kind: kind,
+                version: pinned
+            )
+            let config = try CardGameConfig(envelope: envelope)
+            let candidate = try? await CardGameSessionCoordinator.create(
+                kind: kind,
+                catalogVersion: envelope.version,
+                using: supabase
+            )
+            let nextEngine = CardGameEngine(
+                kind: kind,
+                config: config,
+                userScope: candidate?.userId.uuidString ?? supabase.userId?.uuidString
+            )
+            if let candidate,
+               candidate.resumed || nextEngine.phase == .intro || nextEngine.phase == .select {
+                sessionSync = candidate
+                nextEngine.scenarioSeed = candidate.seed
+            } else {
+                candidate?.clearLocalState()
+                sessionSync = nil
+            }
+            engine = nextEngine
+            catalogLoadError = nil
+        } catch {
+            // Built-in v1 remains the emergency fallback when no cached catalog
+            // and no network are available.
+            sessionSync = nil
+            engine = CardGameEngine(kind: kind, userScope: supabase.userId?.uuidString)
+            if engine.config.cards.isEmpty {
+                catalogLoadError = "这套牌库尚未缓存，请联网后重试。"
+            }
         }
     }
 
@@ -207,7 +292,7 @@ struct CardGameView: View {
                             HStack(alignment: .lastTextBaseline, spacing: 1) {
                                 Text("\(engine.selected.count)").font(.system(size: 20, weight: .heavy)).foregroundStyle(accent)
                                     .contentTransition(.numericText())
-                                Text("/9").font(.system(size: 11)).foregroundStyle(Theme.faint)
+                                Text("/\(engine.initialSelectCount)").font(.system(size: 11)).foregroundStyle(Theme.faint)
                             }
                         }
                     }
@@ -215,7 +300,11 @@ struct CardGameView: View {
                         Capsule().fill(Theme.raised)
                             .overlay(alignment: .leading) {
                                 Capsule().fill(accent)
-                                    .frame(width: geo.size.width * Double(engine.selected.count) / 9)
+                                    .frame(
+                                        width: geo.size.width
+                                            * Double(engine.selected.count)
+                                            / Double(max(1, engine.initialSelectCount))
+                                    )
                                     .animation(.easeOut(duration: 0.25), value: engine.selected.count)
                             }
                     }
@@ -236,9 +325,19 @@ struct CardGameView: View {
                 }
                 .padding(.horizontal, 22).padding(.top, 14).padding(.bottom, 24)
             }
-            foot(primary: (engine.selected.count == 9 ? "带着这 9 张牌出发" : "还需选择 \(9 - engine.selected.count) 张",
-                           { engine.confirmSelection() }),
-                 enabled: engine.selected.count == 9)
+            foot(
+                primary: (
+                    engine.selected.count == engine.initialSelectCount
+                        ? "带着这 \(engine.initialSelectCount) 张牌出发"
+                        : "还需选择 \(engine.initialSelectCount - engine.selected.count) 张",
+                    {
+                        let cards = engine.selected
+                        engine.confirmSelection()
+                        sessionSync?.record(type: "confirm_selection", cardKeys: cards)
+                    }
+                ),
+                enabled: engine.selected.count == engine.initialSelectCount
+            )
         }
     }
 
@@ -289,7 +388,7 @@ struct CardGameView: View {
                     Text(engine.stageMeta.name).font(.system(size: 21, weight: .bold)).foregroundStyle(Theme.ink)
                     Text(engine.acceptStreak > 0
                          ? "你已连续接受 \(engine.acceptStreak) 次，压力正在加码。"
-                         : "命运放下了五张牌。凭直觉，抽一张。")
+                         : "命运放下了 \(engine.scenarioChoiceCount) 张牌。凭直觉，抽一张。")
                         .font(.system(size: 12)).foregroundStyle(Theme.sub)
                 }
 
@@ -301,7 +400,7 @@ struct CardGameView: View {
                         Text(severity.name).font(.system(size: 12.5, weight: .bold)).foregroundStyle(pressureColor)
                     }
                     HStack(spacing: 5) {
-                        ForEach(1...4, id: \.self) { level in
+                        ForEach(engine.pressureMin...engine.pressureMax, id: \.self) { level in
                             Capsule()
                                 .fill(level <= engine.pressure ? pressureColor : Theme.raised)
                                 .frame(height: 4)
@@ -328,7 +427,14 @@ struct CardGameView: View {
     }
 
     private var pressureColor: Color {
-        [Color(hex: 0x7CABFF), Color(hex: 0xD9B563), Color(hex: 0xFF9A6B), Color(hex: 0xF06A6A)][engine.pressure - 1]
+        let colors = [
+            Color(hex: 0x7CABFF),
+            Color(hex: 0xD9B563),
+            Color(hex: 0xFF9A6B),
+            Color(hex: 0xF06A6A),
+        ]
+        let index = max(0, min(colors.count - 1, engine.pressure - engine.pressureMin))
+        return colors[index]
     }
 
     // MARK: 扇形牌弧
@@ -361,6 +467,10 @@ struct CardGameView: View {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                                 engine.draw(chosen)
                             }
+                            sessionSync?.record(
+                                type: "draw_scenario",
+                                scenarioKey: chosen.key
+                            )
                         }
                     } label: {
                         faceDownCard(isSelected: isSelected)
@@ -435,13 +545,13 @@ struct CardGameView: View {
                         .strokeBorder(.white.opacity(0.2), lineWidth: 1))
                     .transition(.asymmetric(insertion: .scale(scale: 0.8).combined(with: .opacity), removal: .opacity))
 
-                    Text("\(severity.name) · 拒绝需交换 2 张")
+                    Text("\(severity.name) · 拒绝需交换 \(engine.discardPerTrade) 张")
                         .font(.system(size: 11, weight: .semibold)).foregroundStyle(pressureColor)
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(pressureColor.opacity(0.1), in: Capsule())
                         .overlay(Capsule().strokeBorder(pressureColor.opacity(0.4), lineWidth: 1))
 
-                    Text("接受它，会保留所有底牌，但下一轮会继续加码；\n拒绝它，则放下 2 张底牌。直到手中自然只剩三张。")
+                    Text("接受它，会保留所有底牌，但下一轮会继续加码；\n拒绝它，则放下 \(engine.discardPerTrade) 张底牌。直到手中自然只剩 \(engine.finalCardCount) 张。")
                         .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
                         .multilineTextAlignment(.center)
 
@@ -458,7 +568,12 @@ struct CardGameView: View {
             }
             HStack(spacing: 12) {
                 Button("接受它") {
+                    let scenarioKey = engine.current?.key
                     withAnimation(.easeOut(duration: 0.25)) { engine.accept() }
+                    sessionSync?.record(
+                        type: "accept_scenario",
+                        scenarioKey: scenarioKey
+                    )
                 }
                 .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(.white)
                 .frame(maxWidth: .infinity).padding(.vertical, 14)
@@ -492,7 +607,7 @@ struct CardGameView: View {
                             .foregroundStyle(accent.opacity(0.9))
                         Text("你愿意用什么交换？").font(.system(size: 19, weight: .bold)).foregroundStyle(Theme.ink)
                     }
-                    Text("为了让“\(engine.current?.title ?? "")”不发生，请从仍持有的 \(engine.held.count) 张底牌中放下 2 张。最后三张会被保留。")
+                    Text("为了让“\(engine.current?.title ?? "")”不发生，请从仍持有的 \(engine.held.count) 张底牌中放下 \(engine.discardPerTrade) 张。最后 \(engine.finalCardCount) 张会被保留。")
                         .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
                         .padding(12)
                         .background(accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -508,7 +623,7 @@ struct CardGameView: View {
                     reasonField(label: "为什么你不能接受这件事？", hint: "写下第一反应",
                                 placeholder: "例如：我无法接受重要的人因为我受到伤害……",
                                 text: Bindable(engine).reasonCannotAccept)
-                    reasonField(label: "为什么愿意放弃这 2 张牌？", hint: "没有标准答案",
+                    reasonField(label: "为什么愿意放弃这 \(engine.discardPerTrade) 张牌？", hint: "没有标准答案",
                                 placeholder: "例如：这些东西可以以后再争取……",
                                 text: Bindable(engine).reasonAbandon)
                     Text("你的原话会成为结果分析的重要依据，默认只进入私密画像。")
@@ -516,9 +631,20 @@ struct CardGameView: View {
                 }
                 .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 20)
             }
-            foot(primary: ("确认交换 2 张牌", {
+            foot(primary: ("确认交换 \(engine.discardPerTrade) 张牌", {
+                let scenarioKey = engine.current?.key
+                let cards = engine.tradePick
+                let cannotAccept = engine.reasonCannotAccept.trimmingCharacters(in: .whitespacesAndNewlines)
+                let abandon = engine.reasonAbandon.trimmingCharacters(in: .whitespacesAndNewlines)
                 withAnimation(.easeOut(duration: 0.25)) { engine.confirmTrade() }
-            }), enabled: engine.tradePick.count == 2)
+                sessionSync?.record(
+                    type: "trade_cards",
+                    scenarioKey: scenarioKey,
+                    cardKeys: cards,
+                    reasonCannotAccept: cannotAccept.isEmpty ? nil : cannotAccept,
+                    reasonAbandon: abandon.isEmpty ? nil : abandon
+                )
+            }), enabled: engine.tradePick.count == engine.discardPerTrade)
         }
     }
 
@@ -597,7 +723,7 @@ struct CardGameView: View {
             foot(
                 primary: (
                     isSaving ? "正在保存…" : saveError == nil
-                        ? (kind == .life ? "保存到我的私密画像" : "保存最关心的三点")
+                        ? (kind == .life ? "保存到我的私密画像" : "保存最关心的 \(engine.finalCardCount) 点")
                         : "重试云端同步",
                     { saveAndClose() }),
                 enabled: !isSaving)
@@ -614,18 +740,23 @@ struct CardGameView: View {
         isSaving = true
         Task {
             do {
-                try await engine.uploadResult(using: supabase)
+                if let sessionSync {
+                    try await sessionSync.complete()
+                    engine.clearProgressAfterSync()
+                } else {
+                    try await engine.uploadResult(using: supabase)
+                }
                 didSyncResult = true
                 home.refreshPersona(using: supabase)
                 if kind == .life {
-                    toast.show("三张底牌已融入动态画像并同步")
+                    toast.show("\(engine.finalCardCount) 张底牌已融入动态画像并同步")
                 } else {
-                    toast.show("\(cfg.title.prefix(2))中最关心的三点已写入画像：\(tags.joined(separator: " · "))")
+                    toast.show("\(cfg.title.prefix(2))中最关心的 \(engine.finalCardCount) 点已写入画像：\(tags.joined(separator: " · "))")
                 }
                 close()
             } catch {
                 isSaving = false
-                saveError = "请检查网络后重试。你的三张底牌、取舍记录和画像关键词都已安全留在本机。"
+                saveError = "请检查网络后重试。你的 \(engine.finalCardCount) 张底牌、取舍记录和画像关键词都已安全留在本机。"
             }
         }
     }
@@ -638,7 +769,7 @@ struct CardGameView: View {
                 .frame(width: 66, height: 66)
                 .background(accent.opacity(0.12), in: Circle())
                 .overlay(Circle().strokeBorder(accent.opacity(0.4), lineWidth: 1))
-            Text("\(cfg.title.prefix(2))中，你最关心这三点")
+            Text("\(cfg.title.prefix(2))中，你最关心这 \(engine.finalCardCount) 点")
                 .font(.system(size: 19, weight: .bold)).foregroundStyle(Theme.ink)
             Text("\(engine.groupNarrative)\n它们来自多轮情境与交换，不是固定答案，而是你此刻真实的优先级。")
                 .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
@@ -666,7 +797,7 @@ struct CardGameView: View {
                     .foregroundStyle(accent.opacity(0.9))
                 Text(cards.map(\.name).joined(separator: " · "))
                     .font(.system(size: 14.5, weight: .bold)).foregroundStyle(Theme.ink)
-                Text("本次经历了 \(engine.round) 轮情境，接受 \(engine.accepted.count) 次、主动交换 \(engine.traded.count) 次。这三点会成为画像的优先信号。")
+                Text("本次经历了 \(engine.round) 轮情境，接受 \(engine.accepted.count) 次、主动交换 \(engine.traded.count) 次。这 \(engine.finalCardCount) 点会成为画像的优先信号。")
                     .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -716,7 +847,7 @@ struct CardGameView: View {
                 }
             }
 
-            resultBlock(kicker: "将融入动态画像的三张底牌", tint: 0x5E96FF) {
+            resultBlock(kicker: "将融入动态画像的 \(engine.finalCardCount) 张底牌", tint: 0x5E96FF) {
                 HStack(spacing: 8) {
                     ForEach(a.held) { card in
                         HStack(spacing: 5) {
@@ -767,7 +898,7 @@ struct CardGameView: View {
                 .font(.system(size: 9.5)).lineSpacing(4).foregroundStyle(Theme.faint)
             HStack(alignment: .top, spacing: 8) {
                 Text("◉").font(.system(size: 11)).foregroundStyle(Color(hex: 0x8EE7C8))
-                Text("三张人生底牌会作为画像信号融入动态数字形象；其余 \(a.hiddenTraits.count) 条深层推断仍默认私密，只用于帮助数字人理解你。")
+                Text("\(engine.finalCardCount) 张人生底牌会作为画像信号融入动态数字形象；其余 \(a.hiddenTraits.count) 条深层推断仍默认私密，只用于帮助数字人理解你。")
                     .font(.system(size: 10)).lineSpacing(4).foregroundStyle(Theme.faint)
             }
             .padding(11)

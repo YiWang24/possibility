@@ -152,7 +152,10 @@ Deno.serve(async (req) => {
         evidenceResult,
         proposalResult,
         assessmentResult,
-        cardResult,
+        legacyCardResult,
+        cardSessionResult,
+        cardActionResult,
+        cardRunResult,
         draftResult,
         publicationResult,
         personaResult,
@@ -184,6 +187,18 @@ Deno.serve(async (req) => {
           .select("*")
           .eq("user_id", user.id)
           .order("created_at"),
+        db.from("card_game_sessions")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("started_at"),
+        db.from("card_game_actions")
+          .select("*,card_game_sessions!inner(user_id)")
+          .eq("card_game_sessions.user_id", user.id)
+          .order("created_at"),
+        db.from("card_game_runs")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("completed_at"),
         db.from("profile_public_drafts")
           .select("*")
           .eq("id", user.id)
@@ -204,7 +219,10 @@ Deno.serve(async (req) => {
         evidenceResult.error,
         proposalResult.error,
         assessmentResult.error,
-        cardResult.error,
+        legacyCardResult.error,
+        cardSessionResult.error,
+        cardActionResult.error,
+        cardRunResult.error,
         draftResult.error,
         publicationResult.error,
         personaResult.error,
@@ -214,7 +232,7 @@ Deno.serve(async (req) => {
       }
       return jsonResponse({
         schema: "possibility.profile-export",
-        schema_version: 2,
+        schema_version: 3,
         exported_at: new Date().toISOString(),
         data: {
           profile: profileResult.data,
@@ -222,7 +240,13 @@ Deno.serve(async (req) => {
           fact_evidence: evidenceResult.data ?? [],
           memory_proposals: proposalResult.data ?? [],
           assessment_runs: assessmentResult.data ?? [],
-          card_games: cardResult.data ?? [],
+          card_games: legacyCardResult.data ?? [],
+          card_game_sessions: cardSessionResult.data ?? [],
+          card_game_actions: (cardActionResult.data ?? []).map((row) => {
+            const { card_game_sessions: _ownership, ...action } = row;
+            return action;
+          }),
+          card_game_runs: cardRunResult.data ?? [],
           profile_public_draft: draftResult.data,
           public_profile: publicationResult.data,
           persona_jobs: personaResult.data ?? [],
