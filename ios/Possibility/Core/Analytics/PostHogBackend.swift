@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import PostHog
 
-// MARK: - Layer 2：PostHog（docs/埋点方案.md §0）
+// MARK: - Layer 2：PostHog（docs/engineering/埋点方案.md §0）
 //
 // 只做一件事：把 AnalyticsEvent 翻译成 PostHog 的 capture/identify/alias。
 // 不做重试、不做缓冲 —— posthog-ios 自带磁盘队列与批量上报，重复造一层只会打架。

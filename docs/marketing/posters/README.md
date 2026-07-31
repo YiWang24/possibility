@@ -25,7 +25,7 @@
 ## 重新生成
 
 ```bash
-cd 宣传海报
+cd docs/marketing/posters
 ./render.sh                      # 渲染全部
 ./render.sh main 1080 1620       # 单张：名称 逻辑宽 逻辑高（实际输出 ×2）
 ```

@@ -100,7 +100,7 @@ struct AnalyticsFanOutTests {
         Analytics.shared.reset()
     }
 
-    @Test("事件名与 docs/埋点方案.md §3 一致", arguments: [
+    @Test("事件名与 docs/engineering/埋点方案.md §3 一致", arguments: [
         (AnalyticsEvent.appOpened(isFirstOpen: true, isAuthenticated: false), "app_opened"),
         (AnalyticsEvent.authCompleted(method: "apple"), "auth_completed"),
         (AnalyticsEvent.purchaseCompleted(sku: .consult, price: 29), "purchase_completed"),
@@ -111,7 +111,7 @@ struct AnalyticsFanOutTests {
     }
 }
 
-// MARK: - 身份关联（docs/埋点方案.md §2）
+// MARK: - 身份关联（docs/engineering/埋点方案.md §2）
 //
 // 匿名模式停用后 alias 从认证路径上退场了（冷启动即登录墙，第一个 user_id
 // 就是正式账号，没有前序身份可接），原先覆盖「什么时候该 alias」的三条规则用例
@@ -185,7 +185,7 @@ struct AnalyticsPropertyEncodingTests {
     @Test("props 写入 jsonb 时保持标量类型")
     func propsKeepTypesForJSONBColumn() {
         // app_events.props 是 jsonb：数字被写成字符串的话，
-        // SQL 里 avg(latency_ms) 直接失效（docs/埋点方案.md §1 只允许四种标量）
+        // SQL 里 avg(latency_ms) 直接失效（docs/engineering/埋点方案.md §1 只允许四种标量）
         let props: [String: AnalyticsValue] = [
             "sku": .string("unlock_profile"),
             "turn_index": .int(3),

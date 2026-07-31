@@ -742,7 +742,7 @@ values
 
 -- app_events（0017 补进合并函数）：匿名期事件必须跟着迁到正式账号。
 -- 不迁的话，merge-anonymous 随后 deleteUser 会把它们 set null 成孤儿事件，
--- 「app_opened → 付费」完整漏斗直接断裂（docs/埋点方案.md §2）。
+-- 「app_opened → 付费」完整漏斗直接断裂（docs/engineering/埋点方案.md §2）。
 insert into public.app_events (user_id, event, source)
 values
   ('33333333-3333-4333-8333-333333333333', 'app_opened', 'ios'),

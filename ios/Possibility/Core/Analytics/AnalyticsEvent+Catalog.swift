@@ -1,8 +1,8 @@
 import Foundation
 
-// MARK: - 事件清单（契约层 · docs/埋点方案.md §3 的 Swift 镜像）
+// MARK: - 事件清单（契约层 · docs/engineering/埋点方案.md §3 的 Swift 镜像）
 //
-// 改动纪律：先改 docs/埋点方案.md，再同步本文件与 supabase/functions/_shared/events.ts。
+// 改动纪律：先改 docs/engineering/埋点方案.md，再同步本文件与 supabase/functions/_shared/events.ts。
 // 调用点一律用这里的工厂方法，不手写事件名字符串。
 
 /// 付费商品标识（对应 AppConfig.Price）
@@ -138,7 +138,7 @@ extension AnalyticsEvent {
         .init("simulation_requested", ["years": .int(years)])
     }
 
-    /// content_chars 是派生值 —— 禁止上报日记正文本身（docs/埋点方案.md §1）
+    /// content_chars 是派生值 —— 禁止上报日记正文本身（docs/engineering/埋点方案.md §1）
     static func diaryCreated(inputMethod: String, contentChars: Int) -> Self {
         .init("diary_created", [
             "input_method": .string(inputMethod),

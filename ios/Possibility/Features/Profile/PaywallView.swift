@@ -122,7 +122,7 @@ struct PaywallView: View {
         }
     }
 
-    // MARK: - 埋点（付费漏斗北极星 · docs/埋点方案.md §3.1）
+    // MARK: - 埋点（付费漏斗北极星 · docs/engineering/埋点方案.md §3.1）
 
     /// 本次结账对应的 SKU。资料包（materials）在事件清单里没有登记的 sku，
     /// 宁可不上报也不错报到别的商品上 —— 少一条事件可补，脏数据会污染转化率。

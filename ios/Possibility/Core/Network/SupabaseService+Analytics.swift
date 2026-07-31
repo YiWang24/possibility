@@ -1,7 +1,7 @@
 import Foundation
 import Supabase
 
-// MARK: - 会话变化 → 埋点身份（docs/埋点方案.md §2）
+// MARK: - 会话变化 → 埋点身份（docs/engineering/埋点方案.md §2）
 //
 // 拆成独立文件而非塞进 SupabaseService.swift：那个文件已经贴着 800 行上限，
 // 且埋点身份是一个能独立读懂的关注点 —— 会话怎么切是 Supabase 的事，
@@ -22,7 +22,7 @@ extension SupabaseService {
     }
 
     /// person properties 只放派生特征：邮箱 / 姓名 / 日记与对话正文一律不进埋点
-    /// （docs/埋点方案.md §1）。所以是 `has_email: Bool` 而不是邮箱本身。
+    /// （docs/engineering/埋点方案.md §1）。所以是 `has_email: Bool` 而不是邮箱本身。
     ///
     /// 用传入的 user 而非 `self.currentUser`：后者由 authStateChanges 异步刷新，
     /// 登录刚返回的这一刻还是旧值，会把 has_apple 算反。

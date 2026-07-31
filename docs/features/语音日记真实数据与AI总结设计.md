@@ -1179,7 +1179,7 @@ DIARY_DAILY_ENTRY_LIMIT
 
 普通入队会主动唤醒 Worker；Cron 是异常退出后的恢复保障。部署
 `diary-worker` 后，在托管项目执行
-`docs/diary-worker-cron.sql.example`，将项目 URL 与独立 Worker secret
+`docs/engineering/diary-worker-cron.sql.example`，将项目 URL 与独立 Worker secret
 写入 Vault，再创建每分钟一次的恢复任务。生产值不能提交到仓库。
 
 上线前还需要用用户明确授权的普通话、方言和中英混合录音做准确率评测。

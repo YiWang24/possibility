@@ -1,4 +1,4 @@
--- 0017_app_events.sql — 埋点事实表（docs/埋点方案.md §4，三层架构的 Layer 1）
+-- 0017_app_events.sql — 埋点事实表（docs/engineering/埋点方案.md §4，三层架构的 Layer 1）
 --
 -- 为什么要自建这张表而不是只用 PostHog：PostHog Cloud 在国内网络可达性不稳定，
 -- 上报失败即永久丢数；app_events 是兜底的事实表，也是唯一能和 match_results /
@@ -150,7 +150,7 @@ grant all on sequence app_events_id_seq to service_role;
 
 -- ==================== 匿名账号合并需一并迁移事件 ====================
 -- 0016 的 merge_anonymous_user 早于本表存在，未覆盖 app_events。
--- 不补这一行的后果正是 docs/埋点方案.md §2 警告的那条：Apple 登录会产生新
+-- 不补这一行的后果正是 docs/engineering/埋点方案.md §2 警告的那条：Apple 登录会产生新
 -- user_id，merge-anonymous 迁完业务数据后会 deleteUser 掉旧匿名账号，届时
 -- on delete set null 会把匿名期的全部事件打成孤儿，「app_opened → 付费」
 -- 完整漏斗当场断裂。

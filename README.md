@@ -271,11 +271,19 @@ possibility/
 │   ├── shared-types/            # supabase gen types 产物 + Edge Function 名称契约
 │   └── api-client/              # Supabase 客户端 + Edge Function 调用封装
 │
-├── docs/                        # ← 所有不进产物的资料，只此一处
-│   ├── 产品同步0723.md           # 产品 PRD（完整需求）
-│   ├── 技术设计文档.md            # 技术架构设计
-│   ├── 后端开发架构.md            # 后端模块拆解与依赖图
-│   ├── 并行开发方案.md            # 前后端接线开发方案
+├── docs/                        # ← 所有不进产物的资料，只此一处（索引见 docs/README.md）
+│   ├── product/                 # 产品定义
+│   │   └── 产品同步0723.md       # 产品 PRD（完整需求）
+│   ├── engineering/             # 工程架构与规范
+│   │   ├── 技术设计文档.md        # 技术架构设计（数据模型/RLS/函数契约）
+│   │   ├── 后端开发架构.md        # 后端模块拆解与依赖图
+│   │   ├── 并行开发方案.md        # 前后端接线开发方案
+│   │   ├── 埋点方案.md            # 埋点契约（Swift / TS 镜像的唯一事实来源）
+│   │   └── diary-worker-cron.sql.example  # diary-worker 定时任务部署片段
+│   ├── features/                # 单功能模块设计
+│   │   ├── 个人档案与AI使用设计.md         # profile_facts 数据结构与 AI 用法
+│   │   ├── AI记忆与检索系统完整设计.md      # 跨对话记忆与向量检索路线图
+│   │   └── 语音日记真实数据与AI总结设计.md  # 语音日记异步流水线
 │   ├── design/                  # 设计资产
 │   │   ├── prototype/           # 高保真原型 HTML（seed.sql 的数据来源）
 │   │   ├── screens/             # 各界面设计稿
@@ -283,6 +291,7 @@ possibility/
 │   │   ├── appstore/            # App Store 上架截图
 │   │   └── assets/              # 共享图片母版（社区头像 · 数字人）
 │   └── marketing/               # 宣传物料
+│       ├── posters/             # 宣传海报套件（HTML 源 + render.sh 出图）
 │       └── possibility-poker/   # 人生决策扑克牌（HTML 模板 + 出图提示词）
 │
 ├── scripts/                     # 工具脚本

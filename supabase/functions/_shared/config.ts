@@ -73,7 +73,7 @@ export const runtimeConfig = {
   get diaryDailyEntryLimit(): number {
     return positiveInteger("DIARY_DAILY_ENTRY_LIMIT", 30);
   },
-  // Sentry（docs/埋点方案.md Layer 3 服务端）。留空即整条上报链路静默关闭，
+  // Sentry（docs/engineering/埋点方案.md Layer 3 服务端）。留空即整条上报链路静默关闭，
   // 因此本地开发和未配置密钥的环境不受影响——错误监控绝不能成为启动的硬依赖。
   get sentryDsn(): string {
     return env("SENTRY_DSN", "");
