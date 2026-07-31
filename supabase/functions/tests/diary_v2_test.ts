@@ -10,6 +10,7 @@ import {
   validateUpdateDiaryTranscriptInput,
 } from "../_shared/diary.ts";
 import { entryJobKey, summaryJobKey } from "../_shared/diary-queue.ts";
+import { buildDiaryProfileProposalRows } from "../_shared/diary-profile-proposals.ts";
 import { HttpError } from "../_shared/errors.ts";
 import {
   transcribeDiaryAudio,
@@ -147,6 +148,36 @@ Deno.test("diary queue keys are stable per content version and period", () => {
       "2026-07-01",
     ) === "generate_month_summary:user-1:2026-07-01:latest",
   );
+});
+
+Deno.test("diary profile proposals are normalized, deduplicated, and versioned", async () => {
+  const rows = await buildDiaryProfileProposalRows(
+    "user-1",
+    "01901234-5678-7abc-8def-0123456789ab",
+    3,
+    [
+      { dimension: "skill", value: "  Product   Strategy " },
+      { dimension: "skill", value: "product strategy" },
+      { dimension: "like", value: "安静地散步" },
+      { dimension: "invalid", value: "不能写入" },
+    ],
+    { modelName: "deepseek-test", promptVersion: "diary-entry-test" },
+  );
+
+  assert(rows.length === 2);
+  assert(rows[0].source_type === "diary");
+  assert(rows[0].source_version === 3);
+  assert(rows[0].normalized_value === "product strategy");
+  assert(rows[0].dedupe_key.length === 64);
+
+  const repeated = await buildDiaryProfileProposalRows(
+    "user-1",
+    "01901234-5678-7abc-8def-0123456789ab",
+    3,
+    [{ dimension: "skill", value: "Product Strategy" }],
+    { modelName: "deepseek-test", promptVersion: "diary-entry-test" },
+  );
+  assert(repeated[0].dedupe_key === rows[0].dedupe_key);
 });
 
 Deno.test("Azure transcription sends multipart audio and returns text", async () => {
