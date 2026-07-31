@@ -1,7 +1,7 @@
 "use client";
 /* 我的公开主页 —— 移植 iOS MeView.swift（原型 #scr-me · renderMyProfile）。
    hero（头像 / 徽章 / 转型条 / 标签 / 编辑）→ 4 tab：动态画像 / 我的故事 / 经验与建议 / 提供服务，
-   末尾账号区（登录状态 / 登录 / 退出 / 注销）。编辑为关键动作：游客先经 AuthGate 登录。 */
+   末尾账号区（登录邮箱 / 退出 / 注销）。冷启动无会话由 AuthWall 拦下，此页必然已登录。 */
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,7 +9,7 @@ import { PageContainer } from "@/components/shell/PageContainer";
 import { PageHeader, SectionHeader, TagPill } from "@/components/ui/Basics";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
-import { useAuth, phoneDisplay } from "@/stores/auth";
+import { useAuth } from "@/stores/auth";
 import { useData } from "@/stores/data";
 import { useMyProfile } from "@/stores/my-profile";
 import { useAuthGate } from "@/components/auth/AuthGate";
@@ -19,6 +19,7 @@ import { useHome } from "@/features/home/store";
 import { buildPersonaModel } from "@/features/home/persona";
 import { PersonaCanvas } from "@/features/home/PersonaCanvas";
 import { MeEditView, type MeEditMode } from "./MeEditView";
+import { ProfilePrivacyView } from "./ProfilePrivacyView";
 
 /* 动态画像单项（对齐 iOS MyProfileStore.PersonaItem） */
 export interface PersonaItem {
@@ -51,63 +52,74 @@ const TAB_ITEMS: { key: string; label: string }[] = [
 export function MeView() {
   const showToast = useToast((s) => s.show);
   const profile = useMyProfile((s) => s.profile);
-  const { require: requireAuth, openLogin, isAnonymous } = useAuthGate();
-  const phone = useAuth((s) => s.phone);
+  const { require: requireAuth, isAuthenticated } = useAuthGate();
+  const email = useAuth((s) => s.email);
   const signOut = useAuth((s) => s.signOut);
   const deleteAccount = useAuth((s) => s.deleteAccount);
 
   /* 画像数据来源：与「认识你自己」同一份本地维度 + 云端底牌 */
-  const filledDims = useHome((s) => s.filledDims);
   const loadPortrait = useHome((s) => s.loadPortrait);
-  const cardGames = useData((s) => s.profile?.card_games);
+  const profileFacts = useData((s) => s.profile?.facts ?? []);
 
   const [tab, setTab] = useState("persona");
   const [editMode, setEditMode] = useState<MeEditMode | null>(null);
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [accountBusy, setAccountBusy] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
 
-  /* 挂载：加载本地/云端画像维度；已登录时用 public_profile 合并本地档案（保留本地非空字段） */
+  /* 挂载：加载画像和公开主页资料。 */
   useEffect(() => {
     void loadPortrait();
   }, [loadPortrait]);
 
   useEffect(() => {
-    if (isAnonymous) return;
+    if (!isAuthenticated) return;
     void (async () => {
       const remote = await useData.getState().loadProfile();
       const pub = remote?.public_profile;
-      if (pub) useMyProfile.getState().applyRemote(pub);
+      if (pub) {
+        useMyProfile.getState().applyRemote(pub);
+      }
     })();
-  }, [isAnonymous]);
+  }, [isAuthenticated]);
 
-  const lifeCards = useMemo(() => {
-    const life = cardGames?.find((g) => g.kind === "life");
-    if (!life) return [] as { glyph: string; name: string }[];
-    return life.final_cards.slice(0, 3).map((c) => ({ glyph: c.glyph ?? "◆", name: c.name }));
-  }, [cardGames]);
+  const publicValues = useMemo(() => {
+    const grouped: Record<string, string[]> = {};
+    for (const fact of profileFacts) {
+      if (fact.visibility !== "public") continue;
+      (grouped[fact.dimension] ??= []).push(fact.value);
+    }
+    return grouped;
+  }, [profileFacts]);
 
-  /* 全量画像内容（含未公开项，供「设置展示」使用） */
+  const lifeCards = useMemo(
+    () => (publicValues.life ?? []).slice(0, 3).map((name) => ({ glyph: "◆", name })),
+    [publicValues],
+  );
+
+  /* 本页只展示明确标记为 public 的事实。 */
   const allPersonaItems = useMemo<PersonaItem[]>(() => {
-    const d = filledDims;
+    const value = (dimension: string, fallback = "尚未公开") =>
+      publicValues[dimension]?.join(" · ") || fallback;
     return [
-      { key: "personality", label: "人格底色", value: d.personality || "尚未填写", glyph: "◎", tint: "#5968D9" },
-      { key: "skill", label: "我擅长", value: d.skill || "尚未填写", glyph: "✦", tint: "#5E96FF" },
-      { key: "like", label: "我喜欢", value: d.like || "尚未填写", glyph: "♡", tint: "#E35CC1" },
-      { key: "love", label: "我在恋爱关系中在意", value: d.love || "尚未填写", glyph: "✿", tint: "#FF7A4D" },
-      { key: "family", label: "我在家庭关系中在意", value: d.family || "尚未填写", glyph: "⌂", tint: "#3ED9A4" },
-      { key: "social", label: "我在人际交往中在意", value: d.social || "尚未填写", glyph: "◎", tint: "#5E96FF" },
+      { key: "personality", label: "人格底色", value: value("personality"), glyph: "◎", tint: "#5968D9" },
+      { key: "skill", label: "我擅长", value: value("skill"), glyph: "✦", tint: "#5E96FF" },
+      { key: "like", label: "我喜欢", value: value("like"), glyph: "♡", tint: "#E35CC1" },
+      { key: "love", label: "我在恋爱关系中在意", value: value("love"), glyph: "✿", tint: "#FF7A4D" },
+      { key: "family", label: "我在家庭关系中在意", value: value("family"), glyph: "⌂", tint: "#3ED9A4" },
+      { key: "social", label: "我在人际交往中在意", value: value("social"), glyph: "◎", tint: "#5E96FF" },
       {
         key: "life",
         label: "我的人生底牌",
-        value: lifeCards.length ? lifeCards.map((c) => c.name).join(" · ") : "尚未生成",
+        value: value("life"),
         glyph: "◇",
         tint: "#8F7BFF",
         cards: lifeCards,
       },
     ];
-  }, [filledDims, lifeCards]);
+  }, [publicValues, lifeCards]);
 
-  const visibleItems = allPersonaItems.filter((it) => profile.visibility[it.key]);
+  const visibleItems = allPersonaItems.filter((it) => hasResult(it.value));
 
   /* 公开画像驱动的数字形象（仅由公开项生成，对齐 iOS MeView.personaModel） */
   const personaModel = useMemo(() => {
@@ -115,9 +127,9 @@ export function MeView() {
     const signature = visibleItems.find((it) => it.key === "life")?.cards?.map((c) => c.name) ?? [];
     return buildPersonaModel(values, signature);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.visibility, allPersonaItems]);
+  }, [allPersonaItems]);
 
-  /* 编辑公开主页是关键动作：游客先登录，成功后继续打开编辑页 */
+  /* 编辑公开主页是关键动作：会话过期时先补登录，成功后继续打开编辑页 */
   const requestEdit = (mode: MeEditMode) => requireAuth(() => setEditMode(mode));
 
   const doSignOut = async () => {
@@ -126,7 +138,7 @@ export function MeView() {
     setConfirm(null);
     await signOut();
     setAccountBusy(false);
-    showToast("已退出登录，切换为游客模式");
+    showToast("已退出登录");
   };
 
   const doDelete = async () => {
@@ -230,7 +242,7 @@ export function MeView() {
               items={visibleItems}
               totalCount={allPersonaItems.length}
               lifeCards={lifeCards}
-              onEdit={() => requestEdit("persona")}
+              onEdit={() => setPrivacyOpen(true)}
             />
           )}
         </div>
@@ -239,37 +251,31 @@ export function MeView() {
         <div className="mt-6 flex flex-col gap-3">
           <SectionHeader title="账号" />
           <div className="kaleido-card flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3.5">
-              <span className="text-[13px] text-sub">登录状态</span>
-              <span
-                className={`text-[13px] font-semibold ${isAnonymous ? "text-faint" : "text-[#8EE7C8]"}`}
-              >
-                {isAnonymous ? "游客模式" : phoneDisplay(phone) ?? "已登录"}
+            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+              <span className="shrink-0 text-[13px] text-sub">登录邮箱</span>
+              <span className="truncate text-[13px] font-semibold text-[#8EE7C8]">
+                {email ?? "已登录"}
               </span>
             </div>
             <div className="h-px bg-line" />
+            <AccountRow
+              title="个人档案与 AI 隐私"
+              tint="text-brand"
+              busy={accountBusy}
+              onClick={() => setPrivacyOpen(true)}
+            />
+            <div className="h-px bg-line" />
 
-            {isAnonymous ? (
-              <>
-                <AccountRow title="登录 / 注册" tint="text-brand" busy={accountBusy} onClick={() => openLogin()} />
-                <div className="flex items-start gap-1.5 px-4 pb-3.5 text-[10.5px] text-faint">
-                  <span>ⓘ</span>
-                  <span>游客数据保存在本机对应的匿名账号里，登录后自动并入正式账号。</span>
-                </div>
-              </>
-            ) : (
-              <>
-                <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
-                <div className="h-px bg-line" />
-                <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
-              </>
-            )}
+            <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
+            <div className="h-px bg-line" />
+            <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
           </div>
         </div>
       </PageContainer>
 
       {/* 编辑浮层 */}
-      <MeEditView mode={editMode} personaItems={allPersonaItems} onClose={() => setEditMode(null)} />
+      <MeEditView mode={editMode} onClose={() => setEditMode(null)} />
+      <ProfilePrivacyView open={privacyOpen} onClose={() => setPrivacyOpen(false)} />
 
       {/* 二次确认 */}
       <ConfirmDialog
@@ -278,7 +284,7 @@ export function MeView() {
         message={
           confirm === "delete"
             ? "注销后账号与全部数据将被永久删除，且无法恢复。"
-            : "退出后将切换为游客模式，本机匿名数据仍会保留。"
+            : "退出后需要重新登录才能继续使用，账号数据不受影响。"
         }
         confirmLabel={confirm === "delete" ? "永久删除我的账号" : "退出登录"}
         destructive={confirm === "delete"}

@@ -3,9 +3,8 @@
    服务端状态经此拉取缓存；UI/客户端状态留在各页面组件（二者分治）。
    拉取失败一律回退 demo 种子（断网兜底，技术设计文档 §13）。 */
 import { create } from "zustand";
-import { bootstrap, callFunction, supabase } from "@/lib/supabase";
+import { callFunction, supabase } from "@/lib/supabase";
 import {
-  PORTRAIT_INITIAL_PCT,
   PRICE_UNLOCK_PROFILE,
   travelerDetailFromRow,
   travelerFromRow,
@@ -31,13 +30,8 @@ function errMessage(err: unknown): string {
 /** get-profile 会话缓存 TTL（对齐 iOS remoteProfileCacheTTL = 60s） */
 const PROFILE_CACHE_TTL_MS = 60_000;
 
-/** 当前会话 user id（无会话时先补匿名登录） */
+/** 当前会话 user id（匿名登录已停用：无会话即未登录，调用方直接跳过取数） */
 async function currentUserId(): Promise<string | null> {
-  try {
-    await bootstrap();
-  } catch {
-    return null;
-  }
   const { data } = await supabase().auth.getSession();
   return data.session?.user.id ?? null;
 }
@@ -178,9 +172,14 @@ export const useData = create<DataState>()((set, get) => ({
     try {
       const remote = await callFunction<RemoteProfile>("get-profile");
       const normalized: RemoteProfile = {
-        portrait_pct: remote.portrait_pct ?? PORTRAIT_INITIAL_PCT,
-        dims: remote.dims ?? {},
-        dimensions: remote.dimensions ?? [],
+        portrait_pct: remote.portrait_pct ?? 0,
+        profile_revision: remote.profile_revision ?? 0,
+        verification: remote.verification ?? {
+          status: "unverified",
+          provider: null,
+          verified_at: null,
+        },
+        facts: remote.facts ?? [],
         card_games: remote.card_games ?? [],
         public_profile: remote.public_profile ?? null,
       };
@@ -188,13 +187,18 @@ export const useData = create<DataState>()((set, get) => ({
       return normalized;
     } catch (err) {
       set({ lastError: errMessage(err) });
-      // 首次进入没有画像：本地兜底，后续写路径再同步
+      // 请求失败时保留空档案，不用假数据伪装真实画像。
       if (!get().profile) {
         set({
           profile: {
-            portrait_pct: PORTRAIT_INITIAL_PCT,
-            dims: {},
-            dimensions: [],
+            portrait_pct: 0,
+            profile_revision: 0,
+            verification: {
+              status: "unverified",
+              provider: null,
+              verified_at: null,
+            },
+            facts: [],
             card_games: [],
             public_profile: null,
           },

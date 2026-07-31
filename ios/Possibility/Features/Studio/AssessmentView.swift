@@ -5,13 +5,16 @@ import SwiftUI
 struct AssessmentFlowView: View {
     let kind: AssessmentKind
     /// 结果写入画像（tags 为可写入的关键词组）
-    var onSaveToProfile: (AssessmentKind, [String]) -> Void
+    var onSaveToProfile: (AssessmentKind, [String], [Int], [String: Int]) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
     @State private var model: AssessmentModel
 
-    init(kind: AssessmentKind, onSaveToProfile: @escaping (AssessmentKind, [String]) -> Void) {
+    init(
+        kind: AssessmentKind,
+        onSaveToProfile: @escaping (AssessmentKind, [String], [Int], [String: Int]) -> Void
+    ) {
         self.kind = kind
         self.onSaveToProfile = onSaveToProfile
         _model = State(initialValue: AssessmentModel(kind: kind))
@@ -21,7 +24,12 @@ struct AssessmentFlowView: View {
         VStack(spacing: 0) {
             if model.phase == .result {
                 AssessmentResultView(model: model, onSave: {
-                    onSaveToProfile(kind, model.resultTags)
+                    onSaveToProfile(
+                        kind,
+                        model.resultTags,
+                        model.answers.compactMap { $0 },
+                        model.result?.scores ?? [:]
+                    )
                     dismiss()
                 }, onBack: { dismiss() })
             } else {
@@ -206,7 +214,7 @@ struct AssessmentFlowView: View {
 }
 
 #Preview {
-    AssessmentFlowView(kind: .strength) { _, _ in }
+    AssessmentFlowView(kind: .strength) { _, _, _, _ in }
         .environment(ToastCenter())
         .preferredColorScheme(.dark)
 }

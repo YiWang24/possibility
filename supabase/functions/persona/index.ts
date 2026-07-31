@@ -12,41 +12,16 @@ import { personaPrompt } from "../_shared/prompts.ts";
 import { type PersonaOutput, personaSchema } from "../_shared/schemas.ts";
 import { fallbackPersona } from "../_shared/persona.ts";
 import { validatePersonaInput } from "../_shared/validate.ts";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 /**
  * POST /persona
  * 动态数字形象异步任务（对应原型 AI_INTEGRATION_PROMPTS.dynamicPersona）。
  * - action=generate：根据已授权画像生成 persona，落库并返回 { job_id, status, persona }
  * - action=status：按 job_id 查询 { job_id, status, persona }
- * 私密维度（public_profiles.visibility 中显式为 false）不会进入 prompt。
+ * 使用本人有效画像事实；公开事实可发布，私人事实仅用于本人体验。
  * 离线兜底逻辑见 _shared/persona.ts（纯函数、可单测）。
  */
-
-async function authorizedContext(
-  db: SupabaseClient,
-  userId: string,
-): Promise<string> {
-  const { data: profile } = await db
-    .from("profiles")
-    .select("dims")
-    .eq("id", userId)
-    .maybeSingle();
-  const { data: pub } = await db
-    .from("public_profiles")
-    .select("tags,visibility")
-    .eq("id", userId)
-    .maybeSingle();
-
-  const dims = (profile?.dims ?? {}) as Record<string, string>;
-  const visibility = (pub?.visibility ?? {}) as Record<string, boolean>;
-  // 私密维度：visibility 显式为 false 的键不参与生成。
-  const authorized = Object.entries(dims)
-    .filter(([key]) => visibility[key] !== false)
-    .map(([key, value]) => `${key}：${value}`);
-  const tags = Array.isArray(pub?.tags) ? (pub!.tags as string[]) : [];
-  return [...authorized, ...tags].join(" ");
-}
 
 Deno.serve(async (req) => {
   const preflight = preflightResponse(req);
@@ -76,7 +51,11 @@ Deno.serve(async (req) => {
     }
 
     // action === "generate"
-    const context = await authorizedContext(db, user.id);
+    const aiContext = await loadProfileContext(
+      db,
+      user.id,
+      "persona",
+    );
     let persona: PersonaOutput;
     let modelVersion = runtimeConfig.structuredModel;
     try {
@@ -86,16 +65,16 @@ Deno.serve(async (req) => {
         system: personaPrompt,
         prompt: input.promptOverride
           ? `${input.promptOverride}\n\n已授权画像内容：${
-            context || "（暂无）"
+            aiContext.text || "（暂无）"
           }`
-          : `已授权画像内容：${context || "（暂无）"}`,
+          : `已授权画像内容：${aiContext.text || "（暂无）"}`,
         schema: personaSchema,
         track: { userId: user.id, feature: "persona" },
         trace: { name: "persona", userId: user.id },
       });
     } catch (llmError) {
       console.error("persona generation fell back to local:", llmError);
-      persona = fallbackPersona(context);
+      persona = fallbackPersona(aiContext.text);
       modelVersion = "fallback";
     }
 
@@ -118,6 +97,11 @@ Deno.serve(async (req) => {
       status: "completed",
       persona,
       model_version: modelVersion,
+      ai_context: {
+        purpose: aiContext.purpose,
+        dimensions: aiContext.dimensions,
+        profile_revision: aiContext.profileRevision,
+      },
     });
   } catch (error) {
     return errorResponse(error, req);

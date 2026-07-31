@@ -6,7 +6,7 @@ struct PossibilityApp: App {
     @State private var supabase: SupabaseService
     @Environment(\.scenePhase) private var scenePhase
 
-    /// 埋点必须在 bootstrap 之前装好：bootstrap 里的匿名登录会立刻 identify，
+    /// 埋点必须在 bootstrap 之前装好：bootstrap 恢复到会话后会立刻 identify，
     /// 后端没注册的话那次 identify 就丢了，冷启动 cohort 直接缺一块。
     /// 同理 Sentry 越早启动越好——启动期崩溃只有这个时机抓得到。
     init() {
@@ -21,10 +21,10 @@ struct PossibilityApp: App {
                 .environment(supabase)
                 .preferredColorScheme(.dark) // 暗色是贴合内省气质的有意选择
                 .task {
-                    await supabase.bootstrap() // 冷启动匿名登录（内含 identify）
+                    await supabase.bootstrap() // 冷启动恢复会话（有会话则 identify + 预取）
                     Analytics.shared.track(.appOpened(
                         isFirstOpen: AnalyticsBootstrap.consumeFirstOpenFlag(),
-                        isAnonymous: supabase.isAnonymous
+                        isAuthenticated: supabase.isAuthenticated
                     ))
                 }
                 .onChange(of: scenePhase) { _, phase in
@@ -76,13 +76,49 @@ enum AnalyticsBootstrap {
     }
 }
 
-// MARK: - 根导航：底部四 Tab（认识你自己 / 人生实验室 / 万花筒社区 / 我的主页）
+// MARK: - 根导航：登录墙 → 底部四 Tab（认识你自己 / 人生实验室 / 万花筒社区 / 我的主页）
 
 enum AppTab: Hashable {
     case home, lab, community, me
 }
 
+/// 冷启动分流。匿名模式已停用，未登录时全部 Edge Function 都会 401，
+/// 所以在这里就把用户拦在登录墙上，而不是放进去看一屏加载失败。
 struct RootView: View {
+    @Environment(SupabaseService.self) private var supabase
+
+    var body: some View {
+        Group {
+            if !supabase.isReady {
+                SplashView()
+            } else if !supabase.isAuthenticated {
+                AuthWallView()
+            } else {
+                MainTabView()
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: supabase.isAuthenticated)
+    }
+}
+
+/// 会话恢复期的过场：只有一枚呼吸的极光环，避免闪一下登录墙再跳走
+struct SplashView: View {
+    @State private var pulsing = false
+
+    var body: some View {
+        Circle()
+            .fill(Theme.aurora)
+            .frame(width: 48, height: 48)
+            .opacity(pulsing ? 0.35 : 0.85)
+            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: pulsing)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .screenBackground()
+            .onAppear { pulsing = true }
+            .accessibilityLabel("正在恢复会话")
+    }
+}
+
+struct MainTabView: View {
     @State private var router = AppRouter()
     @State private var toast = ToastCenter()
 

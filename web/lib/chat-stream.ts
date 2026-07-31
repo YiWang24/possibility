@@ -1,6 +1,7 @@
 "use client";
 import { SUPABASE_ANON_KEY, functionURL } from "./config";
 import { jwt } from "./supabase";
+import type { AIContextDisclosure } from "./models";
 
 /* 探索对话 SSE 客户端 —— 对齐 iOS ChatStreamClient 协议 */
 
@@ -24,6 +25,7 @@ export type ChatStreamDone = {
   is_enough?: boolean;
   next_actions?: { type: string; label: string }[];
   high_risk?: boolean;
+  ai_context?: AIContextDisclosure;
 };
 
 export type ChatTurn = { role: string; content: string };

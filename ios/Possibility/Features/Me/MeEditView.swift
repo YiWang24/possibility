@@ -2,11 +2,11 @@ import SwiftUI
 
 // MARK: - 我的主页编辑（原型 #myEditPage · renderMyProfileEditor）
 //
-// 5 种编辑模式：basic / story / advice / service / persona（展示开关）。
+// 4 种编辑模式：basic / story / advice / service。
 // 编辑基于草稿副本，保存时整体写回（原型 myEditDraft 语义）。
 
 enum MeEditMode: String, Identifiable {
-    case basic, story, advice, service, persona
+    case basic, story, advice, service
     var id: String { rawValue }
 
     var title: String {
@@ -15,7 +15,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "编辑我的故事"
         case .advice: return "编辑经验与建议"
         case .service: return "编辑提供服务"
-        case .persona: return "设置动态画像"
         }
     }
 
@@ -25,7 +24,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "修改故事内容和人生时间线"
         case .advice: return "自由组合标题、内容与链接"
         case .service: return "设置服务内容、价格和公开状态"
-        case .persona: return "选择主页允许公开的画像内容"
         }
     }
 
@@ -35,7 +33,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "保存故事"
         case .advice: return "保存建议"
         case .service: return "保存服务"
-        case .persona: return "保存展示设置"
         }
     }
 
@@ -45,7 +42,6 @@ enum MeEditMode: String, Identifiable {
         case .story: return "已保存故事"
         case .advice: return "已保存建议"
         case .service: return "已保存服务"
-        case .persona: return "已保存展示设置"
         }
     }
 }
@@ -80,7 +76,6 @@ struct MeEditView: View {
                     case .story: storyEditor
                     case .advice: adviceEditor
                     case .service: serviceEditor
-                    case .persona: personaEditor
                     }
                 }
                 .padding(.horizontal, 22).padding(.top, 16).padding(.bottom, 30)
@@ -332,33 +327,6 @@ struct MeEditView: View {
         }
     }
 
-    // MARK: 画像展示开关（原型 visibility-list）
-
-    private var personaEditor: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionTitle("动态画像展示", note: "开启后即在主页展示")
-            ForEach(store.allPersonaItems) { item in
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(item.label).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
-                        Text(item.value).font(.system(size: 11)).lineLimit(1).foregroundStyle(Theme.sub)
-                    }
-                    Spacer()
-                    Toggle("", isOn: Binding(
-                        get: { draft.visibility[item.key] ?? false },
-                        set: { draft.visibility[item.key] = $0 }
-                    ))
-                    .labelsHidden()
-                    .tint(Theme.blue)
-                }
-                .padding(.horizontal, 14).padding(.vertical, 12)
-                .background(Theme.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
-            }
-            Text("原始答案与未开启的画像内容不会出现在主页。")
-                .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-        }
-    }
 }
 
 #Preview {

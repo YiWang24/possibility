@@ -42,11 +42,14 @@ struct ChatStreamDone: Decodable, Sendable {
     var profileSignals: [String: String]?
     /// 与 crossroads.ready 分离：只有 AI 判断下一轮已完成回答时才为 ready。
     var conclusion: ChatConclusion?
+    /// 本轮实际使用的长期画像维度；不包含画像原文。
+    var aiContext: AIContextDisclosure?
 
     enum CodingKeys: String, CodingKey {
         case crossroads, conclusion
         case conversationId = "conversation_id"
         case profileSignals = "profile_signals"
+        case aiContext = "ai_context"
     }
 }
 
@@ -87,7 +90,7 @@ struct ChatStreamClient: Sendable {
     /// - `data:` 累积 JSON；空行触发派发
     func stream(_ request: ChatRequest) -> AsyncThrowingStream<ChatStreamEvent, Error> {
         let requestId = UUID().uuidString
-        AsyncThrowingStream { continuation in
+        return AsyncThrowingStream { continuation in
             let task = Task {
                 do {
                     let urlRequest = try await makeRequest(request, requestId: requestId)

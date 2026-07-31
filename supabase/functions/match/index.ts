@@ -14,6 +14,7 @@ import { validateMatchInput } from "../_shared/validate.ts";
 import { insertMatchResult } from "../_shared/db.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { trackEvent } from "../_shared/track.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 type TravelerForMatch = {
   id: number;
@@ -35,9 +36,13 @@ Deno.serve(async (req) => {
     // 请求侧先打点：match_requested 是漏斗分母，失败的请求同样要计入，
     // 否则「有多少人走到匹配这一步」会被上游故障系统性低估。
     trackEvent(user.id, ServerEvent.MATCH_REQUESTED);
-    const { data, error } = await db.from("travelers")
-      .select("id,name,quote,bio,tags,dims,trajectory")
-      .order("id");
+    const [travelerResult, aiContext] = await Promise.all([
+      db.from("travelers")
+        .select("id,name,quote,bio,tags,dims,trajectory")
+        .order("id"),
+      loadProfileContext(db, user.id, "match"),
+    ]);
+    const { data, error } = travelerResult;
     if (error) {
       console.error("load travelers failed:", error.message);
       throw new HttpError(500, "DATABASE_ERROR", "暂时无法读取旅人资料。");
@@ -58,8 +63,10 @@ Deno.serve(async (req) => {
       // 错误应对，见 anthropic.ts）。
       maxTokens: 1_536,
       system: matchPrompt,
-      prompt: `用户当前状态：\n${
-        JSON.stringify(userState)
+      prompt: `用户本次明确提交的当前状态：\n${JSON.stringify(userState)}${
+        aiContext.text
+          ? `\n\n用户另行授权用于本次匹配的长期画像：\n${aiContext.text}`
+          : ""
       }\n\n候选旅人（只能使用这些 ID）：\n${JSON.stringify(travelers)}`,
       schema: matchSchema,
       track: { userId: user.id, feature: "match" },
@@ -84,7 +91,14 @@ Deno.serve(async (req) => {
     trackEvent(user.id, ServerEvent.MATCH_CONDITIONS_READY, {
       candidate_count: result.matches.length,
     });
-    return jsonResponse(result);
+    return jsonResponse({
+      ...result,
+      ai_context: {
+        purpose: aiContext.purpose,
+        dimensions: aiContext.dimensions,
+        profile_revision: aiContext.profileRevision,
+      },
+    });
   } catch (error) {
     return errorResponse(error, req);
   }

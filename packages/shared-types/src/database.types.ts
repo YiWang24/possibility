@@ -88,6 +88,42 @@ export type Database = {
         }
         Relationships: []
       }
+      assessment_runs: {
+        Row: {
+          answers: Json
+          assessment_kind: string
+          completed_at: string
+          created_at: string
+          id: string
+          result_tags: string[]
+          schema_version: number
+          scores: Json
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          assessment_kind: string
+          completed_at?: string
+          created_at?: string
+          id?: string
+          result_tags?: string[]
+          schema_version?: number
+          scores?: Json
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          assessment_kind?: string
+          completed_at?: string
+          created_at?: string
+          id?: string
+          result_tags?: string[]
+          schema_version?: number
+          scores?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       bounties: {
         Row: {
           created_at: string
@@ -521,6 +557,89 @@ export type Database = {
         }
         Relationships: []
       }
+      memory_proposals: {
+        Row: {
+          confidence: number
+          created_at: string
+          dedupe_key: string
+          dimension: string
+          expires_at: string
+          fact_kind: string
+          id: string
+          model_name: string | null
+          normalized_value: string
+          operation: string
+          prompt_version: string | null
+          rationale_code: string
+          reviewed_at: string | null
+          schema_version: number
+          sensitivity: string
+          source_id: string
+          source_type: string
+          source_version: number
+          status: string
+          target_fact_id: string | null
+          user_id: string
+          value: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          dedupe_key: string
+          dimension: string
+          expires_at?: string
+          fact_kind?: string
+          id?: string
+          model_name?: string | null
+          normalized_value: string
+          operation?: string
+          prompt_version?: string | null
+          rationale_code?: string
+          reviewed_at?: string | null
+          schema_version?: number
+          sensitivity?: string
+          source_id: string
+          source_type: string
+          source_version?: number
+          status?: string
+          target_fact_id?: string | null
+          user_id: string
+          value: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          dedupe_key?: string
+          dimension?: string
+          expires_at?: string
+          fact_kind?: string
+          id?: string
+          model_name?: string | null
+          normalized_value?: string
+          operation?: string
+          prompt_version?: string | null
+          rationale_code?: string
+          reviewed_at?: string | null
+          schema_version?: number
+          sensitivity?: string
+          source_id?: string
+          source_type?: string
+          source_version?: number
+          status?: string
+          target_fact_id?: string | null
+          user_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memory_proposals_target_fact_id_fkey"
+            columns: ["target_fact_id"]
+            isOneToOne: false
+            referencedRelation: "profile_facts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -589,102 +708,266 @@ export type Database = {
         }
         Relationships: []
       }
-      profile_dimensions: {
+      profile_fact_evidence: {
         Row: {
+          confidence: number
           created_at: string
-          dimension: string
-          id: number
-          source: string
-          tags: string[]
-          updated_at: string
+          evidence_role: string
+          fact_id: string
+          id: string
+          observed_at: string
+          source_id: string
+          source_type: string
+          source_version: number
           user_id: string
         }
         Insert: {
+          confidence?: number
           created_at?: string
-          dimension: string
-          id?: number
-          source?: string
-          tags?: string[]
-          updated_at?: string
+          evidence_role?: string
+          fact_id: string
+          id?: string
+          observed_at?: string
+          source_id: string
+          source_type: string
+          source_version?: number
           user_id: string
         }
         Update: {
+          confidence?: number
+          created_at?: string
+          evidence_role?: string
+          fact_id?: string
+          id?: string
+          observed_at?: string
+          source_id?: string
+          source_type?: string
+          source_version?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_fact_evidence_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "profile_facts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_facts: {
+        Row: {
+          confidence: number
+          created_at: string
+          dimension: string
+          fact_kind: string
+          id: string
+          last_supported_at: string
+          normalized_value: string
+          observed_at: string
+          sensitivity: string
+          source: string
+          source_ref: string | null
+          status: string
+          support_count: number
+          updated_at: string
+          user_confirmed: boolean
+          user_id: string
+          valid_from: string | null
+          valid_to: string | null
+          value: string
+          visibility: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          dimension: string
+          fact_kind?: string
+          id?: string
+          last_supported_at?: string
+          normalized_value: string
+          observed_at?: string
+          sensitivity?: string
+          source?: string
+          source_ref?: string | null
+          status?: string
+          support_count?: number
+          updated_at?: string
+          user_confirmed?: boolean
+          user_id: string
+          valid_from?: string | null
+          valid_to?: string | null
+          value: string
+          visibility?: string
+        }
+        Update: {
+          confidence?: number
           created_at?: string
           dimension?: string
-          id?: number
+          fact_kind?: string
+          id?: string
+          last_supported_at?: string
+          normalized_value?: string
+          observed_at?: string
+          sensitivity?: string
           source?: string
-          tags?: string[]
+          source_ref?: string | null
+          status?: string
+          support_count?: number
           updated_at?: string
+          user_confirmed?: boolean
           user_id?: string
+          valid_from?: string | null
+          valid_to?: string | null
+          value?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
+      profile_public_drafts: {
+        Row: {
+          advice: Json
+          age: number | null
+          avatar_url: string | null
+          bio: string
+          city: string
+          created_at: string
+          from_role: string
+          hue: number
+          id: string
+          name: string
+          profile_version: number
+          quote: string
+          result: string
+          services: Json
+          stage: string
+          story_full: string
+          story_intro: string
+          tags: string[]
+          to_role: string
+          trajectory: Json
+          updated_at: string
+        }
+        Insert: {
+          advice?: Json
+          age?: number | null
+          avatar_url?: string | null
+          bio?: string
+          city?: string
+          created_at?: string
+          from_role?: string
+          hue?: number
+          id: string
+          name?: string
+          profile_version?: number
+          quote?: string
+          result?: string
+          services?: Json
+          stage?: string
+          story_full?: string
+          story_intro?: string
+          tags?: string[]
+          to_role?: string
+          trajectory?: Json
+          updated_at?: string
+        }
+        Update: {
+          advice?: Json
+          age?: number | null
+          avatar_url?: string | null
+          bio?: string
+          city?: string
+          created_at?: string
+          from_role?: string
+          hue?: number
+          id?: string
+          name?: string
+          profile_version?: number
+          quote?: string
+          result?: string
+          services?: Json
+          stage?: string
+          story_full?: string
+          story_intro?: string
+          tags?: string[]
+          to_role?: string
+          trajectory?: Json
+          updated_at?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
           created_at: string
-          dims: Json
           id: string
           portrait_pct: number
+          profile_revision: number
           updated_at: string
+          verification_provider: string | null
+          verification_status: string
+          verified_at: string | null
         }
         Insert: {
           created_at?: string
-          dims?: Json
           id: string
           portrait_pct?: number
+          profile_revision?: number
           updated_at?: string
+          verification_provider?: string | null
+          verification_status?: string
+          verified_at?: string | null
         }
         Update: {
           created_at?: string
-          dims?: Json
           id?: string
           portrait_pct?: number
+          profile_revision?: number
           updated_at?: string
+          verification_provider?: string | null
+          verification_status?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
       public_profiles: {
         Row: {
-          advice: Json
           avatar_url: string | null
           bio: string
-          created_at: string
+          hue: number
           id: string
+          is_verified: boolean
           name: string
+          published_at: string
+          published_facts: Json
           quote: string
-          services: Json
           tags: string[]
-          trajectory: Json
           updated_at: string
-          visibility: Json
         }
         Insert: {
-          advice?: Json
           avatar_url?: string | null
           bio?: string
-          created_at?: string
+          hue?: number
           id: string
+          is_verified?: boolean
           name?: string
+          published_at?: string
+          published_facts?: Json
           quote?: string
-          services?: Json
           tags?: string[]
-          trajectory?: Json
           updated_at?: string
-          visibility?: Json
         }
         Update: {
-          advice?: Json
           avatar_url?: string | null
           bio?: string
-          created_at?: string
+          hue?: number
           id?: string
+          is_verified?: boolean
           name?: string
+          published_at?: string
+          published_facts?: Json
           quote?: string
-          services?: Json
           tags?: string[]
-          trajectory?: Json
           updated_at?: string
-          visibility?: Json
         }
         Relationships: []
       }
@@ -895,18 +1178,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      apply_profile_update: {
-        Args: { p_dims: Json; p_portrait_delta: number }
-        Returns: {
-          dims: Json
-          portrait_pct: number
-        }[]
-      }
       can_insert_app_event: {
         Args: { p_event: string; p_source: string; p_user_id: string }
         Returns: boolean
       }
+      clear_profile: {
+        Args: { p_expected_revision?: number }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      confirm_profile_fact: {
+        Args: { p_expected_revision?: number; p_fact_id: string }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
       delete_diary_job: { Args: { p_message_id: number }; Returns: boolean }
+      delete_profile_dimension: {
+        Args: { p_dimension: string; p_expected_revision?: number }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
       enqueue_diary_job: {
         Args: {
           p_delay_seconds?: number
@@ -922,6 +1219,21 @@ export type Database = {
         Args: { p_new: string; p_old: string }
         Returns: undefined
       }
+      propose_profile_fact: {
+        Args: {
+          p_confidence: number
+          p_dimension: string
+          p_fact_kind?: string
+          p_model_name?: string
+          p_prompt_version?: string
+          p_sensitivity?: string
+          p_source_id: string
+          p_source_type: string
+          p_source_version?: number
+          p_value: string
+        }
+        Returns: string
+      }
       purge_diary_jobs: { Args: { p_user_id: string }; Returns: number }
       read_diary_jobs: {
         Args: { p_quantity?: number; p_visibility_seconds?: number }
@@ -931,6 +1243,82 @@ export type Database = {
           msg_id: number
           read_ct: number
           vt: string
+        }[]
+      }
+      replace_profile_dimension: {
+        Args: {
+          p_confidence?: number
+          p_dimension: string
+          p_expected_revision?: number
+          p_portrait_delta?: number
+          p_source?: string
+          p_source_ref?: string
+          p_user_confirmed?: boolean
+          p_values: string[]
+        }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      review_profile_proposal: {
+        Args: {
+          p_accept: boolean
+          p_expected_revision?: number
+          p_proposal_id: string
+        }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      save_assessment_and_profile: {
+        Args: {
+          p_answers?: Json
+          p_assessment_kind: string
+          p_dimension: string
+          p_expected_revision?: number
+          p_schema_version?: number
+          p_scores?: Json
+          p_values: string[]
+        }
+        Returns: {
+          assessment_run_id: string
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      save_card_game_and_profile: {
+        Args: {
+          p_accepted: Json
+          p_expected_revision?: number
+          p_final_cards: Json
+          p_kind: string
+          p_rounds: number
+          p_traded: Json
+        }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      save_public_profile: { Args: { p_profile: Json }; Returns: undefined }
+      set_profile_fact_visibility: {
+        Args: {
+          p_expected_revision?: number
+          p_fact_id: string
+          p_visibility: string
+        }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
+        }[]
+      }
+      update_profile_progress: {
+        Args: { p_portrait_delta?: number }
+        Returns: {
+          portrait_pct: number
+          profile_revision: number
         }[]
       }
     }

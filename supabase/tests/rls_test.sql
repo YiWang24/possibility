@@ -65,11 +65,12 @@ begin
   exception
     when insufficient_privilege then null;
   end;
+
 end
 $$;
 reset role;
 
--- ==================== 2. 用户 A：画像更新 RPC（合并 + 钳制） ====================
+-- ==================== 2. 用户 A：画像完成度 RPC（钳制） ====================
 select set_config(
   'request.jwt.claim.sub',
   '11111111-1111-4111-8111-111111111111',
@@ -80,30 +81,23 @@ set local role authenticated;
 do $$
 declare
   v_pct  smallint;
-  v_dims jsonb;
 begin
-  -- 首次：portrait 0 -> 30，dims 写入「阶段」。
-  select portrait_pct, dims into v_pct, v_dims
-  from public.apply_profile_update('{"\u9636\u6bb5":"\u8f6c\u578b"}'::jsonb, 30);
+  select portrait_pct into v_pct
+  from public.update_profile_progress(30);
   if v_pct <> 30 then
     raise exception 'rpc first call portrait expected 30, got %', v_pct;
   end if;
 
-  -- 上钳制：30 + 90 = 120 -> 100；dims 合并「技能」。
-  select portrait_pct, dims into v_pct, v_dims
-  from public.apply_profile_update('{"\u6280\u80fd":"\u7f16\u7a0b"}'::jsonb, 90);
+  select portrait_pct into v_pct
+  from public.update_profile_progress(90);
   if v_pct <> 100 then
     raise exception 'rpc portrait should clamp to 100, got %', v_pct;
   end if;
 
-  -- 下钳制：100 - 200 = -100 -> 0；dims 传空对象不应删除既有键。
-  select portrait_pct, dims into v_pct, v_dims
-  from public.apply_profile_update('{}'::jsonb, -200);
+  select portrait_pct into v_pct
+  from public.update_profile_progress(-200);
   if v_pct <> 0 then
     raise exception 'rpc portrait should clamp to 0, got %', v_pct;
-  end if;
-  if not (v_dims ? '阶段' and v_dims ? '技能') then
-    raise exception 'rpc should merge dims cumulatively, got %', v_dims;
   end if;
 end
 $$;
@@ -144,8 +138,16 @@ values (
 insert into public.unlocks (user_id, kind, target_id, amount)
 values ('11111111-1111-4111-8111-111111111111', 'profile', '1', 29);
 
-insert into public.profile_dimensions (user_id, dimension, tags)
-values ('11111111-1111-4111-8111-111111111111', 'skill', '{"\u7f16\u7a0b","\u5199\u4f5c"}');
+select * from public.replace_profile_dimension(
+  'skill',
+  array['编程', '写作'],
+  'manual',
+  null,
+  1,
+  true,
+  0,
+  0
+);
 
 insert into public.card_game_results (user_id, kind, final_cards, rounds)
 values (
@@ -155,8 +157,18 @@ values (
   3
 );
 
-insert into public.public_profiles (id, name, quote)
-values ('11111111-1111-4111-8111-111111111111', '测试用户A', '人生如棋');
+select public.save_public_profile(
+  '{"profile_version":2,"name":"测试用户A","quote":"人生如棋"}'::jsonb
+);
+
+select * from public.set_profile_fact_visibility(
+  (
+    select id from public.profile_facts
+     where dimension = 'skill' and value = '编程'
+  ),
+  'public',
+  1
+);
 
 insert into public.kaleidoscope_draws (user_id, mode, traveler_id)
 values ('11111111-1111-4111-8111-111111111111', 'similar', 1);
@@ -358,26 +370,19 @@ begin
 end
 $$;
 
--- ==================== 4. updated_at 触发器 ====================
--- INSERT 不触发 BEFORE UPDATE 触发器，故可用一个旧时间写入基线；
--- 随后 UPDATE 应被 touch_updated_at 刷新为事务时间（不再等于旧值）。
-insert into public.profile_dimensions (user_id, dimension, tags, updated_at)
-values (
-  '11111111-1111-4111-8111-111111111111',
-  'like',
-  '{"\u9605\u8bfb"}',
-  '2000-01-01T00:00:00Z'
-);
-update public.profile_dimensions
-set tags = '{"\u9605\u8bfb","\u5f92\u6b65"}'
-where user_id = '11111111-1111-4111-8111-111111111111' and dimension = 'like';
+-- ==================== 4. 最终画像表结构 ====================
 do $$
 begin
-  if (
-    select updated_at from public.profile_dimensions
-    where user_id = '11111111-1111-4111-8111-111111111111' and dimension = 'like'
-  ) = '2000-01-01T00:00:00Z' then
-    raise exception 'touch_updated_at should refresh updated_at on UPDATE';
+  if to_regclass('public.profile_dimensions') is not null then
+    raise exception 'profile_dimensions compatibility table must not exist';
+  end if;
+  if exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'profiles'
+       and column_name = 'dims'
+  ) then
+    raise exception 'profiles.dims compatibility column must not exist';
   end if;
 end
 $$;
@@ -445,19 +450,18 @@ begin
     raise exception 'persona_jobs.persona object check not enforced';
   exception when check_violation then null; end;
 
-  -- profiles.dims 必须是对象（非数组）
+  -- 事实可见性只能是 public/private。
   begin
-    update public.profiles set dims = '[]'::jsonb
-    where id = '11111111-1111-4111-8111-111111111111';
-    raise exception 'profiles.dims object check not enforced';
-  exception when check_violation then null; end;
-
-  -- UNIQUE(user_id, dimension)
-  begin
-    insert into public.profile_dimensions (user_id, dimension, tags)
-    values ('11111111-1111-4111-8111-111111111111', 'skill', '{}');
-    raise exception 'profile_dimensions unique(user_id,dimension) not enforced';
-  exception when unique_violation then null; end;
+    perform * from public.set_profile_fact_visibility(
+      (
+        select id from public.profile_facts
+         where dimension = 'skill' and value = '写作'
+      ),
+      'friends',
+      2
+    );
+    raise exception 'profile visibility check not enforced';
+  exception when invalid_parameter_value then null; end;
 
   -- UNIQUE(user_id, kind)
   begin
@@ -501,8 +505,8 @@ begin
   if (select count(*) from public.unlocks) <> 0 then
     raise exception 'cross-user unlocks leaked';
   end if;
-  if (select count(*) from public.profile_dimensions) <> 0 then
-    raise exception 'cross-user profile_dimensions leaked';
+  if (select count(*) from public.profile_facts) <> 0 then
+    raise exception 'cross-user profile_facts leaked';
   end if;
   if (select count(*) from public.card_game_results) <> 0 then
     raise exception 'cross-user card_game_results leaked';
@@ -564,9 +568,16 @@ begin
   exception when insufficient_privilege then null; end;
 
   begin
-    insert into public.profile_dimensions (user_id, dimension, tags)
-    values ('11111111-1111-4111-8111-111111111111', 'love', '{"\u97f3\u4e50"}');
-    raise exception 'cross-user dimension write unexpectedly succeeded';
+    insert into public.profile_facts (
+      user_id, dimension, value, normalized_value, source
+    ) values (
+      '11111111-1111-4111-8111-111111111111',
+      'love',
+      '音乐',
+      '音乐',
+      'manual'
+    );
+    raise exception 'direct fact write unexpectedly succeeded';
   exception when insufficient_privilege then null; end;
 
   begin
@@ -582,11 +593,11 @@ begin
   exception when insufficient_privilege then null; end;
 
   -- B 无法修改 A 的公开资料 / 悬赏（策略过滤为 0 行，found=false）。
-  update public.public_profiles set name = 'hacked'
-  where id = '11111111-1111-4111-8111-111111111111';
-  if found then
-    raise exception 'cross-user public_profile update unexpectedly succeeded';
-  end if;
+  begin
+    update public.public_profiles set name = 'hacked'
+    where id = '11111111-1111-4111-8111-111111111111';
+    raise exception 'published profile direct update unexpectedly succeeded';
+  exception when insufficient_privilege then null; end;
 
   update public.bounties set detail = 'hacked'
   where user_id = '11111111-1111-4111-8111-111111111111';
@@ -596,13 +607,13 @@ begin
 end
 $$;
 
--- 画像 RPC 以调用者身份运行：B 调用只应影响 B 自己，A 的画像不受影响。
+-- 完成度 RPC 以调用者身份运行：B 调用只应影响 B 自己，A 不受影响。
 do $$
 declare
   v_pct smallint;
 begin
   select portrait_pct into v_pct
-  from public.apply_profile_update('{"x":"y"}'::jsonb, 15);
+  from public.update_profile_progress(15);
   if v_pct <> 15 then
     raise exception 'B rpc should update only B, expected 15 got %', v_pct;
   end if;
@@ -678,12 +689,12 @@ $$;
 reset role;
 
 -- 构造迁移前数据（postgres 直接写，模拟两账号既有数据）。
--- profiles：old 覆盖 dims 与 pct，验证合并时 new 键优先 + pct 取较大。
+-- profiles 只保留完成度与画像修订号；画像内容由 profile_facts 承载。
 update public.profiles
-  set dims = '{"a":"1","shared":"old"}'::jsonb, portrait_pct = 40
+  set portrait_pct = 40, profile_revision = 3
   where id = '33333333-3333-4333-8333-333333333333';
 update public.profiles
-  set dims = '{"b":"2","shared":"new"}'::jsonb, portrait_pct = 10
+  set portrait_pct = 10, profile_revision = 5
   where id = '44444444-4444-4444-8444-444444444444';
 
 -- conversations：无 user_id 唯一约束 → 直接改归属。
@@ -702,13 +713,14 @@ values
   ('33333333-3333-4333-8333-333333333333', 'profile', '2', 9),
   ('44444444-4444-4444-8444-444444444444', 'profile', '1', 9);
 
--- profile_dimensions：old 有 skill/love；new 有 skill
--- → 冲突丢弃 old skill（保留 new 值），迁入 old love。
-insert into public.profile_dimensions (user_id, dimension, tags)
+-- profile_facts：相同原子事实冲突时保留正式账号行，其他事实迁入。
+insert into public.profile_facts (
+  user_id, dimension, value, normalized_value, source, source_ref
+)
 values
-  ('33333333-3333-4333-8333-333333333333', 'skill', '{"old"}'),
-  ('33333333-3333-4333-8333-333333333333', 'love', '{"old"}'),
-  ('44444444-4444-4444-8444-444444444444', 'skill', '{"new"}');
+  ('33333333-3333-4333-8333-333333333333', 'skill', 'shared', 'shared', 'manual', 'old'),
+  ('33333333-3333-4333-8333-333333333333', 'love', '信任', '信任', 'manual', 'old'),
+  ('44444444-4444-4444-8444-444444444444', 'skill', 'shared', 'shared', 'manual', 'new');
 
 -- card_game_results：仅 old 有 life → 直接迁入。
 insert into public.card_game_results (user_id, kind, final_cards)
@@ -722,7 +734,7 @@ values
   (2, '33333333-3333-4333-8333-333333333333', 'old-resp-2'),
   (1, '44444444-4444-4444-8444-444444444444', 'new-resp');
 
--- public_profiles：两账号均建档 → 合并应保留 new、删除 old。
+-- 公开发布表：两账号均建档 → 合并应保留 new、删除 old。
 insert into public.public_profiles (id, name)
 values
   ('33333333-3333-4333-8333-333333333333', 'old-name'),
@@ -744,17 +756,20 @@ select public.merge_anonymous_user(
 
 do $$
 declare
-  v_dims jsonb;
   v_pct  smallint;
+  v_profile_revision bigint;
 begin
-  -- profiles：dims 合并（new 覆盖 shared），pct 取较大值 40，old 行删除。
-  select dims, portrait_pct into v_dims, v_pct
+  -- profiles：完成度取较大值，修订号在两边最大值上递增，old 行删除。
+  select portrait_pct, profile_revision
+    into v_pct, v_profile_revision
   from public.profiles where id = '44444444-4444-4444-8444-444444444444';
-  if not (v_dims ? 'a' and v_dims ? 'b' and v_dims->>'shared' = 'new') then
-    raise exception 'merge profiles dims wrong: %', v_dims;
-  end if;
   if v_pct <> 40 then
     raise exception 'merge portrait_pct should be greatest=40, got %', v_pct;
+  end if;
+  if v_profile_revision <> 6 then
+    raise exception
+      'merge revision should advance from max value, got %',
+      v_profile_revision;
   end if;
   if exists (
     select 1 from public.profiles
@@ -792,19 +807,26 @@ begin
     raise exception 'no unlocks should remain on old user';
   end if;
 
-  -- profile_dimensions：skill 保留 new 值，love 迁入 → new 恰 2 行。
+  -- profile_facts：重复 skill 保留 new 来源，love 迁入 → new 恰 2 行。
   if (
-    select count(*) from public.profile_dimensions
+    select count(*) from public.profile_facts
     where user_id = '44444444-4444-4444-8444-444444444444'
   ) <> 2 then
-    raise exception 'new user should have exactly 2 dimensions after merge';
+    raise exception 'new user should have exactly 2 profile facts after merge';
   end if;
   if (
-    select tags[1] from public.profile_dimensions
+    select source_ref from public.profile_facts
     where user_id = '44444444-4444-4444-8444-444444444444'
       and dimension = 'skill'
+      and value = 'shared'
   ) <> 'new' then
-    raise exception 'conflicting skill dimension should keep new user value';
+    raise exception 'conflicting profile fact should keep new user row';
+  end if;
+  if exists (
+    select 1 from public.profile_facts
+    where user_id = '33333333-3333-4333-8333-333333333333'
+  ) then
+    raise exception 'no profile facts should remain on old user';
   end if;
 
   -- card_game_results：old 的 life 直接迁入。
@@ -939,3 +961,6 @@ end
 $$;
 
 rollback;
+
+-- Keep the profile privacy contract in the same database test entrypoint.
+\ir profile_privacy_rls_test.sql

@@ -13,6 +13,7 @@ export const EDGE_FUNCTIONS = [
   'update-diary-transcript',
   'save-profile',
   'get-profile',
+  'profile-privacy',
   'list-conversations',
   'list-diary',
   'diary-summary',

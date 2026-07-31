@@ -24,10 +24,12 @@ enum AuthTrigger: String, Sendable {
 
 extension AnalyticsEvent {
 
-    static func appOpened(isFirstOpen: Bool, isAnonymous: Bool) -> Self {
+    /// - Parameter isAuthenticated: 冷启动时是否已有有效会话。false 即用户落在登录墙上，
+    ///   「打开 App → 真正进到主界面」这一段流失只有靠它才看得见。
+    static func appOpened(isFirstOpen: Bool, isAuthenticated: Bool) -> Self {
         .init("app_opened", [
             "is_first_open": .bool(isFirstOpen),
-            "is_anonymous": .bool(isAnonymous),
+            "is_authenticated": .bool(isAuthenticated),
         ])
     }
 
@@ -108,25 +110,15 @@ extension AnalyticsEvent {
         .init("auth_prompted", ["trigger": .string(trigger.rawValue)])
     }
 
-    static var authSMSRequested: Self { .init("auth_sms_requested") }
-
-    static var authSMSVerified: Self { .init("auth_sms_verified") }
-
     static var authAppleStarted: Self { .init("auth_apple_started") }
 
-    static func authCompleted(method: String, wasAnonymous: Bool) -> Self {
-        .init("auth_completed", [
-            "method": .string(method),
-            "was_anonymous": .bool(wasAnonymous),
-        ])
+    /// - Parameter method: "email"（邮箱密码注册/登录）| "apple"
+    static func authCompleted(method: String) -> Self {
+        .init("auth_completed", ["method": .string(method)])
     }
 
     static func authAbandoned(trigger: AuthTrigger) -> Self {
         .init("auth_abandoned", ["trigger": .string(trigger.rawValue)])
-    }
-
-    static func identityMerged(anonymousId: String) -> Self {
-        .init("identity_merged", ["anonymous_id": .string(anonymousId)])
     }
 }
 

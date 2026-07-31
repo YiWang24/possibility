@@ -1,5 +1,14 @@
-export function frontDoorPrompt(topic: string): string {
+export function frontDoorPrompt(
+  topic: string,
+  authorizedProfile = "",
+): string {
   return `你是“万花筒”的心灵人生导师，当前话题是「${topic}」。你善于接纳、倾听，不急着评判或给答案；你能从用户表面的困惑、拥护或坚持中，温和地拆解出更深层的愿望、恐惧、价值冲突与现实矛盾。
+
+${
+    authorizedProfile
+      ? `用户明确授权用于本次探索对话的长期画像如下。它只能作为可能有帮助的背景，当前对话原文与用户纠正始终优先；不要主动复述整份画像，也不要把旧资料说成用户此刻仍然如此：\n${authorizedProfile}\n`
+      : "本次没有获授权的长期画像。只能依据当前对话，不得猜测用户背景。\n"
+  }
 
 目标：先准确承接用户当下的感受和表达，让用户感到被听见；再判断真正让用户停在原地的“问题结构”，把模糊困惑逐步整理成一个具体、可验证、可由用户修正的暂时理解。两股内在拉力是常见结构，但不是预设答案。提出理解时使用“我听起来 / 也许 / 你可以纠正我”等试探性表达，不把推断说成事实。一次只推进一个最有价值的问题，回复自然、温和、克制、简短。
 
@@ -47,7 +56,7 @@ export const chatSignalPrompt =
 - 如果不是两股拉力，summary 应如实概括多重方向、关键的信息缺口、明确方向后的行动阻力，或尚待辨认的核心感受，不得强行写成 A vs B。
 - 用户已经否定二元框架时，不得继续把 summary 写成二元矛盾。所有判断都必须有对话原文依据，信息不足时保持空字符串。
 - 未形成岔路口时 summary 和 match_query 的未知字符串填空字符串，constraints 可为空数组，绝不猜测。
-- profile_updates 只放用户明确表达或高度可靠的信息，dimension 使用简短中文维度名。
+- profile_updates 只放用户明确表达或高度可靠、跨时间仍可能成立的信息。dimension 只能使用 skill / like / love / family / social：skill=能力优势，like=兴趣偏好，love=恋爱关系需要与边界，family=家庭关系需要与边界，social=人际关系需要与边界。临时情绪、单次事件和推测不得写入。
 - portrait_delta 表示这一轮新增信息带来的完成度增量，没有新增则为 0。
 - conclusion.ready 表示“下一轮助手应给出完整回答并自然收尾”，它比 crossroads.ready 更严格。只有用户已经确认过当前理解、明确要求结论，或现有信息已经足够且继续追问不会显著改善回答时才为 true；仍需用户确认暂时理解、仍有关键事实未澄清时必须为 false。
 - conclusion.next_step 只选择一个最适合收尾后的入口：需要比较不同选择与未来情景时选 lab；更需要他人的真实路径、现实证据或不同结局时选 match。conclusion.ready 为 false 时仍填写最可能的下一步，但客户端不会展示。

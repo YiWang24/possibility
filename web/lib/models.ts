@@ -240,6 +240,15 @@ export interface Unlock {
 }
 
 /** POST /match 出参：3 位结局不同的旅人 + 可解释理由 */
+export interface AIContextDisclosure {
+  purpose: "persona" | "chat" | "match" | "lab" | "community";
+  dimensions: string[];
+  /** 本次 AI 上下文对应的画像版本；用于向用户解释和排查跨设备更新。 */
+  profile_revision?: number;
+  /** 本次 AI 上下文对应的用途授权版本。 */
+  permission_revision?: number;
+}
+
 export interface MatchResponse {
   matches: {
     traveler_id: number;
@@ -248,6 +257,7 @@ export interface MatchResponse {
     /** 不适用条件（避免确认偏误） */
     not_applicable: string;
   }[];
+  ai_context?: AIContextDisclosure;
 }
 
 /** POST /list-conversations 出参条目 */
@@ -288,6 +298,7 @@ export interface ServiceOffer {
 
 /** public_profiles 行的 wire 模型（snake_case 仅 avatar_url，jsonb 复用 MyProfile 嵌套形状） */
 export interface RemotePublicProfile {
+  profile_version?: number | null;
   name?: string | null;
   quote?: string | null;
   bio?: string | null;
@@ -296,18 +307,37 @@ export interface RemotePublicProfile {
   trajectory?: TrajectoryNode[] | null;
   services?: ServiceOffer[] | null;
   advice?: AdviceModule[] | null;
-  visibility?: Record<string, boolean> | null;
+  hue?: number | null;
+  age?: number | null;
+  city?: string | null;
+  from_role?: string | null;
+  to_role?: string | null;
+  stage?: string | null;
+  result?: string | null;
+  story_intro?: string | null;
+  story_full?: string | null;
 }
 
 /* ============ GET /get-profile 出参 ============ */
 
-/** profile_dimensions 行：{dimension, tags, source, updated_at} */
-export interface RemoteProfileDimension {
-  /** skill | like | love | family | social | personality */
+/** 画像中的原子事实；公开事实可发布，私人事实只服务于本人。 */
+export interface RemoteProfileFact {
+  id: string;
   dimension: string;
-  tags: string[];
-  /** manual | card_game | ... */
-  source?: string | null;
+  value: string;
+  source: string;
+  source_ref?: string | null;
+  confidence: number;
+  user_confirmed: boolean;
+  visibility: "public" | "private";
+  fact_kind?: string;
+  sensitivity?: "low" | "medium" | "high" | string;
+  support_count?: number;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  last_supported_at?: string | null;
+  status?: "active" | "superseded" | string;
+  observed_at?: string | null;
   updated_at?: string | null;
 }
 
@@ -333,8 +363,14 @@ export interface RemoteCardGame {
 /** GET /get-profile 云端画像全量出参 */
 export interface RemoteProfile {
   portrait_pct: number;
-  dims: Record<string, string>;
-  dimensions: RemoteProfileDimension[];
+  /** 乐观并发控制版本：任何画像事实变更都会递增。 */
+  profile_revision: number;
+  verification: {
+    status: "unverified" | "pending" | "verified" | "rejected";
+    provider: string | null;
+    verified_at: string | null;
+  };
+  facts: RemoteProfileFact[];
   card_games: RemoteCardGame[];
   /** public_profiles 行（未建档为 null） */
   public_profile: RemotePublicProfile | null;
@@ -344,9 +380,6 @@ export interface RemoteProfile {
 
 /** mock 解锁完整经验价格（¥9.9） */
 export const PRICE_UNLOCK_PROFILE = 9.9;
-/** 首次进入没有 profile 行时的本地兜底画像完成度 */
-export const PORTRAIT_INITIAL_PCT = 60;
-
 /* ============ 探索话题（对应原型 topicChips） ============ */
 
 export interface ExploreTopic {

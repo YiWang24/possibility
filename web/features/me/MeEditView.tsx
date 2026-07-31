@@ -10,42 +10,40 @@ import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
 import { hue } from "@/lib/theme";
-import { useMyProfile, myProfileRemotePayload, type MyProfile } from "@/stores/my-profile";
-import type { PersonaItem } from "./MeView";
+import {
+  useMyProfile,
+  myProfileRemotePayload,
+  type MyProfile,
+} from "@/stores/my-profile";
 
-export type MeEditMode = "basic" | "story" | "advice" | "service" | "persona";
+export type MeEditMode = "basic" | "story" | "advice" | "service";
 
 const MODE_META: Record<MeEditMode, { title: string; subtitle: string; save: string; toast: string }> = {
   basic: { title: "编辑基础资料", subtitle: "只修改主页名片上的公开信息", save: "保存基础资料", toast: "已保存基础资料" },
   story: { title: "编辑我的故事", subtitle: "修改故事内容和人生时间线", save: "保存故事", toast: "已保存故事" },
   advice: { title: "编辑经验与建议", subtitle: "自由组合标题、内容与链接", save: "保存建议", toast: "已保存建议" },
   service: { title: "编辑提供服务", subtitle: "设置服务内容、价格和公开状态", save: "保存服务", toast: "已保存服务" },
-  persona: { title: "设置动态画像", subtitle: "选择主页允许公开的画像内容", save: "保存展示设置", toast: "已保存展示设置" },
 };
 
 export function MeEditView({
   mode,
-  personaItems,
   onClose,
 }: {
   mode: MeEditMode | null;
-  personaItems: PersonaItem[];
   onClose: () => void;
 }) {
   return (
     <AnimatePresence>
-      {mode && <EditSheet key={mode} mode={mode} personaItems={personaItems} onClose={onClose} />}
+      {mode && <EditSheet key={mode} mode={mode} onClose={onClose} />}
     </AnimatePresence>
   );
 }
 
 function EditSheet({
   mode,
-  personaItems,
   onClose,
 }: {
   mode: MeEditMode;
-  personaItems: PersonaItem[];
   onClose: () => void;
 }) {
   const showToast = useToast((s) => s.show);
@@ -135,7 +133,6 @@ function EditSheet({
           {mode === "story" && <StoryEditor draft={draft} setDraft={setDraft} patch={patch} patchMeta={patchMeta} />}
           {mode === "advice" && <AdviceEditor draft={draft} setDraft={setDraft} />}
           {mode === "service" && <ServiceEditor draft={draft} setDraft={setDraft} />}
-          {mode === "persona" && <PersonaEditor draft={draft} personaItems={personaItems} setDraft={setDraft} />}
         </div>
 
         {/* 保存栏 */}
@@ -416,38 +413,6 @@ function ServiceEditor({
   );
 }
 
-/* ============ 画像展示开关 ============ */
-
-function PersonaEditor({
-  draft,
-  personaItems,
-  setDraft,
-}: {
-  draft: MyProfile;
-  personaItems: PersonaItem[];
-  setDraft: React.Dispatch<React.SetStateAction<MyProfile>>;
-}) {
-  const toggle = (key: string, on: boolean) =>
-    setDraft((d) => ({ ...d, visibility: { ...d.visibility, [key]: on } }));
-
-  return (
-    <div className="flex flex-col gap-3.5">
-      <SectionTitle title="动态画像展示" note="开启后即在主页展示" />
-      {personaItems.map((item) => (
-        <div key={item.key} className="flex items-center gap-3 rounded-[14px] border border-line bg-card px-3.5 py-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-ink">{item.label}</span>
-            <span className="truncate text-[11px] text-sub">{item.value}</span>
-          </div>
-          <Toggle on={draft.visibility[item.key] ?? false} onChange={(v) => toggle(item.key, v)} />
-        </div>
-      ))}
-      <span className="text-[10.5px] text-faint">原始答案与未开启的画像内容不会出现在主页。</span>
-    </div>
-  );
-}
-
 function newId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
-  return `advice-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  return crypto.randomUUID();
 }

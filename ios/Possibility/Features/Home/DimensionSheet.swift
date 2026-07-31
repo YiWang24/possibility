@@ -8,6 +8,7 @@ struct DimensionSheet: View {
     let key: DimensionKey
     var initialSelected: [String] = []
     var onSave: ([String]) -> Void
+    var onSaveAssessment: ((AssessmentKind, [String], [Int], [String: Int]) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(ToastCenter.self) private var toast
@@ -64,8 +65,8 @@ struct DimensionSheet: View {
         .onAppear { if selected.isEmpty { selected = initialSelected } }
         .fullScreenCover(item: $activeAssessment) { kind in
             // 小工具测评：结果写回当前维度（原型 saveDemoAssessmentToProfile 目标一致）
-            AssessmentFlowView(kind: kind) { _, tags in
-                onSave(tags)
+            AssessmentFlowView(kind: kind) { assessmentKind, tags, answers, scores in
+                onSaveAssessment?(assessmentKind, tags, answers, scores)
                 toast.show("结果已写入画像 · 原始答案默认私密")
                 dismiss()
             }

@@ -17,6 +17,7 @@ import { validateSimulateInputV2 } from "../_shared/validate.ts";
 import { ServerEvent } from "../_shared/events.ts";
 import { runInBackground } from "../_shared/background.ts";
 import { trackEvent } from "../_shared/track.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 type TravelerCandidate = {
   id: number;
@@ -40,6 +41,7 @@ Deno.serve(async (req) => {
     trackEvent(user.id, ServerEvent.SIMULATION_REQUESTED, {
       years: input.years,
     });
+    const aiContext = await loadProfileContext(db, user.id, "lab");
 
     // 候选旅人：用于生成「相似旅人推荐」，模型只能从这些 id 中挑选。
     const { data: travelerRows } = await db
@@ -57,6 +59,9 @@ Deno.serve(async (req) => {
       `问题：${input.question}\n选择：${input.choice}\n推演时间跨度：${input.time_horizon}`;
     if (input.carry_cards && input.carry_cards.length > 0) {
       prompt += `\n底线卡（最不能失去的）：${input.carry_cards.join("、")}`;
+    }
+    if (aiContext.text) {
+      prompt += `\n用户本人档案中的长期画像：\n${aiContext.text}`;
     }
     prompt += `\n\n候选旅人（recommended_traveler_ids 只能取这些 id）：\n${
       JSON.stringify(candidates)
@@ -130,6 +135,11 @@ Deno.serve(async (req) => {
     return jsonResponse({
       ...result,
       recommended_travelers: [],
+      ai_context: {
+        purpose: aiContext.purpose,
+        dimensions: aiContext.dimensions,
+        profile_revision: aiContext.profileRevision,
+      },
     });
   } catch (error) {
     return errorResponse(error, req);

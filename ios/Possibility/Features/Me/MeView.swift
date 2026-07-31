@@ -14,6 +14,7 @@ struct MeView: View {
     /// 编辑公开主页是关键动作：游客先登录（AuthGate 就地弹 LoginSheet）
     @State private var authGate = AuthGateCenter()
     @State private var showDeleteConfirm = false
+    @State private var showProfilePrivacy = false
     @State private var accountBusy = false
 
     var body: some View {
@@ -37,6 +38,9 @@ struct MeView: View {
         }
         .fullScreenCover(item: $editMode, onDismiss: { tick += 1 }) { mode in
             MeEditView(store: store, mode: mode)
+        }
+        .fullScreenCover(isPresented: $showProfilePrivacy, onDismiss: { tick += 1 }) {
+            ProfilePrivacyView(store: store)
         }
         .authGate(authGate)
     }
@@ -149,7 +153,7 @@ struct MeView: View {
         let lifeCards = items.first { $0.key == "life" }?.cards ?? []
         return VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "我的动态画像", trailing: "设置展示", isLink: true) {
-                requestEdit(.persona)
+                showProfilePrivacy = true
             }
             VStack(spacing: 14) {
                 ZStack(alignment: .topLeading) {
@@ -370,11 +374,12 @@ struct MeView: View {
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
     }
 
-    // MARK: 账号（登录状态 / 登录 / 退出 / 注销 —— 技术设计文档 §登录系统）
+    // MARK: 账号（登录邮箱 / 退出 / 注销 —— 技术设计文档 §登录系统）
+    //
+    // 冷启动无会话由 RootView 的登录墙拦下，能走到本页就必然已登录，无需游客分支。
 
     private var accountStatusText: String {
-        if supabase.isAnonymous { return "游客模式" }
-        if let phone = supabase.phoneDisplay { return phone }
+        if let email = supabase.emailDisplay { return email }
         if supabase.isAppleLinked { return "Apple 账号" }
         return "已登录"
     }
@@ -383,44 +388,36 @@ struct MeView: View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader(title: "账号")
             VStack(spacing: 0) {
-                HStack {
-                    Text("登录状态").font(.system(size: 13)).foregroundStyle(Theme.sub)
-                    Spacer()
+                HStack(spacing: 12) {
+                    Text("登录邮箱").font(.system(size: 13)).foregroundStyle(Theme.sub)
+                    Spacer(minLength: 0)
                     Text(accountStatusText)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(supabase.isAnonymous ? Theme.faint : Color(hex: 0x8EE7C8))
+                        .foregroundStyle(Color(hex: 0x8EE7C8))
+                        .lineLimit(1).truncationMode(.middle)
                 }
                 .padding(.horizontal, 16).padding(.vertical, 14)
 
                 Divider().overlay(Theme.line)
 
-                if supabase.isAnonymous {
-                    accountRow("登录 / 注册", tint: Theme.blue) {
-                        // 空续接：仅弹登录页；成功后 authStateChanges 刷新状态行。
-                        // trigger 传 nil：这是用户主动点「登录/注册」，事件清单的
-                        // AuthTrigger 里没有对应取值，不硬塞成 profile_edit 之类。
-                        authGate.require(supabase, trigger: nil) {}
+                accountRow("个人档案与 AI 隐私", tint: Theme.blue) {
+                    showProfilePrivacy = true
+                }
+
+                Divider().overlay(Theme.line)
+
+                accountRow("退出登录", tint: Theme.sub) {
+                    guard !accountBusy else { return }
+                    accountBusy = true
+                    Task {
+                        await supabase.signOut()
+                        accountBusy = false
+                        toast.show("已退出登录")
                     }
-                    HStack(spacing: 6) {
-                        Image(systemName: "info.circle").font(.system(size: 10))
-                        Text("游客数据保存在本机对应的匿名账号里，登录后自动并入正式账号。")
-                    }
-                    .font(.system(size: 10.5)).foregroundStyle(Theme.faint)
-                    .padding(.horizontal, 16).padding(.bottom, 13)
-                } else {
-                    accountRow("退出登录", tint: Theme.sub) {
-                        guard !accountBusy else { return }
-                        accountBusy = true
-                        Task {
-                            await supabase.signOut()
-                            accountBusy = false
-                            toast.show("已退出登录，切换为游客模式")
-                        }
-                    }
-                    Divider().overlay(Theme.line)
-                    accountRow("注销账号", tint: Theme.orange) {
-                        showDeleteConfirm = true
-                    }
+                }
+                Divider().overlay(Theme.line)
+                accountRow("注销账号", tint: Theme.orange) {
+                    showDeleteConfirm = true
                 }
             }
             .kaleidoCard()
@@ -463,6 +460,533 @@ struct MeView: View {
         }
         .buttonStyle(.plain)
         .disabled(accountBusy)
+    }
+}
+
+// MARK: - 个人档案与 AI 隐私
+
+private struct ProfilePrivacyView: View {
+    @Environment(SupabaseService.self) private var supabase
+    @Environment(ToastCenter.self) private var toast
+    @Environment(\.dismiss) private var dismiss
+
+    let store: MyProfileStore
+
+    @State private var snapshot: ProfilePrivacySnapshot?
+    @State private var loading = true
+    @State private var busy: String?
+    @State private var errorText: String?
+    @State private var pendingAction: PendingAction?
+    @State private var exportDocument: ProfileExportDocument?
+
+    private static let dimensionKeys = [
+        "personality", "skill", "like", "love", "family", "social", "life",
+    ]
+    private static let dimensionLabels = [
+        "personality": "人格底色", "skill": "我擅长", "like": "我喜欢",
+        "love": "恋爱关系", "family": "家庭关系", "social": "人际交往",
+        "life": "人生底牌",
+    ]
+    private static let sourceLabels = [
+        "manual": "本人填写", "assessment": "测评结果", "card_game": "卡牌选择",
+        "chat": "探索对话推断", "diary": "日记推断", "legacy": "历史资料",
+    ]
+    private static let purposeLabels = [
+        "persona": "动态 AI 形象", "chat": "探索对话",
+        "match": "相似经历匹配", "lab": "人生实验室",
+        "community": "社区与万花筒",
+    ]
+
+    private enum PendingAction: Identifiable {
+        case dimension(String)
+        case clear
+
+        var id: String {
+            switch self {
+            case let .dimension(value): "dimension:" + value
+            case .clear: "clear"
+            }
+        }
+    }
+
+    private struct ProfileExportDocument: Identifiable {
+        let id = UUID()
+        let json: String
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                if loading, snapshot == nil {
+                    ProgressView("正在读取个人档案…")
+                        .foregroundStyle(Theme.sub)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 100)
+                } else {
+                    VStack(alignment: .leading, spacing: 22) {
+                        if let errorText {
+                            Text(errorText)
+                                .font(.system(size: 11.5))
+                                .foregroundStyle(Theme.orange)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(12)
+                                .background(
+                                    Color(hex: 0xFF7A4D, alpha: 0.1),
+                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                )
+                        }
+                        factsSection
+                        proposalsSection
+                        receiptsSection
+                        dataSection
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 20)
+                }
+            }
+            .scrollIndicators(.hidden)
+            .screenBackground()
+            .navigationTitle("个人档案与 AI 隐私")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("关闭") { dismiss() }
+                        .foregroundStyle(Theme.blue)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("刷新") { Task { await load() } }
+                        .foregroundStyle(Theme.blue)
+                        .disabled(loading || busy != nil)
+                }
+            }
+        }
+        .task { await load() }
+        .confirmationDialog(
+            confirmationTitle,
+            isPresented: Binding(
+                get: { pendingAction != nil },
+                set: { if !$0 { pendingAction = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("确认", role: .destructive) {
+                guard let action = pendingAction else { return }
+                pendingAction = nil
+                Task { await run(action) }
+            }
+            Button("取消", role: .cancel) {}
+        } message: {
+            Text(confirmationMessage)
+        }
+        .sheet(item: $exportDocument) { document in
+            NavigationStack {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("档案已准备完成")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(Theme.ink)
+                    Text("JSON 包含画像事实、来源与最小化 AI 使用记录。你可以保存到“文件”或发送给自己。")
+                        .font(.system(size: 13))
+                        .lineSpacing(5)
+                        .foregroundStyle(Theme.sub)
+                    ShareLink(item: document.json) {
+                        Label("分享 / 保存 JSON", systemImage: "square.and.arrow.up")
+                            .font(.system(size: 14, weight: .semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 13)
+                            .foregroundStyle(.white)
+                            .background(Theme.buttonGradient, in: Capsule())
+                    }
+                    Spacer()
+                }
+                .padding(22)
+                .screenBackground()
+                .navigationTitle("导出个人档案")
+                .navigationBarTitleDisplayMode(.inline)
+            }
+            .presentationDetents([.medium])
+        }
+    }
+
+    private var groupedFacts: [String: [ProfileFact]] {
+        Dictionary(grouping: snapshot?.facts ?? [], by: \.dimension)
+    }
+
+    private var factsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("画像事实")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Theme.ink)
+                    Text("版本 \(snapshot?.profileRevision ?? 0) · 本人确认与 AI 推断分开保存")
+                        .font(.system(size: 10.5))
+                        .foregroundStyle(Theme.faint)
+                }
+                Spacer()
+            }
+
+            if groupedFacts.isEmpty {
+                Text("还没有画像事实")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.faint)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 28)
+                    .kaleidoCard()
+            } else {
+                ForEach(Self.dimensionKeys.filter { groupedFacts[$0]?.isEmpty == false }, id: \.self) { dimension in
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text(Self.dimensionLabels[dimension] ?? dimension)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(Theme.ink)
+                            Spacer()
+                            Button("删除整个维度") {
+                                pendingAction = .dimension(dimension)
+                            }
+                            .font(.system(size: 10.5))
+                            .foregroundStyle(Theme.orange)
+                            .disabled(busy != nil)
+                        }
+
+                        ForEach(groupedFacts[dimension] ?? []) { fact in
+                            HStack(alignment: .top, spacing: 10) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(fact.value)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(Theme.ink)
+                                    Text("\(Self.sourceLabels[fact.source] ?? fact.source) · 置信度 \(Int((fact.confidence * 100).rounded()))%")
+                                        .font(.system(size: 9.5))
+                                        .foregroundStyle(Theme.faint)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                                if fact.userConfirmed {
+                                    Text("已确认")
+                                        .font(.system(size: 9.5, weight: .semibold))
+                                        .foregroundStyle(Color(hex: 0x8EE7C8))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 5)
+                                        .background(Color(hex: 0x3ED9A4, alpha: 0.12), in: Capsule())
+                                } else {
+                                    Button("确认准确") {
+                                        Task { await confirm(fact) }
+                                    }
+                                    .font(.system(size: 9.5, weight: .semibold))
+                                    .foregroundStyle(Theme.blue)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 5)
+                                    .background(Color(hex: 0x5E96FF, alpha: 0.12), in: Capsule())
+                                    .disabled(busy != nil)
+                                }
+                                Button {
+                                    Task { await setVisibility(fact) }
+                                } label: {
+                                    Text(fact.visibility == "public" ? "公开" : "私人")
+                                        .font(.system(size: 9.5, weight: .semibold))
+                                        .foregroundStyle(
+                                            fact.visibility == "public"
+                                                ? Color(hex: 0x8EE7C8)
+                                                : Theme.sub
+                                        )
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 5)
+                                        .background(
+                                            fact.visibility == "public"
+                                                ? Color(hex: 0x3ED9A4, alpha: 0.12)
+                                                : Theme.card,
+                                            in: Capsule()
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(busy != nil)
+                            }
+                            .padding(11)
+                            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                    }
+                    .padding(14)
+                    .kaleidoCard()
+                }
+            }
+        }
+    }
+
+    private var receiptsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("最近 AI 使用记录")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                Text("只记录用途和维度，不保存发送给模型的原文")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.faint)
+            }
+
+            if snapshot?.accessReceipts.isEmpty != false {
+                Text("暂无长期画像使用记录")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.faint)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .kaleidoCard()
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array((snapshot?.accessReceipts ?? []).prefix(20).enumerated()), id: \.element.id) { index, receipt in
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack {
+                                Text(Self.purposeLabels[receipt.purpose] ?? receipt.purpose)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(Theme.ink)
+                                Spacer()
+                                Text(receipt.createdAt.replacingOccurrences(of: "T", with: " ").prefix(16))
+                                    .font(.system(size: 9.5))
+                                    .foregroundStyle(Theme.faint)
+                            }
+                            Text("使用：\(receipt.dimensions.map { Self.dimensionLabels[$0] ?? $0 }.joined(separator: "、")) · 版本 \(receipt.profileRevision)")
+                                .font(.system(size: 10.5))
+                                .foregroundStyle(Theme.sub)
+                            Text("公开 \(receipt.publicFactCount) 条 · 私人 \(receipt.privateFactCount) 条")
+                                .font(.system(size: 9.5))
+                                .foregroundStyle(Theme.faint)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        if index < min((snapshot?.accessReceipts.count ?? 0), 20) - 1 {
+                            Divider().overlay(Theme.line)
+                        }
+                    }
+                }
+                .kaleidoCard()
+            }
+        }
+    }
+
+    private var proposalsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("待你确认的理解")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                Text("Chat 和日记只能提出候选，不会直接覆盖正式画像")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.faint)
+            }
+            if snapshot?.proposals.isEmpty != false {
+                Text("暂无待确认内容")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.faint)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 26)
+                    .kaleidoCard()
+            } else {
+                ForEach(snapshot?.proposals ?? []) { proposal in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(proposal.value)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Theme.ink)
+                        Text("\(Self.dimensionLabels[proposal.dimension] ?? proposal.dimension) · \(Self.sourceLabels[proposal.sourceType] ?? proposal.sourceType) · 置信度 \(Int((proposal.confidence * 100).rounded()))%")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(Theme.faint)
+                        HStack(spacing: 8) {
+                            Button("不是这样") {
+                                Task { await review(proposal, accept: false) }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .background(Theme.raised, in: Capsule())
+                            Button("确认加入") {
+                                Task { await review(proposal, accept: true) }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
+                            .foregroundStyle(.white)
+                            .background(Theme.buttonGradient, in: Capsule())
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .disabled(busy != nil)
+                    }
+                    .padding(14)
+                    .kaleidoCard()
+                }
+            }
+        }
+    }
+
+    private var dataSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("数据管理")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                Text("公开事实会进入公开主页；私人事实只服务于你本人")
+                    .font(.system(size: 10.5))
+                    .foregroundStyle(Theme.faint)
+            }
+            VStack(spacing: 0) {
+                privacyAction(
+                    "导出完整个人档案",
+                    detail: "包含事实、来源和使用记录"
+                ) {
+                    Task { await exportProfile() }
+                }
+                Divider().overlay(Theme.line)
+                privacyAction(
+                    "清空全部画像",
+                    detail: "删除公开和私人事实、卡牌结果及 AI 形象；主页基础资料保留",
+                    destructive: true
+                ) {
+                    pendingAction = .clear
+                }
+            }
+            .kaleidoCard()
+        }
+    }
+
+    private func privacyAction(
+        _ title: String,
+        detail: String,
+        destructive: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(destructive ? Theme.orange : Theme.ink)
+                    Text(detail)
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(Theme.faint)
+                }
+                Spacer()
+                if busy != nil {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Text("›").foregroundStyle(Theme.faint)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 13)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(busy != nil)
+    }
+
+    private var confirmationTitle: String {
+        switch pendingAction {
+        case .dimension: "删除整个画像维度？"
+        case .clear: "清空全部画像？"
+        case nil: "确认操作"
+        }
+    }
+
+    private var confirmationMessage: String {
+        switch pendingAction {
+        case let .dimension(dimension):
+            "将永久删除“\(Self.dimensionLabels[dimension] ?? dimension)”及其来源记录。"
+        case .clear:
+            "全部画像事实将永久删除；你的主页基础资料不会受到影响。"
+        case nil:
+            ""
+        }
+    }
+
+    @MainActor
+    private func load() async {
+        loading = true
+        errorText = nil
+        do {
+            snapshot = try await supabase.fetchProfilePrivacy()
+        } catch {
+            errorText = "暂时无法读取隐私设置，请稍后重试。"
+        }
+        loading = false
+    }
+
+    @MainActor
+    private func confirm(_ fact: ProfileFact) async {
+        guard let revision = snapshot?.profileRevision else { return }
+        busy = "fact:" + fact.id.uuidString
+        errorText = nil
+        do {
+            try await supabase.confirmProfileFact(fact.id, expectedRevision: revision)
+            await load()
+        } catch {
+            errorText = "确认失败，画像可能已在其他设备更新，请刷新后重试。"
+        }
+        busy = nil
+    }
+
+    @MainActor
+    private func review(_ proposal: ProfileProposal, accept: Bool) async {
+        guard let revision = snapshot?.profileRevision else { return }
+        busy = "proposal:" + proposal.id.uuidString
+        errorText = nil
+        do {
+            try await supabase.reviewProfileProposal(
+                proposal.id,
+                accept: accept,
+                expectedRevision: revision
+            )
+            await load()
+        } catch {
+            errorText = "处理失败，画像可能已在其他设备更新，请刷新后重试。"
+        }
+        busy = nil
+    }
+
+    @MainActor
+    private func setVisibility(_ fact: ProfileFact) async {
+        guard let revision = snapshot?.profileRevision else { return }
+        busy = "visibility:" + fact.id.uuidString
+        errorText = nil
+        do {
+            try await supabase.setProfileFactVisibility(
+                fact.id,
+                visibility: fact.visibility == "public" ? "private" : "public",
+                expectedRevision: revision
+            )
+            await load()
+            await store.refreshFacts(using: supabase)
+        } catch {
+            errorText = "修改失败，画像可能已在其他设备更新，请刷新后重试。"
+        }
+        busy = nil
+    }
+
+    @MainActor
+    private func run(_ action: PendingAction) async {
+        guard let revision = snapshot?.profileRevision else { return }
+        busy = action.id
+        errorText = nil
+        do {
+            switch action {
+            case let .dimension(dimension):
+                try await supabase.deleteProfileDimension(dimension, expectedRevision: revision)
+                store.clearDimensionCache(dimension)
+            case .clear:
+                try await supabase.clearProfile(expectedRevision: revision)
+                store.clearProfileCache()
+            }
+            await load()
+            toast.show("设置已更新")
+        } catch {
+            errorText = "操作失败，画像可能已更新；请刷新后重试。"
+        }
+        busy = nil
+    }
+
+    @MainActor
+    private func exportProfile() async {
+        busy = "export"
+        errorText = nil
+        do {
+            exportDocument = ProfileExportDocument(json: try await supabase.exportProfileData())
+        } catch {
+            errorText = "导出失败，请稍后重试。"
+        }
+        busy = nil
     }
 }
 

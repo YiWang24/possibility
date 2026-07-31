@@ -51,9 +51,11 @@ struct PostHogBackend: AnalyticsBackend {
     }
 
     func alias(previousId: String, newId: String) {
-        // 规则 3（Apple 登录换 user_id）。PostHog 的 alias 只收一个参数：
-        // 它把**当前 distinct_id**（此刻仍是 previousId）与传入的 newId 标成同一人，
-        // 所以必须在 identify(newId) 之前调用 —— 顺序由 AnalyticsIdentityTransition 保证。
+        // 匿名模式停用后，认证路径上已经没有调用方（冷启动即登录墙，第一个 user_id
+        // 就是正式账号，没有前序身份可接）。保留为通用原语，供日后恢复匿名/合并时使用。
+        //
+        // PostHog 的 alias 只收一个参数：它把**当前 distinct_id**（此刻仍是 previousId）
+        // 与传入的 newId 标成同一人，所以调用方必须在 identify(newId) 之前调用。
         //
         // alias 先建立 current distinct_id → newId 的服务端关联，随后 identify(newId)
         // 再切换本地身份并更新 person properties；两步各司其职，不能省略或倒序。

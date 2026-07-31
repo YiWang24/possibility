@@ -182,6 +182,24 @@ Deno.test("saveDimension rejects empty tags", () => {
   );
 });
 
+Deno.test("saveDimension only accepts user-authored sources", () => {
+  const assessment = validateSaveDimensionInput({
+    dimension: "personality",
+    tags: ["审慎"],
+    source: "assessment",
+  });
+  assert(assessment.source === "assessment");
+  assertHttpError(
+    () =>
+      validateSaveDimensionInput({
+        dimension: "skill",
+        tags: ["推断内容"],
+        source: "chat",
+      }),
+    "INVALID_INPUT",
+  );
+});
+
 Deno.test("saveCardGame accepts valid input", () => {
   const input = validateSaveCardGameInput({
     kind: "life",
@@ -501,13 +519,13 @@ Deno.test("diary requires a closed input_method value", () => {
   );
 });
 
-Deno.test("saveDimension honors custom source and rejects >20 tags", () => {
+Deno.test("saveDimension honors assessment source and rejects >20 tags", () => {
   const input = validateSaveDimensionInput({
     dimension: "personality",
     tags: ["内向"],
-    source: "card_game",
+    source: "assessment",
   });
-  assert(input.source === "card_game");
+  assert(input.source === "assessment");
   assertHttpError(
     () =>
       validateSaveDimensionInput({

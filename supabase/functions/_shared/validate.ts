@@ -172,7 +172,7 @@ export function validateDiaryInput(value: unknown): DiaryInput {
 export type SaveDimensionInput = {
   dimension: string;
   tags: string[];
-  source?: string;
+  source: "manual" | "assessment";
 };
 
 export function validateSaveDimensionInput(value: unknown): SaveDimensionInput {
@@ -203,6 +203,13 @@ export function validateSaveDimensionInput(value: unknown): SaveDimensionInput {
   }
   const validatedTags = tags.map((t, i) => string(t, `tags[${i}]`, 50)!);
   const source = string(body.source, "source", 30, false) ?? "manual";
+  if (source !== "manual" && source !== "assessment") {
+    throw new HttpError(
+      400,
+      "INVALID_INPUT",
+      "source 必须是 manual 或 assessment。",
+    );
+  }
   return { dimension, tags: validatedTags, source };
 }
 

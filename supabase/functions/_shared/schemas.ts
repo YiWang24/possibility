@@ -420,7 +420,10 @@ export const chatSignalSchema = {
       items: {
         type: "object",
         properties: {
-          dimension: { type: "string", minLength: 1 },
+          dimension: {
+            type: "string",
+            enum: ["skill", "like", "love", "family", "social"],
+          },
           value: { type: "string", minLength: 1 },
         },
         required: ["dimension", "value"],

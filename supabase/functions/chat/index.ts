@@ -31,6 +31,7 @@ import { sseEvent, sseResponse } from "../_shared/sse.ts";
 import { errorText, runInBackground } from "../_shared/background.ts";
 import { trackEvent } from "../_shared/track.ts";
 import { validateChatInput } from "../_shared/validate.ts";
+import { loadProfileContext } from "../_shared/profile-context.ts";
 
 function conversationText(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
@@ -152,7 +153,10 @@ Deno.serve(async (req) => {
         "该对话已结束，请新建对话。",
       );
     }
-    const history = await loadHistory(db, conversation.id);
+    const [history, aiContext] = await Promise.all([
+      loadHistory(db, conversation.id),
+      loadProfileContext(db, user.id, "chat"),
+    ]);
     await insertMessage(db, conversation.id, "user", input.message);
 
     const messages: Array<{ role: "user" | "assistant"; content: string }> = [
@@ -214,7 +218,7 @@ Deno.serve(async (req) => {
             // 用 Vercel AI SDK 流式生成回复：短超时 + 空则重试，避开偶发挂起窗口。
             const assistantText = await streamChatReply({
               model: runtimeConfig.chatModel,
-              system: frontDoorPrompt(conversation.topic),
+              system: frontDoorPrompt(conversation.topic, aiContext.text),
               messages,
               maxOutputTokens: 1_024,
               cancelSignal: cancelController.signal,
@@ -295,6 +299,11 @@ Deno.serve(async (req) => {
                 conclusion: signal.conclusion,
                 next_actions: nextActions,
                 profile,
+                ai_context: {
+                  purpose: aiContext.purpose,
+                  dimensions: aiContext.dimensions,
+                  profile_revision: aiContext.profileRevision,
+                },
                 high_risk: signal.high_risk,
                 signal_degraded: signalResult.degraded,
               }, "done"));
