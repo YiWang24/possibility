@@ -18,6 +18,7 @@
 		13DEC256816F24F5543582D1 /* AnalyticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A208138BF922934372D678 /* AnalyticsTests.swift */; };
 		16DBCAB9BD3183A235A5897A /* AsyncTimeout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00A8EA0211BA0086E22D165 /* AsyncTimeout.swift */; };
 		1B6EC8AB900C4E63384F54E5 /* AnalyticsEvent+Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B268159974A678B6A714A56 /* AnalyticsEvent+Catalog.swift */; };
+		1BD8BEA038F18F90E846FE7A /* AuthErrorMessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736E8B6CAA00A257FFE7D83D /* AuthErrorMessageTests.swift */; };
 		1E850B5E9CD65299DED6CBE5 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8721D78ED6F25C0C88AA31 /* Theme.swift */; };
 		1F08856B12E4529AE27A5311 /* AuthGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1248A5434ABC8B9883F5E347 /* AuthGate.swift */; };
 		22D3A2C9AA3CD268CF301772 /* KaleidoscopeDrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E10DE6C099E69BB0F3F77C1 /* KaleidoscopeDrawView.swift */; };
@@ -25,7 +26,6 @@
 		255F3FAC100045FDD33B318D /* CardIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 787FBC923D38D9AC621071DF /* CardIconTests.swift */; };
 		27267E91C34A60C559F306D4 /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2F9977BB46AD27AC3EDBF0 /* ContentModels.swift */; };
 		27851D89398520A277F50AE8 /* ChatStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A66E7957C018F28AE0D5320 /* ChatStreamClient.swift */; };
-		282D9AFC450DC4DED27F3558 /* AnalyticsIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = D52D71415C8415DCBA1B449C /* AnalyticsIdentity.swift */; };
 		31840B944EB082620402CFB8 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D42332B2DD677F8FDB1F33 /* PaywallView.swift */; };
 		3234F079D7394368B20B0FB4 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93FD99C770031C1C3DC0D15 /* HomeModel.swift */; };
 		33D70AA22000628C8AD028AE /* AppStoreScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64161A4A56C068BECFE28DF /* AppStoreScreenshots.swift */; };
@@ -40,6 +40,7 @@
 		5EC91FC62E16B29EBA88C95F /* OrbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51129B1B7F87093065CCC8EC /* OrbView.swift */; };
 		6224F195BDA26920A43AE176 /* AppleSignInCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30B7B6ADAB6F296D90BE9A0D /* AppleSignInCoordinator.swift */; };
 		65ACCF758E1D7AA76C96AA2A /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = F13E8EF1CA4AB0E2FC5842A8 /* Sentry */; };
+		72F5CF76B70A42CE42B8FBEC /* SupabaseService+AuthErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A56D98E1CFBD988DBCB17240 /* SupabaseService+AuthErrors.swift */; };
 		772DE1B3FCA1C70DDF7DE3CD /* MeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351A794A055BA499DC309163 /* MeView.swift */; };
 		7B74C2B7F98E8D5D8CF4DFD4 /* WaveformView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EBC846C3ACF38AAEBAFBD79 /* WaveformView.swift */; };
 		7E2953E80851F2B283F5F1B9 /* CardGameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = FABE6A15C76DC9D96B714A13 /* CardGameEngine.swift */; };
@@ -137,6 +138,7 @@
 		6E10DE6C099E69BB0F3F77C1 /* KaleidoscopeDrawView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KaleidoscopeDrawView.swift; sourceTree = "<group>"; };
 		72172BC567A5EA335C0F3585 /* SentryBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentryBackend.swift; sourceTree = "<group>"; };
 		736BF2D8C2A484E4C55AB6F8 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
+		736E8B6CAA00A257FFE7D83D /* AuthErrorMessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthErrorMessageTests.swift; sourceTree = "<group>"; };
 		7735138ACE8A745DC2F66C92 /* CardIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardIcon.swift; sourceTree = "<group>"; };
 		77F3CF53344B4A63CD764555 /* PossibilityTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PossibilityTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		787FBC923D38D9AC621071DF /* CardIconTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardIconTests.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 		9FE5CA51D6824FF070E68648 /* SupabaseTimestamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseTimestamp.swift; sourceTree = "<group>"; };
 		A19616E41BB812662799579F /* UserModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserModels.swift; sourceTree = "<group>"; };
 		A2D2C48FAB6AFD1BC799A510 /* MeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeModel.swift; sourceTree = "<group>"; };
+		A56D98E1CFBD988DBCB17240 /* SupabaseService+AuthErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SupabaseService+AuthErrors.swift"; sourceTree = "<group>"; };
 		A6D42332B2DD677F8FDB1F33 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		AB0FD2C967552C2704670360 /* DemoData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoData.swift; sourceTree = "<group>"; };
 		B3A208138BF922934372D678 /* AnalyticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsTests.swift; sourceTree = "<group>"; };
@@ -171,7 +174,6 @@
 		C385F2E0EE2271D758BDC9C9 /* MyProfileModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyProfileModels.swift; sourceTree = "<group>"; };
 		CA165C8E6F2A77F2CC442B9F /* HomeCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeCards.swift; sourceTree = "<group>"; };
 		D06D2C120F718C83B1F4FA00 /* CardGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameView.swift; sourceTree = "<group>"; };
-		D52D71415C8415DCBA1B449C /* AnalyticsIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsIdentity.swift; sourceTree = "<group>"; };
 		D64161A4A56C068BECFE28DF /* AppStoreScreenshots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreScreenshots.swift; sourceTree = "<group>"; };
 		D6B4014AD989DB0ACED82804 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		D93FD99C770031C1C3DC0D15 /* HomeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeModel.swift; sourceTree = "<group>"; };
@@ -274,6 +276,7 @@
 			isa = PBXGroup;
 			children = (
 				B3A208138BF922934372D678 /* AnalyticsTests.swift */,
+				736E8B6CAA00A257FFE7D83D /* AuthErrorMessageTests.swift */,
 				ED1FB90120DA8234D01EACDA /* CardGameTests.swift */,
 				787FBC923D38D9AC621071DF /* CardIconTests.swift */,
 			);
@@ -306,7 +309,6 @@
 			children = (
 				24568246CB58D3ADCCB020B2 /* Analytics.swift */,
 				3B268159974A678B6A714A56 /* AnalyticsEvent+Catalog.swift */,
-				D52D71415C8415DCBA1B449C /* AnalyticsIdentity.swift */,
 				415D71DDB0A6299F5C17EC5F /* AnalyticsLog.swift */,
 				DDFF75D5E912238827A3C43E /* PostHogBackend.swift */,
 				72172BC567A5EA335C0F3585 /* SentryBackend.swift */,
@@ -393,6 +395,7 @@
 				7A66E7957C018F28AE0D5320 /* ChatStreamClient.swift */,
 				82499AB284DEE9B04F47B7DC /* SupabaseService.swift */,
 				6C226F3A187343313B576559 /* SupabaseService+Analytics.swift */,
+				A56D98E1CFBD988DBCB17240 /* SupabaseService+AuthErrors.swift */,
 			);
 			path = Network;
 			sourceTree = "<group>";
@@ -492,6 +495,8 @@
 				A51D91BEDC619FAC60BF5921 /* PBXTargetDependency */,
 			);
 			name = PossibilityTests;
+			packageProductDependencies = (
+			);
 			productName = PossibilityTests;
 			productReference = 77F3CF53344B4A63CD764555 /* PossibilityTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -508,6 +513,8 @@
 				E1F2C6E905A61E2B19AA4023 /* PBXTargetDependency */,
 			);
 			name = PossibilityUITests;
+			packageProductDependencies = (
+			);
 			productName = PossibilityUITests;
 			productReference = 0E16FCF69CBB73D2AB9852FF /* PossibilityUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -578,8 +585,8 @@
 			projectRoot = "";
 			targets = (
 				C2474A909F3B0387E61B95D1 /* Possibility */,
-				651A2602E3AA0C22DBDB2DCE /* PossibilityTests */,
 				97C3EF562E8333EE867AAEF9 /* PossibilityUITests */,
+				651A2602E3AA0C22DBDB2DCE /* PossibilityTests */,
 			);
 		};
 /* End PBXProject section */
@@ -602,7 +609,6 @@
 			files = (
 				4BCDC83A1531F0BB84567375 /* Analytics.swift in Sources */,
 				1B6EC8AB900C4E63384F54E5 /* AnalyticsEvent+Catalog.swift in Sources */,
-				282D9AFC450DC4DED27F3558 /* AnalyticsIdentity.swift in Sources */,
 				C8DA54DB55EF9182FBA8FB32 /* AnalyticsLog.swift in Sources */,
 				12BB5C70922DCCEFB89AB46E /* AppConfig.swift in Sources */,
 				6224F195BDA26920A43AE176 /* AppleSignInCoordinator.swift in Sources */,
@@ -663,6 +669,7 @@
 				B6F11D3744D196A5ED2D96CB /* Shaders.metal in Sources */,
 				D249E82CEE6CD0A3B84C02D4 /* SupabaseEventBackend.swift in Sources */,
 				9028629F1611A9F73087164A /* SupabaseService+Analytics.swift in Sources */,
+				72F5CF76B70A42CE42B8FBEC /* SupabaseService+AuthErrors.swift in Sources */,
 				C18D90D9775C8FA60B893FC3 /* SupabaseService.swift in Sources */,
 				83533EF621F6867BF037A0F2 /* SupabaseTimestamp.swift in Sources */,
 				1E850B5E9CD65299DED6CBE5 /* Theme.swift in Sources */,
@@ -686,6 +693,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				13DEC256816F24F5543582D1 /* AnalyticsTests.swift in Sources */,
+				1BD8BEA038F18F90E846FE7A /* AuthErrorMessageTests.swift in Sources */,
 				A77CBCE5DCCE295A0EBB91E1 /* CardGameTests.swift in Sources */,
 				255F3FAC100045FDD33B318D /* CardIconTests.swift in Sources */,
 			);

@@ -3,133 +3,186 @@ import AuthenticationServices
 
 // MARK: - 登录页（技术设计文档 §登录系统）
 //
-// 手机验证码（两步式：输号码 → 输验证码）+ Apple 登录；微信按钮位预留（资质到位后启用）。
-// 匿名数据处理：手机号走 updateUser 原地转正（user_id 不变）；Apple / 已注册手机号
-// 走新会话 + merge-anonymous 迁移，均由 SupabaseService 封装，本视图只管交互。
+// 邮箱 + 密码（登录 / 注册切 tab，字段完全一致）+ Apple 登录；微信按钮位预留。
+// 同一个视图两种呈现：
+//   .wall  —— 冷启动无会话时的全屏登录墙（RootView 分流，见 PossibilityApp）
+//   .sheet —— 会话中途过期时 AuthGate 就地弹出的补登录
+// 差别只在头部文案与外框，表单与第三方登录完全共用。
 
 struct LoginSheet: View {
-    /// 登录成功回调（AuthGate 继续被拦截的动作）
+
+    enum Presentation { case wall, sheet }
+
+    var presentation: Presentation = .sheet
+    /// 登录成功回调（AuthGate 继续被拦截的动作；登录墙由 isAuthenticated 自动切走）
     var onSuccess: () -> Void = {}
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SupabaseService.self) private var supabase
 
-    private enum Step { case phone, code }
-    @State private var step: Step = .phone
-    @State private var phone = ""
-    @State private var code = ""
-    @State private var flow: SupabaseService.PhoneOTPFlow = .linkAnonymous
+    private enum Mode { case signIn, signUp }
+    @State private var mode: Mode = .signIn
+    @State private var email = ""
+    @State private var password = ""
+    @State private var showPassword = false
     @State private var busy = false
     @State private var errorText: String?
-    @State private var resendCountdown = 0
+    @State private var noticeText: String?
     @State private var appleNonce = ""
+
+    /// 与 config.toml 的 minimum_password_length 保持一致
+    private static let minPasswordLength = 6
 
     /// 微信登录预留位：开放平台资质到位、wechat-login 函数上线后置 true
     private let wechatEnabled = false
 
-    private var phoneValid: Bool {
-        let digits = phone.filter(\.isNumber)
-        return digits.count == 11 && digits.hasPrefix("1")
+    private var emailValid: Bool {
+        let trimmed = email.trimmingCharacters(in: .whitespaces)
+        guard let at = trimmed.firstIndex(of: "@"), at != trimmed.startIndex else { return false }
+        let domain = trimmed[trimmed.index(after: at)...]
+        return !domain.isEmpty && domain.contains(".") && !domain.hasSuffix(".") && !domain.contains("@")
     }
-    private var codeValid: Bool { code.filter(\.isNumber).count == 6 }
+    private var passwordValid: Bool { password.count >= Self.minPasswordLength }
+    private var canSubmit: Bool { emailValid && passwordValid && !busy }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
-
-                switch step {
-                case .phone: phoneStep
-                case .code: codeStep
-                }
+                modePicker
+                fields
+                if let errorText { hint(errorText, tint: Theme.orange) }
+                if let noticeText { hint(noticeText, tint: Theme.blue) }
+                submitButton
 
                 divider
 
                 appleButton
                 if wechatEnabled { wechatButton }
 
-                Text("登录即代表同意用户协议与隐私政策。游客数据在登录后自动并入你的账号。")
+                Text("继续即代表同意用户协议与隐私政策。")
                     .font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint)
             }
-            .padding(.horizontal, 22).padding(.top, 24).padding(.bottom, 26)
+            .padding(.horizontal, 22).padding(.top, presentation == .wall ? 56 : 24).padding(.bottom, 26)
         }
         .scrollIndicators(.hidden)
+        .scrollDismissesKeyboard(.interactively)
     }
 
     // MARK: 头部
 
+    @ViewBuilder
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("登录 Possibility").font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.ink)
-            Text("发布、回应与公开主页需要一个可以找回的账号。")
-                .font(.system(size: 11.5)).foregroundStyle(Theme.sub)
+        switch presentation {
+        case .wall:
+            // 登录墙：靠尺度对比与一道极光竖线立住品牌，不用居中大标题的套路版式
+            HStack(alignment: .top, spacing: 14) {
+                Capsule().fill(Theme.aurora).frame(width: 3).frame(maxHeight: .infinity)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("POSSIBILITY · 万花筒")
+                        .font(.system(size: 11)).tracking(3.5).foregroundStyle(Theme.faint)
+                    Text("认识你自己，\n推演你的人生可能性")
+                        .font(.system(size: 28, weight: .bold)).tracking(0.6).lineSpacing(6)
+                        .foregroundStyle(Theme.ink)
+                    Text("画像、推演与社区都绑定在你的账号上。用邮箱注册一个可以找回的身份，换设备也能接着往下走。")
+                        .font(.system(size: 12.5)).lineSpacing(6).foregroundStyle(Theme.sub)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 8)
+
+        case .sheet:
+            VStack(alignment: .leading, spacing: 6) {
+                Text("登录 Possibility").font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.ink)
+                Text("会话已过期，重新登录后继续刚才的操作。")
+                    .font(.system(size: 11.5)).foregroundStyle(Theme.sub)
+            }
         }
     }
 
-    // MARK: 手机号步骤
+    // MARK: 登录 / 注册切换
 
-    private var phoneStep: some View {
+    private var modePicker: some View {
+        HStack(spacing: 7) {
+            modeTab("登录", value: .signIn)
+            modeTab("注册", value: .signUp)
+        }
+    }
+
+    private func modeTab(_ title: String, value: Mode) -> some View {
+        let on = mode == value
+        return Button {
+            mode = value
+            errorText = nil
+            noticeText = nil
+        } label: {
+            Text(title)
+                .font(.system(size: 12.5, weight: on ? .semibold : .regular))
+                .foregroundStyle(on ? Color.white : Theme.sub)
+                .frame(maxWidth: .infinity).padding(.vertical, 9)
+                .background(on ? AnyShapeStyle(Theme.buttonGradient) : AnyShapeStyle(Theme.raised), in: Capsule())
+        }
+        .buttonStyle(PressScaleStyle())
+    }
+
+    // MARK: 输入
+
+    private var fields: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("手机号登录").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.sub)
-            HStack(spacing: 10) {
-                Text("+86").font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
-                TextField("", text: $phone, prompt: Text("请输入手机号").foregroundStyle(Theme.faint))
+            field {
+                TextField("", text: $email, prompt: Text("邮箱地址").foregroundStyle(Theme.faint))
                     .font(.system(size: 14)).foregroundStyle(Theme.ink)
-                    .keyboardType(.numberPad)
-                    .textContentType(.telephoneNumber)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
             }
+            field {
+                Group {
+                    if showPassword {
+                        TextField("", text: $password, prompt: passwordPrompt)
+                    } else {
+                        SecureField("", text: $password, prompt: passwordPrompt)
+                    }
+                }
+                .font(.system(size: 14)).foregroundStyle(Theme.ink)
+                .textContentType(mode == .signUp ? .newPassword : .password)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.go)
+                .onSubmit { submit() }
+
+                Button(showPassword ? "隐藏" : "显示") { showPassword.toggle() }
+                    .font(.system(size: 11.5)).foregroundStyle(Theme.sub)
+                    .buttonStyle(PressScaleStyle())
+                    .accessibilityLabel(showPassword ? "隐藏密码" : "显示密码")
+            }
+        }
+    }
+
+    private var passwordPrompt: Text {
+        Text("密码（至少 \(Self.minPasswordLength) 位）").foregroundStyle(Theme.faint)
+    }
+
+    private func field<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        HStack(spacing: 10) { content() }
             .padding(.horizontal, 14).padding(.vertical, 13)
             .background(Theme.raised, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
-
-            if let errorText { hint(errorText) }
-
-            Button(busy ? "发送中…" : "获取验证码") { sendCode() }
-                .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
-                .frame(maxWidth: .infinity).padding(.vertical, 14)
-                .background(phoneValid && !busy ? AnyShapeStyle(Theme.buttonGradient) : AnyShapeStyle(Theme.raised), in: Capsule())
-                .buttonStyle(PressScaleStyle())
-                .disabled(!phoneValid || busy)
-        }
     }
 
-    // MARK: 验证码步骤
+    private var submitButton: some View {
+        Button(submitTitle) { submit() }
+            .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            .frame(maxWidth: .infinity).padding(.vertical, 14)
+            .background(canSubmit ? AnyShapeStyle(Theme.buttonGradient) : AnyShapeStyle(Theme.raised), in: Capsule())
+            .buttonStyle(PressScaleStyle())
+            .disabled(!canSubmit)
+    }
 
-    private var codeStep: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("验证码已发送至 +86 \(phone)")
-                    .font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.sub)
-                Spacer()
-                Button("换个号码") {
-                    step = .phone
-                    code = ""
-                    errorText = nil
-                }
-                .font(.system(size: 11.5)).foregroundStyle(Theme.blue)
-            }
-            TextField("", text: $code, prompt: Text("6 位验证码").foregroundStyle(Theme.faint))
-                .font(.system(size: 18, weight: .semibold)).foregroundStyle(Theme.ink)
-                .keyboardType(.numberPad)
-                .textContentType(.oneTimeCode)
-                .padding(.horizontal, 14).padding(.vertical, 13)
-                .background(Theme.raised, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 13, style: .continuous).strokeBorder(Theme.line, lineWidth: 1))
-
-            if let errorText { hint(errorText) }
-
-            Button(busy ? "验证中…" : "登录") { verifyCode() }
-                .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
-                .frame(maxWidth: .infinity).padding(.vertical, 14)
-                .background(codeValid && !busy ? AnyShapeStyle(Theme.buttonGradient) : AnyShapeStyle(Theme.raised), in: Capsule())
-                .buttonStyle(PressScaleStyle())
-                .disabled(!codeValid || busy)
-
-            Button(resendCountdown > 0 ? "重新发送（\(resendCountdown)s）" : "重新发送") { sendCode() }
-                .font(.system(size: 12)).foregroundStyle(resendCountdown > 0 ? Theme.faint : Theme.blue)
-                .frame(maxWidth: .infinity)
-                .disabled(resendCountdown > 0 || busy)
-        }
+    private var submitTitle: String {
+        if busy { return mode == .signUp ? "注册中…" : "登录中…" }
+        return mode == .signUp ? "注册并进入" : "登录"
     }
 
     // MARK: 第三方登录
@@ -172,45 +225,36 @@ struct LoginSheet: View {
         .buttonStyle(PressScaleStyle())
     }
 
-    private func hint(_ text: String) -> some View {
-        Text(text).font(.system(size: 11)).foregroundStyle(Theme.orange)
+    private func hint(_ text: String, tint: Color) -> some View {
+        Text(text).font(.system(size: 11)).foregroundStyle(tint)
     }
 
     // MARK: 动作
 
-    private func sendCode() {
-        guard phoneValid, !busy else { return }
+    private func submit() {
+        guard canSubmit else { return }
         busy = true
         errorText = nil
+        noticeText = nil
+        let address = email.trimmingCharacters(in: .whitespaces)
         Task {
             do {
-                flow = try await supabase.sendPhoneOTP(phone)
-                // 打在验证码真正发出之后：发送失败不算一次「已请求」（手机号绝不进属性）
-                Analytics.shared.track(.authSMSRequested)
-                step = .code
-                startResendCountdown()
-            } catch {
-                errorText = "验证码发送失败：\(error.localizedDescription)"
-            }
-            busy = false
-        }
-    }
-
-    private func verifyCode() {
-        guard codeValid, !busy else { return }
-        busy = true
-        errorText = nil
-        Task {
-            do {
-                try await supabase.verifyPhoneOTP(phone, code: code.filter(\.isNumber), flow: flow)
-                // 校验通过；auth_completed 由 SupabaseService 统一上报，这里不重复
-                Analytics.shared.track(.authSMSVerified)
+                switch mode {
+                case .signUp: try await supabase.signUp(email: address, password: password)
+                case .signIn: try await supabase.signIn(email: address, password: password)
+                }
                 busy = false
-                dismiss()
-                onSuccess()
+                finishSuccess()
+            } catch let error as SupabaseService.EmailConfirmationRequired {
+                // 线上开了确认邮件才会走到：此时还没有会话，不能当成功继续
+                busy = false
+                mode = .signIn
+                noticeText = error.localizedDescription
             } catch {
                 busy = false
-                errorText = "验证码不正确或已过期，请重试"
+                // 邮箱已注册：直接把用户送到登录 tab，省掉一次「为什么失败」的猜测
+                if mode == .signUp, SupabaseService.isEmailExistsError(error) { mode = .signIn }
+                errorText = SupabaseService.authErrorMessage(error)
             }
         }
     }
@@ -220,6 +264,7 @@ struct LoginSheet: View {
         case .success(let authorization):
             busy = true
             errorText = nil
+            noticeText = nil
             Task {
                 do {
                     let credential = try AppleSignIn.credential(from: authorization)
@@ -229,8 +274,7 @@ struct LoginSheet: View {
                         fullName: credential.fullName
                     )
                     busy = false
-                    dismiss()
-                    onSuccess()
+                    finishSuccess()
                 } catch {
                     busy = false
                     errorText = "Apple 登录失败：\(error.localizedDescription)"
@@ -244,18 +288,32 @@ struct LoginSheet: View {
         }
     }
 
-    private func startResendCountdown() {
-        resendCountdown = 60
-        Task {
-            while resendCountdown > 0 {
-                try? await Task.sleep(for: .seconds(1))
-                resendCountdown -= 1
-            }
-        }
+    /// 登录墙由 isAuthenticated 自动切走，不需要（也不能）dismiss —— 它不是被 present 出来的
+    private func finishSuccess() {
+        guard presentation == .sheet else { return }
+        dismiss()
+        onSuccess()
     }
 }
 
-#Preview {
+// MARK: - 全屏登录墙（冷启动无会话）
+
+/// 全部 Edge Function 都强制校验 JWT，未登录时任何页面都只会换回一片 401，
+/// 所以冷启动直接拦在这里，而不是让用户进去看一屏报错。
+struct AuthWallView: View {
+    var body: some View {
+        LoginSheet(presentation: .wall)
+            .screenBackground()
+    }
+}
+
+#Preview("登录墙") {
+    AuthWallView()
+        .environment(SupabaseService())
+        .preferredColorScheme(.dark)
+}
+
+#Preview("补登录 sheet") {
     LoginSheet()
         .environment(SupabaseService())
         .preferredColorScheme(.dark)

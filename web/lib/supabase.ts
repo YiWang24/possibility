@@ -19,39 +19,21 @@ export function supabase(): PossibilityClient {
   return client;
 }
 
-/* 冷启动匿名登录（对齐 iOS bootstrap()）：已有会话则复用 */
-let bootstrapPromise: Promise<void> | null = null;
-
-export function bootstrap(): Promise<void> {
-  if (!bootstrapPromise) {
-    bootstrapPromise = (async () => {
-      const sb = supabase();
-      const { data } = await sb.auth.getSession();
-      if (!data.session) {
-        const { error } = await sb.auth.signInAnonymously();
-        if (error) throw error;
-      }
-    })().catch((err) => {
-      bootstrapPromise = null;
-      throw err;
-    });
-  }
-  return bootstrapPromise;
-}
-
+/**
+ * 当前 JWT。匿名登录已停用，没有会话就是真的没登录 —— 直接抛，
+ * 让调用方（AuthWall / AuthGate）把用户带回登录页，而不是静默发无效请求。
+ */
 export async function jwt(): Promise<string> {
-  await bootstrap();
   const { data } = await supabase().auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error("未登录");
   return token;
 }
 
-/* Edge Function 调用（自动确保匿名会话） */
+/** Edge Function 调用（invokeFunction 自带会话 JWT；无会话时由后端 401） */
 export async function callFunction<T>(
   name: EdgeFunctionName,
   body?: Record<string, unknown>,
 ): Promise<T> {
-  await bootstrap();
   return invokeFunction<T>(supabase(), name, body);
 }

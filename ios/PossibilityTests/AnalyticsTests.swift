@@ -76,7 +76,7 @@ struct AnalyticsFanOutTests {
         Analytics.shared.register(second)
 
         Analytics.shared.track(.paywallViewed(sku: .unlockProfile, price: 9.9, context: "profile"))
-        Analytics.shared.identify(userId: "u1", properties: ["is_anonymous": .bool(false)])
+        Analytics.shared.identify(userId: "u1", properties: ["has_email": .bool(true)])
         Analytics.shared.alias(previousId: "old", newId: "new")
         Analytics.shared.reset()
 
@@ -88,7 +88,7 @@ struct AnalyticsFanOutTests {
         ]
         #expect(first.calls == expected, "三层上报缺一层，数据主权 / 兜底的设计就失效了")
         #expect(second.calls == expected)
-        #expect(first.lastIdentifyProperties == ["is_anonymous": .bool(false)])
+        #expect(first.lastIdentifyProperties == ["has_email": .bool(true)])
     }
 
     @Test("未注册任何 backend 时全部调用是无害 no-op")
@@ -101,9 +101,8 @@ struct AnalyticsFanOutTests {
     }
 
     @Test("事件名与 docs/埋点方案.md §3 一致", arguments: [
-        (AnalyticsEvent.appOpened(isFirstOpen: true, isAnonymous: true), "app_opened"),
-        (AnalyticsEvent.authCompleted(method: "apple", wasAnonymous: true), "auth_completed"),
-        (AnalyticsEvent.identityMerged(anonymousId: "a"), "identity_merged"),
+        (AnalyticsEvent.appOpened(isFirstOpen: true, isAuthenticated: false), "app_opened"),
+        (AnalyticsEvent.authCompleted(method: "apple"), "auth_completed"),
         (AnalyticsEvent.purchaseCompleted(sku: .consult, price: 29), "purchase_completed"),
     ])
     func eventFactoriesMatchSpecNames(event: AnalyticsEvent, expected: String) {
@@ -112,96 +111,67 @@ struct AnalyticsFanOutTests {
     }
 }
 
-// MARK: - 身份关联：三条路径（docs/埋点方案.md §2）
+// MARK: - 身份关联（docs/埋点方案.md §2）
+//
+// 匿名模式停用后 alias 从认证路径上退场了（冷启动即登录墙，第一个 user_id
+// 就是正式账号，没有前序身份可接），原先覆盖「什么时候该 alias」的三条规则用例
+// 随之删除。留下的是 person properties —— 它承载 §1 的隐私红线，仍需守住。
 
 @Suite("埋点身份关联")
 @MainActor
 struct AnalyticsIdentityTests {
 
-    private let anonymousId = "11111111-1111-1111-1111-111111111111"
-    private let appleId = "22222222-2222-2222-2222-222222222222"
+    private let userId = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
 
     init() {
         Analytics.shared.removeAllBackends()
     }
 
-    // MARK: 判定
+    @Test("person properties 只放派生特征，不带邮箱原文")
+    func personPropertiesNeverCarryRawEmail() {
+        // §1 红线：邮箱 / 姓名 / 正文一律不进埋点。这条一旦破，PII 会散进
+        // PostHog 与 Sentry 两个第三方，事后无从收回 —— 所以按 key 白名单断言。
+        let properties = SupabaseService.analyticsPersonProperties(for: user(email: "a@b.com"))
 
-    @Test("规则 1 · 冷启动：没有旧 id，只 identify")
-    func coldStartIdentifiesWithoutAlias() {
-        // 冷启动没有「上一个 user_id」，alias 无源端可用
-        #expect(
-            AnalyticsIdentityTransition.resolve(previousUserId: nil, newUserId: anonymousId)
-                == .identify(userId: anonymousId))
+        #expect(Set(properties.keys) == ["has_email", "has_apple"])
+        #expect(properties["has_email"] == .bool(true))
     }
 
-    @Test("规则 2 · 手机号原地转正：user_id 不变，不调 alias")
-    func phoneUpgradeKeepsSameIdAndSkipsAlias() {
-        // updateUser 原地链接手机号，user_id 不变 → 只更新 person properties。
-        // 这里若误调 alias，等于让用户和自己 alias，PostHog 里堆一堆无意义的 $create_alias。
-        #expect(
-            AnalyticsIdentityTransition.resolve(previousUserId: anonymousId, newUserId: anonymousId)
-                == .identify(userId: anonymousId))
+    @Test("has_email / has_apple 如实反映账号构成", arguments: [
+        (String?.none, false, false, false),
+        ("a@b.com", false, true, false),
+        ("a@b.com", true, true, true),
+    ])
+    func derivedFlagsReflectAccount(
+        email: String?, appleLinked: Bool, expectedEmail: Bool, expectedApple: Bool
+    ) {
+        let properties = SupabaseService.analyticsPersonProperties(
+            for: user(email: email, appleLinked: appleLinked)
+        )
+        #expect(properties["has_email"] == .bool(expectedEmail))
+        #expect(properties["has_apple"] == .bool(expectedApple))
     }
 
-    @Test("规则 3 · Apple 登录换 id：必须 alias")
-    func appleSignInAliasesOldIdToNewId() {
-        #expect(
-            AnalyticsIdentityTransition.resolve(previousUserId: anonymousId, newUserId: appleId)
-                == .aliasThenIdentify(previousId: anonymousId, userId: appleId))
-    }
-
-    @Test("空串旧 id 当作「没有旧 id」")
-    func emptyPreviousIdIsTreatedAsAbsent() {
-        // 空串不是合法的 distinct_id，别把它 alias 上去
-        #expect(
-            AnalyticsIdentityTransition.resolve(previousUserId: "", newUserId: appleId)
-                == .identify(userId: appleId))
-    }
-
-    // MARK: 派发顺序
-
-    @Test("Apple 路径：alias 必须先于 identify 派发")
-    func aliasIsDispatchedBeforeIdentify() {
-        let spy = SpyBackend()
-        Analytics.shared.register(spy)
-
-        AnalyticsIdentityTransition
-            .resolve(previousUserId: anonymousId, newUserId: appleId)
-            .apply(properties: ["is_anonymous": .bool(false)])
-
-        // 顺序不能反：PostHog 的 alias 以「当前 distinct_id」为源端，
-        // identify 之后再 alias 就把新 id 串到新 id 上，匿名期行为依然是孤儿。
-        #expect(spy.calls == [
-            .alias(previousId: anonymousId, newId: appleId),
-            .identify(userId: appleId),
-        ])
-    }
-
-    @Test("冷启动路径：只派发 identify")
-    func coldStartDispatchesIdentifyOnly() {
-        let spy = SpyBackend()
-        Analytics.shared.register(spy)
-
-        AnalyticsIdentityTransition
-            .resolve(previousUserId: nil, newUserId: anonymousId)
-            .apply(properties: ["is_anonymous": .bool(true)])
-
-        #expect(spy.calls == [.identify(userId: anonymousId)])
-        #expect(spy.lastIdentifyProperties == ["is_anonymous": .bool(true)])
-    }
-
-    @Test("手机号转正路径：只派发 identify，但带上刷新后的 person properties")
-    func phoneUpgradeDispatchesIdentifyOnlyWithFreshProperties() {
-        let spy = SpyBackend()
-        Analytics.shared.register(spy)
-
-        AnalyticsIdentityTransition
-            .resolve(previousUserId: anonymousId, newUserId: anonymousId)
-            .apply(properties: ["is_anonymous": .bool(false), "has_phone": .bool(true)])
-
-        #expect(spy.calls == [.identify(userId: anonymousId)])
-        #expect(spy.lastIdentifyProperties == ["is_anonymous": .bool(false), "has_phone": .bool(true)])
+    private func user(email: String?, appleLinked: Bool = false) -> User {
+        User(
+            id: userId,
+            appMetadata: [:],
+            userMetadata: [:],
+            aud: "authenticated",
+            email: email,
+            createdAt: Date(timeIntervalSince1970: 0),
+            updatedAt: Date(timeIntervalSince1970: 0),
+            identities: appleLinked
+                ? [UserIdentity(
+                    id: "apple-identity",
+                    identityId: userId,
+                    userId: userId,
+                    identityData: [:],
+                    provider: "apple",
+                    createdAt: nil, lastSignInAt: nil, updatedAt: nil
+                )]
+                : nil
+        )
     }
 }
 

@@ -149,7 +149,7 @@ final class HomeModel {
     private func runAnalysis(transcript: String, using supabase: SupabaseService) async {
         analyzing = true
         defer { analyzing = false }
-        let result = await withTimeout(seconds: 50) {
+        let result = await withTimeout(seconds: 50) { [self] in
             try await supabase.analyzeDiary(
                 transcript: transcript,
                 inputMethod: diaryInputMethod.rawValue

@@ -1,18 +1,13 @@
 "use client";
-import { useEffect } from "react";
-import { bootstrap } from "@/lib/supabase";
 import { ToastHost } from "@/components/ui/Toast";
 import { AuthGateHost } from "@/components/auth/AuthGate";
+import { AuthWall } from "@/components/auth/AuthWall";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    bootstrap().catch(() => {
-      /* 断网时各页面走 demo 兜底 */
-    });
-  }, []);
   return (
     <>
-      {children}
+      {/* 全站 client 组件 + localStorage 会话，登录墙在客户端拦即可，无需 middleware */}
+      <AuthWall>{children}</AuthWall>
       <AuthGateHost />
       <ToastHost />
     </>

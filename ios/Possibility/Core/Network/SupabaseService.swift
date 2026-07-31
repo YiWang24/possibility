@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import Supabase
 
-/// Supabase 封装：匿名 Auth、Postgres 读写（受 RLS 约束）、mock 解锁。
+/// Supabase 封装：邮箱密码 / Apple Auth、Postgres 读写（受 RLS 约束）、mock 解锁。
 /// 服务端状态经此拉取缓存；UI/客户端状态留在各 Feature Model（二者分治，见技术设计文档 §8.2）。
 @Observable
 @MainActor
@@ -15,19 +15,17 @@ final class SupabaseService {
     private(set) var userId: UUID?
     private(set) var isReady = false
     private(set) var lastError: String?
-    /// 当前 Auth 用户（匿名或正式）；登录/登出/转正后由 authStateChanges 刷新
+    /// 当前 Auth 用户；登录/登出/换账号后由 authStateChanges 刷新
     private(set) var currentUser: User?
     private var authListener: Task<Void, Never>?
 
-    /// 游客（匿名会话或尚未建立会话）——AuthGate 据此决定是否弹登录页
-    var isAnonymous: Bool { currentUser?.isAnonymous ?? true }
+    /// 是否已登录 —— 匿名模式已停用，根视图据此在登录墙与主界面之间分流
+    var isAuthenticated: Bool { currentUser != nil }
 
-    /// 已绑定手机号（Supabase 存储格式 8613812345678 → +86 138****5678 脱敏展示）
-    var phoneDisplay: String? {
-        guard var phone = currentUser?.phone, !phone.isEmpty else { return nil }
-        if phone.hasPrefix("86"), phone.count == 13 { phone.removeFirst(2) }
-        guard phone.count == 11 else { return phone }
-        return "+86 \(phone.prefix(3))****\(phone.suffix(4))"
+    /// 当前账号邮箱（Me 页展示；Apple 私密转发地址也是邮箱）
+    var emailDisplay: String? {
+        guard let email = currentUser?.email, !email.isEmpty else { return nil }
+        return email
     }
 
     /// 是否绑定了 Apple 身份
@@ -51,143 +49,112 @@ final class SupabaseService {
         )
     }
 
-    // MARK: - 启动：匿名登录 + 预取公开内容
+    // MARK: - 启动：恢复会话 + 预取
 
+    /// 冷启动。匿名登录已停用 —— 没有会话就停在 isReady 上，由根视图切登录墙；
+    /// 此时预取毫无意义（所有 Edge Function 都强制校验 JWT，只会换回一片 401）。
     func bootstrap() async {
         startAuthListener()
-        do {
-            if let session = try? await client.auth.session {
-                userId = session.user.id
-                currentUser = session.user
-            } else {
-                let session = try await client.auth.signInAnonymously()
-                userId = session.user.id
-                currentUser = session.user
-            }
+        if let session = try? await client.auth.session {
+            userId = session.user.id
+            currentUser = session.user
             isReady = true
-            // 冷启动：没有「上一个 user_id」（规则 1）→ 只 identify，不 alias
-            if let user = currentUser { syncAnalyticsIdentity(previousUserId: nil, user: user) }
-            async let t: Void = loadTravelers()
-            async let b: Void = loadBounties()
-            async let p: Void = loadProfile()
-            async let u: Void = loadUnlocks()
-            _ = await (t, b, p, u)
-        } catch {
-            lastError = error.localizedDescription
+            syncAnalyticsIdentity(user: session.user)
+            await prefetchAll()
+        } else {
+            isReady = true
         }
     }
 
-    /// 监听会话变化（转正 / 换账号 / 登出），保持 currentUser 与 UI 同步
+    /// 预取公开内容 + 用户侧数据（需要有效会话）
+    private func prefetchAll() async {
+        async let t: Void = loadTravelers()
+        async let b: Void = loadBounties()
+        async let p: Void = loadProfile()
+        async let u: Void = loadUnlocks()
+        _ = await (t, b, p, u)
+    }
+
+    /// 监听会话变化（换账号 / 登出 / 刷新 token），保持 currentUser 与 UI 同步
     private func startAuthListener() {
         guard authListener == nil else { return }
         authListener = Task { [weak self] in
             guard let self else { return }
             for await (event, session) in self.client.auth.authStateChanges {
                 guard [.signedIn, .signedOut, .userUpdated, .tokenRefreshed].contains(event) else { continue }
+                // 登出时 session 为 nil，userId 必须跟着置空：留着旧 id 会让
+                // loadProfile / loadUnlocks 继续拿别人的 uid 去查（RLS 下必然失败）
                 self.currentUser = session?.user
-                if let id = session?.user.id { self.userId = id }
+                self.userId = session?.user.id
             }
         }
     }
 
     /// 当前 JWT（ChatStreamClient / callFunction 用）。
-    /// 会话缺失时（冷启动 bootstrap 尚未完成、失败或会话过期）现场补一次匿名登录，
-    /// 不让「暂时没有会话」直接把 chat / analyze-diary 等打成 sessionMissing 报错。
+    /// 匿名登录已停用：没有会话就是真的没登录 —— 直接抛，让登录墙接管，
+    /// 而不是拿一个注定 401 的请求去撞后端。
     func jwt() async throws -> String {
-        if let session = try? await client.auth.session {
-            return session.accessToken
+        guard let session = try? await client.auth.session else {
+            throw NotSignedInError()
         }
-        let session = try await client.auth.signInAnonymously()
-        userId = session.user.id
-        isReady = true
-        // 会话是在这里补建的（bootstrap 失败 / 过期），埋点身份要跟着补上，
-        // 否则这批用户的事件会一路挂着 nil user_id
-        syncAnalyticsIdentity(previousUserId: nil, user: session.user)
         return session.accessToken
     }
 
-    // MARK: - 真实登录（手机验证码 / Apple —— 技术设计文档 §登录系统）
+    // MARK: - 登录（邮箱密码 / Apple —— 技术设计文档 §登录系统）
 
-    /// 手机验证码流向：匿名转正（updateUser 原地链接，user_id 不变）或既有账号登录
-    enum PhoneOTPFlow: Sendable {
-        case linkAnonymous   // verifyOTP 用 .phoneChange
-        case signIn          // verifyOTP 用 .sms（登录后触发匿名数据迁移）
+    /// 会话缺失（未登录或已过期）
+    struct NotSignedInError: LocalizedError {
+        var errorDescription: String? { "登录已过期，请重新登录" }
     }
 
-    /// 发送验证码。匿名态优先走转正路径；号码已被注册（phone_exists）时
-    /// 自动切换为既有账号登录流，verify 成功后经 merge-anonymous 迁移匿名数据。
-    func sendPhoneOTP(_ rawPhone: String) async throws -> PhoneOTPFlow {
-        let phone = Self.e164Phone(rawPhone)
-        if isAnonymous, (try? await client.auth.session) != nil {
-            do {
-                try await client.auth.update(user: UserAttributes(phone: phone))
-                return .linkAnonymous
-            } catch let error as AuthError where error.errorCode.rawValue == "phone_exists" {
-                try await client.auth.signInWithOTP(phone: phone)
-                return .signIn
-            }
-        }
-        try await client.auth.signInWithOTP(phone: phone)
-        return .signIn
+    /// 注册成功但未直接拿到会话（线上开启了邮箱确认）
+    struct EmailConfirmationRequired: LocalizedError {
+        var errorDescription: String? { "注册成功，请查收确认邮件并完成验证后登录" }
     }
 
-    /// 校验验证码。signIn 流会替换会话：先暂存匿名 token，成功后迁移数据。
-    func verifyPhoneOTP(_ rawPhone: String, code: String, flow: PhoneOTPFlow) async throws {
-        let phone = Self.e164Phone(rawPhone)
-        let wasAnonymous = isAnonymous
-        // 旧 user_id 必须在会话被替换前抓住：.signIn 流整个换掉会话，
-        // 之后向 client 要到的已经是新账号，alias 的源端就没了。
-        let previousUserId = userId
-        let response: AuthResponse
-        switch flow {
-        case .linkAnonymous:
-            response = try await client.auth.verifyOTP(phone: phone, token: code, type: .phoneChange)
-        case .signIn:
-            let anonymousToken = await anonymousAccessToken()
-            response = try await client.auth.verifyOTP(phone: phone, token: code, type: .sms)
-            await mergeAnonymousData(token: anonymousToken, anonymousUserId: previousUserId)
-        }
-        // .linkAnonymous：原地链接手机号，user_id 不变（规则 2）→ 只更新 person properties；
-        // .signIn：号码已属于既有账号，user_id 变了 → 与 Apple 同属规则 3，必须先 alias。
-        // 两种情况都交给 resolve 判定，不在这里写死。
-        syncAnalyticsIdentity(previousUserId: previousUserId, user: response.user)
-        await refreshAfterAuthChange()
-        Analytics.shared.track(.authCompleted(method: "sms", wasAnonymous: wasAnonymous))
+    /// 邮箱注册。config.toml 关了邮箱确认 → 正常返回即带 session（注册即登录）；
+    /// 线上若开着确认邮件，session 为 nil，此时抛错提示查收邮件而不是假装已登录。
+    func signUp(email: String, password: String) async throws {
+        let response = try await client.auth.signUp(email: email, password: password)
+        guard let session = response.session else { throw EmailConfirmationRequired() }
+        await completeSignIn(user: session.user, method: "email")
     }
 
-    /// Apple 原生登录（signInWithIdToken）。会产生/命中另一个正式账号：
-    /// 先暂存匿名 token，登录成功后经 merge-anonymous 迁移数据。
+    /// 邮箱密码登录
+    func signIn(email: String, password: String) async throws {
+        let session = try await client.auth.signIn(email: email, password: password)
+        await completeSignIn(user: session.user, method: "email")
+    }
+
+    /// Apple 原生登录（signInWithIdToken）。
     /// - Parameter fullName: Apple 仅首次授权返回，随手写入 user metadata
     func signInWithApple(idToken: String, nonce: String, fullName: String?) async throws {
-        let wasAnonymous = isAnonymous
-        // 这一行是整个埋点最关键的时机：signInWithIdToken 一返回，client 上的会话
-        // 就换成新账号了，authStateChanges 也会把 userId 覆盖掉。此刻不把旧匿名 id
-        // 抓在手里，alias 就没有源端 —— 匿名期行为全部成为孤儿事件，
-        // 「进入 → 付费」漏斗从登录那一刻断开。
-        let previousUserId = userId
-        let anonymousToken = await anonymousAccessToken()
         let session = try await client.auth.signInWithIdToken(
             credentials: .init(provider: .apple, idToken: idToken, nonce: nonce)
         )
-        // 规则 3：Apple 登录必然换 user_id → 先 alias(旧, 新) 再 identify(新)。
-        // 紧贴登录调用，不等 merge / 缓存刷新，避免中间产生归属错乱的事件。
-        syncAnalyticsIdentity(previousUserId: previousUserId, user: session.user)
         if let fullName, !fullName.isEmpty {
             _ = try? await client.auth.update(user: UserAttributes(data: ["full_name": .string(fullName)]))
         }
-        await mergeAnonymousData(token: anonymousToken, anonymousUserId: previousUserId)
-        await refreshAfterAuthChange()
-        Analytics.shared.track(.authCompleted(method: "apple", wasAnonymous: wasAnonymous))
+        await completeSignIn(user: session.user, method: "apple")
     }
 
-    /// 退出登录：清空本地缓存后回落到全新匿名会话（游客模式仍可用）
+    /// 登录成功后的统一收尾：埋点身份 → 会话状态 → 全量预取。
+    /// 拉的是全量而非只有用户侧：登录前 bootstrap 跳过了预取，公开内容也还是空的。
+    private func completeSignIn(user: User, method: String) async {
+        syncAnalyticsIdentity(user: user)
+        userId = user.id
+        currentUser = user
+        invalidateRemoteProfileCache()
+        await prefetchAll()
+        Analytics.shared.track(.authCompleted(method: method))
+    }
+
+    /// 退出登录：清空会话与本地缓存（不再回落匿名，根视图自动切回登录墙）
     func signOut() async {
         try? await client.auth.signOut()
         resetUserCaches()
-        // 断开本地身份关联：登出后的行为属于新的匿名用户，不能继续挂在旧账号上。
-        // 紧接着的 bootstrap 会为新匿名会话重新 identify。
+        // 断开本地身份关联：登出后的行为不能继续挂在旧账号上
         Analytics.shared.reset()
-        await bootstrap()
     }
 
     /// 注销账号（App Store 5.1.1(v)）：服务端删除 auth 用户（业务表级联清理）后本地登出
@@ -196,64 +163,6 @@ final class SupabaseService {
         struct Response: Decodable { let ok: Bool }
         _ = try await callFunction("delete-account", body: Body(), as: Response.self)
         await signOut()
-    }
-
-    // MARK: 登录私有工具
-
-    /// 展示用手机号 → E.164（默认 +86；11 位裸号自动补前缀）
-    static func e164Phone(_ raw: String) -> String {
-        let digits = raw.filter(\.isNumber)
-        if raw.hasPrefix("+") { return "+\(digits)" }
-        if digits.hasPrefix("86"), digits.count == 13 { return "+\(digits)" }
-        return "+86\(digits)"
-    }
-
-    /// 当前会话若是匿名，取其 access token（登录切换账号前暂存，供数据迁移）
-    private func anonymousAccessToken() async -> String? {
-        guard let session = try? await client.auth.session, session.user.isAnonymous else { return nil }
-        return session.accessToken
-    }
-
-    /// POST /merge-anonymous：把旧匿名账号数据迁到当前正式账号。
-    /// 失败不阻断登录（记录 lastError，可由后台任务/客服兜底）。
-    /// - Parameter anonymousUserId: 被迁移的匿名 user_id，仅用于上报 identity_merged
-    private func mergeAnonymousData(token: String?, anonymousUserId: UUID?) async {
-        guard let token else { return }
-        struct Body: Encodable { let anonymous_access_token: String }
-        struct Response: Decodable {
-            let ok: Bool
-            let merged: Bool
-        }
-        do {
-            let response = try await callFunction(
-                "merge-anonymous",
-                body: Body(anonymous_access_token: token),
-                as: Response.self
-            )
-            // 只有真的迁成功才算合并 —— 失败时上报会让「合并率」指标虚高，
-            // 掩盖掉需要人工兜底的那部分用户（docs/埋点方案.md §3.2）
-            // Layer 1 由服务端权威写入；端上只补 PostHog / Sentry，避免事实表双计数。
-            if response.merged, let anonymousUserId {
-                Analytics.shared.track(
-                    AnalyticsEvent.identityMerged(anonymousId: anonymousUserId.uuidString)
-                        .externalOnly()
-                )
-            }
-        } catch {
-            lastError = "匿名数据迁移失败：\(error.localizedDescription)"
-        }
-    }
-
-    /// 登录 / 转正 / 登出后：同步会话状态并重拉用户侧数据
-    private func refreshAfterAuthChange() async {
-        if let session = try? await client.auth.session {
-            userId = session.user.id
-            currentUser = session.user
-        }
-        invalidateRemoteProfileCache()
-        async let p: Void = loadProfile()
-        async let u: Void = loadUnlocks()
-        _ = await (p, u)
     }
 
     /// 登出 / 注销时清空所有仅属于旧账号的本地缓存
