@@ -96,8 +96,10 @@ function authHintScript(supabaseUrl: string): string {
    suppressHydrationWarning：data-auth 由 auth-branch-hint 在 hydrate 之前写到
    <html> 上，服务端产物里没有，不声明就会报 mismatch。 */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  /* 全站纯 dark：color-scheme 由 globals.css 声明，Tailwind v4 下 `.dark` class
+     没有任何消费者（dark: 变体全站零使用），不再保留 shadcn v3 模板的残留。 */
   return (
-    <html lang="zh-CN" className="dark" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         {/* 会话恢复是 hydrate 之后的第一件事，握手却要等到那一刻才开始做。
             提前 preconnect，DNS + TCP + TLS 与 JS 下载并行，省掉首个 API 前的串行等待。
