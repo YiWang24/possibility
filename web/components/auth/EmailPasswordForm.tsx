@@ -3,7 +3,11 @@
    登录 / 注册只切 tab，不换表单：两条路径的字段完全一致，拆成两个页面纯属多余。 */
 import { useCallback, useState, type FormEvent } from "react";
 import { PrimaryButton } from "@/components/ui/Basics";
+import { useToast } from "@/components/ui/Toast";
 import { authErrorMessage, isEmailExistsError, useAuth } from "@/stores/auth";
+
+/** 注册成功提示的停留时长：要够用户看清邮箱地址并意识到有封信 */
+const SIGNUP_TOAST_MS = 5000;
 
 type Mode = "signin" | "signup";
 
@@ -13,6 +17,7 @@ const MIN_PASSWORD_LENGTH = 6;
 export function EmailPasswordForm({ onSuccess }: { onSuccess?: () => void }) {
   const signIn = useAuth((s) => s.signIn);
   const signUp = useAuth((s) => s.signUp);
+  const showToast = useToast((s) => s.show);
 
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -41,7 +46,8 @@ export function EmailPasswordForm({ onSuccess }: { onSuccess?: () => void }) {
       setNoticeText(null);
       try {
         if (mode === "signup") {
-          const { needsEmailConfirmation } = await signUp(email.trim(), password);
+          const address = email.trim();
+          const { needsEmailConfirmation, verificationEmailSent } = await signUp(address, password);
           if (needsEmailConfirmation) {
             // 线上开了确认邮件时才会走到：此时还没有会话，不能当成功继续
             setMode("signin");
@@ -49,6 +55,14 @@ export function EmailPasswordForm({ onSuccess }: { onSuccess?: () => void }) {
             setBusy(false);
             return;
           }
+          // 注册即登录：本表单马上随登录墙卸载，提示只能交给全局 toast。
+          // 措辞要说清「不验证也能用」，否则用户会以为卡在验证这一步。
+          showToast(
+            verificationEmailSent
+              ? `验证邮件已发送至 ${address}，稍后验证即可，不影响使用`
+              : "验证邮件发送失败，不影响使用，可稍后在「我」里重发",
+            SIGNUP_TOAST_MS,
+          );
         } else {
           await signIn(email.trim(), password);
         }

@@ -3,7 +3,7 @@
    hero（头像 / 徽章 / 转型条 / 标签 / 编辑）→ 4 tab：动态画像 / 我的故事 / 经验与建议 / 提供服务，
    末尾账号区（登录邮箱 / 退出 / 注销）。冷启动无会话由 AuthWall 拦下，此页必然已登录。 */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PageContainer } from "@/components/shell/PageContainer";
 import { PageHeader, SectionHeader, TagPill } from "@/components/ui/Basics";
@@ -56,6 +56,7 @@ export function MeView() {
   const email = useAuth((s) => s.email);
   const signOut = useAuth((s) => s.signOut);
   const deleteAccount = useAuth((s) => s.deleteAccount);
+  const sendVerificationEmail = useAuth((s) => s.sendVerificationEmail);
 
   /* 画像数据来源：与「认识你自己」同一份本地维度 + 云端底牌 */
   const loadPortrait = useHome((s) => s.loadPortrait);
@@ -66,6 +67,16 @@ export function MeView() {
   const [confirm, setConfirm] = useState<null | "signout" | "delete">(null);
   const [accountBusy, setAccountBusy] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [resendBusy, setResendBusy] = useState(false);
+
+  /* 补发邮箱验证链接。sendVerificationEmail 自己吞异常并回布尔，这里只管把结果说清楚 */
+  const resendVerification = useCallback(async () => {
+    if (resendBusy || !email) return;
+    setResendBusy(true);
+    const ok = await sendVerificationEmail(email);
+    setResendBusy(false);
+    showToast(ok ? `验证链接已重新发送至 ${email}` : "发送失败，请稍后再试");
+  }, [resendBusy, email, sendVerificationEmail, showToast]);
 
   /* 挂载：加载画像和公开主页资料。 */
   useEffect(() => {
@@ -263,6 +274,14 @@ export function MeView() {
               tint="text-brand"
               busy={accountBusy}
               onClick={() => setPrivacyOpen(true)}
+            />
+            <div className="h-px bg-line" />
+            {/* 邮箱验证不拦登录，所以这里是「补发」而非「去验证」：注册时那封漏收了可再来一次 */}
+            <AccountRow
+              title="重发邮箱验证链接"
+              tint="text-sub"
+              busy={accountBusy || resendBusy}
+              onClick={resendVerification}
             />
             <div className="h-px bg-line" />
 

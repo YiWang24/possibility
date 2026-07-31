@@ -19,6 +19,10 @@ port = 54323
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
+# 验证邮件里的链接跳回站点根路径（web 用 window.location.origin 现算），
+# 该列表是 Supabase 的 redirect allow list，不在表里的地址会被打回 site_url。
+# 线上域名与预览域名需在 Dashboard → Auth → URL Configuration 里同步添加。
+additional_redirect_urls = ["http://localhost:3000", "http://127.0.0.1:3000"]
 # 匿名登录已停用：改为冷启动登录墙（邮箱 + 密码），无会话不放行任何页面。
 # 全部 Edge Functions 经 requireUser() 强制校验 JWT，匿名浏览本就会大面积 401。
 enable_anonymous_sign_ins = false
@@ -27,11 +31,24 @@ enable_manual_linking = false
 minimum_password_length = 6
 
 # ---- 邮箱 + 密码登录（当前唯一的自有账号体系） ----
-# enable_confirmations = false：signUp 直接返回 session，注册即登录，不走确认邮件。
-# 需要邮箱验证时改 true，并同步处理 signUp 返回 session == nil 的分支。
+# enable_confirmations = false：signUp 直接返回 session，注册即登录，不拦在验证前。
+#
+# 产品要的是「验证链接照发、但不阻断登录」，而 Supabase 并没有这个组合开关：
+# 确认开着就必然不返回 session（signIn 报 email_not_confirmed），关着则一封不发。
+# 所以确认保持关闭，验证信改由客户端在注册成功后补发一次 signInWithOtp
+# （见 web/stores/auth.ts sendVerificationEmail 与 iOS SupabaseService）。
+# 代价：Supabase 侧 email_confirmed_at 在注册时即置位，不能用它判断用户是否真点了
+# 链接；日后若要「已验证」这一状态，需要业务表自己记，别指望这个字段。
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+
+# 补发的验证信走 magic_link 模板（signInWithOtp 用的就是它）——默认文案是「登录链接」，
+# 与注册后「验证你的邮箱」的语境不符，这里改写。
+# 注意：本段只对本地 supabase start 生效，线上模板在 Dashboard → Auth → Email Templates。
+[auth.email.template.magic_link]
+subject = "验证你的 Possibility 邮箱"
+content_path = "./supabase/templates/verify_email.html"
 
 # ---- 手机验证码登录（已停用，配置保留便于日后恢复） ----
 # 恢复步骤：取消下面三段注释 + 线上 Dashboard 开启 Phone provider 与 Send SMS hook。

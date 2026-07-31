@@ -114,10 +114,31 @@ final class SupabaseService {
 
     /// 邮箱注册。config.toml 关了邮箱确认 → 正常返回即带 session（注册即登录）；
     /// 线上若开着确认邮件，session 为 nil，此时抛错提示查收邮件而不是假装已登录。
-    func signUp(email: String, password: String) async throws {
+    ///
+    /// - Returns: 随后那封验证信是否发出。注册本身已经成功（session 在手），
+    ///   发信失败只改提示措辞，不该让调用方以为注册失败。
+    @discardableResult
+    func signUp(email: String, password: String) async throws -> Bool {
         let response = try await client.auth.signUp(email: email, password: password)
         guard let session = response.session else { throw EmailConfirmationRequired() }
         await completeSignIn(user: session.user, method: "email")
+        return await sendVerificationEmail(to: email)
+    }
+
+    /// 发一封邮箱验证链接。
+    ///
+    /// 邮箱确认关着时 Supabase 注册链路一封邮件都不发，而产品要的是「链接照发、
+    /// 但不拦登录」，所以这里补一次 OTP：它给已存在用户发 magic_link 模板的邮件。
+    /// shouldCreateUser: false —— 只发给已注册邮箱，杜绝拿这个接口凭空建号。
+    ///
+    /// 不抛错：限流（429）等失败不值得打断一个已经登录成功的用户。
+    func sendVerificationEmail(to email: String) async -> Bool {
+        do {
+            try await client.auth.signInWithOTP(email: email, shouldCreateUser: false)
+            return true
+        } catch {
+            return false
+        }
     }
 
     /// 邮箱密码登录

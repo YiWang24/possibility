@@ -66,9 +66,26 @@ interface AuthState {
   /**
    * 注册。config.toml 关了邮箱确认，正常返回即带 session（注册即登录）；
    * 若线上开启了确认邮件，session 为空 —— 返回标志让 UI 提示查收邮件。
+   *
+   * `verificationEmailSent` 表示随后那封验证邮件是否发出（见
+   * sendVerificationEmail）。发失败不影响注册成败，只影响 UI 提示措辞。
    */
-  signUp: (email: string, password: string) => Promise<{ needsEmailConfirmation: boolean }>;
+  signUp: (
+    email: string,
+    password: string,
+  ) => Promise<{ needsEmailConfirmation: boolean; verificationEmailSent: boolean }>;
   signIn: (email: string, password: string) => Promise<void>;
+  /**
+   * 发一封邮箱验证链接。
+   *
+   * 邮箱确认关着（enable_confirmations = false）时 Supabase 注册链路一封邮件都不发，
+   * 而产品要的是「链接照发、但不拦登录」，所以这里补一次 signInWithOtp：它给已存在
+   * 用户发 magic_link 模板的邮件，点开即校验该邮箱确属本人（不点也照常使用）。
+   * shouldCreateUser: false —— 只发给已注册邮箱，杜绝拿这个接口凭空建号。
+   *
+   * 全程吞异常：限流（429）等失败不该让「已经拿到 session」的注册显示成失败。
+   */
+  sendVerificationEmail: (email: string) => Promise<boolean>;
   /** 退出登录：清空本地缓存 + 清空会话（不再回落匿名，AuthWall 自动接管） */
   signOut: () => Promise<void>;
   /** 注销账号：服务端删除 auth 用户（业务表级联清理）后本地登出 */
@@ -117,9 +134,34 @@ export const useAuth = create<AuthState>()((set, get) => {
     async signUp(email, password) {
       const { data, error } = await supabase().auth.signUp({ email, password });
       if (error) throw error;
-      if (!data.session) return { needsEmailConfirmation: true };
+      // 线上若开着确认邮件：没有 session，Supabase 自己已发确认信，不必再补一封
+      if (!data.session) return { needsEmailConfirmation: true, verificationEmailSent: true };
       await refreshAfterAuthChange();
-      return { needsEmailConfirmation: false };
+      // 等这一下（多一次往返）是为了把「信到底发没发出去」如实告诉用户；
+      // 它自己吞异常回布尔，所以不论成败都不会把已经成功的注册带成失败。
+      const verificationEmailSent = await get().sendVerificationEmail(email);
+      return { needsEmailConfirmation: false, verificationEmailSent };
+    },
+
+    async sendVerificationEmail(email) {
+      try {
+        const { error } = await supabase().auth.signInWithOtp({
+          email,
+          options: {
+            shouldCreateUser: false,
+            // 点开链接回到当前站点根路径：本地 / 预览 / 线上各自成立，无需再配环境变量。
+            // 该 origin 必须在 Supabase 的 redirect allow list 内（见 config.toml）。
+            emailRedirectTo:
+              typeof window === "undefined" ? undefined : `${window.location.origin}/`,
+          },
+        });
+        if (error) throw error;
+        return true;
+      } catch (err) {
+        // 只留痕不抛出：用户此刻已登录，一封发不出去的验证信不值得打断他
+        set({ lastError: `验证邮件发送失败：${errMessage(err)}` });
+        return false;
+      }
     },
 
     async signIn(email, password) {
