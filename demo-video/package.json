@@ -1,0 +1,35 @@
+{
+  "name": "kaleido-demo-video",
+  "version": "1.0.0",
+  "description": "万花筒 KALEIDO 产品 demo 视频 — 一份剪辑表驱动横屏主版、竖屏长版与社交短版",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/cli": "4.0.499",
+    "@remotion/fonts": "^4.0.499",
+    "@remotion/google-fonts": "^4.0.499",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.499"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.499",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "clips": "bash scripts/cut-clips.sh",
+    "font": "python3 scripts/build-font.py",
+    "render": "remotion render KaleidoDemo out/kaleido-demo.mp4",
+    "render:vertical": "remotion render KaleidoDemoVertical out/kaleido-demo-vertical.mp4",
+    "render:teaser": "remotion render KaleidoTeaser out/kaleido-teaser.mp4",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && tsc"
+  }
+}
