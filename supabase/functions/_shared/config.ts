@@ -14,6 +14,14 @@ function env(name: string, fallback?: string): string {
   throw new Error(`Missing required environment variable: ${name}`);
 }
 
+function positiveInteger(name: string, fallback: number): number {
+  const value = Number.parseInt(env(name, String(fallback)), 10);
+  if (!Number.isInteger(value) || value < 1) {
+    throw new Error(`Invalid positive integer environment variable: ${name}`);
+  }
+  return value;
+}
+
 export const runtimeConfig = {
   get supabaseUrl(): string {
     return env("SUPABASE_URL");
@@ -43,6 +51,27 @@ export const runtimeConfig = {
   // 日记/信号抽取（analyze-diary/diary-summary/chat signal）：质量优先，默认 pro。
   get diaryModel(): string {
     return env("DEEPSEEK_DIARY_MODEL", "deepseek-v4-pro");
+  },
+  get azureSpeechKey(): string {
+    return env("AZURE_SPEECH_KEY");
+  },
+  get azureSpeechEndpoint(): string {
+    return env("AZURE_SPEECH_ENDPOINT");
+  },
+  get azureSpeechApiVersion(): string {
+    return env("AZURE_SPEECH_API_VERSION", "2025-10-15");
+  },
+  get azureSpeechLocales(): string[] {
+    return env("AZURE_SPEECH_LOCALES", "zh-CN,en-US")
+      .split(",")
+      .map((locale) => locale.trim())
+      .filter(Boolean);
+  },
+  get diaryWorkerSecret(): string {
+    return env("DIARY_WORKER_SECRET", this.serviceRoleKey);
+  },
+  get diaryDailyEntryLimit(): number {
+    return positiveInteger("DIARY_DAILY_ENTRY_LIMIT", 30);
   },
   // Sentry（docs/埋点方案.md Layer 3 服务端）。留空即整条上报链路静默关闭，
   // 因此本地开发和未配置密钥的环境不受影响——错误监控绝不能成为启动的硬依赖。

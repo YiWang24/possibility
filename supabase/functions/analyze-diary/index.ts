@@ -44,6 +44,8 @@ Deno.serve(async (req) => {
     });
 
     return jsonResponse({
+      title: result.title,
+      entry_summary: result.entry_summary,
       emotions: result.emotions,
       keywords: result.keywords,
       dim_updates: Object.fromEntries(

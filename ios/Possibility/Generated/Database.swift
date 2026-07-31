@@ -383,56 +383,362 @@ internal enum PublicSchema {
     }
   }
   internal struct DiaryEntriesSelect: Codable, Hashable, Sendable {
+    internal let analysis: AnyJSON
+    internal let analysisModel: String?
+    internal let analysisProvider: String?
+    internal let analyzedAt: String?
+    internal let attemptCount: Int32
+    internal let audioBytes: Int64?
+    internal let audioDeletedAt: String?
+    internal let audioMime: String?
     internal let audioPath: String?
+    internal let contentVersion: Int32
     internal let createdAt: String
+    internal let deletedAt: String?
+    internal let durationMs: Int32?
     internal let emotions: [String]?
+    internal let entrySummary: String?
+    internal let entryUuid: UUID
+    internal let errorCode: String?
     internal let id: Int64
     internal let keywords: [String]?
+    internal let localDate: String
+    internal let promptVersion: String?
+    internal let recordedAt: String
+    internal let source: String
+    internal let status: String
+    internal let timezone: String
+    internal let title: String?
+    internal let transcribedAt: String?
     internal let transcript: String?
+    internal let transcriptEdited: String?
+    internal let transcriptLanguage: String?
+    internal let transcriptRaw: String?
+    internal let transcriptionModel: String?
+    internal let transcriptionProvider: String?
+    internal let updatedAt: String
+    internal let uploadedAt: String?
     internal let userId: UUID
     internal enum CodingKeys: String, CodingKey {
+      case analysis = "analysis"
+      case analysisModel = "analysis_model"
+      case analysisProvider = "analysis_provider"
+      case analyzedAt = "analyzed_at"
+      case attemptCount = "attempt_count"
+      case audioBytes = "audio_bytes"
+      case audioDeletedAt = "audio_deleted_at"
+      case audioMime = "audio_mime"
       case audioPath = "audio_path"
+      case contentVersion = "content_version"
       case createdAt = "created_at"
+      case deletedAt = "deleted_at"
+      case durationMs = "duration_ms"
       case emotions = "emotions"
+      case entrySummary = "entry_summary"
+      case entryUuid = "entry_uuid"
+      case errorCode = "error_code"
       case id = "id"
       case keywords = "keywords"
+      case localDate = "local_date"
+      case promptVersion = "prompt_version"
+      case recordedAt = "recorded_at"
+      case source = "source"
+      case status = "status"
+      case timezone = "timezone"
+      case title = "title"
+      case transcribedAt = "transcribed_at"
       case transcript = "transcript"
+      case transcriptEdited = "transcript_edited"
+      case transcriptLanguage = "transcript_language"
+      case transcriptRaw = "transcript_raw"
+      case transcriptionModel = "transcription_model"
+      case transcriptionProvider = "transcription_provider"
+      case updatedAt = "updated_at"
+      case uploadedAt = "uploaded_at"
       case userId = "user_id"
     }
   }
   internal struct DiaryEntriesInsert: Codable, Hashable, Sendable {
+    internal let analysis: AnyJSON?
+    internal let analysisModel: String?
+    internal let analysisProvider: String?
+    internal let analyzedAt: String?
+    internal let attemptCount: Int32?
+    internal let audioBytes: Int64?
+    internal let audioDeletedAt: String?
+    internal let audioMime: String?
     internal let audioPath: String?
+    internal let contentVersion: Int32?
     internal let createdAt: String?
+    internal let deletedAt: String?
+    internal let durationMs: Int32?
     internal let emotions: [String]?
+    internal let entrySummary: String?
+    internal let entryUuid: UUID?
+    internal let errorCode: String?
     internal let id: Int64?
     internal let keywords: [String]?
+    internal let localDate: String
+    internal let promptVersion: String?
+    internal let recordedAt: String?
+    internal let source: String?
+    internal let status: String?
+    internal let timezone: String?
+    internal let title: String?
+    internal let transcribedAt: String?
     internal let transcript: String?
+    internal let transcriptEdited: String?
+    internal let transcriptLanguage: String?
+    internal let transcriptRaw: String?
+    internal let transcriptionModel: String?
+    internal let transcriptionProvider: String?
+    internal let updatedAt: String?
+    internal let uploadedAt: String?
     internal let userId: UUID
     internal enum CodingKeys: String, CodingKey {
+      case analysis = "analysis"
+      case analysisModel = "analysis_model"
+      case analysisProvider = "analysis_provider"
+      case analyzedAt = "analyzed_at"
+      case attemptCount = "attempt_count"
+      case audioBytes = "audio_bytes"
+      case audioDeletedAt = "audio_deleted_at"
+      case audioMime = "audio_mime"
       case audioPath = "audio_path"
+      case contentVersion = "content_version"
       case createdAt = "created_at"
+      case deletedAt = "deleted_at"
+      case durationMs = "duration_ms"
       case emotions = "emotions"
+      case entrySummary = "entry_summary"
+      case entryUuid = "entry_uuid"
+      case errorCode = "error_code"
       case id = "id"
       case keywords = "keywords"
+      case localDate = "local_date"
+      case promptVersion = "prompt_version"
+      case recordedAt = "recorded_at"
+      case source = "source"
+      case status = "status"
+      case timezone = "timezone"
+      case title = "title"
+      case transcribedAt = "transcribed_at"
       case transcript = "transcript"
+      case transcriptEdited = "transcript_edited"
+      case transcriptLanguage = "transcript_language"
+      case transcriptRaw = "transcript_raw"
+      case transcriptionModel = "transcription_model"
+      case transcriptionProvider = "transcription_provider"
+      case updatedAt = "updated_at"
+      case uploadedAt = "uploaded_at"
       case userId = "user_id"
     }
   }
   internal struct DiaryEntriesUpdate: Codable, Hashable, Sendable {
+    internal let analysis: AnyJSON?
+    internal let analysisModel: String?
+    internal let analysisProvider: String?
+    internal let analyzedAt: String?
+    internal let attemptCount: Int32?
+    internal let audioBytes: Int64?
+    internal let audioDeletedAt: String?
+    internal let audioMime: String?
     internal let audioPath: String?
+    internal let contentVersion: Int32?
     internal let createdAt: String?
+    internal let deletedAt: String?
+    internal let durationMs: Int32?
     internal let emotions: [String]?
+    internal let entrySummary: String?
+    internal let entryUuid: UUID?
+    internal let errorCode: String?
     internal let id: Int64?
     internal let keywords: [String]?
+    internal let localDate: String?
+    internal let promptVersion: String?
+    internal let recordedAt: String?
+    internal let source: String?
+    internal let status: String?
+    internal let timezone: String?
+    internal let title: String?
+    internal let transcribedAt: String?
     internal let transcript: String?
+    internal let transcriptEdited: String?
+    internal let transcriptLanguage: String?
+    internal let transcriptRaw: String?
+    internal let transcriptionModel: String?
+    internal let transcriptionProvider: String?
+    internal let updatedAt: String?
+    internal let uploadedAt: String?
     internal let userId: UUID?
     internal enum CodingKeys: String, CodingKey {
+      case analysis = "analysis"
+      case analysisModel = "analysis_model"
+      case analysisProvider = "analysis_provider"
+      case analyzedAt = "analyzed_at"
+      case attemptCount = "attempt_count"
+      case audioBytes = "audio_bytes"
+      case audioDeletedAt = "audio_deleted_at"
+      case audioMime = "audio_mime"
       case audioPath = "audio_path"
+      case contentVersion = "content_version"
       case createdAt = "created_at"
+      case deletedAt = "deleted_at"
+      case durationMs = "duration_ms"
       case emotions = "emotions"
+      case entrySummary = "entry_summary"
+      case entryUuid = "entry_uuid"
+      case errorCode = "error_code"
       case id = "id"
       case keywords = "keywords"
+      case localDate = "local_date"
+      case promptVersion = "prompt_version"
+      case recordedAt = "recorded_at"
+      case source = "source"
+      case status = "status"
+      case timezone = "timezone"
+      case title = "title"
+      case transcribedAt = "transcribed_at"
       case transcript = "transcript"
+      case transcriptEdited = "transcript_edited"
+      case transcriptLanguage = "transcript_language"
+      case transcriptRaw = "transcript_raw"
+      case transcriptionModel = "transcription_model"
+      case transcriptionProvider = "transcription_provider"
+      case updatedAt = "updated_at"
+      case uploadedAt = "uploaded_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct DiarySummariesSelect: Codable, Hashable, Sendable {
+    internal let activeDayCount: Int32
+    internal let attemptCount: Int32
+    internal let createdAt: String
+    internal let dataCutoffAt: String?
+    internal let entryCount: Int32
+    internal let errorCode: String?
+    internal let generatedAt: String?
+    internal let id: UUID
+    internal let model: String?
+    internal let periodStart: String
+    internal let periodType: String
+    internal let promptVersion: String?
+    internal let provider: String?
+    internal let schemaVersion: Int32
+    internal let sourceFingerprint: String?
+    internal let status: String
+    internal let summary: AnyJSON
+    internal let totalDurationMs: Int64
+    internal let updatedAt: String
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case activeDayCount = "active_day_count"
+      case attemptCount = "attempt_count"
+      case createdAt = "created_at"
+      case dataCutoffAt = "data_cutoff_at"
+      case entryCount = "entry_count"
+      case errorCode = "error_code"
+      case generatedAt = "generated_at"
+      case id = "id"
+      case model = "model"
+      case periodStart = "period_start"
+      case periodType = "period_type"
+      case promptVersion = "prompt_version"
+      case provider = "provider"
+      case schemaVersion = "schema_version"
+      case sourceFingerprint = "source_fingerprint"
+      case status = "status"
+      case summary = "summary"
+      case totalDurationMs = "total_duration_ms"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct DiarySummariesInsert: Codable, Hashable, Sendable {
+    internal let activeDayCount: Int32?
+    internal let attemptCount: Int32?
+    internal let createdAt: String?
+    internal let dataCutoffAt: String?
+    internal let entryCount: Int32?
+    internal let errorCode: String?
+    internal let generatedAt: String?
+    internal let id: UUID?
+    internal let model: String?
+    internal let periodStart: String
+    internal let periodType: String
+    internal let promptVersion: String?
+    internal let provider: String?
+    internal let schemaVersion: Int32?
+    internal let sourceFingerprint: String?
+    internal let status: String?
+    internal let summary: AnyJSON?
+    internal let totalDurationMs: Int64?
+    internal let updatedAt: String?
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case activeDayCount = "active_day_count"
+      case attemptCount = "attempt_count"
+      case createdAt = "created_at"
+      case dataCutoffAt = "data_cutoff_at"
+      case entryCount = "entry_count"
+      case errorCode = "error_code"
+      case generatedAt = "generated_at"
+      case id = "id"
+      case model = "model"
+      case periodStart = "period_start"
+      case periodType = "period_type"
+      case promptVersion = "prompt_version"
+      case provider = "provider"
+      case schemaVersion = "schema_version"
+      case sourceFingerprint = "source_fingerprint"
+      case status = "status"
+      case summary = "summary"
+      case totalDurationMs = "total_duration_ms"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct DiarySummariesUpdate: Codable, Hashable, Sendable {
+    internal let activeDayCount: Int32?
+    internal let attemptCount: Int32?
+    internal let createdAt: String?
+    internal let dataCutoffAt: String?
+    internal let entryCount: Int32?
+    internal let errorCode: String?
+    internal let generatedAt: String?
+    internal let id: UUID?
+    internal let model: String?
+    internal let periodStart: String?
+    internal let periodType: String?
+    internal let promptVersion: String?
+    internal let provider: String?
+    internal let schemaVersion: Int32?
+    internal let sourceFingerprint: String?
+    internal let status: String?
+    internal let summary: AnyJSON?
+    internal let totalDurationMs: Int64?
+    internal let updatedAt: String?
+    internal let userId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case activeDayCount = "active_day_count"
+      case attemptCount = "attempt_count"
+      case createdAt = "created_at"
+      case dataCutoffAt = "data_cutoff_at"
+      case entryCount = "entry_count"
+      case errorCode = "error_code"
+      case generatedAt = "generated_at"
+      case id = "id"
+      case model = "model"
+      case periodStart = "period_start"
+      case periodType = "period_type"
+      case promptVersion = "prompt_version"
+      case provider = "provider"
+      case schemaVersion = "schema_version"
+      case sourceFingerprint = "source_fingerprint"
+      case status = "status"
+      case summary = "summary"
+      case totalDurationMs = "total_duration_ms"
+      case updatedAt = "updated_at"
       case userId = "user_id"
     }
   }

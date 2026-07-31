@@ -263,6 +263,9 @@ export async function insertDiaryAnalysis(
   const { data, error } = await db.from("diary_entries").insert({
     user_id: userId,
     transcript,
+    transcript_raw: transcript,
+    title: result.title,
+    entry_summary: result.entry_summary,
     emotions: result.emotions,
     keywords: result.keywords,
   }).select("id").single();

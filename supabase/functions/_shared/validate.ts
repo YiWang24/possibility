@@ -391,22 +391,33 @@ export function validateGetBountyInput(value: unknown): GetBountyInput {
 }
 
 export type DiarySummaryInput = {
-  period: "month" | "year";
+  period: "day" | "month" | "year";
   ref: string;
 };
 
 export function validateDiarySummaryInput(value: unknown): DiarySummaryInput {
   const body = object(value);
   const period = string(body.period, "period", 10)!;
-  if (period !== "month" && period !== "year") {
+  if (period !== "day" && period !== "month" && period !== "year") {
     throw new HttpError(
       400,
       "INVALID_INPUT",
-      "period 必须是 month 或 year。",
+      "period 必须是 day、month 或 year。",
     );
   }
   const ref = string(body.ref, "ref", 10)!;
-  if (period === "month") {
+  if (period === "day") {
+    if (
+      !/^\d{4}-(0[1-9]|1[0-2])-([012]\d|3[01])$/.test(ref) ||
+      Number.isNaN(new Date(`${ref}T00:00:00Z`).getTime())
+    ) {
+      throw new HttpError(
+        400,
+        "INVALID_INPUT",
+        "day 的 ref 必须形如 2026-07-30。",
+      );
+    }
+  } else if (period === "month") {
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(ref)) {
       throw new HttpError(
         400,
@@ -417,7 +428,7 @@ export function validateDiarySummaryInput(value: unknown): DiarySummaryInput {
   } else if (!/^\d{4}$/.test(ref)) {
     throw new HttpError(400, "INVALID_INPUT", "year 的 ref 必须形如 2026。");
   }
-  return { period, ref };
+  return { period: period as DiarySummaryInput["period"], ref };
 }
 
 export type KaleidoscopeInput = {
