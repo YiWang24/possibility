@@ -197,6 +197,7 @@ export type Database = {
           action_type: string
           card_keys: string[]
           created_at: string
+          decision_source: string | null
           id: number
           pressure_after: number | null
           pressure_before: number | null
@@ -210,6 +211,7 @@ export type Database = {
           action_type: string
           card_keys?: string[]
           created_at?: string
+          decision_source?: string | null
           id?: never
           pressure_after?: number | null
           pressure_before?: number | null
@@ -223,6 +225,7 @@ export type Database = {
           action_type?: string
           card_keys?: string[]
           created_at?: string
+          decision_source?: string | null
           id?: never
           pressure_after?: number | null
           pressure_before?: number | null

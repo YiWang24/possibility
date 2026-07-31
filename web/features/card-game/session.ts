@@ -108,7 +108,7 @@ export class CardGameSessionCoordinator {
         catalog_version: catalogVersion,
         session_id: crypto.randomUUID(),
         client_session_id: crypto.randomUUID(),
-        seed: crypto.getRandomValues(new Uint32Array(1))[0] & 0x7fff_ffff,
+        seed: crypto.getRandomValues(new Uint32Array(1))[0] & 0x7fffffff,
         server_state_version: 0,
         last_synced_sequence: 0,
         pending_actions: [],
@@ -127,6 +127,7 @@ export class CardGameSessionCoordinator {
       card_keys?: string[];
       reason_cannot_accept?: string | null;
       reason_abandon?: string | null;
+      decision_source?: CardGameAction["decision_source"];
     },
   ): void {
     const previous = this.state.pending_actions.at(-1)?.sequence ??

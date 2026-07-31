@@ -209,6 +209,7 @@ Deno.test("generic engine replays actions and produces AI-ready result", () => {
       card_keys: ["card_4", "card_5"],
       reason_cannot_accept: "无法接受",
       reason_abandon: "可以重建",
+      decision_source: "voluntary_reject",
       pressure_before: 1,
       pressure_after: 1,
     },
@@ -226,8 +227,97 @@ Deno.test("generic engine replays actions and produces AI-ready result", () => {
   assert(run.final_card_keys.length === 3);
   assert(run.discarded_card_keys.length === 2);
   assert(run.legacy_traded[0].reasons.length === 2);
+  assert(run.metrics.voluntary_trade_count === 1);
+  assert(run.metrics.forced_trade_count === 0);
   const signals = run.ai_snapshot.signals as Array<{ key: string }>;
   assert(signals.some((signal) => signal.key === "security"));
+});
+
+Deno.test("pressure cap forces a trade and preserves decision provenance", () => {
+  const selected = ["card_1", "card_2", "card_3", "card_4", "card_5"];
+  let state = applyCardGameAction(
+    catalog,
+    initialCardGameState(catalog),
+    { sequence: 1, action_type: "confirm_selection", card_keys: selected },
+    7,
+  );
+
+  for (let sequence = 2; sequence <= 5; sequence += 2) {
+    const scenario = cardGameScenarioOptions(catalog, state, 7)[0];
+    state = applyCardGameAction(
+      catalog,
+      state,
+      { sequence, action_type: "draw_scenario", scenario_key: scenario.key },
+      7,
+    );
+    state = applyCardGameAction(
+      catalog,
+      state,
+      {
+        sequence: sequence + 1,
+        action_type: "accept_scenario",
+        scenario_key: scenario.key,
+      },
+      7,
+    );
+  }
+  assert(state.pressure === catalog.rules.pressure.max);
+
+  const forcedScenario = cardGameScenarioOptions(catalog, state, 7)[0];
+  state = applyCardGameAction(
+    catalog,
+    state,
+    {
+      sequence: 6,
+      action_type: "draw_scenario",
+      scenario_key: forcedScenario.key,
+    },
+    7,
+  );
+  assertThrows(
+    () =>
+      applyCardGameAction(
+        catalog,
+        state,
+        {
+          sequence: 7,
+          action_type: "accept_scenario",
+          scenario_key: forcedScenario.key,
+        },
+        7,
+      ),
+    "pressure is at maximum",
+  );
+  assertThrows(
+    () =>
+      applyCardGameAction(
+        catalog,
+        state,
+        {
+          sequence: 7,
+          action_type: "trade_cards",
+          scenario_key: forcedScenario.key,
+          card_keys: ["card_4", "card_5"],
+          decision_source: "voluntary_reject",
+        },
+        7,
+      ),
+    "decision source does not match",
+  );
+
+  state = applyCardGameAction(
+    catalog,
+    state,
+    {
+      sequence: 7,
+      action_type: "trade_cards",
+      scenario_key: forcedScenario.key,
+      card_keys: ["card_4", "card_5"],
+      decision_source: "pressure_forced",
+    },
+    7,
+  );
+  assert(state.phase === "result");
 });
 
 Deno.test("engine rejects client-forged final cards", () => {
@@ -278,6 +368,8 @@ Deno.test("AI context uses latest structured snapshot without raw reasons", () =
         behavior: {
           accept_rate: 0.25,
           trade_count: 3,
+          voluntary_trade_count: 1,
+          forced_trade_count: 2,
           decision_mode: "control",
         },
         signals: [
@@ -299,6 +391,9 @@ Deno.test("AI context uses latest structured snapshot without raw reasons", () =
   assert(context.gameKeys.join(",") === "life");
   assert(context.text.includes("最终选择：家人、自由"));
   assert(context.text.includes("security=0.80"));
+  assert(context.text.includes("自主交换：1次"));
+  assert(context.text.includes("压力强制交换：2次"));
+  assert(!context.text.includes("主动交换"));
   assert(context.text.includes("不等同于稳定人格"));
   assert(!context.text.includes("绝不能进入"));
   assert(!context.text.includes("旧结果"));

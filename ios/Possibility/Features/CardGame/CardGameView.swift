@@ -545,13 +545,17 @@ struct CardGameView: View {
                         .strokeBorder(.white.opacity(0.2), lineWidth: 1))
                     .transition(.asymmetric(insertion: .scale(scale: 0.8).combined(with: .opacity), removal: .opacity))
 
-                    Text("\(severity.name) · 拒绝需交换 \(engine.discardPerTrade) 张")
+                    Text(engine.isForcedTrade
+                         ? "\(severity.name) · 压力已到极限，必须交换 \(engine.discardPerTrade) 张"
+                         : "\(severity.name) · 拒绝需交换 \(engine.discardPerTrade) 张")
                         .font(.system(size: 11, weight: .semibold)).foregroundStyle(pressureColor)
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(pressureColor.opacity(0.1), in: Capsule())
                         .overlay(Capsule().strokeBorder(pressureColor.opacity(0.4), lineWidth: 1))
 
-                    Text("接受它，会保留所有底牌，但下一轮会继续加码；\n拒绝它，则放下 \(engine.discardPerTrade) 张底牌。直到手中自然只剩 \(engine.finalCardCount) 张。")
+                    Text(engine.isForcedTrade
+                         ? "你已经承担到压力上限。这一轮不能继续接受，请放下 \(engine.discardPerTrade) 张底牌后继续。"
+                         : "接受它，会保留所有底牌，但下一轮会继续加码；\n拒绝它，则放下 \(engine.discardPerTrade) 张底牌。直到手中自然只剩 \(engine.finalCardCount) 张。")
                         .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
                         .multilineTextAlignment(.center)
 
@@ -567,20 +571,24 @@ struct CardGameView: View {
                 .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 20)
             }
             HStack(spacing: 12) {
-                Button("接受它") {
-                    let scenarioKey = engine.current?.key
-                    withAnimation(.easeOut(duration: 0.25)) { engine.accept() }
-                    sessionSync?.record(
-                        type: "accept_scenario",
-                        scenarioKey: scenarioKey
-                    )
+                if engine.canAccept {
+                    Button("接受它") {
+                        let scenarioKey = engine.current?.key
+                        withAnimation(.easeOut(duration: 0.25)) { engine.accept() }
+                        sessionSync?.record(
+                            type: "accept_scenario",
+                            scenarioKey: scenarioKey
+                        )
+                    }
+                    .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity).padding(.vertical, 14)
+                    .background(Theme.buttonGradient, in: Capsule())
+                    .buttonStyle(PressScaleStyle())
                 }
-                .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(.white)
-                .frame(maxWidth: .infinity).padding(.vertical, 14)
-                .background(Theme.buttonGradient, in: Capsule())
-                .buttonStyle(PressScaleStyle())
 
-                Button(engine.canTrade ? "我不接受" : "只剩最终底牌") {
+                Button(engine.canTrade
+                       ? (engine.isForcedTrade ? "必须交换 \(engine.discardPerTrade) 张" : "我不接受")
+                       : "只剩最终底牌") {
                     withAnimation(.easeOut(duration: 0.25)) { engine.beginTrade() }
                 }
                 .font(.system(size: 13.5, weight: .semibold)).foregroundStyle(engine.canTrade ? Color(hex: 0xFF9A8A) : Theme.faint)
@@ -598,16 +606,20 @@ struct CardGameView: View {
     // MARK: 交换
 
     private var trade: some View {
-        VStack(spacing: 0) {
+        let forcedTrade = engine.isForcedTrade
+        return VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     VStack(alignment: .leading, spacing: 5) {
                         Text("THE PRICE")
                             .font(.system(size: 9, weight: .semibold)).tracking(2.2)
                             .foregroundStyle(accent.opacity(0.9))
-                        Text("你愿意用什么交换？").font(.system(size: 19, weight: .bold)).foregroundStyle(Theme.ink)
+                        Text(forcedTrade ? "压力已到极限，必须做出取舍" : "你愿意用什么交换？")
+                            .font(.system(size: 19, weight: .bold)).foregroundStyle(Theme.ink)
                     }
-                    Text("为了让“\(engine.current?.title ?? "")”不发生，请从仍持有的 \(engine.held.count) 张底牌中放下 \(engine.discardPerTrade) 张。最后 \(engine.finalCardCount) 张会被保留。")
+                    Text(forcedTrade
+                         ? "你已经承担到上限。请从仍持有的 \(engine.held.count) 张底牌中放下 \(engine.discardPerTrade) 张，释放压力后继续。最后 \(engine.finalCardCount) 张会被保留。"
+                         : "为了让“\(engine.current?.title ?? "")”不发生，请从仍持有的 \(engine.held.count) 张底牌中放下 \(engine.discardPerTrade) 张。最后 \(engine.finalCardCount) 张会被保留。")
                         .font(.system(size: 11.5)).lineSpacing(5).foregroundStyle(Theme.sub)
                         .padding(12)
                         .background(accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -620,10 +632,14 @@ struct CardGameView: View {
                         }
                     }
 
-                    reasonField(label: "为什么你不能接受这件事？", hint: "写下第一反应",
-                                placeholder: "例如：我无法接受重要的人因为我受到伤害……",
-                                text: Bindable(engine).reasonCannotAccept)
-                    reasonField(label: "为什么愿意放弃这 \(engine.discardPerTrade) 张牌？", hint: "没有标准答案",
+                    if !forcedTrade {
+                        reasonField(label: "为什么你不能接受这件事？", hint: "写下第一反应",
+                                    placeholder: "例如：我无法接受重要的人因为我受到伤害……",
+                                    text: Bindable(engine).reasonCannotAccept)
+                    }
+                    reasonField(label: forcedTrade
+                                ? "在必须取舍时，为什么放下这 \(engine.discardPerTrade) 张牌？"
+                                : "为什么愿意放弃这 \(engine.discardPerTrade) 张牌？", hint: "没有标准答案",
                                 placeholder: "例如：这些东西可以以后再争取……",
                                 text: Bindable(engine).reasonAbandon)
                     Text("你的原话会成为结果分析的重要依据，默认只进入私密画像。")
@@ -636,13 +652,15 @@ struct CardGameView: View {
                 let cards = engine.tradePick
                 let cannotAccept = engine.reasonCannotAccept.trimmingCharacters(in: .whitespacesAndNewlines)
                 let abandon = engine.reasonAbandon.trimmingCharacters(in: .whitespacesAndNewlines)
+                let decisionSource = engine.isForcedTrade ? "pressure_forced" : "voluntary_reject"
                 withAnimation(.easeOut(duration: 0.25)) { engine.confirmTrade() }
                 sessionSync?.record(
                     type: "trade_cards",
                     scenarioKey: scenarioKey,
                     cardKeys: cards,
                     reasonCannotAccept: cannotAccept.isEmpty ? nil : cannotAccept,
-                    reasonAbandon: abandon.isEmpty ? nil : abandon
+                    reasonAbandon: abandon.isEmpty ? nil : abandon,
+                    decisionSource: decisionSource
                 )
             }), enabled: engine.tradePick.count == engine.discardPerTrade)
         }

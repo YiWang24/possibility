@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 /** #RRGGBB → rgba() */
 export function withAlpha(hex: string, alpha: number): string {
-  const n = parseInt(hex.replace("#", ""), 16);
+  const n = Number.parseInt(hex.replace("#", ""), 16);
   const r = (n >> 16) & 255;
   const g = (n >> 8) & 255;
   const b = n & 255;
@@ -19,6 +19,7 @@ export const PRESSURE_COLORS = ["#7CABFF", "#D9B563", "#FF9A6B", "#F06A6A"];
 export function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-label="返回"
       className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-raised text-ink transition active:scale-95"
@@ -41,9 +42,10 @@ export function Foot({
   onClick: () => void;
 }) {
   return (
-    <div className="border-t border-line px-5 pt-3 pb-[14px]">
-      <div className="mx-auto w-full max-w-measure">
+    <div className="border-t border-white/[0.07] bg-[#090b17]/82 px-5 pt-3 pb-[14px] backdrop-blur-xl">
+      <div className="mx-auto w-full max-w-[800px]">
         <button
+          type="button"
           disabled={!enabled}
           onClick={onClick}
           className="w-full rounded-chip bg-btn-g py-[15px] text-[14px] font-semibold text-white transition active:scale-[0.97] disabled:opacity-45"
@@ -60,14 +62,16 @@ export function ResultBlock({
   kicker,
   tint,
   children,
+  className = "",
 }: {
   kicker: string;
   tint: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
     <div
-      className="flex w-full flex-col items-start gap-[9px] rounded-[16px] bg-card p-[15px] text-left"
+      className={`flex w-full flex-col items-start gap-[9px] rounded-[16px] bg-card p-[15px] text-left ${className}`}
       style={{ border: `1px solid ${withAlpha(tint, 0.22)}` }}
     >
       <div className="text-[9px] font-semibold tracking-[1.8px]" style={{ color: withAlpha(tint, 0.95) }}>

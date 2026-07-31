@@ -355,6 +355,7 @@ struct CardGameSyncAction: Codable, Sendable {
     var cardKeys: [String] = []
     var reasonCannotAccept: String?
     var reasonAbandon: String?
+    var decisionSource: String?
     var createdAt: String = ISO8601DateFormatter().string(from: Date())
 
     enum CodingKeys: String, CodingKey {
@@ -364,6 +365,7 @@ struct CardGameSyncAction: Codable, Sendable {
         case cardKeys = "card_keys"
         case reasonCannotAccept = "reason_cannot_accept"
         case reasonAbandon = "reason_abandon"
+        case decisionSource = "decision_source"
         case createdAt = "created_at"
     }
 }

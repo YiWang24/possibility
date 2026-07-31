@@ -278,6 +278,7 @@ internal enum PublicSchema {
     internal let actionType: String
     internal let cardKeys: [String]
     internal let createdAt: String
+    internal let decisionSource: String?
     internal let id: Int64
     internal let pressureAfter: Int32?
     internal let pressureBefore: Int32?
@@ -290,6 +291,7 @@ internal enum PublicSchema {
       case actionType = "action_type"
       case cardKeys = "card_keys"
       case createdAt = "created_at"
+      case decisionSource = "decision_source"
       case id = "id"
       case pressureAfter = "pressure_after"
       case pressureBefore = "pressure_before"
@@ -304,6 +306,7 @@ internal enum PublicSchema {
     internal let actionType: String
     internal let cardKeys: [String]?
     internal let createdAt: String?
+    internal let decisionSource: String?
     internal let id: Int64?
     internal let pressureAfter: Int32?
     internal let pressureBefore: Int32?
@@ -316,6 +319,7 @@ internal enum PublicSchema {
       case actionType = "action_type"
       case cardKeys = "card_keys"
       case createdAt = "created_at"
+      case decisionSource = "decision_source"
       case id = "id"
       case pressureAfter = "pressure_after"
       case pressureBefore = "pressure_before"
@@ -330,6 +334,7 @@ internal enum PublicSchema {
     internal let actionType: String?
     internal let cardKeys: [String]?
     internal let createdAt: String?
+    internal let decisionSource: String?
     internal let id: Int64?
     internal let pressureAfter: Int32?
     internal let pressureBefore: Int32?
@@ -342,6 +347,7 @@ internal enum PublicSchema {
       case actionType = "action_type"
       case cardKeys = "card_keys"
       case createdAt = "created_at"
+      case decisionSource = "decision_source"
       case id = "id"
       case pressureAfter = "pressure_after"
       case pressureBefore = "pressure_before"

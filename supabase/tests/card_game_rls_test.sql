@@ -164,7 +164,7 @@ select public.sync_card_game_session_v2(
   '55555555-5555-4555-8555-555555555555',
   '77777777-7777-4777-8777-777777777777',
   0,
-  '[
+  $actions$[
     {
       "sequence": 1,
       "action_type": "confirm_selection",
@@ -186,6 +186,7 @@ select public.sync_card_game_session_v2(
       "card_keys": ["trust","forgive"],
       "reason_cannot_accept": "无法接受家庭冲突",
       "reason_abandon": "可以重新建立",
+      "decision_source": "voluntary_reject",
       "pressure_before": 1,
       "pressure_after": 1
     },
@@ -201,6 +202,7 @@ select public.sync_card_game_session_v2(
       "action_type": "trade_cards",
       "scenario_key": "adult_life_02",
       "card_keys": ["talent","iq"],
+      "decision_source": "voluntary_reject",
       "pressure_before": 1,
       "pressure_after": 1
     },
@@ -216,11 +218,12 @@ select public.sync_card_game_session_v2(
       "action_type": "trade_cards",
       "scenario_key": "later_life_02",
       "card_keys": ["confidence","kindness"],
+      "decision_source": "voluntary_reject",
       "pressure_before": 1,
       "pressure_after": 1
     }
-  ]'::jsonb,
-  '{
+  ]$actions$::jsonb,
+  $state${
     "phase": "result",
     "selected_card_keys": ["family","friend","lover","confidence","kindness","talent","iq","trust","forgive"],
     "held_card_keys": ["family","friend","lover"],
@@ -230,7 +233,7 @@ select public.sync_card_game_session_v2(
     "accept_count": 0,
     "trade_count": 3,
     "pressure": 1
-  }'::jsonb
+  }$state$::jsonb
 );
 
 select public.complete_card_game_session_v2(
@@ -270,6 +273,40 @@ begin
   if (select count(*) from public.card_game_actions) <> 7 then
     raise exception 'all actions should be preserved';
   end if;
+  if (
+    select count(*)
+      from public.card_game_actions
+     where action_type = 'trade_cards'
+       and decision_source = 'voluntary_reject'
+  ) <> 3 then
+    raise exception 'trade decision provenance should be preserved';
+  end if;
+  if exists (
+    select 1
+      from public.card_game_actions
+     where action_type <> 'trade_cards'
+       and decision_source is not null
+  ) then
+    raise exception 'non-trade actions should not have decision provenance';
+  end if;
+  begin
+    insert into public.card_game_actions (
+      session_id,
+      sequence,
+      action_type,
+      card_keys,
+      decision_source
+    ) values (
+      '77777777-7777-4777-8777-777777777777',
+      8,
+      'trade_cards',
+      array['family', 'friend'],
+      null
+    );
+    raise exception 'trade action without provenance should be rejected';
+  exception when check_violation then
+    null;
+  end;
   if (select count(*) from public.card_game_runs) <> 1 then
     raise exception 'completion should create one historical run';
   end if;
