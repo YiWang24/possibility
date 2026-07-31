@@ -73,15 +73,15 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
       />
 
       {/* 尼采引文 */}
-      <div className="relative border-l border-sub/30 pl-3.5 pt-1">
-        <p className="font-serif text-[12px] leading-[1.9] text-sub">
+      <div className="relative border-l border-sub/30 pl-3.5 pt-1 xl:max-w-[68ch]">
+        <p className="font-serif text-[12px] leading-[1.9] text-sub xl:text-[13px]">
           我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：“离每个人最远的，就是他自己。”——对于我们自己，我们不是“知者”……
         </p>
         <p className="mt-1 text-right text-[11px] text-faint">——尼采《道德的系谱》</p>
       </div>
 
       {/* 画像卡 */}
-      <div className="kaleido-card px-5 pb-[18px] pt-[22px]">
+      <div className="kaleido-card px-5 pb-[18px] pt-[22px] xl:px-8 xl:pb-7 xl:pt-8">
         <PersonaStage
           model={model}
           userName={USER_NAME}
@@ -125,8 +125,8 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
           </span>
         </div>
 
-        {/* 五维行 */}
-        <div className="mt-4 flex flex-col gap-2.5 md:grid md:grid-cols-2 md:gap-2.5">
+        {/* 六维行 —— 桌面 3 列正好两行满栅格，不留豁口 */}
+        <div className="mt-4 flex flex-col gap-2.5 md:grid md:grid-cols-2 md:gap-2.5 xl:grid-cols-3 xl:gap-3">
           {dims.map((dim) => {
             const isTodo = !dim.value;
             return (

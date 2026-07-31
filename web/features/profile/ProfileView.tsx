@@ -89,7 +89,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
     <div className="min-h-dvh screen-bg">
       {/* 顶栏 */}
       <div className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[720px] items-center gap-3 px-5 py-3">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[16px] font-semibold tracking-[0.5px] text-ink">
@@ -116,7 +116,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           {/* Hero */}
           <div className="border-b border-line">
             <div
-              className="mx-auto w-full max-w-[720px] px-[22px] pb-5 pt-[22px]"
+              className="mx-auto w-full max-w-measure px-[22px] pb-5 pt-[22px]"
               style={{
                 background:
                   "radial-gradient(220px circle at 100% 0%, rgba(94,150,255,0.28), transparent), linear-gradient(135deg,#111625 0%,#0B0E17 100%)",
@@ -178,7 +178,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
           {/* Tab 栏 */}
           <div className="sticky top-[57px] z-10 border-b border-line bg-paper/95 backdrop-blur">
-            <div className="mx-auto flex w-full max-w-[720px]">
+            <div className="mx-auto flex w-full max-w-measure">
               {TABS.map((t) => {
                 const active = tab === t.key;
                 return (
@@ -204,7 +204,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           </div>
 
           {/* Panel 内容 */}
-          <div className="mx-auto w-full max-w-[720px] px-5 pb-32 pt-5">
+          <div className="mx-auto w-full max-w-measure px-5 pb-32 pt-5">
             {tab === "story" && (
               <StoryPanel
                 traveler={traveler}
@@ -227,8 +227,8 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           </div>
 
           {/* 底部咨询付费栏 */}
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
-            <div className="mx-auto w-full max-w-[720px] px-4 py-3">
+          <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
+            <div className="mx-auto w-full max-w-measure px-4 py-3">
               <button
                 onClick={() => setShowPaywall(true)}
                 className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-btn-g py-[15px] text-[13px] font-semibold text-white shadow-[0_8px_14px_rgba(79,125,255,0.55)] transition active:scale-[0.97]"

@@ -102,13 +102,13 @@ export function HubView() {
     <div className="min-h-dvh screen-bg">
       {/* 顶栏 */}
       <div className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-5 pt-[14px] pb-3">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
           <BackButton onClick={() => router.back()} />
           <div className="text-[16px] font-bold text-ink">卡牌探索</div>
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-[22px] pt-4 pb-[34px]">
+      <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-[22px] pt-4 pb-[34px]">
         {/* hero */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}

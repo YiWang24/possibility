@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PageContainer } from "@/components/shell/PageContainer";
+import { PageGrid } from "@/components/shell/PageGrid";
 import { PageHeader, SectionHeader, TagPill } from "@/components/ui/Basics";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
@@ -42,6 +43,9 @@ function hasResult(value: string): boolean {
   );
 }
 
+/** 稳定的空回退，避免 zustand 选择器每次产出新引用 */
+const NO_FACTS: NonNullable<ReturnType<typeof useData.getState>["profile"]>["facts"] = [];
+
 const TAB_ITEMS: { key: string; label: string }[] = [
   { key: "persona", label: "动态画像" },
   { key: "story", label: "我的故事" },
@@ -60,7 +64,9 @@ export function MeView() {
 
   /* 画像数据来源：与「认识你自己」同一份本地维度 + 云端底牌 */
   const loadPortrait = useHome((s) => s.loadPortrait);
-  const profileFacts = useData((s) => s.profile?.facts ?? []);
+  /* 选择器里写 `?? []` 会每次返回新数组引用，useSyncExternalStore 判定快照未缓存
+     并抛 "getSnapshot should be cached"，进而无限重渲染。回退值必须是稳定常量。 */
+  const profileFacts = useData((s) => s.profile?.facts) ?? NO_FACTS;
 
   const [tab, setTab] = useState("persona");
   const [editMode, setEditMode] = useState<MeEditMode | null>(null);
@@ -173,123 +179,133 @@ export function MeView() {
   return (
     <>
       <PageContainer>
-        <PageHeader eyebrow="MY PUBLIC PAGE" title="我的主页" />
+        <PageHeader
+          eyebrow="MY PUBLIC PAGE"
+          title="我的主页"
+          description="别人点开你的万花筒名片时看到的样子。"
+        />
 
-        {/* Hero 名片 */}
-        <div className="kaleido-card mt-4 flex flex-col gap-3 p-[18px]">
-          <div className="flex items-center gap-3.5">
-            <div className="relative shrink-0 rounded-full p-[3px]" style={{ background: hue(profile.hue).gradient }}>
-              <TravelerAvatar initial={profile.name.slice(0, 1)} hueIndex={profile.hue} size={62} />
-            </div>
-            <div className="flex min-w-0 flex-col gap-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[21px] font-bold text-ink">{profile.name}</span>
-                <span className="rounded-chip border border-[#3ED9A4]/40 bg-[#3ED9A4]/13 px-2 py-[3px] text-[9.5px] font-semibold text-[#8EE7C8]">
-                  我的公开主页
-                </span>
+        {/* 桌面分栏：名片钉在左轨常驻，右侧翻 tab 时身份信息始终在场 */}
+        <PageGrid
+          className="mt-4 lg:mt-9"
+          railSide="start"
+          rail={
+            <div className="kaleido-card flex flex-col gap-3 p-[18px] xl:p-6">
+              <div className="flex items-center gap-3.5">
+                <div className="relative shrink-0 rounded-full p-[3px]" style={{ background: hue(profile.hue).gradient }}>
+                  <TravelerAvatar initial={profile.name.slice(0, 1)} hueIndex={profile.hue} size={62} />
+                </div>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[21px] font-bold text-ink">{profile.name}</span>
+                    <span className="rounded-chip border border-[#3ED9A4]/40 bg-[#3ED9A4]/13 px-2 py-[3px] text-[9.5px] font-semibold text-[#8EE7C8]">
+                      我的公开主页
+                    </span>
+                  </div>
+                  <span className="text-[12px] text-sub">
+                    {profile.meta.age} 岁 · {profile.meta.city}
+                  </span>
+                </div>
+                <button
+                  onClick={() => requestEdit("basic")}
+                  aria-label="编辑个人资料"
+                  className="ml-auto flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-line bg-raised text-[14px] text-ink transition active:scale-95"
+                >
+                  ✎
+                </button>
               </div>
-              <span className="text-[12px] text-sub">
-                {profile.meta.age} 岁 · {profile.meta.city}
+
+              {/* 转型条 */}
+              <div className="inline-flex w-fit items-center gap-2.5 rounded-chip border border-[#5E96FF]/28 bg-[#5E96FF]/[0.09] px-3.5 py-[9px] text-[13px] font-semibold">
+                <span className="text-sub">{profile.meta.from}</span>
+                <span className="text-brand">→</span>
+                <span className="text-ink">{profile.meta.to}</span>
+              </div>
+
+              <span className="text-[11.5px] text-faint">
+                {profile.meta.years} · {profile.meta.result}
               </span>
+
+              <div className="flex flex-wrap gap-[7px]">
+                {profile.tags.map((t) => (
+                  <TagPill key={t} text={t} />
+                ))}
+              </div>
             </div>
-            <button
-              onClick={() => requestEdit("basic")}
-              aria-label="编辑个人资料"
-              className="ml-auto flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-line bg-raised text-[14px] text-ink transition active:scale-95"
-            >
-              ✎
-            </button>
-          </div>
-
-          {/* 转型条 */}
-          <div className="inline-flex w-fit items-center gap-2.5 rounded-chip border border-[#5E96FF]/28 bg-[#5E96FF]/[0.09] px-3.5 py-[9px] text-[13px] font-semibold">
-            <span className="text-sub">{profile.meta.from}</span>
-            <span className="text-brand">→</span>
-            <span className="text-ink">{profile.meta.to}</span>
-          </div>
-
-          <span className="text-[11.5px] text-faint">
-            {profile.meta.years} · {profile.meta.result}
-          </span>
-
-          <div className="flex flex-wrap gap-[7px]">
-            {profile.tags.map((t) => (
-              <TagPill key={t} text={t} />
-            ))}
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="mt-4 flex gap-[7px]">
-          {TAB_ITEMS.map(({ key, label }) => {
-            const on = tab === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`flex-1 rounded-chip border py-[9px] text-[12px] transition active:scale-[0.97] ${
-                  on
-                    ? "bg-btn-g border-[#6FA5FF]/60 font-semibold text-white"
-                    : "border-line bg-raised text-sub"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Panel */}
-        <div className="mt-4">
-          {tab === "story" ? (
-            <StoryPanel profile={profile} yearsNumber={yearsNumber} onEdit={() => requestEdit("story")} />
-          ) : tab === "advice" ? (
-            <AdvicePanel modules={profile.adviceModules} onEdit={() => requestEdit("advice")} />
-          ) : tab === "service" ? (
-            <ServicePanel services={profile.services} onEdit={() => requestEdit("service")} />
-          ) : (
-            <PersonaPanel
-              model={personaModel}
-              items={visibleItems}
-              totalCount={allPersonaItems.length}
-              lifeCards={lifeCards}
-              onEdit={() => setPrivacyOpen(true)}
-            />
-          )}
-        </div>
-
-        {/* 账号区 */}
-        <div className="mt-6 flex flex-col gap-3">
-          <SectionHeader title="账号" />
-          <div className="kaleido-card flex flex-col">
-            <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-              <span className="shrink-0 text-[13px] text-sub">登录邮箱</span>
-              <span className="truncate text-[13px] font-semibold text-[#8EE7C8]">
-                {email ?? "已登录"}
-              </span>
+          }
+        >
+            {/* Tabs */}
+            <div className="flex gap-[7px]">
+              {TAB_ITEMS.map(({ key, label }) => {
+                const on = tab === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    className={`flex-1 rounded-chip border py-[9px] text-[12px] transition active:scale-[0.97] ${
+                      on
+                        ? "bg-btn-g border-[#6FA5FF]/60 font-semibold text-white"
+                        : "border-line bg-raised text-sub"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-            <div className="h-px bg-line" />
-            <AccountRow
-              title="个人档案与 AI 隐私"
-              tint="text-brand"
-              busy={accountBusy}
-              onClick={() => setPrivacyOpen(true)}
-            />
-            <div className="h-px bg-line" />
-            {/* 邮箱验证不拦登录，所以这里是「补发」而非「去验证」：注册时那封漏收了可再来一次 */}
-            <AccountRow
-              title="重发邮箱验证链接"
-              tint="text-sub"
-              busy={accountBusy || resendBusy}
-              onClick={resendVerification}
-            />
-            <div className="h-px bg-line" />
 
-            <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
-            <div className="h-px bg-line" />
-            <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
-          </div>
-        </div>
+            {/* Panel */}
+            <div className="mt-4">
+              {tab === "story" ? (
+                <StoryPanel profile={profile} yearsNumber={yearsNumber} onEdit={() => requestEdit("story")} />
+              ) : tab === "advice" ? (
+                <AdvicePanel modules={profile.adviceModules} onEdit={() => requestEdit("advice")} />
+              ) : tab === "service" ? (
+                <ServicePanel services={profile.services} onEdit={() => requestEdit("service")} />
+              ) : (
+                <PersonaPanel
+                  model={personaModel}
+                  items={visibleItems}
+                  totalCount={allPersonaItems.length}
+                  lifeCards={lifeCards}
+                  onEdit={() => setPrivacyOpen(true)}
+                />
+              )}
+            </div>
+
+            {/* 账号区 */}
+            <div className="mt-6 flex flex-col gap-3">
+              <SectionHeader title="账号" />
+              <div className="kaleido-card flex flex-col">
+                <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+                  <span className="shrink-0 text-[13px] text-sub">登录邮箱</span>
+                  <span className="truncate text-[13px] font-semibold text-[#8EE7C8]">
+                    {email ?? "已登录"}
+                  </span>
+                </div>
+                <div className="h-px bg-line" />
+                <AccountRow
+                  title="个人档案与 AI 隐私"
+                  tint="text-brand"
+                  busy={accountBusy}
+                  onClick={() => setPrivacyOpen(true)}
+                />
+                <div className="h-px bg-line" />
+                {/* 邮箱验证不拦登录，所以这里是「补发」而非「去验证」：注册时那封漏收了可再来一次 */}
+                <AccountRow
+                  title="重发邮箱验证链接"
+                  tint="text-sub"
+                  busy={accountBusy || resendBusy}
+                  onClick={resendVerification}
+                />
+                <div className="h-px bg-line" />
+
+                <AccountRow title="退出登录" tint="text-sub" busy={accountBusy} onClick={() => setConfirm("signout")} />
+                <div className="h-px bg-line" />
+                <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
+              </div>
+            </div>
+        </PageGrid>
       </PageContainer>
 
       {/* 编辑浮层 */}

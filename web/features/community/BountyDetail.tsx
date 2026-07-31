@@ -139,7 +139,7 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
     <div className="min-h-dvh screen-bg">
       {/* 顶栏 */}
       <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-5 py-3">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
             <div className="text-[16px] font-bold tracking-[0.5px] text-ink">悬赏详情</div>
@@ -150,7 +150,7 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-5 pb-28 pt-4">
+      <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-5 pb-28 pt-4">
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
@@ -224,8 +224,8 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
       </div>
 
       {/* 底部动作栏 */}
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
-        <div className="mx-auto w-full max-w-[680px] px-5 py-3">
+      <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
+        <div className="mx-auto w-full max-w-measure px-5 py-3">
           <button
             onClick={onSend}
             disabled={sent}

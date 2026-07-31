@@ -31,12 +31,45 @@
     "Segoe UI", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
   --font-serif: "New York", "Songti SC", Georgia, "Noto Serif SC", serif;
 
+  /* 断点阶梯 —— md 手机→平板，lg 平板→笔记本，xl/2xl 才是真正的桌面全屏档 */
   --breakpoint-md: 768px;
   --breakpoint-lg: 1100px;
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: 1760px;
+
+  /* 内容宽度令牌 —— 三档：阅读流 / 应用页 / 看板 */
+  --container-measure: 48rem; /* 768px：长文、对话、单步流程的经典行宽 */
+  --container-app: 74rem; /* 1184px：常规应用页，主栏 + 右轨 */
+  --container-board: 96rem; /* 1536px：卡片看板、社区多列 */
 }
 
+/* 侧栏宽度的单一真源。AppShell 用它设 aside 宽度，页面级 fixed 底栏 / Toast
+   用它避让侧栏 —— 否则加了侧栏之后，这些元素仍按整个视口居中，会歪到侧栏底下。
+   全屏浮层（modal / sheet）不该用它：它们本来就该盖住侧栏。 */
 :root {
   color-scheme: dark;
+  --shell-sidebar: 0px;
+}
+@media (width >= 768px) {
+  :root {
+    --shell-sidebar: 232px;
+  }
+}
+@media (width >= 1440px) {
+  :root {
+    --shell-sidebar: 272px;
+  }
+}
+@media (width >= 1760px) {
+  :root {
+    --shell-sidebar: 292px;
+  }
+}
+
+/* 页面级固定条：贴主区左沿而不是视口左沿 */
+@utility shell-fixed-x {
+  left: var(--shell-sidebar);
+  right: 0;
 }
 
 body {
@@ -45,6 +78,73 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+}
+
+/* 桌面滚动条：默认的浅色滚动条在深色底上非常刺眼 */
+@media (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.14) transparent;
+  }
+}
+
+::selection {
+  background: rgb(94 150 255 / 0.32);
+}
+
+/* 键盘可见焦点 —— 原 iOS 移植版全靠 active:scale，桌面缺少焦点态 */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- 布局基元 ---------------------------------------------------------- */
+
+/* 页面横向留白：手机 22px 贴边，桌面随视口张开到 64px */
+@utility shell-gutter {
+  padding-inline: clamp(22px, 3.4vw, 64px);
+}
+
+/* 主区在侧栏之外还需要一段呼吸，避免内容顶着分隔线 */
+@utility shell-inset {
+  padding-inline: clamp(22px, 3.4vw, 64px);
+  @media (width >= 1100px) {
+    padding-inline-start: clamp(32px, 3.4vw, 72px);
+  }
+}
+
+/* ---- 流体字阶 —— 固定 px 字号在 27" 屏上显得像手机截图 ------------------ */
+
+/* 页面主标题：27px → 40px */
+@utility text-display {
+  font-size: clamp(1.6875rem, 1.35rem + 1.05vw, 2.5rem);
+  line-height: 1.16;
+  letter-spacing: 0.6px;
+}
+
+/* 区块标题：15px → 19px */
+@utility text-section {
+  font-size: clamp(0.9375rem, 0.86rem + 0.24vw, 1.1875rem);
+  line-height: 1.35;
+  letter-spacing: 0.6px;
+}
+
+/* eyebrow 小字：11px → 12px，字距随尺寸放大 */
+@utility text-eyebrow {
+  font-size: clamp(0.6875rem, 0.65rem + 0.12vw, 0.75rem);
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
 }
 
 /* 渐变 —— aurora / aurora-deep / 按钮渐变 */
@@ -105,11 +205,21 @@ body {
   );
 }
 
-/* 屏幕背景：paper 底 + 双极光径向（iOS ScreenBackground） */
+/* 屏幕背景：paper 底 + 双极光径向（iOS ScreenBackground）。
+   半径改为随视口缩放 —— 原来的 320px/260px 固定值在 1440px+ 屏上缩成两个小光点，
+   正是「手机截图贴在大屏上」的观感来源之一。 */
 @utility screen-bg {
   background:
-    radial-gradient(320px circle at 108% -5%, rgb(74 116 255 / 0.16), transparent),
-    radial-gradient(260px circle at -15% 30%, rgb(227 92 193 / 0.07), transparent),
+    radial-gradient(
+      clamp(320px, 34vw, 860px) circle at 100% -6%,
+      rgb(74 116 255 / 0.16),
+      transparent
+    ),
+    radial-gradient(
+      clamp(260px, 28vw, 720px) circle at -8% 26%,
+      rgb(227 92 193 / 0.07),
+      transparent
+    ),
     var(--color-paper);
 }
 

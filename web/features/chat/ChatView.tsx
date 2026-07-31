@@ -95,22 +95,26 @@ export function ChatView({
 
   return (
     <div className="flex min-h-dvh flex-col screen-bg">
-      {/* 顶栏 */}
-      <div className="sticky top-0 z-30 flex items-center gap-3 bg-paper/80 backdrop-blur px-[22px] py-3 border-b border-line">
-        <BackButton onClick={() => router.back()} />
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[16px] font-semibold tracking-[0.8px] text-ink">
-            {model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
-          </span>
-          <span className="text-[11px] text-faint">和你的动态画像一起想清楚</span>
+      {/* 顶栏 —— 内容与消息列、输入栏同一根中轴线，否则桌面上三者各对各的边 */}
+      <div className="sticky top-0 z-30 border-b border-line bg-paper/80 px-[22px] py-3 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3">
+          <BackButton onClick={() => router.back()} />
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[16px] font-semibold tracking-[0.8px] text-ink">
+              {model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
+            </span>
+            <span className="text-[11px] text-faint">和你的动态画像一起想清楚</span>
+          </div>
+          <div className="flex-1" />
+          {model.historyEntries.length > 0 ? (
+            <HistoryButton onClick={() => model.setShowHistory(true)} />
+          ) : null}
         </div>
-        <div className="flex-1" />
-        {model.historyEntries.length > 0 ? <HistoryButton onClick={() => model.setShowHistory(true)} /> : null}
       </div>
 
       {/* 消息流 */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="mx-auto w-full max-w-[760px] px-5 py-3">
+        <div className="mx-auto w-full max-w-measure px-5 py-3">
           {model.messages.map((msg) => (msg.text ? <MessageBubble key={msg.id} message={msg} /> : null))}
 
           {showThinking ? <ThinkingBubble /> : null}

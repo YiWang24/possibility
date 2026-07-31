@@ -263,7 +263,7 @@ function GameBody({
     <div className="flex h-dvh flex-col screen-bg">
       {/* 顶栏 */}
       <div className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-[680px] items-center gap-3 px-5 pt-[14px] pb-3">
+        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
           <BackButton onClick={back} />
           <div className="min-w-0 flex-1">
             <div className="truncate text-[15.5px] font-bold text-ink">{topInfo.title}</div>
@@ -335,7 +335,7 @@ function GameBody({
                     borderTop: "1px solid rgba(255,122,77,0.3)",
                   }}
                 >
-                  <div className="mx-auto w-full max-w-[680px]">
+                  <div className="mx-auto w-full max-w-measure">
                     <div className="text-[12.5px] font-semibold text-[#FFB096]">
                       ⚠ 已保存在本机，云端同步失败
                     </div>
@@ -378,7 +378,7 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-6 pt-[14px] pb-[26px]">
+        <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-[14px] pb-[26px]">
           {/* 顶部扇形装饰牌（原型 .linear-spread） */}
           <div className="relative mx-auto mt-3 h-24 w-[220px]">
             {[0, 1, 2, 3, 4].map((i) => {
@@ -459,7 +459,7 @@ function SelectPhase({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-3 px-[22px] pt-[14px] pb-6">
+        <div className="mx-auto flex w-full max-w-measure flex-col gap-3 px-[22px] pt-[14px] pb-6">
           <div className="flex items-start justify-between">
             <div>
               <div className="text-[9px] font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>
@@ -597,7 +597,7 @@ function DrawPhase({
   const stage = engine.stageMeta;
   return (
     <div className="no-scrollbar flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4 px-6 pt-4 pb-[26px]">
+      <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-4 pb-[26px]">
         <div>
           <div className="text-[9.5px] font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
             STAGE {pad2(engine.round + 1)} · {stage.age}
@@ -683,7 +683,7 @@ function DecisionPhase({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col items-center gap-[15px] px-6 pt-4 pb-5">
+        <div className="mx-auto flex w-full max-w-measure flex-col items-center gap-[15px] px-6 pt-4 pb-5">
           <span className="rounded-chip bg-raised px-3 py-[5px] text-[10.5px] font-semibold text-sub">
             第 {engine.round + 1} 轮 ·{" "}
             {cfg.kind === "life" ? engine.stageMeta.name : scenario.theme}
@@ -741,7 +741,7 @@ function DecisionPhase({
         </div>
       </div>
       <div className="border-t border-line px-5 pt-3 pb-[14px]">
-        <div className="mx-auto flex w-full max-w-[680px] gap-3">
+        <div className="mx-auto flex w-full max-w-measure gap-3">
           <button
             onClick={() => {
               const scenarioKey = engine.current?.key;
@@ -789,7 +789,7 @@ function TradePhase({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-[680px] flex-col gap-[14px] px-[22px] pt-4 pb-5">
+        <div className="mx-auto flex w-full max-w-measure flex-col gap-[14px] px-[22px] pt-4 pb-5">
           <div>
             <div className="text-[9px] font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>
               THE PRICE

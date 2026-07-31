@@ -256,7 +256,8 @@ export function ProfilePrivacyView({
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="flex h-full w-full max-w-[720px] flex-col bg-page"
+            /* 原为 bg-page：主题里没有该 token，实际渲染成透明，面板一直靠父层蒙版凑合 */
+            className="screen-bg flex h-full w-full max-w-measure flex-col border-x border-line"
             initial={{ y: 28, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 28, opacity: 0 }}
