@@ -181,11 +181,12 @@ body {
 }
 
 /* 隐藏滚动条（横向 chips/牌堆） */
-@utility no-scrollbar {
+.no-scrollbar {
   scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* 光球 conic 色环 */

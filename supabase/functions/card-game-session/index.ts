@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
       );
       const seed = body.seed === undefined
         ? crypto.getRandomValues(new Uint32Array(1))[0]
-        : integer(body.seed, "seed", 0, 0x7fff_ffff);
+        : integer(body.seed, "seed", 0, 0x7fffffff);
       const { data, error } = await db.rpc("create_card_game_session_v2", {
         p_user_id: user.id,
         p_session_id: sessionId,

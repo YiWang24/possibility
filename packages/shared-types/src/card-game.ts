@@ -583,7 +583,7 @@ export function validateCardGameCatalog(input: unknown): CardGameCatalog {
     },
   );
   invariant(
-    thresholds.some((maximum) => maximum === 1),
+    thresholds.includes(1),
     "analysis.mode_thresholds must cover accept rate 1",
   );
 
