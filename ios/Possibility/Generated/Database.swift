@@ -509,6 +509,16 @@ internal enum PublicSchema {
     }
   }
   internal struct CardGameRunsSelect: Codable, Hashable, Sendable {
+    internal let aiNarrative: AnyJSON?
+    internal let aiNarrativeAttempts: Int16
+    internal let aiNarrativeErrorCode: String?
+    internal let aiNarrativeGeneratedAt: String?
+    internal let aiNarrativeGenerationId: UUID?
+    internal let aiNarrativeModel: String?
+    internal let aiNarrativePromptVersion: String?
+    internal let aiNarrativeSchemaVersion: Int16?
+    internal let aiNarrativeStartedAt: String?
+    internal let aiNarrativeStatus: String
     internal let aiSnapshot: AnyJSON
     internal let analysisKey: String
     internal let analysisSchemaVersion: Int16
@@ -524,6 +534,16 @@ internal enum PublicSchema {
     internal let sessionId: UUID
     internal let userId: UUID
     internal enum CodingKeys: String, CodingKey {
+      case aiNarrative = "ai_narrative"
+      case aiNarrativeAttempts = "ai_narrative_attempts"
+      case aiNarrativeErrorCode = "ai_narrative_error_code"
+      case aiNarrativeGeneratedAt = "ai_narrative_generated_at"
+      case aiNarrativeGenerationId = "ai_narrative_generation_id"
+      case aiNarrativeModel = "ai_narrative_model"
+      case aiNarrativePromptVersion = "ai_narrative_prompt_version"
+      case aiNarrativeSchemaVersion = "ai_narrative_schema_version"
+      case aiNarrativeStartedAt = "ai_narrative_started_at"
+      case aiNarrativeStatus = "ai_narrative_status"
       case aiSnapshot = "ai_snapshot"
       case analysisKey = "analysis_key"
       case analysisSchemaVersion = "analysis_schema_version"
@@ -541,6 +561,16 @@ internal enum PublicSchema {
     }
   }
   internal struct CardGameRunsInsert: Codable, Hashable, Sendable {
+    internal let aiNarrative: AnyJSON?
+    internal let aiNarrativeAttempts: Int16?
+    internal let aiNarrativeErrorCode: String?
+    internal let aiNarrativeGeneratedAt: String?
+    internal let aiNarrativeGenerationId: UUID?
+    internal let aiNarrativeModel: String?
+    internal let aiNarrativePromptVersion: String?
+    internal let aiNarrativeSchemaVersion: Int16?
+    internal let aiNarrativeStartedAt: String?
+    internal let aiNarrativeStatus: String?
     internal let aiSnapshot: AnyJSON
     internal let analysisKey: String
     internal let analysisSchemaVersion: Int16
@@ -556,6 +586,16 @@ internal enum PublicSchema {
     internal let sessionId: UUID
     internal let userId: UUID
     internal enum CodingKeys: String, CodingKey {
+      case aiNarrative = "ai_narrative"
+      case aiNarrativeAttempts = "ai_narrative_attempts"
+      case aiNarrativeErrorCode = "ai_narrative_error_code"
+      case aiNarrativeGeneratedAt = "ai_narrative_generated_at"
+      case aiNarrativeGenerationId = "ai_narrative_generation_id"
+      case aiNarrativeModel = "ai_narrative_model"
+      case aiNarrativePromptVersion = "ai_narrative_prompt_version"
+      case aiNarrativeSchemaVersion = "ai_narrative_schema_version"
+      case aiNarrativeStartedAt = "ai_narrative_started_at"
+      case aiNarrativeStatus = "ai_narrative_status"
       case aiSnapshot = "ai_snapshot"
       case analysisKey = "analysis_key"
       case analysisSchemaVersion = "analysis_schema_version"
@@ -573,6 +613,16 @@ internal enum PublicSchema {
     }
   }
   internal struct CardGameRunsUpdate: Codable, Hashable, Sendable {
+    internal let aiNarrative: AnyJSON?
+    internal let aiNarrativeAttempts: Int16?
+    internal let aiNarrativeErrorCode: String?
+    internal let aiNarrativeGeneratedAt: String?
+    internal let aiNarrativeGenerationId: UUID?
+    internal let aiNarrativeModel: String?
+    internal let aiNarrativePromptVersion: String?
+    internal let aiNarrativeSchemaVersion: Int16?
+    internal let aiNarrativeStartedAt: String?
+    internal let aiNarrativeStatus: String?
     internal let aiSnapshot: AnyJSON?
     internal let analysisKey: String?
     internal let analysisSchemaVersion: Int16?
@@ -588,6 +638,16 @@ internal enum PublicSchema {
     internal let sessionId: UUID?
     internal let userId: UUID?
     internal enum CodingKeys: String, CodingKey {
+      case aiNarrative = "ai_narrative"
+      case aiNarrativeAttempts = "ai_narrative_attempts"
+      case aiNarrativeErrorCode = "ai_narrative_error_code"
+      case aiNarrativeGeneratedAt = "ai_narrative_generated_at"
+      case aiNarrativeGenerationId = "ai_narrative_generation_id"
+      case aiNarrativeModel = "ai_narrative_model"
+      case aiNarrativePromptVersion = "ai_narrative_prompt_version"
+      case aiNarrativeSchemaVersion = "ai_narrative_schema_version"
+      case aiNarrativeStartedAt = "ai_narrative_started_at"
+      case aiNarrativeStatus = "ai_narrative_status"
       case aiSnapshot = "ai_snapshot"
       case analysisKey = "analysis_key"
       case analysisSchemaVersion = "analysis_schema_version"

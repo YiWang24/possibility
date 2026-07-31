@@ -78,6 +78,7 @@ begin
   end;
 end
 $$;
+
 reset role;
 
 set local role service_role;
@@ -270,13 +271,18 @@ begin
   ) is not true then
     raise exception 'completion should atomically finish the session';
   end if;
-  if (select count(*) from public.card_game_actions) <> 7 then
+  if (
+    select count(*)
+      from public.card_game_actions
+     where session_id = '77777777-7777-4777-8777-777777777777'
+  ) <> 7 then
     raise exception 'all actions should be preserved';
   end if;
   if (
     select count(*)
-      from public.card_game_actions
-     where action_type = 'trade_cards'
+     from public.card_game_actions
+     where session_id = '77777777-7777-4777-8777-777777777777'
+       and action_type = 'trade_cards'
        and decision_source = 'voluntary_reject'
   ) <> 3 then
     raise exception 'trade decision provenance should be preserved';
@@ -284,7 +290,8 @@ begin
   if exists (
     select 1
       from public.card_game_actions
-     where action_type <> 'trade_cards'
+     where session_id = '77777777-7777-4777-8777-777777777777'
+       and action_type <> 'trade_cards'
        and decision_source is not null
   ) then
     raise exception 'non-trade actions should not have decision provenance';
@@ -307,7 +314,11 @@ begin
   exception when check_violation then
     null;
   end;
-  if (select count(*) from public.card_game_runs) <> 1 then
+  if (
+    select count(*)
+      from public.card_game_runs
+     where session_id = '77777777-7777-4777-8777-777777777777'
+  ) <> 1 then
     raise exception 'completion should create one historical run';
   end if;
   if (
@@ -328,6 +339,37 @@ begin
   end if;
 end
 $$;
+
+update public.card_game_runs
+   set ai_narrative_status = 'ready',
+       ai_narrative = '{
+         "schema_version": 1,
+         "headline": "关系中的稳定锚点",
+         "summary": "这一局的选择显示了关系在压力下的排序。",
+         "truth": {"text":"关系是本局稳定线索。","evidence_refs":["final_card:family"]},
+         "tension": {"text":"选择与放下之间存在张力。","evidence_refs":["discarded_card:trust"]},
+         "blind_spot": {"text":"交换不等于永久否定。","evidence_refs":["decision:3"]},
+         "reflection_question": {"text":"现实里还会这样选择吗？","evidence_refs":["behavior:aggregate"]}
+       }'::jsonb,
+       ai_narrative_schema_version = 1,
+       ai_narrative_prompt_version = 'card_game_narrative_zh_v1',
+       ai_narrative_model = 'test-model',
+       ai_narrative_generation_id = null,
+       ai_narrative_attempts = 1,
+       ai_narrative_generated_at = now()
+ where session_id = '77777777-7777-4777-8777-777777777777';
+
+do $$
+begin
+  begin
+    update public.card_game_runs
+       set ai_narrative = null
+     where session_id = '77777777-7777-4777-8777-777777777777';
+    raise exception 'ready narrative without an object was accepted';
+  exception when check_violation then null;
+  end;
+end
+$$;
 reset role;
 
 select set_config(
@@ -343,6 +385,17 @@ begin
      or (select count(*) from public.card_game_runs) <> 1 then
     raise exception 'owner should read own full card history';
   end if;
+  if (
+    select ai_narrative ->> 'headline' = '关系中的稳定锚点'
+      from public.card_game_runs
+  ) is not true then
+    raise exception 'owner should read own cached AI narrative';
+  end if;
+  begin
+    update public.card_game_runs set ai_narrative_status = 'failed';
+    raise exception 'owner directly mutated AI narrative state';
+  exception when insufficient_privilege then null;
+  end;
 end
 $$;
 reset role;
@@ -355,9 +408,16 @@ select set_config(
 set local role authenticated;
 do $$
 begin
-  if exists (select 1 from public.card_game_sessions)
-     or exists (select 1 from public.card_game_actions)
-     or exists (select 1 from public.card_game_runs) then
+  if exists (
+       select 1 from public.card_game_sessions
+        where user_id = '66666666-6666-4666-8666-666666666666'
+     ) or exists (
+       select 1 from public.card_game_actions
+        where session_id = '77777777-7777-4777-8777-777777777777'
+     ) or exists (
+       select 1 from public.card_game_runs
+        where user_id = '66666666-6666-4666-8666-666666666666'
+     ) then
     raise exception 'another user read private card history';
   end if;
 end
@@ -398,9 +458,16 @@ reset role;
 set local role service_role;
 do $$
 begin
-  if exists (select 1 from public.card_game_sessions)
-     or exists (select 1 from public.card_game_actions)
-     or exists (select 1 from public.card_game_runs) then
+  if exists (
+       select 1 from public.card_game_sessions
+        where user_id = '66666666-6666-4666-8666-666666666666'
+     ) or exists (
+       select 1 from public.card_game_actions
+        where session_id = '77777777-7777-4777-8777-777777777777'
+     ) or exists (
+       select 1 from public.card_game_runs
+        where user_id = '66666666-6666-4666-8666-666666666666'
+     ) then
     raise exception 'clear_profile should purge card-game v2 private history';
   end if;
 end

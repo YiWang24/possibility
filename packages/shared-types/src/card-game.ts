@@ -208,6 +208,41 @@ export interface CardGameRunPayload {
   }>;
 }
 
+export type CardGameAiNarrativeStatus =
+  | "pending"
+  | "generating"
+  | "ready"
+  | "failed";
+
+export interface CardGameAiNarrativeSection {
+  text: string;
+  evidence_refs: string[];
+}
+
+/**
+ * AI may phrase the interpretation, but every section must cite evidence from
+ * the server-validated run. The disclaimer remains product-owned copy.
+ */
+export interface CardGameAiNarrative {
+  schema_version: 1;
+  headline: string;
+  summary: string;
+  truth: CardGameAiNarrativeSection;
+  tension: CardGameAiNarrativeSection;
+  blind_spot: CardGameAiNarrativeSection;
+  reflection_question: CardGameAiNarrativeSection;
+}
+
+export interface CardGameAiNarrativeResponse {
+  ok: true;
+  session_id: string;
+  status: CardGameAiNarrativeStatus;
+  narrative: CardGameAiNarrative | null;
+  generated_at: string | null;
+  retryable: boolean;
+  source: "ai" | "rules";
+}
+
 const KEY_PATTERN = /^[a-z][a-z0-9_]{0,63}$/;
 const PROFILE_DIMENSIONS = new Set([
   "personality",

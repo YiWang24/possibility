@@ -12,9 +12,11 @@ import {
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CardGameKind, GameCard } from "./data";
+import type { CardGameAiNarrativeResponse } from "@possibility/shared-types";
 import { loadCardGameConfig } from "./catalog";
 import {
   CardGameSessionCoordinator,
+  lastCompletedCardGameSession,
   pinnedCardGameCatalogVersion,
 } from "./session";
 import {
@@ -208,6 +210,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [sessionSync, setSessionSync] =
     useState<CardGameSessionCoordinator | null>(null);
+  const [lastResultSessionId, setLastResultSessionId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -255,7 +258,10 @@ export function GameView({ kind }: { kind: CardGameKind }) {
         }
         if (!active) return;
         if (coordinator) nextEngine.scenarioSeed = coordinator.seed;
+        const previousResultSessionId = await lastCompletedCardGameSession(kind);
+        if (!active) return;
         setSessionSync(coordinator);
+        setLastResultSessionId(previousResultSessionId);
         setEngine(nextEngine);
         setLoadError(null);
       } catch {
@@ -304,6 +310,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
     <GameBody
       engine={engine}
       sessionSync={sessionSync}
+      lastResultSessionId={lastResultSessionId}
       act={act}
       router={router}
       isSaving={isSaving}
@@ -317,6 +324,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
 function GameBody({
   engine,
   sessionSync,
+  lastResultSessionId,
   act,
   router,
   isSaving,
@@ -326,6 +334,7 @@ function GameBody({
 }: {
   engine: CardGameEngine;
   sessionSync: CardGameSessionCoordinator | null;
+  lastResultSessionId: string | null;
   act: (fn: () => void) => void;
   router: ReturnType<typeof useRouter>;
   isSaving: boolean;
@@ -336,6 +345,73 @@ function GameBody({
   const cfg = engine.config;
   const accent = engine.config.accent;
   const phase = engine.phase;
+  const [aiResult, setAiResult] = useState<CardGameAiNarrativeResponse | null>(null);
+  const [resultPersisted, setResultPersisted] = useState(false);
+  const [aiRetryNonce, setAiRetryNonce] = useState(0);
+
+  useEffect(() => {
+    if (phase !== "result" || (!sessionSync && !lastResultSessionId)) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const setIfActive = (result: CardGameAiNarrativeResponse) => {
+      if (!cancelled) setAiResult(result);
+    };
+    const poll = async (sessionId: string, remaining = 36): Promise<void> => {
+      if (cancelled || remaining <= 0) return;
+      try {
+        const result = await callFunction<CardGameAiNarrativeResponse>(
+          "card-game-result",
+          { operation: "get", session_id: sessionId },
+        );
+        setIfActive(result);
+        if (result.status === "generating") {
+          timer = setTimeout(() => void poll(sessionId, remaining - 1), 2_500);
+        }
+      } catch {
+        setIfActive({
+          ok: true,
+          session_id: sessionId,
+          status: "failed",
+          narrative: null,
+          generated_at: null,
+          retryable: true,
+          source: "rules",
+        });
+      }
+    };
+
+    const prepare = async () => {
+      const sessionId = sessionSync
+        ? (await sessionSync.complete()).sessionId
+        : lastResultSessionId;
+      if (!sessionId) return;
+      if (cancelled) return;
+      setResultPersisted(true);
+      const result = await callFunction<CardGameAiNarrativeResponse>(
+        "card-game-result",
+        { operation: "generate", session_id: sessionId },
+      );
+      setIfActive(result);
+      if (result.status === "generating") await poll(sessionId);
+    };
+    void prepare().catch(() => {
+      setIfActive({
+        ok: true,
+        session_id: sessionSync?.sessionId ?? lastResultSessionId ?? "",
+        status: "failed",
+        narrative: null,
+        generated_at: null,
+        retryable: true,
+        source: "rules",
+      });
+    });
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [aiRetryNonce, lastResultSessionId, phase, sessionSync]);
 
   /* 顶栏信息（iOS topInfo）—— 引擎为可变对象，每次渲染直接重算 */
   const topInfo = ((): { title: string; sub: string; progressText: string } => {
@@ -505,7 +581,25 @@ function GameBody({
           {phase === "result" && (
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="no-scrollbar flex-1 overflow-y-auto">
-                {cfg.kind === "life" ? <LifeResult engine={engine} /> : <RelationResult engine={engine} />}
+                {cfg.kind === "life"
+                  ? (
+                    <LifeResult
+                      engine={engine}
+                      aiResult={aiResult}
+                      onRetry={sessionSync || lastResultSessionId
+                        ? () => setAiRetryNonce((value) => value + 1)
+                        : undefined}
+                    />
+                  )
+                  : (
+                    <RelationResult
+                      engine={engine}
+                      aiResult={aiResult}
+                      onRetry={sessionSync || lastResultSessionId
+                        ? () => setAiRetryNonce((value) => value + 1)
+                        : undefined}
+                    />
+                  )}
               </div>
               {saveError && (
                 <div
@@ -535,7 +629,9 @@ function GameBody({
                   isSaving
                     ? "正在保存…"
                     : saveError === null
-                      ? cfg.kind === "life"
+                      ? resultPersisted
+                        ? "完成并返回人生实验室"
+                        : cfg.kind === "life"
                         ? "保存到我的私密画像"
                         : `保存最关心的 ${engine.finalCardCount} 点`
                       : "重试云端同步"

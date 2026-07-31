@@ -29,6 +29,9 @@ export type StructuredOutputOptions = {
   track?: LLMTrackContext;
   /// 传入且已配置 Langfuse 环境变量时上报调用链路 trace。不传则静默跳过。
   trace?: LlmTrace;
+  /** Per-feature bounds; defaults preserve the established 3 x 45s policy. */
+  maxAttempts?: number;
+  perAttemptTimeoutMs?: number;
 };
 
 function deepseek(model: string) {
@@ -59,7 +62,11 @@ async function runStructuredAttempt<T>(
   options: StructuredOutputOptions,
 ): Promise<Attempt<T>> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_TIMEOUT_MS);
+  const timeoutMs = Math.max(
+    1_000,
+    Math.min(options.perAttemptTimeoutMs ?? PER_ATTEMPT_TIMEOUT_MS, 45_000),
+  );
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
   try {
     const result = await generateObject({
@@ -104,7 +111,11 @@ async function runStructuredAttempt<T>(
 async function generateWithRetry<T>(
   options: StructuredOutputOptions,
 ): Promise<T> {
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+  const maxAttempts = Math.max(
+    1,
+    Math.min(options.maxAttempts ?? MAX_ATTEMPTS, MAX_ATTEMPTS),
+  );
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const result = await runStructuredAttempt<T>(options);
     if (result.ok) return result.object;
     // 真正的 4xx 配置错误（凭证/请求非法）：直接抛出，别浪费重试。
@@ -117,7 +128,7 @@ async function generateWithRetry<T>(
     }
     // 超时/网络抖动/无法解析出合法对象：记录后重试。
     console.error(
-      `structuredOutput attempt ${attempt}/${MAX_ATTEMPTS} failed:`,
+      `structuredOutput attempt ${attempt}/${maxAttempts} failed:`,
       result.detail,
     );
   }
