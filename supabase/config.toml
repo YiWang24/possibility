@@ -50,6 +50,33 @@ enable_confirmations = false
 subject = "验证你的 Possibility 邮箱"
 content_path = "./supabase/templates/verify_email.html"
 
+# ---- 发信通道：Zoho Mail（加拿大区）----
+# 默认 enabled = false：本地开发照旧走内置 Mailpit（信落在 http://127.0.0.1:54324，
+# 不会真发出去），谁都不需要 Zoho 凭据，CI 也不受影响。只有要验真实投递时才：
+#   SUPABASE_AUTH_SMTP_PASS=<Zoho 应用专用密码> supabase start
+# 并把下面的 enabled 临时改成 true。
+#
+# host 必须是 smtp.zohocloud.ca —— yilab.tech 的 MX 指向 mx.zohocloud.ca、SPF 是
+# include:zohocloud.ca，账号在 Zoho 加拿大数据中心。发往 smtp.zoho.com（美国区）
+# 连得上、但一律 535 Authentication Failed，现象极像「密码填错了」，别再踩。
+# 465(SSL) 与 587(STARTTLS) 实测均可用，取 465，少一轮 STARTTLS 协商。
+#
+# 密码只走 env()，仓库里不留明文（.gitignore 的 .env* 已挡下 supabase/.env）。
+#
+# ⚠️ 线上不读本段，也不要用 `supabase config push` 推它 —— 那会把整个 auth 段
+# 一起推上去，包括下面 site_url = "http://localhost:3000"，线上跳转当场就断。
+# Hosted 项目的 Auth SMTP 是项目级配置，也不归 scripts/doppler-sync.sh 管
+# （那个同步的是 Edge Functions Secrets，两码事），
+# 需在 Dashboard → Project Settings → Authentication → SMTP Settings 手工配同一份。
+[auth.email.smtp]
+enabled = false
+host = "smtp.zohocloud.ca"
+port = 465
+user = "yiwang@yilab.tech"
+pass = "env(SUPABASE_AUTH_SMTP_PASS)"
+admin_email = "yiwang@yilab.tech"
+sender_name = "我有可能 Possibility"
+
 # ---- 手机验证码登录（已停用，配置保留便于日后恢复） ----
 # 恢复步骤：取消下面三段注释 + 线上 Dashboard 开启 Phone provider 与 Send SMS hook。
 # 服务端代码（send-sms-hook 函数、阿里云短信模块）未删除，仍在仓库里。
