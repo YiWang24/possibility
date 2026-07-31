@@ -5,10 +5,16 @@ plugins {
   alias(libs.plugins.kotlin.serialization)
 }
 
-// Supabase 配置经 Doppler 注入：doppler run -- ./gradlew assembleDebug
-// 模拟器访问宿主机 supabase start 用 http://10.0.2.2:54321
-val supabaseUrl = providers.environmentVariable("SUPABASE_URL").getOrElse("http://10.0.2.2:54321")
-val supabaseAnonKey = providers.environmentVariable("SUPABASE_ANON_KEY").getOrElse("")
+// Supabase 配置必须由构建环境注入。优先读取 Gradle 属性，其次读取环境变量：
+// doppler run -- ./gradlew assembleDebug
+// ./gradlew assembleDebug -PSUPABASE_URL=... -PSUPABASE_ANON_KEY=...
+// 模拟器访问宿主机 supabase start 时使用 http://10.0.2.2:54321。
+val supabaseUrl = providers.gradleProperty("SUPABASE_URL")
+  .orElse(providers.environmentVariable("SUPABASE_URL"))
+  .getOrElse("")
+val supabaseAnonKey = providers.gradleProperty("SUPABASE_ANON_KEY")
+  .orElse(providers.environmentVariable("SUPABASE_ANON_KEY"))
+  .getOrElse("")
 
 android {
   namespace = "app.possibility.android"
@@ -56,8 +62,11 @@ dependencies {
   implementation(platform(libs.compose.bom))
   implementation(libs.compose.ui)
   implementation(libs.compose.material3)
+  implementation(libs.compose.material.icons.extended)
   implementation(libs.compose.ui.tooling.preview)
   debugImplementation(libs.compose.ui.tooling)
+
+  implementation(libs.kotlinx.serialization.json)
 
   implementation(platform(libs.supabase.bom))
   implementation(libs.supabase.postgrest)
@@ -65,4 +74,6 @@ dependencies {
   implementation(libs.supabase.functions)
   implementation(libs.supabase.realtime)
   implementation(libs.ktor.client.okhttp)
+
+  testImplementation("junit:junit:4.13.2")
 }
