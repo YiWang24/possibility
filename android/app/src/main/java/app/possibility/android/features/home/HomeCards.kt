@@ -614,7 +614,6 @@ private fun MiniDeck() {
 @Composable
 fun PortraitCard(
     model: HomeModel,
-    animationPaused: Boolean,
     onTapDim: (HomeModel.PortraitDim) -> Unit,
 ) {
     Column(

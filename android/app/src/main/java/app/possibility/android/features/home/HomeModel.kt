@@ -233,16 +233,28 @@ class HomeModel(
         val rec = runCatching { SpeechRecognizer.createSpeechRecognizer(appContext) }.getOrNull() ?: return false
         recognizer = rec
         rec.setRecognitionListener(object : RecognitionListener {
-                override fun onReadyForSpeech(params: Bundle?) {}
-                override fun onBeginningOfSpeech() {}
-                override fun onRmsChanged(rmsdB: Float) {}
-                override fun onBufferReceived(buffer: ByteArray?) {}
-                override fun onEndOfSpeech() {}
+                override fun onReadyForSpeech(params: Bundle?) {
+                    // The UI already shows the recording state; no second state transition is needed here.
+                }
+                override fun onBeginningOfSpeech() {
+                    // Speech start does not change the diary recording lifecycle.
+                }
+                override fun onRmsChanged(rmsdB: Float) {
+                    // Audio levels are intentionally not retained or rendered.
+                }
+                override fun onBufferReceived(buffer: ByteArray?) {
+                    // Raw recognizer buffers are intentionally ignored; only transcript results are used.
+                }
+                override fun onEndOfSpeech() {
+                    // Final transcript delivery is handled exclusively by onResults.
+                }
                 override fun onError(error: Int) {
                     sttStarted = false
                     releaseRecognizer()
                 }
-                override fun onEvent(eventType: Int, params: Bundle?) {}
+                override fun onEvent(eventType: Int, params: Bundle?) {
+                    // Vendor-specific events are not part of the supported transcript contract.
+                }
 
                 override fun onPartialResults(partialResults: Bundle?) {
                     partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)

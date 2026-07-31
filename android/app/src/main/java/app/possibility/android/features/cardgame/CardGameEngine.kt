@@ -454,8 +454,8 @@ class CardGameEngine(
         phase = parsedPhase
         selected = snapshot.selected
         held = snapshot.held
-        accepted = restoredAccepted!!
-        traded = restoredTraded!!
+        accepted = restoredAccepted.orEmpty()
+        traded = restoredTraded.orEmpty()
         round = snapshot.round
         pressure = snapshot.pressure
         acceptStreak = snapshot.acceptStreak
@@ -764,7 +764,7 @@ class CardGameSessionCoordinator private constructor(
 
     suspend fun complete() {
         flush()
-        if (state.pendingActions.isNotEmpty()) throw IllegalStateException("仍有未同步的操作")
+        check(state.pendingActions.isEmpty()) { "仍有未同步的操作" }
         supabase.completeCardGameSession(
             sessionId = state.sessionId,
             expectedStateVersion = state.serverStateVersion,

@@ -73,7 +73,6 @@ fun HomeScreen() {
     var showStudio by remember { mutableStateOf(false) }
     var showCardHub by remember { mutableStateOf(false) }
 
-    val paused = chatLaunch != null || diaryLaunch || showStudio
 
     fun send() {
         if (!model.canSend) return
@@ -102,7 +101,7 @@ fun HomeScreen() {
             Spacer(Modifier.height(14.dp))
             LifeEntryButton { showCardHub = true }
             Spacer(Modifier.height(24.dp))
-            PortraitSection(model, animationPaused = paused, onTapDim = ::handleDimTap) { showStudio = true }
+            PortraitSection(model, onTapDim = ::handleDimTap) { showStudio = true }
         }
     }
 
@@ -160,13 +159,12 @@ private fun Greet(model: HomeModel) {
 @Composable
 private fun PortraitSection(
     model: HomeModel,
-    animationPaused: Boolean,
     onTapDim: (HomeModel.PortraitDim) -> Unit,
     onOpenStudio: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         HomeSectionHeader("我的动态画像", "探索更多画像 ›", onOpenStudio)
         NietzscheQuote()
-        PortraitCard(model, animationPaused = animationPaused, onTapDim = onTapDim)
+        PortraitCard(model, onTapDim = onTapDim)
     }
 }

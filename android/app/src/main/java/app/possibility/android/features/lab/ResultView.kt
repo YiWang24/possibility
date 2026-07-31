@@ -83,10 +83,10 @@ fun ResultSheet(
 
         val allTravelers by SupabaseService.shared.travelers.collectAsState()
         val people: List<Traveler> = remember(result, allTravelers) {
-            result.recommendedTravelers
+            result.recommendedTravelers?.takeIf { it.isNotEmpty() }
                 ?: result.recommendedTravelerIds
                     ?.mapNotNull { id -> allTravelers.firstOrNull { it.id == id } }
-                ?: emptyList()
+                    .orEmpty()
         }
 
         var profileTraveler by remember { mutableStateOf<Traveler?>(null) }

@@ -747,8 +747,7 @@ internal fun LabPrimaryButton(title: String, enabled: Boolean, modifier: Modifie
             .clip(RoundedCornerShape(16.dp))
             .background(Theme.buttonGradient)
             .then(if (enabled) Modifier.clickableNoRipple(onClick) else Modifier)
-            .padding(vertical = 16.dp)
-            .then(if (enabled) Modifier else Modifier),
+            .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(

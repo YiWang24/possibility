@@ -242,8 +242,7 @@ class ChatModel(
     }
 
     private fun effectiveMatchQuery(): MatchQuery {
-        val c = crossroads
-        if (c?.ready == true && c.matchQuery != null) return c.matchQuery!!
+        crossroads?.takeIf { it.ready }?.matchQuery?.let { return it }
         val userContext = if (answers.isEmpty()) displayQuestion else answers.joinToString("；")
         return MatchQuery(
             lifeStage = null,

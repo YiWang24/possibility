@@ -4,5 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools">
     <application
         android:usesCleartextTraffic="true"
-        tools:ignore="UnusedAttribute" />
+        tools:ignore="UnusedAttribute"
+        tools:replace="android:usesCleartextTraffic" />
 </manifest>

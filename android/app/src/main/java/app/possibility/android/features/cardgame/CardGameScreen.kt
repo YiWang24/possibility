@@ -299,7 +299,6 @@ internal fun CardGameScreen(kind: CardGameKind, onExit: () -> Unit) {
 
 @Composable
 private fun TopBar(engine: CardGameEngine, accent: Color, onBack: () -> Unit) {
-    val cfg = engine.config
     val (title, sub, progressText) = topInfo(engine)
     Column {
         Row(

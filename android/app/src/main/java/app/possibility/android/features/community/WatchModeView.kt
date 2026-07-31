@@ -257,7 +257,6 @@ fun WatchModeView(
 /** 圆形毛玻璃气泡（原型 .watch-user 的简化版）。 */
 @Composable
 private fun BubbleCard(traveler: Traveler, isFocus: Boolean) {
-    val glow = Theme.hue(traveler.hue).accent
     Column(
         Modifier
             .size(BUBBLE.dp)

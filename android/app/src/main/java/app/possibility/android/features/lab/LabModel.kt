@@ -141,7 +141,7 @@ enum class CardIcon {
             var best: Pair<CardIcon, Int>? = null
             for ((icon, words) in keywords) {
                 for (word in words) {
-                    if (text.contains(word) && (best == null || word.length > best!!.second)) {
+                    if (text.contains(word) && word.length > (best?.second ?: -1)) {
                         best = icon to word.length
                     }
                 }

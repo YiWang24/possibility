@@ -6,9 +6,11 @@
 
     <application
         android:name=".PossibilityApp"
+        android:allowBackup="false"
         android:label="我有可能"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Possibility">
+        android:theme="@style/Theme.Possibility"
+        android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
