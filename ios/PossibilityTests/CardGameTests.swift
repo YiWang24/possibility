@@ -81,13 +81,13 @@ final class CardGameTests: XCTestCase {
         }
     }
 
-    func testProgressRestoresPerTopicIncludingPressureAndChoices() {
+    func testProgressRestoresPerTopicIncludingPressureAndChoices() throws {
         for kind in CardGameKind.allCases {
             let original = CardGameEngine(kind: kind, store: store)
             original.start()
             original.config.cards.prefix(9).forEach { _ = original.toggleSelect($0.id) }
             original.confirmSelection()
-            let scenario = try! XCTUnwrap(original.scenarioOptions.first)
+            let scenario = try XCTUnwrap(original.scenarioOptions.first)
             original.draw(scenario)
             original.accept()
 
@@ -129,12 +129,12 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(engine.traded.count, 1)
     }
 
-    func testTradeDraftAndFinalResultRestore() {
+    func testTradeDraftAndFinalResultRestore() throws {
         let engine = CardGameEngine(kind: .family, store: store)
         engine.start()
         engine.config.cards.prefix(9).forEach { _ = engine.toggleSelect($0.id) }
         engine.confirmSelection()
-        engine.draw(try! XCTUnwrap(engine.scenarioOptions.first))
+        engine.draw(try XCTUnwrap(engine.scenarioOptions.first))
         engine.beginTrade()
         engine.reasonCannotAccept = "这会越过我的家庭边界"
         engine.reasonAbandon = "这两点以后仍可重新协商"
@@ -149,7 +149,7 @@ final class CardGameTests: XCTestCase {
 
         restoredDraft.confirmTrade()
         for _ in 0..<2 {
-            restoredDraft.draw(try! XCTUnwrap(restoredDraft.scenarioOptions.first))
+            restoredDraft.draw(try XCTUnwrap(restoredDraft.scenarioOptions.first))
             restoredDraft.beginTrade()
             restoredDraft.heldCards.prefix(2).forEach { _ = restoredDraft.toggleTrade($0.id) }
             restoredDraft.confirmTrade()
