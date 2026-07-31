@@ -127,6 +127,7 @@ export class CardGameSessionCoordinator {
       card_keys?: string[];
       reason_cannot_accept?: string | null;
       reason_abandon?: string | null;
+      decision_source?: CardGameAction["decision_source"];
     },
   ): void {
     const previous = this.state.pending_actions.at(-1)?.sequence ??

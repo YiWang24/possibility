@@ -18,6 +18,7 @@ import {
 } from "./data";
 
 export type Phase = "intro" | "select" | "draw" | "decision" | "trade" | "result";
+export type TradeDecisionSource = "voluntary_reject" | "pressure_forced";
 
 export interface AcceptedEntry {
   round: number;
@@ -31,6 +32,7 @@ export interface TradedEntry {
   ids: string[];
   cannotAccept: string;
   abandon: string;
+  decisionSource: TradeDecisionSource;
 }
 
 /* ============ 本地存储（对齐 iOS CardGameLocalRecord） ============ */
@@ -142,6 +144,7 @@ interface TradedSnapshot {
   ids: string[];
   cannotAccept: string;
   abandon: string;
+  decisionSource?: TradeDecisionSource;
 }
 
 interface ProgressSnapshot {
@@ -375,8 +378,17 @@ export class CardGameEngine {
     return this.held.length - this.discardPerTrade >= this.finalCardCount;
   }
 
+  get canAccept(): boolean {
+    return this.phase === "decision" && this.pressure < this.pressureMax;
+  }
+
+  get isForcedTrade(): boolean {
+    return (this.phase === "decision" || this.phase === "trade") &&
+      this.pressure >= this.pressureMax;
+  }
+
   accept() {
-    if (!this.current) return;
+    if (!this.current || !this.canAccept) return;
     this.accepted.push({ round: this.round, scenario: this.current, severity: this.pressure });
     this.acceptStreak += 1;
     const delta = this.config.dynamicRules?.pressure.accept_delta ?? 1;
@@ -407,12 +419,16 @@ export class CardGameEngine {
 
   confirmTrade() {
     if (this.tradePick.length !== this.discardPerTrade || !this.current) return;
+    const decisionSource: TradeDecisionSource = this.isForcedTrade
+      ? "pressure_forced"
+      : "voluntary_reject";
     this.traded.push({
       round: this.round,
       scenario: this.current,
       ids: [...this.tradePick],
       cannotAccept: this.reasonCannotAccept.trim(),
       abandon: this.reasonAbandon.trim(),
+      decisionSource,
     });
     this.held = this.held.filter((id) => !this.tradePick.includes(id));
     this.tradePick = [];
@@ -498,6 +514,7 @@ export class CardGameEngine {
         round: e.round,
         scenario: e.scenario.title,
         ids: e.ids,
+        decision_source: e.decisionSource,
         reasons: [e.cannotAccept, e.abandon].filter((s) => s.length > 0),
       })),
     };
@@ -527,6 +544,7 @@ export class CardGameEngine {
         ids: [...e.ids],
         cannotAccept: e.cannotAccept,
         abandon: e.abandon,
+        decisionSource: e.decisionSource,
       })),
       round: this.round,
       pressure: this.pressure,
@@ -573,6 +591,7 @@ export class CardGameEngine {
       ids: [...e.ids],
       cannotAccept: e.cannotAccept,
       abandon: e.abandon,
+      decisionSource: e.decisionSource ?? "voluntary_reject",
     }));
     this.round = snapshot.round;
     this.pressure = snapshot.pressure;
@@ -684,7 +703,10 @@ export class CardGameEngine {
         new Set(e.ids).size !== this.discardPerTrade ||
         !isSubset(e.ids, validCardIDs) ||
         typeof e.cannotAccept !== "string" ||
-        typeof e.abandon !== "string"
+        typeof e.abandon !== "string" ||
+        (e.decisionSource !== undefined &&
+          e.decisionSource !== "voluntary_reject" &&
+          e.decisionSource !== "pressure_forced")
       ) {
         return false;
       }

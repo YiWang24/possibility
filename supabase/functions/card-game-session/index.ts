@@ -3,6 +3,7 @@ import {
   buildCardGameRun,
   type CardGameAction,
   type CardGameCatalog,
+  type CardGameDecisionSource,
   type CardGameSession,
   type CardGameState,
   initialCardGameState,
@@ -245,6 +246,19 @@ function parseActions(
     if (scenarioKey !== null && !GAME_KEY_PATTERN.test(scenarioKey)) {
       throw new HttpError(400, "INVALID_INPUT", "scenario_key 无效。");
     }
+    const decisionSource = string(
+      input.decision_source,
+      `actions[${index}].decision_source`,
+      30,
+      false,
+    );
+    if (
+      decisionSource !== null &&
+      decisionSource !== "voluntary_reject" &&
+      decisionSource !== "pressure_forced"
+    ) {
+      throw new HttpError(400, "INVALID_INPUT", "decision_source 无效。");
+    }
     return {
       sequence,
       action_type: actionType,
@@ -262,6 +276,7 @@ function parseActions(
         500,
         false,
       ),
+      decision_source: decisionSource as CardGameDecisionSource | null,
       created_at: typeof input.created_at === "string"
         ? input.created_at
         : new Date().toISOString(),
@@ -291,6 +306,12 @@ function normalizeActions(
     const stored: CardGameAction = {
       ...action,
       scenario_key: action.scenario_key ?? state.current_scenario_key,
+      decision_source: action.action_type === "trade_cards"
+        ? action.decision_source ??
+          (pressureBefore >= catalog.rules.pressure.max
+            ? "pressure_forced"
+            : "voluntary_reject")
+        : null,
       pressure_before: pressureBefore,
       pressure_after: next.pressure,
     };
@@ -437,7 +458,7 @@ Deno.serve(async (req) => {
       const { data: actionRows, error: actionsError } = await db
         .from("card_game_actions")
         .select(
-          "sequence,action_type,scenario_key,card_keys,reason_cannot_accept,reason_abandon,pressure_before,pressure_after,created_at",
+          "sequence,action_type,scenario_key,card_keys,reason_cannot_accept,reason_abandon,decision_source,pressure_before,pressure_after,created_at",
         )
         .eq("session_id", sessionId)
         .order("sequence");

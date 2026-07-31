@@ -7,10 +7,8 @@ import { motion } from "framer-motion";
 import type { GameScenario } from "./data";
 import { withAlpha } from "./ui";
 
-const ARC_W = 460;
-const ARC_H = 214;
-const CARD_W = 120;
-const CARD_H = 165;
+const COMPACT_ARC_W = 460;
+const WIDE_ARC_W = 700;
 
 export function FanArc({
   options,
@@ -22,26 +20,46 @@ export function FanArc({
   onDraw: (scenario: GameScenario) => void;
 }) {
   const [picked, setPicked] = useState<number | null>(null);
+  const [arcWidth, setArcWidth] = useState(COMPACT_ARC_W);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* 初始居中（原型 defaultScrollAnchor(.center)） */
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollLeft = Math.max(0, (ARC_W - el.clientWidth) / 2);
+    if (!el) return;
+    const updateLayout = () => {
+      setArcWidth(el.clientWidth >= 650 ? WIDE_ARC_W : COMPACT_ARC_W);
+    };
+    updateLayout();
+    const observer = new ResizeObserver(updateLayout);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = Math.max(0, (arcWidth - el.clientWidth) / 2);
+  }, [arcWidth]);
+
   const mid = (options.length - 1) / 2;
+  const wide = arcWidth === WIDE_ARC_W;
+  const arcHeight = wide ? 310 : 214;
+  const cardWidth = wide ? 164 : 120;
+  const cardHeight = wide ? 226 : 165;
+  const spacing = wide ? 105 : 73;
 
   return (
     <div className="pt-2.5">
-      <div ref={scrollRef} className="no-scrollbar overflow-x-auto" style={{ height: ARC_H }}>
-        <div className="relative mx-auto" style={{ width: ARC_W, height: ARC_H }}>
+      <div ref={scrollRef} className="no-scrollbar overflow-x-auto" style={{ height: arcHeight }}>
+        <div className="relative mx-auto" style={{ width: arcWidth, height: arcHeight }}>
           {options.map((scenario, i) => {
             const d = i - mid;
             const isSelected = picked === i;
             /* 弧线：中间高、两侧低（原型 y = -10 / 7 / 28） */
-            const cx = ARC_W / 2 + d * 73;
-            const cy = ARC_H / 2 - 8 + (2 * d * d + 15 * Math.abs(d) - 10);
+            const cx = arcWidth / 2 + d * spacing;
+            const cy = arcHeight / 2 - 8 +
+              ((wide ? 3 : 2) * d * d + (wide ? 18 : 15) * Math.abs(d) -
+                (wide ? 18 : 10));
             return (
               <motion.button
                 key={`${scenario.title}-${i}`}
@@ -64,22 +82,30 @@ export function FanArc({
                   setPicked(i);
                   setTimeout(() => onDraw(scenario), 320);
                 }}
-                className="absolute flex items-center justify-center rounded-[16px] transition-transform active:scale-[0.94]"
+                className="card-game-back absolute flex items-center justify-center overflow-hidden rounded-[16px] transition-transform active:scale-[0.94] lg:rounded-[20px]"
                 style={{
-                  left: cx - CARD_W / 2,
-                  top: cy - CARD_H / 2,
-                  width: CARD_W,
-                  height: CARD_H,
+                  left: cx - cardWidth / 2,
+                  top: cy - cardHeight / 2,
+                  width: cardWidth,
+                  height: cardHeight,
                   zIndex: isSelected ? 20 : Math.round(10 - Math.abs(d) * 2),
-                  background: "linear-gradient(135deg,#232948,#161A30)",
                   border: `${isSelected ? 2 : 1}px solid ${isSelected ? accent : withAlpha(accent, 0.35)}`,
                   boxShadow: isSelected
                     ? `0 6px 26px ${withAlpha(accent, 0.5)}`
                     : "0 6px 18px rgba(0,0,0,0.45)",
                 }}
               >
+                <span className="absolute inset-[10px] rounded-[11px] border border-white/[0.07] lg:inset-[14px] lg:rounded-[14px]" />
                 <span
-                  className="text-[21px]"
+                  className="absolute h-12 w-12 rotate-45 rounded-[12px] border border-violet-soft/35 bg-violet-soft/[0.035] lg:h-16 lg:w-16 lg:rounded-[16px]"
+                  style={{
+                    boxShadow: isSelected
+                      ? `0 0 28px ${withAlpha(accent, 0.25)}`
+                      : undefined,
+                  }}
+                />
+                <span
+                  className="relative text-[21px] lg:text-[27px]"
                   style={{ color: isSelected ? accent : withAlpha(accent, 0.5) }}
                 >
                   ✦

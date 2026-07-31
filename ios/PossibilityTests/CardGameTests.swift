@@ -102,6 +102,33 @@ final class CardGameTests: XCTestCase {
         }
     }
 
+    func testPressureCapBlocksAcceptUntilCardsAreTraded() {
+        let engine = CardGameEngine(kind: .life, store: store)
+        engine.start()
+        engine.config.cards.prefix(engine.initialSelectCount).forEach {
+            _ = engine.toggleSelect($0.id)
+        }
+        engine.confirmSelection()
+        engine.draw(try! XCTUnwrap(engine.scenarioOptions.first))
+        engine.pressure = engine.pressureMax
+
+        XCTAssertFalse(engine.canAccept)
+        XCTAssertTrue(engine.isForcedTrade)
+        let roundBeforeAccept = engine.round
+        engine.accept()
+        XCTAssertEqual(engine.round, roundBeforeAccept)
+        XCTAssertEqual(engine.phase, .decision)
+
+        engine.beginTrade()
+        XCTAssertTrue(engine.isForcedTrade)
+        engine.heldCards.prefix(engine.discardPerTrade).forEach {
+            _ = engine.toggleTrade($0.id)
+        }
+        engine.confirmTrade()
+        XCTAssertEqual(engine.pressure, engine.pressureMax - 1)
+        XCTAssertEqual(engine.traded.count, 1)
+    }
+
     func testTradeDraftAndFinalResultRestore() {
         let engine = CardGameEngine(kind: .family, store: store)
         engine.start()

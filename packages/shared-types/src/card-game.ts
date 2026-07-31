@@ -137,6 +137,10 @@ export type CardGameActionType =
   | "accept_scenario"
   | "trade_cards";
 
+export type CardGameDecisionSource =
+  | "voluntary_reject"
+  | "pressure_forced";
+
 export interface CardGameAction {
   sequence: number;
   action_type: CardGameActionType;
@@ -144,6 +148,7 @@ export interface CardGameAction {
   card_keys?: string[];
   reason_cannot_accept?: string | null;
   reason_abandon?: string | null;
+  decision_source?: CardGameDecisionSource | null;
   pressure_before?: number | null;
   pressure_after?: number | null;
   created_at?: string;
@@ -684,6 +689,11 @@ export function applyCardGameAction(
   };
   const rules = catalog.rules;
 
+  invariant(
+    action.action_type === "trade_cards" || action.decision_source == null,
+    "decision source is only valid for a trade",
+  );
+
   switch (action.action_type) {
     case "confirm_selection": {
       invariant(
@@ -727,6 +737,10 @@ export function applyCardGameAction(
           action.scenario_key === state.current_scenario_key,
         "accepted scenario does not match current scenario",
       );
+      invariant(
+        state.pressure < rules.pressure.max,
+        "pressure is at maximum; cards must be traded",
+      );
       next.accept_count += 1;
       next.round_count += 1;
       next.pressure = clamp(
@@ -747,6 +761,15 @@ export function applyCardGameAction(
         !action.scenario_key ||
           action.scenario_key === state.current_scenario_key,
         "traded scenario does not match current scenario",
+      );
+      const expectedDecisionSource: CardGameDecisionSource =
+        state.pressure >= rules.pressure.max
+          ? "pressure_forced"
+          : "voluntary_reject";
+      invariant(
+        action.decision_source == null ||
+          action.decision_source === expectedDecisionSource,
+        "trade decision source does not match current pressure",
       );
       const discarded = action.card_keys ?? [];
       invariant(
@@ -886,6 +909,8 @@ export function buildCardGameRun(
     .sort((a, b) => Math.abs(b.score) - Math.abs(a.score));
 
   const scenarioThemeCounts: Record<string, number> = {};
+  let voluntaryTradeCount = 0;
+  let forcedTradeCount = 0;
   let maximumPressure = catalog.rules.pressure.initial;
   const legacyAccepted: CardGameRunPayload["legacy_accepted"] = [];
   const legacyTraded: CardGameRunPayload["legacy_traded"] = [];
@@ -910,6 +935,13 @@ export function buildCardGameRun(
         severity: action.pressure_before ?? scenario.severity,
       });
     } else {
+      const decisionSource = action.decision_source ??
+        ((action.pressure_before ?? catalog.rules.pressure.initial) >=
+            catalog.rules.pressure.max
+          ? "pressure_forced"
+          : "voluntary_reject");
+      if (decisionSource === "pressure_forced") forcedTradeCount += 1;
+      else voluntaryTradeCount += 1;
       legacyTraded.push({
         round: legacyAccepted.length + legacyTraded.length,
         scenario: scenario.title,
@@ -942,6 +974,8 @@ export function buildCardGameRun(
       round_count: state.round_count,
       accept_count: state.accept_count,
       trade_count: state.trade_count,
+      voluntary_trade_count: voluntaryTradeCount,
+      forced_trade_count: forcedTradeCount,
       accept_rate: round(acceptRate),
       max_pressure: maximumPressure,
       decision_mode: mode.key,
@@ -959,6 +993,8 @@ export function buildCardGameRun(
       behavior: {
         accept_rate: round(acceptRate),
         trade_count: state.trade_count,
+        voluntary_trade_count: voluntaryTradeCount,
+        forced_trade_count: forcedTradeCount,
         decision_mode: mode.key,
       },
       signals,

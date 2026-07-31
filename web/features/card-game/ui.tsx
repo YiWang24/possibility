@@ -41,8 +41,8 @@ export function Foot({
   onClick: () => void;
 }) {
   return (
-    <div className="border-t border-line px-5 pt-3 pb-[14px]">
-      <div className="mx-auto w-full max-w-measure">
+    <div className="border-t border-white/[0.07] bg-[#090b17]/82 px-5 pt-3 pb-[14px] backdrop-blur-xl">
+      <div className="mx-auto w-full max-w-[800px]">
         <button
           disabled={!enabled}
           onClick={onClick}
@@ -60,14 +60,16 @@ export function ResultBlock({
   kicker,
   tint,
   children,
+  className = "",
 }: {
   kicker: string;
   tint: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
     <div
-      className="flex w-full flex-col items-start gap-[9px] rounded-[16px] bg-card p-[15px] text-left"
+      className={`flex w-full flex-col items-start gap-[9px] rounded-[16px] bg-card p-[15px] text-left ${className}`}
       style={{ border: `1px solid ${withAlpha(tint, 0.22)}` }}
     >
       <div className="text-[9px] font-semibold tracking-[1.8px]" style={{ color: withAlpha(tint, 0.95) }}>

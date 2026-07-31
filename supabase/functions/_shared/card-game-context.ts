@@ -46,6 +46,14 @@ export function cardGameRunsContext(rows: unknown[]): CardGameContext {
     const tradeCount = Number.isInteger(behavior?.trade_count)
       ? Number(behavior?.trade_count)
       : null;
+    const voluntaryTradeCount = Number.isInteger(
+        behavior?.voluntary_trade_count,
+      )
+      ? Number(behavior?.voluntary_trade_count)
+      : null;
+    const forcedTradeCount = Number.isInteger(behavior?.forced_trade_count)
+      ? Number(behavior?.forced_trade_count)
+      : null;
     const signals = Array.isArray(snapshot.signals)
       ? snapshot.signals
         .map((item) => {
@@ -72,7 +80,14 @@ export function cardGameRunsContext(rows: unknown[]): CardGameContext {
       cards.length > 0 ? `最终选择：${cards.join("、")}` : null,
       mode ? `决策模式：${mode}` : null,
       acceptRate !== null ? `接受率：${acceptRate}%` : null,
-      tradeCount !== null ? `主动交换：${tradeCount}次` : null,
+      voluntaryTradeCount !== null
+        ? `自主交换：${voluntaryTradeCount}次`
+        : null,
+      forcedTradeCount !== null ? `压力强制交换：${forcedTradeCount}次` : null,
+      voluntaryTradeCount === null && forcedTradeCount === null &&
+        tradeCount !== null
+        ? `交换总计：${tradeCount}次`
+        : null,
       signals.length > 0 ? `结构化信号：${signals.join("；")}` : null,
       "限制：这是一次情境游戏证据，不等同于稳定人格或心理诊断",
     ].filter(Boolean);
