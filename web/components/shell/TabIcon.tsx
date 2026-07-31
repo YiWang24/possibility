@@ -1,7 +1,7 @@
 "use client";
 
 /* 导航图标（对齐 iOS SF Symbols 语义）。
-   描边走 currentColor，颜色交给父级的 text-* 控制 —— 桌面侧栏需要 hover/active
+   描边走 currentColor，颜色交给父级的 text-* 控制 —— 导航项需要 hover/active
    两态平滑过渡，原来把色值写死在 svg 里做不到。 */
 export function TabIcon({ name, active = false, size = 24 }: {
   name: string;

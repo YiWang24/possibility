@@ -4,7 +4,7 @@
  * 路由契约：
  *  - /chat?topic=话题&q=首条问题  新对话
  *  - /chat?id=UUID               恢复历史会话
- * 全屏页面（不在 tab 壳内），自带 min-h-dvh screen-bg 与左上角返回按钮。 */
+ * 详情流程页面，自带上下文顶栏；桌面端由全站 AppShell 保留主导航。 */
 
 import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
@@ -94,9 +94,10 @@ export function ChatView({
   const showThinking = model.isStreaming && lastMessage?.text === "";
 
   return (
-    <div className="flex min-h-dvh flex-col screen-bg">
-      {/* 顶栏 —— 内容与消息列、输入栏同一根中轴线，否则桌面上三者各对各的边 */}
-      <div className="sticky top-0 z-30 border-b border-line bg-paper/80 px-[22px] py-3 backdrop-blur">
+    <div className="flex min-h-dvh flex-col screen-bg md:min-h-[calc(100dvh-74px)]">
+      {/* 顶栏 —— 内容与消息列、输入栏同一根中轴线，否则桌面上三者各对各的边。
+          桌面上让开全站 navbar 的 74px，否则粘在视口顶端会被 navbar 盖住。 */}
+      <div className="sticky top-0 z-30 border-b border-line bg-paper/80 px-[22px] py-3 backdrop-blur md:top-[74px]">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3">
           <BackButton onClick={() => router.back()} />
           <div className="flex flex-col gap-0.5">

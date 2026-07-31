@@ -11,6 +11,17 @@
   --color-faint: #5a6172;
   --color-line: rgb(255 255 255 / 0.08);
 
+  /* shadcn 语义色 —— 映射到现有万花筒主题 */
+  --color-background: var(--color-paper);
+  --color-foreground: var(--color-ink);
+  --color-popover: var(--color-card);
+  --color-popover-foreground: var(--color-ink);
+  --color-accent: var(--color-raised);
+  --color-accent-foreground: var(--color-ink);
+  --color-muted-foreground: var(--color-sub);
+  --color-border: var(--color-line);
+  --color-ring: var(--color-brand);
+
   /* 品牌色 */
   --color-brand: #5e96ff;
   --color-brand-deep: #2f63e8;
@@ -43,27 +54,13 @@
   --container-board: 96rem; /* 1536px：卡片看板、社区多列 */
 }
 
-/* 侧栏宽度的单一真源。AppShell 用它设 aside 宽度，页面级 fixed 底栏 / Toast
-   用它避让侧栏 —— 否则加了侧栏之后，这些元素仍按整个视口居中，会歪到侧栏底下。
-   全屏浮层（modal / sheet）不该用它：它们本来就该盖住侧栏。 */
+/* 左侧栏占位宽度的单一真源。全站主导航是顶部 navbar（见 AppShell），
+   横向不占位，所以这里恒为 0：页面级 fixed 底栏 / Toast 直接贴视口两沿。
+   保留这个令牌而不是删掉，是为了让 shell-fixed-x 的调用点无需改动 ——
+   将来若某个断点重新引入左侧栏，只需在此加 media query。 */
 :root {
   color-scheme: dark;
   --shell-sidebar: 0px;
-}
-@media (width >= 768px) {
-  :root {
-    --shell-sidebar: 232px;
-  }
-}
-@media (width >= 1440px) {
-  :root {
-    --shell-sidebar: 272px;
-  }
-}
-@media (width >= 1760px) {
-  :root {
-    --shell-sidebar: 292px;
-  }
 }
 
 /* 页面级固定条：贴主区左沿而不是视口左沿 */
@@ -116,12 +113,10 @@ body {
   padding-inline: clamp(22px, 3.4vw, 64px);
 }
 
-/* 主区在侧栏之外还需要一段呼吸，避免内容顶着分隔线 */
+/* 主区留白。左右对称：主导航在顶部而不在左侧，没有竖直分隔线要让，
+   再往左多塞一段就会让居中的内容相对顶部 navbar 偏右。 */
 @utility shell-inset {
   padding-inline: clamp(22px, 3.4vw, 64px);
-  @media (width >= 1100px) {
-    padding-inline-start: clamp(32px, 3.4vw, 72px);
-  }
 }
 
 /* ---- 流体字阶 —— 固定 px 字号在 27" 屏上显得像手机截图 ------------------ */

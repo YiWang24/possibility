@@ -73,7 +73,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
   if (!traveler) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center md:min-h-[calc(100dvh-74px)]">
         <p className="text-[14px] text-sub">没有找到这位旅人。</p>
         <button
           onClick={() => router.back()}
@@ -86,9 +86,9 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
   }
 
   return (
-    <div className="min-h-dvh screen-bg">
+    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
       {/* 顶栏 */}
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur">
+      <div className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur md:top-[74px]">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
@@ -177,7 +177,8 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           </div>
 
           {/* Tab 栏 */}
-          <div className="sticky top-[57px] z-10 border-b border-line bg-paper/95 backdrop-blur">
+          {/* 页内 tab 栏叠在页眉之下：74px navbar + 57px 页眉 = 131px */}
+          <div className="sticky top-[57px] z-10 border-b border-line bg-paper/95 backdrop-blur md:top-[131px]">
             <div className="mx-auto flex w-full max-w-measure">
               {TABS.map((t) => {
                 const active = tab === t.key;

@@ -36,9 +36,13 @@ export function PageGrid({
     ? "lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] xl:grid-cols-[minmax(300px,22rem)_minmax(0,1fr)]"
     : "lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] xl:grid-cols-[minmax(0,1fr)_minmax(300px,22rem)]";
 
+  /* sticky 起点要让开全站 navbar（74px）再留 32px 呼吸，
+     否则侧轨滚上去会钻到 navbar 底下。 */
   const railNode = (
     <aside
-      className={`flex min-w-0 flex-col ${stickyRail ? "lg:sticky lg:top-8 lg:self-start" : ""}`}
+      className={`flex min-w-0 flex-col ${
+        stickyRail ? "lg:sticky lg:top-[calc(74px+2rem)] lg:self-start" : ""
+      }`}
     >
       {rail}
     </aside>

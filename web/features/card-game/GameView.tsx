@@ -116,7 +116,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
 
   if (!engine) {
     return (
-      <div className="flex min-h-dvh items-center justify-center screen-bg px-6">
+      <div className="flex min-h-dvh items-center justify-center screen-bg px-6 md:min-h-[calc(100dvh-74px)]">
         {loadError
           ? (
             <div className="w-full max-w-sm rounded-card border border-line bg-card p-5 text-center">
@@ -260,7 +260,7 @@ function GameBody({
   };
 
   return (
-    <div className="flex h-dvh flex-col screen-bg">
+    <div className="flex h-dvh flex-col screen-bg md:h-[calc(100dvh-74px)]">
       {/* 顶栏 */}
       <div className="border-b border-line">
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
