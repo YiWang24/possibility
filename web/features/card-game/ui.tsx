@@ -2,6 +2,7 @@
 /* 卡牌游戏共用小组件与工具 */
 
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 
 /** #RRGGBB → rgba() */
 export function withAlpha(hex: string, alpha: number): string {
@@ -44,14 +45,9 @@ export function Foot({
   return (
     <div className="border-t border-white/[0.07] bg-[#090b17]/82 px-5 pt-3 pb-[14px] backdrop-blur-xl">
       <div className="mx-auto w-full max-w-[800px]">
-        <button
-          type="button"
-          disabled={!enabled}
-          onClick={onClick}
-          className="w-full rounded-chip bg-btn-g py-[15px] text-[14px] font-semibold text-white transition active:scale-[0.97] disabled:opacity-45"
-        >
+        <Button size="lg" className="w-full" type="button" disabled={!enabled} onClick={onClick}>
           {title}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -71,10 +67,10 @@ export function ResultBlock({
 }) {
   return (
     <div
-      className={`flex w-full flex-col items-start gap-[9px] rounded-[16px] bg-card p-[15px] text-left ${className}`}
+      className={`flex w-full flex-col items-start gap-[9px] rounded-tile bg-card p-[15px] text-left ${className}`}
       style={{ border: `1px solid ${withAlpha(tint, 0.22)}` }}
     >
-      <div className="text-[9px] font-semibold tracking-[1.8px]" style={{ color: withAlpha(tint, 0.95) }}>
+      <div className="text-micro font-semibold tracking-[1.8px]" style={{ color: withAlpha(tint, 0.95) }}>
         {kicker}
       </div>
       {children}

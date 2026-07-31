@@ -2,6 +2,8 @@
 /* 语音日记共用小件 —— 移植 iOS DiaryDetailView.swift 中的 DiaryViewHead / DiaryBlockHead / DiaryKeywordFlow 与静态波形。 */
 
 import type { ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 /** 视图头（原型 .diary-view-head） */
 export function DiaryViewHead({
@@ -18,9 +20,9 @@ export function DiaryViewHead({
   return (
     <div className="flex items-end gap-[14px] pt-4">
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-[9px] tracking-[2.6px] text-[#99B8FF]">{eyebrow}</span>
+        <span className="text-micro tracking-[2.6px] text-brand-lite">{eyebrow}</span>
         <span className="mt-[5px] text-[22px] font-bold text-ink">{title}</span>
-        <span className="mt-1 whitespace-pre-line text-[10.5px] text-faint">{subtitle}</span>
+        <span className="mt-1 whitespace-pre-line text-micro text-faint">{subtitle}</span>
       </div>
       {trailing}
     </div>
@@ -31,8 +33,8 @@ export function DiaryViewHead({
 export function DiaryBlockHead({ title, note }: { title: string; note: string }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[13.5px] font-semibold text-ink">{title}</span>
-      <span className="ml-auto text-[9.5px] text-faint">{note}</span>
+      <span className="text-body font-semibold text-ink">{title}</span>
+      <span className="ml-auto text-micro text-faint">{note}</span>
     </div>
   );
 }
@@ -42,12 +44,7 @@ export function DiaryKeywordFlow({ items }: { items: string[] }) {
   return (
     <div className="flex flex-wrap gap-[7px]">
       {items.map((kw, i) => (
-        <span
-          key={`${kw}-${i}`}
-          className="rounded-chip border border-[#5E96FF]/20 bg-[#5E96FF]/10 px-2.5 py-1.5 text-[11px] text-[#BFD2FF]"
-        >
-          {kw}
-        </span>
+        <Badge key={`${kw}-${i}`}>{kw}</Badge>
       ))}
     </div>
   );
@@ -55,9 +52,7 @@ export function DiaryKeywordFlow({ items }: { items: string[] }) {
 
 /** 卡片容器（Theme.card + line 描边，圆角 20） */
 export function DiaryCard({ children }: { children: ReactNode }) {
-  return (
-    <div className="rounded-[20px] border border-line bg-card p-[17px]">{children}</div>
-  );
+  return <Card elevation="flat" className="p-[17px]">{children}</Card>;
 }
 
 /** 静态波形（高度公式对照原型 diaryWaveHTML；SVG 渲染 24 条） */

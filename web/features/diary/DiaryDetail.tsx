@@ -309,12 +309,12 @@ export function DiaryDetail() {
         <div className="mx-auto flex w-full max-w-measure items-center gap-[13px] px-[22px] pt-3 pb-2.5">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-semibold tracking-[0.8px] text-ink">语音日记</div>
-            <div className="text-[11px] text-faint">听见每天的自己，也看见长期变化</div>
+            <div className="text-subtitle font-semibold tracking-[0.8px] text-ink">语音日记</div>
+            <div className="text-caption text-faint">听见每天的自己，也看见长期变化</div>
           </div>
           <button
             onClick={() => void downloadExport()}
-            className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-[10.5px] text-sub"
+            className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-micro text-sub"
           >
             导出
           </button>
@@ -322,14 +322,14 @@ export function DiaryDetail() {
       </div>
 
       <div className="mx-auto w-full max-w-measure px-5 pb-10">
-        <div className="mt-2.5 flex gap-[5px] rounded-[14px] border border-line bg-white/[0.045] p-1">
+        <div className="mt-2.5 flex gap-[5px] rounded-tile border border-line bg-white/[0.045] p-1">
           {TABS.map((tab) => {
             const active = view === tab.kind;
             return (
               <button
                 key={tab.kind}
                 onClick={() => setView(tab.kind)}
-                className="flex-1 rounded-[10px] py-[9px] text-[11.5px] transition"
+                className="flex-1 rounded-field py-[9px] text-caption transition"
                 style={{
                   color: active ? "#fff" : "var(--color-faint)",
                   background: active
@@ -345,9 +345,9 @@ export function DiaryDetail() {
         </div>
 
         {entriesError && (
-          <div className="mt-3 flex items-center gap-3 rounded-[14px] border border-[#FF6577]/20 bg-[#FF6577]/5 px-3.5 py-3">
-            <span className="min-w-0 flex-1 text-[11.5px] text-sub">{entriesError}</span>
-            <button onClick={() => void loadEntries()} className="text-[11.5px] text-brand">
+          <div className="mt-3 flex items-center gap-3 rounded-tile border border-[#FF6577]/20 bg-[#FF6577]/5 px-3.5 py-3">
+            <span className="min-w-0 flex-1 text-caption text-sub">{entriesError}</span>
+            <button onClick={() => void loadEntries()} className="text-caption text-brand">
               重试
             </button>
           </div>
@@ -404,7 +404,7 @@ export function DiaryDetail() {
 
 function LoadingState({ text }: { text: string }) {
   return (
-    <div className="flex items-center justify-center gap-2.5 py-24 text-[12px] text-sub">
+    <div className="flex items-center justify-center gap-2.5 py-24 text-footnote text-sub">
       <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
       {text}
     </div>

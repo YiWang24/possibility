@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { BackButton, Foot, ResultBlock, withAlpha } from "@/features/card-game/ui";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
@@ -108,8 +109,8 @@ export function AssessmentView({ kind }: { kind: AssessmentKind }) {
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
           <BackButton onClick={back} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[15.5px] font-bold text-ink">{cfg.title}</div>
-            <div className="truncate text-[10.5px] text-faint">{cfg.sub}</div>
+            <div className="truncate text-lead font-bold text-ink">{cfg.title}</div>
+            <div className="truncate text-micro text-faint">{cfg.sub}</div>
           </div>
           {phase === "quiz" && (
             <div className="flex shrink-0 flex-col items-end gap-[5px]">
@@ -119,7 +120,7 @@ export function AssessmentView({ kind }: { kind: AssessmentKind }) {
                   style={{ width: `${(answeredCount / itemCount) * 100}%` }}
                 />
               </div>
-              <div className="text-[10px] tabular-nums text-faint">
+              <div className="text-micro tabular-nums text-faint">
                 {answeredCount}/{itemCount}
               </div>
             </div>
@@ -178,24 +179,24 @@ function IntroPhase({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-4 pb-[26px]">
-          <div className="text-[9.5px] font-semibold tracking-[2.6px] text-brand">
+          <div className="text-micro font-semibold tracking-[2.6px] text-brand">
             {cfg.kicker}
           </div>
           <h1 className="whitespace-pre-line text-[24px] font-bold leading-[1.5] text-ink">
             {cfg.introTitle}
           </h1>
-          <p className="text-[13px] leading-[1.9] text-sub">{cfg.intro}</p>
+          <p className="text-body leading-[1.9] text-sub">{cfg.intro}</p>
 
           <div className="flex flex-col gap-2.5">
             {cfg.notices.map((notice, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 rounded-[14px] border border-line bg-card p-3"
+                className="flex items-start gap-3 rounded-tile border border-line bg-card p-3"
               >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-deep/20 text-[11px] font-bold text-brand">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-deep/20 text-caption font-bold text-brand">
                   {i + 1}
                 </span>
-                <p className="text-[12px] leading-[1.7] text-sub">{notice}</p>
+                <p className="text-footnote leading-[1.7] text-sub">{notice}</p>
               </div>
             ))}
           </div>
@@ -234,7 +235,7 @@ function QuizPhase({
       <div className="no-scrollbar flex-1 overflow-y-auto">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-6 px-6 pt-8 pb-6">
           <div className="flex flex-col items-center gap-3 text-center">
-            <span className="text-[11px] tracking-[2px] text-faint">
+            <span className="text-caption tracking-[2px] text-faint">
               第 {index + 1} / {cfg.items.length} 题
             </span>
             <motion.h2
@@ -242,7 +243,7 @@ function QuizPhase({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
-              className="text-[20px] font-bold leading-[1.6] text-ink"
+              className="text-heading font-bold leading-[1.6] text-ink"
             >
               {item.text}
             </motion.h2>
@@ -259,7 +260,7 @@ function QuizPhase({
                 <button
                   key={i}
                   onClick={() => onChoose(i)}
-                  className="flex items-center gap-3 rounded-[16px] border px-4 py-[15px] text-left transition active:scale-[0.98]"
+                  className="flex items-center gap-3 rounded-tile border px-4 py-[15px] text-left transition active:scale-[0.98]"
                   style={{
                     background: on ? withAlpha(accent, 0.14) : "var(--color-card)",
                     borderColor: on ? withAlpha(accent, 0.6) : "var(--color-line)",
@@ -267,7 +268,7 @@ function QuizPhase({
                   }}
                 >
                   <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-footnote font-bold"
                     style={{
                       background: on ? accent : "var(--color-raised)",
                       color: on ? "#0B0F18" : "var(--color-faint)",
@@ -276,7 +277,7 @@ function QuizPhase({
                     {on ? "✓" : i + 1}
                   </span>
                   <span
-                    className="text-[14px]"
+                    className="text-callout"
                     style={{ color: on ? "#fff" : "var(--color-sub)" }}
                   >
                     {label}
@@ -290,7 +291,7 @@ function QuizPhase({
           {index > 0 && (
             <button
               onClick={() => onJump(index - 1)}
-              className="self-center text-[12px] text-faint"
+              className="self-center text-footnote text-faint"
             >
               ‹ 上一题
             </button>
@@ -345,7 +346,7 @@ function ResultPhase({
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-5 pb-6">
           {/* 标题 */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-[10px] tracking-[2px] text-faint">{cfg.resultSub}</span>
+            <span className="text-micro tracking-[2px] text-faint">{cfg.resultSub}</span>
             <h1 className="text-aurora text-[26px] font-bold">{cfg.resultTitle}</h1>
           </div>
 
@@ -365,14 +366,14 @@ function ResultPhase({
             <FacetGrid facets={result.facets} dims={dims} />
           )}
 
-          <p className="mt-1 text-[10.5px] leading-[1.7] text-faint">
+          <p className="mt-1 text-micro leading-[1.7] text-faint">
             结果用于自我探索，不用于诊断或能力评判。答案与结果默认只保存在本机，
             点下方按钮才会写入你的动态画像。
           </p>
 
           <button
             onClick={onRestart}
-            className="self-start text-[12px] text-brand active:opacity-70"
+            className="self-start text-footnote text-brand active:opacity-70"
           >
             重新测评 ↻
           </button>
@@ -383,17 +384,13 @@ function ResultPhase({
         <div className="mx-auto flex w-full max-w-measure gap-3">
           <button
             onClick={() => router.push("/studio")}
-            className="flex-1 rounded-chip border border-line py-[15px] text-[13.5px] font-semibold text-sub transition active:scale-[0.97]"
+            className="flex-1 rounded-chip border border-line py-[15px] text-body font-semibold text-sub transition active:scale-[0.97]"
           >
             去画像工坊
           </button>
-          <button
-            disabled={saving || savedToProfile}
-            onClick={saveToProfile}
-            className="flex-[1.4] rounded-chip bg-btn-g py-[15px] text-[13.5px] font-semibold text-white transition active:scale-[0.97] disabled:opacity-45"
-          >
+          <Button size="lg" className="flex-[1.4]" disabled={saving || savedToProfile} onClick={saveToProfile}>
             {savedToProfile ? "已写入画像 ✓" : saving ? "正在保存…" : cfg.saveLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -403,15 +400,15 @@ function ResultPhase({
 function DimBar({ dim }: { dim: DimScore }) {
   const pct = Math.round(dim.percent * 100);
   return (
-    <div className="rounded-[14px] border border-line bg-card p-3.5">
+    <div className="rounded-tile border border-line bg-card p-3.5">
       <div className="flex items-baseline justify-between">
         <div className="flex items-baseline gap-2">
-          <span className="text-[14px] font-semibold text-ink">{dim.name}</span>
-          <span className="text-[11px]" style={{ color: dim.color }}>
+          <span className="text-callout font-semibold text-ink">{dim.name}</span>
+          <span className="text-caption" style={{ color: dim.color }}>
             {dim.label}
           </span>
         </div>
-        <span className="text-[13px] font-bold tabular-nums" style={{ color: dim.color }}>
+        <span className="text-body font-bold tabular-nums" style={{ color: dim.color }}>
           {pct}
         </span>
       </div>
@@ -421,7 +418,7 @@ function DimBar({ dim }: { dim: DimScore }) {
           style={{ width: `${pct}%`, background: dim.color }}
         />
       </div>
-      <p className="mt-2 text-[11px] leading-[1.7] text-sub">{dim.desc}</p>
+      <p className="mt-2 text-caption leading-[1.7] text-sub">{dim.desc}</p>
     </div>
   );
 }
@@ -432,7 +429,7 @@ function HollandSummary({ dims }: { dims: DimScore[] }) {
   return (
     <ResultBlock kicker="RIASEC CODE" tint="#789EFF">
       <div className="text-[30px] font-extrabold tracking-[4px] text-aurora">{code || "—"}</div>
-      {narrative && <p className="text-[12.5px] leading-[1.8] text-sub">{narrative}</p>}
+      {narrative && <p className="text-footnote leading-[1.8] text-sub">{narrative}</p>}
     </ResultBlock>
   );
 }
@@ -442,7 +439,7 @@ function BigFiveSummary({ mbti }: { mbti?: string }) {
   return (
     <ResultBlock kicker="MBTI 倾向（由大五推导）" tint="#8F7BFF">
       <div className="text-[30px] font-extrabold tracking-[6px] text-aurora">{mbti}</div>
-      <p className="text-[12px] leading-[1.7] text-sub">
+      <p className="text-footnote leading-[1.7] text-sub">
         依据五维连续分数推导的类型倾向，仅供参考，不等同于正式 MBTI 测验。
       </p>
     </ResultBlock>
@@ -469,20 +466,20 @@ function FacetGrid({
   const facetName = (facet: string) => facetMeta(facet)?.name ?? facet;
 
   return (
-    <div className="rounded-[14px] border border-line bg-card p-3.5">
+    <div className="rounded-tile border border-line bg-card p-3.5">
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between"
       >
-        <span className="text-[13px] font-semibold text-ink">30 个细分面向</span>
-        <span className="text-[12px] text-brand">{open ? "收起" : "展开"}</span>
+        <span className="text-body font-semibold text-ink">30 个细分面向</span>
+        <span className="text-footnote text-brand">{open ? "收起" : "展开"}</span>
       </button>
       {open && (
         <div className="mt-3 flex flex-col gap-4">
           {[...byDim.entries()].map(([dim, list]) => (
             <div key={dim} className="flex flex-col gap-1.5">
               <span
-                className="text-[11px] font-semibold"
+                className="text-caption font-semibold"
                 style={{ color: dimColor.get(dim) ?? "#8FA4FF" }}
               >
                 {dimName.get(dim) ?? dim}
@@ -490,7 +487,7 @@ function FacetGrid({
               <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
                 {list.map((f) => (
                   <div key={f.facet} className="flex items-center gap-2">
-                    <span className="w-9 shrink-0 text-[10px] tabular-nums text-faint">
+                    <span className="w-9 shrink-0 text-micro tabular-nums text-faint">
                       {Math.round(f.percent * 100)}
                     </span>
                     <div className="h-[4px] flex-1 overflow-hidden rounded-chip bg-raised">
@@ -502,7 +499,7 @@ function FacetGrid({
                         }}
                       />
                     </div>
-                    <span className="w-12 shrink-0 truncate text-[10px] text-sub">
+                    <span className="w-12 shrink-0 truncate text-micro text-sub">
                       {facetName(f.facet)}
                     </span>
                   </div>

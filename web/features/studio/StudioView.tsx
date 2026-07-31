@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BackButton } from "@/features/card-game/ui";
-import { SectionHeader } from "@/components/ui/Basics";
+import { SectionHeader } from "@/components/ui/page-header";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import { useHome } from "@/features/home/store";
 import { DimensionSheet } from "@/features/home/DimensionSheet";
@@ -53,8 +53,8 @@ export function StudioView() {
         <div className="mx-auto flex w-full max-w-measure items-center gap-[13px] px-[22px] pt-3 pb-2.5">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-semibold tracking-[0.8px] text-ink">画像工坊</div>
-            <div className="text-[11px] text-faint">用测评与关键词，持续雕刻更立体的自己</div>
+            <div className="text-subtitle font-semibold tracking-[0.8px] text-ink">画像工坊</div>
+            <div className="text-caption text-faint">用测评与关键词，持续雕刻更立体的自己</div>
           </div>
         </div>
       </div>
@@ -67,12 +67,12 @@ export function StudioView() {
             <div className="kaleido-card flex flex-col gap-3.5 p-5">
               <div className="flex items-end justify-between">
                 <div>
-                  <div className="text-[11px] text-faint">你的五维连续分数</div>
-                  <div className="mt-1 text-[15px] font-semibold text-ink">五个维度都是光谱，没有好坏</div>
+                  <div className="text-caption text-faint">你的五维连续分数</div>
+                  <div className="mt-1 text-lead font-semibold text-ink">五个维度都是光谱，没有好坏</div>
                 </div>
                 {bigfive?.mbti && (
                   <div className="flex flex-col items-end">
-                    <span className="text-[10px] text-faint">MBTI 倾向</span>
+                    <span className="text-micro text-faint">MBTI 倾向</span>
                     <span className="text-aurora text-[22px] font-extrabold tracking-[3px]">
                       {bigfive.mbti}
                     </span>
@@ -84,7 +84,7 @@ export function StudioView() {
                   const pct = Math.round(d.percent * 100);
                   return (
                     <div key={d.key} className="flex items-center gap-3">
-                      <span className="w-[70px] shrink-0 text-[12px] text-sub">{d.name}</span>
+                      <span className="w-[70px] shrink-0 text-footnote text-sub">{d.name}</span>
                       <div className="h-[6px] flex-1 overflow-hidden rounded-chip bg-raised">
                         <div
                           className="h-full rounded-chip transition-all duration-500"
@@ -92,7 +92,7 @@ export function StudioView() {
                         />
                       </div>
                       <span
-                        className="w-8 shrink-0 text-right text-[12px] font-bold tabular-nums"
+                        className="w-8 shrink-0 text-right text-footnote font-bold tabular-nums"
                         style={{ color: d.color }}
                       >
                         {pct}
@@ -103,7 +103,7 @@ export function StudioView() {
               </div>
               <button
                 onClick={() => router.push("/assessment/bigfive")}
-                className="self-start text-[12px] text-brand"
+                className="self-start text-footnote text-brand"
               >
                 查看完整结果与 30 个面向 ›
               </button>
@@ -111,16 +111,16 @@ export function StudioView() {
           ) : (
             <button
               onClick={() => router.push("/assessment/bigfive")}
-              className="flex flex-col items-start gap-2 rounded-card border border-dashed border-[#8F7BFF]/45 bg-[#8F7BFF]/6 p-5 text-left transition active:scale-[0.98]"
+              className="flex flex-col items-start gap-2 rounded-card border border-dashed border-violet-soft/45 bg-violet-soft/6 p-5 text-left transition active:scale-[0.98]"
             >
-              <span className="text-[9.5px] font-semibold tracking-[2px] text-brand">
+              <span className="text-micro font-semibold tracking-[2px] text-brand">
                 {bfCfg.kicker}
               </span>
-              <span className="text-[16px] font-bold text-ink">还没有测过大五人格</span>
-              <span className="text-[12px] leading-[1.7] text-sub">
+              <span className="text-subtitle font-bold text-ink">还没有测过大五人格</span>
+              <span className="text-footnote leading-[1.7] text-sub">
                 {bfCfg.notices[0]}。完成后可看到五个主维度、三十个细分面向，并推导 MBTI 倾向。
               </span>
-              <span className="mt-1 rounded-chip bg-btn-g px-4 py-2 text-[12.5px] font-semibold text-white">
+              <span className="mt-1 rounded-chip bg-btn-g px-4 py-2 text-footnote font-semibold text-white">
                 开始大五人格测评
               </span>
             </button>
@@ -144,17 +144,17 @@ export function StudioView() {
                   return (
                     <div
                       key={i}
-                      className="flex items-center justify-between rounded-[12px] border border-line bg-raised px-3.5 py-2.5"
+                      className="flex items-center justify-between rounded-field border border-line bg-raised px-3.5 py-2.5"
                     >
-                      <span className="text-[12.5px] text-sub">
+                      <span className="text-footnote text-sub">
                         {isHi ? axis.hi : axis.lo}
                       </span>
-                      <span className="text-aurora text-[16px] font-bold">{letter}</span>
+                      <span className="text-aurora text-subtitle font-bold">{letter}</span>
                     </div>
                   );
                 })}
               </div>
-              <p className="text-[10.5px] leading-[1.7] text-faint">
+              <p className="text-micro leading-[1.7] text-faint">
                 该类型由五维连续分数推导，仅供自我探索参考，不等同于正式 MBTI 测验结果。
               </p>
             </div>
@@ -174,7 +174,7 @@ export function StudioView() {
                 <button
                   key={key}
                   onClick={() => setActiveDim(key)}
-                  className="flex items-start gap-3 rounded-[16px] border px-4 py-3.5 text-left transition active:scale-[0.98]"
+                  className="flex items-start gap-3 rounded-tile border px-4 py-3.5 text-left transition active:scale-[0.98]"
                   style={{
                     background: done ? "var(--color-raised)" : "rgba(94,150,255,0.06)",
                     borderColor: done ? "var(--color-line)" : "rgba(94,150,255,0.4)",
@@ -182,25 +182,25 @@ export function StudioView() {
                   }}
                 >
                   <span
-                    className="mt-0.5 flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[12px] text-[15px]"
+                    className="mt-0.5 flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-field text-lead"
                     style={{ background: `${cfg.tint}26`, color: cfg.tint }}
                   >
                     {cfg.icon}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13.5px] font-semibold text-ink">{cfg.title}</span>
+                      <span className="text-body font-semibold text-ink">{cfg.title}</span>
                       {assessed && (
-                        <span className="rounded-chip bg-lime/20 px-1.5 py-0.5 text-[9px] text-lime">
+                        <span className="rounded-chip bg-lime/20 px-1.5 py-0.5 text-micro text-lime">
                           已测评
                         </span>
                       )}
                     </div>
-                    <div className={`mt-0.5 text-[11.5px] leading-[1.6] ${done ? "text-sub" : "text-brand"}`}>
+                    <div className={`mt-0.5 text-caption leading-[1.6] ${done ? "text-sub" : "text-brand"}`}>
                       {value ?? "尚未填写 · 点开探索"}
                     </div>
                   </div>
-                  <span className="text-[14px] text-faint">›</span>
+                  <span className="text-callout text-faint">›</span>
                 </button>
               );
             })}

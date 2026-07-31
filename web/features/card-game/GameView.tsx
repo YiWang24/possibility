@@ -27,6 +27,7 @@ import { FanArc } from "./FanArc";
 import { LifeResult, RelationResult } from "./ResultViews";
 import { ValueCardFace, valueCardPalette } from "./ValueCardFace";
 import { BackButton, Foot, PRESSURE_COLORS, withAlpha } from "./ui";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 
@@ -64,7 +65,7 @@ function PressureDots({ engine }: { engine: CardGameEngine }) {
           }}
         />
       ))}
-      <span className="ml-1 text-[10px] tabular-nums text-sub">
+      <span className="ml-1 text-micro tabular-nums text-sub">
         {engine.pressure}/{engine.pressureMax}
       </span>
     </div>
@@ -104,16 +105,16 @@ function GameStateRail({ engine }: { engine: CardGameEngine }) {
     <aside className="hidden flex-col gap-3 lg:flex">
       <div className="card-game-panel p-3.5">
         <div className="flex items-center justify-between">
-          <div className="text-[12px] font-semibold text-ink">
+          <div className="text-footnote font-semibold text-ink">
             {engine.phase === "select" ? "这一局已选择" : "当前持有的底牌"}
           </div>
-          <div className="text-[10px] tabular-nums" style={{ color: accent }}>
+          <div className="text-micro tabular-nums" style={{ color: accent }}>
             {activeCards.length}/{engine.phase === "select" ? engine.initialSelectCount : engine.held.length}
           </div>
         </div>
         <div className="mt-3 flex flex-col gap-1.5">
           {activeCards.length === 0 && (
-            <div className="rounded-[10px] border border-dashed border-white/10 px-3 py-6 text-center text-[10.5px] text-faint">
+            <div className="rounded-field border border-dashed border-white/10 px-3 py-6 text-center text-micro text-faint">
               选择的底牌会出现在这里
             </div>
           )}
@@ -122,14 +123,14 @@ function GameStateRail({ engine }: { engine: CardGameEngine }) {
             return (
               <div
                 key={card.id}
-                className="flex items-center gap-2.5 rounded-[10px] border px-2.5 py-2"
+                className="flex items-center gap-2.5 rounded-field border px-2.5 py-2"
                 style={{
                   borderColor: withAlpha(palette.primary, 0.16),
                   background: `linear-gradient(90deg, ${withAlpha(palette.primary, 0.08)}, rgba(255,255,255,0.018))`,
                 }}
               >
                 <span
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] border text-[13px]"
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-[8px] border text-body"
                   style={{
                     color: palette.primary,
                     borderColor: withAlpha(palette.primary, 0.2),
@@ -140,13 +141,13 @@ function GameStateRail({ engine }: { engine: CardGameEngine }) {
                   {card.glyph}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[11.5px] font-medium text-ink">
+                  <span className="block truncate text-caption font-medium text-ink">
                     {card.name}
                   </span>
-                  <span className="block truncate text-[9px] text-faint">{card.group}</span>
+                  <span className="block truncate text-micro text-faint">{card.group}</span>
                 </span>
                 <span
-                  className="rounded-chip border px-2 py-0.5 text-[8.5px]"
+                  className="rounded-chip border px-2 py-0.5 text-micro"
                   style={{
                     color: withAlpha(palette.primary, 0.82),
                     borderColor: withAlpha(palette.primary, 0.12),
@@ -164,14 +165,14 @@ function GameStateRail({ engine }: { engine: CardGameEngine }) {
       {released.length > 0 && (
         <div className="card-game-panel p-3.5">
           <div className="flex items-center justify-between">
-            <div className="text-[12px] font-semibold text-ink">已经放下</div>
-            <div className="text-[10px] text-faint">{released.length} 张</div>
+            <div className="text-footnote font-semibold text-ink">已经放下</div>
+            <div className="text-micro text-faint">{released.length} 张</div>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {released.map((card) => (
               <span
                 key={card.id}
-                className="rounded-chip border border-white/[0.06] bg-white/[0.025] px-2.5 py-1 text-[9.5px] text-faint"
+                className="rounded-chip border border-white/[0.06] bg-white/[0.025] px-2.5 py-1 text-micro text-faint"
               >
                 {card.glyph} {card.name}
               </span>
@@ -181,19 +182,19 @@ function GameStateRail({ engine }: { engine: CardGameEngine }) {
       )}
 
       <div className="card-game-panel p-3.5">
-        <div className="text-[12px] font-semibold text-ink">本局状态</div>
+        <div className="text-footnote font-semibold text-ink">本局状态</div>
         <div className="mt-3">
-          <div className="text-[9px] text-faint">命运压力</div>
+          <div className="text-micro text-faint">命运压力</div>
           <div className="mt-1.5"><PressureDots engine={engine} /></div>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-[10px] bg-white/[0.025] p-2.5">
-            <div className="text-[9px] text-faint">已接受</div>
-            <div className="mt-1 text-[16px] font-bold text-ink">{engine.accepted.length}</div>
+          <div className="rounded-field bg-white/[0.025] p-2.5">
+            <div className="text-micro text-faint">已接受</div>
+            <div className="mt-1 text-subtitle font-bold text-ink">{engine.accepted.length}</div>
           </div>
-          <div className="rounded-[10px] bg-white/[0.025] p-2.5">
-            <div className="text-[9px] text-faint">已交换</div>
-            <div className="mt-1 text-[16px] font-bold text-ink">{engine.traded.length}</div>
+          <div className="rounded-field bg-white/[0.025] p-2.5">
+            <div className="text-micro text-faint">已交换</div>
+            <div className="mt-1 text-subtitle font-bold text-ink">{engine.traded.length}</div>
           </div>
         </div>
       </div>
@@ -289,20 +290,16 @@ export function GameView({ kind }: { kind: CardGameKind }) {
         {loadError
           ? (
             <div className="w-full max-w-sm rounded-card border border-line bg-card p-5 text-center">
-              <div className="text-[15px] font-semibold text-ink">牌库加载失败</div>
-              <p className="mt-2 text-[12px] leading-[1.7] text-sub">
+              <div className="text-lead font-semibold text-ink">牌库加载失败</div>
+              <p className="mt-2 text-footnote leading-[1.7] text-sub">
                 {loadError}
               </p>
-              <button
-                type="button"
-                className="mt-4 rounded-chip bg-raised px-5 py-2 text-[12px] font-semibold text-ink"
-                onClick={() => router.back()}
-              >
+              <Button variant="tonal" size="sm" className="mt-4" type="button" onClick={() => router.back()}>
                 返回卡牌大厅
-              </button>
+              </Button>
             </div>
           )
-          : <div className="text-[12px] text-faint">加载最新牌库…</div>}
+          : <div className="text-footnote text-faint">加载最新牌库…</div>}
       </div>
     );
   }
@@ -506,12 +503,12 @@ function GameBody({
         <div className="mx-auto flex w-full max-w-[1184px] items-center gap-3 px-5 py-3 lg:px-6 xl:px-0">
           <BackButton onClick={back} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[14.5px] font-semibold text-ink lg:text-[15.5px]">
+            <div className="truncate text-callout font-semibold text-ink lg:text-lead">
               {topInfo.title}
             </div>
-            <div className="truncate text-[10px] text-faint lg:hidden">{topInfo.sub}</div>
+            <div className="truncate text-micro text-faint lg:hidden">{topInfo.sub}</div>
           </div>
-          <div className="hidden items-center gap-6 text-[10.5px] text-faint lg:flex">
+          <div className="hidden items-center gap-6 text-micro text-faint lg:flex">
             {phase === "intro"
               ? <span>从选择底牌开始，看见你在代价出现时保护什么</span>
               : phase === "select"
@@ -535,7 +532,7 @@ function GameBody({
                 }}
               />
             </div>
-            <div className="text-[10px] tabular-nums text-faint">{topInfo.progressText}</div>
+            <div className="text-micro tabular-nums text-faint">{topInfo.progressText}</div>
           </div>
         </div>
       </div>
@@ -610,14 +607,14 @@ function GameBody({
                   }}
                 >
                   <div className="mx-auto w-full max-w-measure">
-                    <div className="text-[12.5px] font-semibold text-[#FFB096]">
+                    <div className="text-footnote font-semibold text-[#FFB096]">
                       ⚠ 已保存在本机，云端同步失败
                     </div>
-                    <p className="mt-1.5 text-[10.5px] leading-[1.7] text-sub">{saveError}</p>
+                    <p className="mt-1.5 text-micro leading-[1.7] text-sub">{saveError}</p>
                     <button
                       type="button"
                       onClick={close}
-                      className="mt-2 text-[11.5px] font-semibold text-ink underline-offset-2 active:opacity-70"
+                      className="mt-2 text-caption font-semibold text-ink underline-offset-2 active:opacity-70"
                     >
                       暂时关闭，稍后从“待同步”继续
                     </button>
@@ -657,13 +654,13 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
       <div className="no-scrollbar flex-1 overflow-y-auto">
         <div className="mx-auto grid w-full max-w-[1100px] items-center gap-8 px-6 py-8 lg:min-h-[600px] lg:grid-cols-[minmax(0,0.92fr)_minmax(440px,1.08fr)] lg:px-8 lg:py-12">
           <div className="order-2 flex flex-col gap-5 lg:order-1">
-            <div className="text-[10px] font-semibold tracking-[3px]" style={{ color: withAlpha(accent, 0.95) }}>
+            <div className="text-micro font-semibold tracking-[3px]" style={{ color: withAlpha(accent, 0.95) }}>
               {cfg.eyebrow} · 一次关于取舍的模拟
             </div>
             <h1 className="whitespace-pre-line text-[28px] font-bold leading-[1.35] text-ink lg:text-[42px] lg:leading-[1.25]">
               {cfg.introTitle}
             </h1>
-            <p className="max-w-[52ch] text-[12.5px] leading-[1.9] text-sub lg:text-[14px]">
+            <p className="max-w-[52ch] text-footnote leading-[1.9] text-sub lg:text-callout">
               {cfg.introCopy}
             </p>
             <div className="grid gap-2.5 md:grid-cols-3 lg:grid-cols-1">
@@ -673,20 +670,20 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
                   className="card-game-panel flex items-start gap-3 p-3.5"
                 >
                   <span
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-[10px] font-bold"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] text-micro font-bold"
                     style={{ color: accent, background: withAlpha(accent, 0.13) }}
                   >
                     {pad2(idx + 1)}
                   </span>
                   <div>
-                    <div className="text-[12.5px] font-semibold text-ink">{title}</div>
-                    <div className="mt-1 text-[10.5px] leading-[1.65] text-sub">{copy}</div>
+                    <div className="text-footnote font-semibold text-ink">{title}</div>
+                    <div className="mt-1 text-micro leading-[1.65] text-sub">{copy}</div>
                   </div>
                 </div>
               ))}
             </div>
             {cfg.contentWarning && (
-              <p className="rounded-[12px] border border-orange/20 bg-orange/[0.055] p-3 text-[10.5px] leading-[1.7] text-faint">
+              <p className="rounded-field border border-orange/20 bg-orange/[0.055] p-3 text-micro leading-[1.7] text-faint">
                 {cfg.contentWarning}
               </p>
             )}
@@ -711,26 +708,26 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
                       rotate: d * 10,
                     }}
                     transition={{ delay: 0.08 * i, type: "spring", stiffness: 210, damping: 19 }}
-                    className="card-game-back absolute left-1/2 top-[8%] h-[185px] w-[126px] rounded-[16px] border lg:h-[286px] lg:w-[192px] lg:rounded-[20px]"
+                    className="card-game-back absolute left-1/2 top-[8%] h-[185px] w-[126px] rounded-tile border lg:h-[286px] lg:w-[192px] lg:rounded-card"
                     style={{
                       marginLeft: `calc(-63px + ${d * 48}px)`,
                       borderColor: d === 0 ? withAlpha(accent, 0.7) : withAlpha(accent, 0.28),
                       zIndex: 10 - Math.abs(d),
                     }}
                   >
-                    <div className="absolute inset-[11px] rounded-[12px] border border-white/[0.07] lg:inset-[15px] lg:rounded-[15px]" />
+                    <div className="absolute inset-[11px] rounded-field border border-white/[0.07] lg:inset-[15px] lg:rounded-tile" />
                     <div
-                      className="animate-card-game-pulse absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-[8px] border lg:h-12 lg:w-12 lg:rounded-[12px]"
+                      className="animate-card-game-pulse absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-[8px] border lg:h-12 lg:w-12 lg:rounded-field"
                       style={{ borderColor: withAlpha(accent, 0.7) }}
                     />
-                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[15px] text-violet-soft/80 lg:text-[21px]">
+                    <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-lead text-violet-soft/80 lg:text-[21px]">
                       ✦
                     </span>
                   </motion.div>
                 );
               })}
             </div>
-            <div className="mt-1 text-center text-[10px] tracking-[0.18em] text-faint">
+            <div className="mt-1 text-center text-micro tracking-[0.18em] text-faint">
               看不见情境，只能在翻开后做出选择
             </div>
           </div>
@@ -761,19 +758,19 @@ function SelectPhase({
         <div className="flex w-full flex-col gap-4 px-[22px] py-5 lg:min-h-[620px] lg:px-6 lg:py-6">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-[9px] font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>
+              <div className="text-micro font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>
                 YOUR FOUNDATION
               </div>
-              <h2 className="mt-[5px] text-[20px] font-bold text-ink lg:text-[24px]">{cfg.selectTitle}</h2>
-              <p className="mt-1.5 text-[10.5px] text-faint lg:text-[11px]">
+              <h2 className="mt-[5px] text-heading font-bold text-ink lg:text-[24px]">{cfg.selectTitle}</h2>
+              <p className="mt-1.5 text-micro text-faint lg:text-caption">
                 这些牌会正面展示；真正的命运情境仍藏在无字牌背之后。
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-[9.5px] text-faint">已选</span>
-              <span className="text-[20px] font-extrabold leading-tight" style={{ color: accent }}>
+              <span className="text-micro text-faint">已选</span>
+              <span className="text-heading font-extrabold leading-tight" style={{ color: accent }}>
                 {engine.selected.length}
-                <span className="text-[11px] font-normal text-faint">
+                <span className="text-caption font-normal text-faint">
                   /{engine.initialSelectCount}
                 </span>
               </span>
@@ -789,14 +786,14 @@ function SelectPhase({
               }}
             />
           </div>
-          <div className="text-[10.5px] text-faint">没有标准答案，此刻的选择只代表这一局</div>
+          <div className="text-micro text-faint">没有标准答案，此刻的选择只代表这一局</div>
 
           <div className="mt-1 grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:gap-3">
             {cfg.cards.map((card, idx) => (
               <SelectCard key={card.id} engine={engine} act={act} card={card} index={idx} />
             ))}
           </div>
-          <div className="pt-1.5 text-center text-[10.5px] text-faint">
+          <div className="pt-1.5 text-center text-micro text-faint">
             已展示全部 {cfg.cards.length} 张底牌
           </div>
         </div>
@@ -849,7 +846,7 @@ function SelectCard({
           if (message) useToast.getState().show(message);
         })
       }
-      className="block h-full w-full rounded-[16px] text-left transition active:scale-[0.97]"
+      className="block h-full w-full rounded-tile text-left transition active:scale-[0.97]"
     >
       <ValueCardFace
         card={card}
@@ -884,11 +881,11 @@ function DrawPhase({
       <div className="flex min-h-[620px] w-full flex-col px-5 py-5 lg:px-7 lg:py-6">
         <div className="grid gap-4 border-b border-white/[0.065] pb-5 md:grid-cols-[minmax(0,1fr)_240px] md:items-start">
           <div>
-            <div className="text-[9.5px] font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
+            <div className="text-micro font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
               STAGE {pad2(engine.round + 1)} · {stage.age}
             </div>
             <h2 className="mt-2 text-[22px] font-bold text-ink lg:text-[27px]">{stage.name}</h2>
-            <p className="mt-2 text-[11.5px] leading-[1.7] text-sub lg:text-[12.5px]">
+            <p className="mt-2 text-caption leading-[1.7] text-sub lg:text-footnote">
               {engine.acceptStreak > 0
                 ? `你已连续接受 ${engine.acceptStreak} 次，命运压力正在加码。牌背不会透露任何情境。`
                 : `命运放下了 ${engine.scenarioChoiceCount} 张无字牌。凭直觉抽一张，翻开后再做选择。`}
@@ -896,26 +893,26 @@ function DrawPhase({
           </div>
 
           <div
-            className="rounded-[13px] border p-3.5"
+            className="rounded-field border p-3.5"
             style={{
               borderColor: withAlpha(currentPressureColor, 0.25),
               background: withAlpha(currentPressureColor, 0.055),
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-faint">{cfg.pressureLabel}</span>
-              <span className="text-[10px] font-semibold" style={{ color: currentPressureColor }}>
+              <span className="text-micro text-faint">{cfg.pressureLabel}</span>
+              <span className="text-micro font-semibold" style={{ color: currentPressureColor }}>
                 {severity.name}
               </span>
             </div>
             <div className="mt-2"><PressureDots engine={engine} /></div>
-            <p className="mt-2 text-[10px] leading-[1.55] text-sub">{severity.copy}</p>
+            <p className="mt-2 text-micro leading-[1.55] text-sub">{severity.copy}</p>
           </div>
         </div>
 
         {/* 可滑动扇形牌弧 */}
         <div className="flex flex-1 flex-col justify-center py-2">
-          <div className="text-center text-[11px] text-sub">点击或选择一张要面对的底牌</div>
+          <div className="text-center text-caption text-sub">点击或选择一张要面对的底牌</div>
           <FanArc
             options={options}
             accent={accent}
@@ -928,7 +925,7 @@ function DrawPhase({
             }}
           />
 
-          <div className="text-center text-[10px] text-faint">左右滑动牌弧 · 牌面在选择前保持隐藏</div>
+          <div className="text-center text-micro text-faint">左右滑动牌弧 · 牌面在选择前保持隐藏</div>
         </div>
       </div>
       </GameWorkspace>
@@ -957,7 +954,7 @@ function DecisionPhase({
       <div className="no-scrollbar flex-1 overflow-y-auto">
         <GameWorkspace engine={engine}>
         <div className="flex min-h-[620px] w-full flex-col gap-4 px-5 py-5 lg:px-7 lg:py-6">
-          <span className="w-fit rounded-chip border border-white/[0.06] bg-white/[0.035] px-3 py-[5px] text-[10.5px] font-semibold text-sub">
+          <span className="w-fit rounded-chip border border-white/[0.06] bg-white/[0.035] px-3 py-[5px] text-micro font-semibold text-sub">
             第 {engine.round + 1} 轮 ·{" "}
             {cfg.kind === "life" ? engine.stageMeta.name : scenario.theme}
           </span>
@@ -968,7 +965,7 @@ function DecisionPhase({
             animate={{ rotateY: 0, opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 220, damping: 20 }}
             style={{ transformPerspective: 1000 }}
-            className="grid w-full overflow-hidden rounded-[17px] border border-white/[0.11] bg-[#101429] md:grid-cols-[180px_minmax(0,1fr)]"
+            className="grid w-full overflow-hidden rounded-tile border border-white/[0.11] bg-[#101429] md:grid-cols-[180px_minmax(0,1fr)]"
           >
             <div
               className="relative flex min-h-[140px] items-center justify-center overflow-hidden border-b border-white/[0.08] md:min-h-[230px] md:border-b-0 md:border-r"
@@ -976,37 +973,37 @@ function DecisionPhase({
                 background: `radial-gradient(circle at 50% 45%, ${withAlpha(accent, 0.38)}, transparent 38%), linear-gradient(145deg, ${withAlpha(accent, 0.35)}, #101329 72%)`,
               }}
             >
-              <span className="absolute inset-3 rounded-[12px] border border-white/[0.08]" />
+              <span className="absolute inset-3 rounded-field border border-white/[0.08]" />
               <span className="text-[38px] text-white/65 md:text-[50px]">{cfg.glyph}</span>
               <span className="absolute bottom-4 text-[8px] font-semibold tracking-[2px] text-white/45">
                 SETBACK {pad2(engine.round + 1)}
               </span>
             </div>
             <div className="flex flex-col justify-center p-5 md:p-7">
-              <div className="text-[9px] font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.92) }}>
+              <div className="text-micro font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.92) }}>
                 {scenario.theme} · 已翻开的情境
               </div>
               <div className="mt-3 text-[22px] font-bold leading-[1.35] text-white md:text-[28px]">
                 {scenario.title}
               </div>
-              <p className="mt-3 max-w-[52ch] text-[12px] leading-[1.85] text-white/70 md:text-[13px]">
+              <p className="mt-3 max-w-[52ch] text-footnote leading-[1.85] text-white/70 md:text-body">
                 {scenario.copy}
               </p>
             </div>
           </motion.div>
 
           <div
-            className="grid gap-3 rounded-[14px] border p-4 md:grid-cols-[200px_minmax(0,1fr)] md:items-center"
+            className="grid gap-3 rounded-tile border p-4 md:grid-cols-[200px_minmax(0,1fr)] md:items-center"
             style={{
               borderColor: withAlpha(currentPressureColor, 0.24),
               background: withAlpha(currentPressureColor, 0.1),
             }}
           >
             <div>
-              <div className="text-[9px] text-faint">命运压力 · {severity.name}</div>
+              <div className="text-micro text-faint">命运压力 · {severity.name}</div>
               <div className="mt-2"><PressureDots engine={engine} /></div>
             </div>
-            <p className="text-[11px] leading-[1.75] text-sub md:text-[11.5px]">
+            <p className="text-caption leading-[1.75] text-sub md:text-caption">
               {engine.isForcedTrade
                 ? `压力已经到达上限。这一轮不能继续接受，必须放下 ${engine.discardPerTrade} 张底牌才能继续。`
                 : `接受会保留全部底牌并继续加压；不接受则放下 ${engine.discardPerTrade} 张。游戏会在手中自然只剩 ${engine.finalCardCount} 张时结束。`}
@@ -1018,7 +1015,7 @@ function DecisionPhase({
             {engine.heldCards.map((card) => (
               <span
                 key={card.id}
-                className="rounded-chip bg-raised px-[9px] py-1 text-[10.5px] text-sub"
+                className="rounded-chip bg-raised px-[9px] py-1 text-micro text-sub"
               >
                 {card.name}
               </span>
@@ -1030,7 +1027,9 @@ function DecisionPhase({
       <div className="border-t border-white/[0.07] bg-[#090b17]/82 px-5 py-3 backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-[800px] gap-3">
           {engine.canAccept && (
-            <button
+            <Button
+              size="lg"
+              className="flex-1"
               type="button"
               onClick={() => {
                 const scenarioKey = engine.current?.key;
@@ -1040,16 +1039,15 @@ function DecisionPhase({
                   scenario_key: scenarioKey,
                 });
               }}
-              className="flex-1 rounded-chip bg-btn-g py-[14px] text-[13.5px] font-semibold text-white transition active:scale-[0.97]"
             >
               接受它
-            </button>
+            </Button>
           )}
           <button
             type="button"
             disabled={!engine.canTrade}
             onClick={() => act(() => engine.beginTrade())}
-            className="flex-1 rounded-chip py-[14px] text-[13.5px] font-semibold transition active:scale-[0.97]"
+            className="flex-1 rounded-chip py-[14px] text-body font-semibold transition active:scale-[0.97]"
             style={{
               color: engine.canTrade ? "#FF9A8A" : "var(--color-faint)",
               background: `rgba(255,106,92,${engine.canTrade ? 0.12 : 0.05})`,
@@ -1089,22 +1087,22 @@ function TradePhase({
         <div className="flex min-h-[620px] w-full flex-col gap-4 px-[22px] py-5 lg:px-7 lg:py-6">
           <div className="flex items-start justify-between gap-4 border-b border-white/[0.065] pb-4">
             <div>
-            <div className="text-[9px] font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>
+            <div className="text-micro font-semibold tracking-[2.2px]" style={{ color: withAlpha(accent, 0.9) }}>
               THE PRICE
             </div>
-            <h2 className="mt-[5px] text-[20px] font-bold text-ink lg:text-[25px]">
+            <h2 className="mt-[5px] text-heading font-bold text-ink lg:text-[25px]">
               {forcedTrade ? "压力已到极限，必须做出取舍" : "你愿意用什么交换？"}
             </h2>
             </div>
-            <div className="hidden rounded-[12px] border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-right md:block">
-              <div className="text-[9px] text-faint">本轮需要放下</div>
-              <div className="mt-0.5 text-[17px] font-bold text-ink">
-                {engine.tradePick.length}<span className="text-[10px] font-normal text-faint">/{engine.discardPerTrade}</span>
+            <div className="hidden rounded-field border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-right md:block">
+              <div className="text-micro text-faint">本轮需要放下</div>
+              <div className="mt-0.5 text-title font-bold text-ink">
+                {engine.tradePick.length}<span className="text-micro font-normal text-faint">/{engine.discardPerTrade}</span>
               </div>
             </div>
           </div>
           <p
-            className="rounded-[12px] p-3.5 text-[11.5px] leading-[1.8] text-sub"
+            className="rounded-field p-3.5 text-caption leading-[1.8] text-sub"
             style={{
               background: withAlpha(accent, 0.07),
               border: `1px solid ${withAlpha(accent, 0.25)}`,
@@ -1133,7 +1131,7 @@ function TradePhase({
                       if (message) useToast.getState().show(message);
                     })
                   }
-                  className="relative flex min-h-[82px] items-center gap-2.5 overflow-hidden rounded-[13px] border px-3 py-3 text-left transition hover:-translate-y-0.5 active:scale-[0.96]"
+                  className="relative flex min-h-[82px] items-center gap-2.5 overflow-hidden rounded-field border px-3 py-3 text-left transition hover:-translate-y-0.5 active:scale-[0.96]"
                   style={{
                     background: `radial-gradient(circle at 10% 0%, ${withAlpha(palette.secondary, picked ? 0.18 : 0.1)}, transparent 42%), linear-gradient(145deg, ${withAlpha(palette.primary, picked ? 0.16 : 0.08)}, ${palette.deep})`,
                     borderColor: withAlpha(palette.primary, picked ? 0.75 : 0.24),
@@ -1143,7 +1141,7 @@ function TradePhase({
                   }}
                 >
                   <span
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border text-[17px]"
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-field border text-title"
                     style={{
                       color: palette.primary,
                       borderColor: withAlpha(palette.primary, 0.25),
@@ -1153,13 +1151,13 @@ function TradePhase({
                     {card.glyph}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[12px] font-semibold text-ink">
+                    <span className="block truncate text-footnote font-semibold text-ink">
                       {card.name}
                     </span>
-                    <span className="block text-[9.5px] text-faint">{card.group}</span>
+                    <span className="block text-micro text-faint">{card.group}</span>
                   </span>
                   <span
-                    className="grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] font-bold"
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded-full border text-micro font-bold"
                     style={{
                       color: picked ? "#fff" : withAlpha(palette.primary, 0.58),
                       borderColor: withAlpha(palette.primary, picked ? 0.72 : 0.2),
@@ -1205,7 +1203,7 @@ function TradePhase({
               }
             />
           </div>
-          <p className="text-[10px] text-faint">
+          <p className="text-micro text-faint">
             你的原话会成为结果分析的重要依据，默认只进入私密画像。
           </p>
         </div>
@@ -1253,15 +1251,15 @@ function ReasonField({
   return (
     <div className="card-game-panel flex flex-col gap-[7px] p-3.5">
       <div className="flex items-baseline justify-between">
-        <span className="text-[12px] font-semibold text-ink">{label}</span>
-        <span className="text-[10px] text-faint">{hint}</span>
+        <span className="text-footnote font-semibold text-ink">{label}</span>
+        <span className="text-micro text-faint">{hint}</span>
       </div>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full resize-none rounded-[10px] border border-white/[0.065] bg-black/15 p-[11px] text-[12px] leading-[1.65] text-ink placeholder:text-faint focus:border-brand/50 focus:outline-none"
+        className="w-full resize-none rounded-field border border-white/[0.065] bg-black/15 p-[11px] text-footnote leading-[1.65] text-ink placeholder:text-faint focus:border-brand/50 focus:outline-none"
       />
     </div>
   );

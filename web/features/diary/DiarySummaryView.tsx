@@ -1,6 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type { DiarySummaryResponse } from "./data";
 import { currentMonthRef, currentYearRef } from "./data";
 import { DiaryBlockHead, DiaryKeywordFlow, DiaryViewHead } from "./ui";
@@ -39,7 +41,7 @@ export function DiarySummaryView({
           <button
             onClick={onRefresh}
             disabled={refreshing || loading}
-            className="shrink-0 rounded-chip border border-[#5E96FF]/20 bg-[#5E96FF]/10 px-[11px] py-2 text-[10.5px] text-[#BBD0FF] transition active:scale-95 disabled:opacity-50"
+            className="shrink-0 rounded-chip border border-brand/20 bg-brand/10 px-[11px] py-2 text-micro text-brand-lite transition active:scale-95 disabled:opacity-50"
           >
             {refreshing ? "总结中…" : "更新总结"}
           </button>
@@ -47,7 +49,7 @@ export function DiarySummaryView({
       />
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2.5 py-24 text-[12px] text-sub">
+        <div className="flex items-center justify-center gap-2.5 py-24 text-footnote text-sub">
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
           正在读取 AI 总结…
         </div>
@@ -87,7 +89,7 @@ function RealSummary({
   return (
     <div className="flex flex-col gap-[14px]">
       {summary.stale && (
-        <div className="mt-[14px] rounded-[14px] border border-[#5E96FF]/20 bg-[#5E96FF]/8 px-3.5 py-2.5 text-[10.5px] text-[#BBD0FF]">
+        <div className="mt-[14px] rounded-tile border border-brand/20 bg-brand/8 px-3.5 py-2.5 text-micro text-brand-lite">
           有新日记加入，下面先保留上一次总结，AI 正在更新。
         </div>
       )}
@@ -132,7 +134,7 @@ function RealSummary({
 
       {summary.entry_count === 0 && (
         <SummaryCard>
-          <p className="text-[11.5px] leading-[1.7] text-sub">
+          <p className="text-caption leading-[1.7] text-sub">
             这个周期还没有可总结的日记。记录第一条声音后，再回来看看变化。
           </p>
         </SummaryCard>
@@ -154,25 +156,25 @@ function SummaryHero({
 }) {
   return (
     <div
-      className="mt-[15px] overflow-hidden rounded-[24px] border border-[#9A8BEA]/30 p-[21px]"
+      className="mt-[15px] overflow-hidden rounded-card border border-[#9A8BEA]/30 p-[21px]"
       style={{
         background:
           "radial-gradient(220px circle at 100% 0%, rgba(227,92,193,0.24), transparent), radial-gradient(190px circle at 0% 100%, rgba(94,150,255,0.22), transparent), linear-gradient(135deg, #1A1830, #111522)",
       }}
     >
-      <div className="text-[9.5px] tracking-[2.4px] text-[#C4B9FF]">{cap}</div>
-      <div className="mt-2 whitespace-pre-line text-[20px] font-bold leading-[1.6] text-ink">
+      <div className="text-micro tracking-[2.4px] text-[#C4B9FF]">{cap}</div>
+      <div className="mt-2 whitespace-pre-line text-heading font-bold leading-[1.6] text-ink">
         {headline}
       </div>
-      <p className="mt-[9px] text-[11.5px] leading-[1.7] text-[#BCC4D4]">{body}</p>
+      <p className="mt-[9px] text-caption leading-[1.7] text-[#BCC4D4]">{body}</p>
       <div className="mt-[14px] flex gap-[7px]">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-1 flex-col items-center gap-1 rounded-[15px] border border-white/[0.06] bg-white/[0.045] py-3"
+            className="flex flex-1 flex-col items-center gap-1 rounded-tile border border-white/[0.06] bg-white/[0.045] py-3"
           >
-            <span className="text-[17px] font-bold text-ink">{stat.value}</span>
-            <span className="text-[9px] text-faint">{stat.label}</span>
+            <span className="text-title font-bold text-ink">{stat.value}</span>
+            <span className="text-micro text-faint">{stat.label}</span>
           </div>
         ))}
       </div>
@@ -181,19 +183,19 @@ function SummaryHero({
 }
 
 function SummaryCard({ children }: { children: ReactNode }) {
-  return <div className="rounded-[20px] border border-line bg-card p-[17px]">{children}</div>;
+  return <Card elevation="flat" className="p-[17px]">{children}</Card>;
 }
 
 function HighlightList({ items }: { items: string[] }) {
   return (
-    <div className="mt-[13px] flex flex-col gap-2.5 rounded-[16px] border border-white/[0.06] bg-white/[0.035] p-[13px]">
+    <div className="mt-[13px] flex flex-col gap-2.5 rounded-tile border border-white/[0.06] bg-white/[0.035] p-[13px]">
       {items.map((item) => (
         <div key={item} className="flex items-start gap-2.5">
           <span
-            className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#8F7BFF]"
+            className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-violet-soft"
             style={{ boxShadow: "0 0 4px rgba(143,123,255,0.6)" }}
           />
-          <span className="text-[11.5px] leading-[1.6] text-sub">{item}</span>
+          <span className="text-caption leading-[1.6] text-sub">{item}</span>
         </div>
       ))}
     </div>
@@ -235,21 +237,18 @@ function EmptySummary({
       <SummaryCard>
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-semibold text-ink">
+            <div className="text-body font-semibold text-ink">
               {status === "failed"
                 ? isMonth ? "月度总结需要重试" : "年度总结需要重试"
                 : isMonth ? "月度总结正在生成" : "年度总结正在生成"}
             </div>
-            <p className="mt-1 text-[10.5px] leading-[1.6] text-sub">
+            <p className="mt-1 text-micro leading-[1.6] text-sub">
               这里不会展示示例内容，生成后会直接替换为你的真实总结。
             </p>
           </div>
-          <button
-            onClick={onRefresh}
-            className="shrink-0 rounded-chip bg-btn-g px-4 py-2 text-[10.5px] font-medium text-white"
-          >
+          <Button size="sm" className="shrink-0" onClick={onRefresh}>
             {status === "failed" ? "再试一次" : "检查进度"}
-          </button>
+          </Button>
         </div>
       </SummaryCard>
     </div>

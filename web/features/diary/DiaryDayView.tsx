@@ -14,6 +14,7 @@ import {
   weekday,
 } from "./data";
 import { DiaryBlockHead, DiaryCard, DiaryKeywordFlow, DiaryViewHead, StaticWave } from "./ui";
+import { Button } from "@/components/ui/button";
 
 export interface RailItem {
   date: string;
@@ -109,7 +110,7 @@ export function DiaryDayView({
                   : `${sortedSelected.length} 篇日记的 AI 小结`}
               />
               {daySummary?.insight ? (
-                <p className="mt-[11px] text-[12.5px] leading-[1.75] text-[#C8CEDA]">
+                <p className="mt-[11px] text-footnote leading-[1.75] text-[#C8CEDA]">
                   {daySummary.insight}
                 </p>
               ) : (
@@ -139,7 +140,7 @@ export function DiaryDayView({
                 {selectedEntry.status === "failed" && (
                   <button
                     onClick={() => onRetry(selectedEntry)}
-                    className="text-[10.5px] font-medium text-brand"
+                    className="text-micro font-medium text-brand"
                   >
                     重新处理
                   </button>
@@ -147,14 +148,14 @@ export function DiaryDayView({
                 {selectedEntry.has_audio && selectedEntry.status === "ready" && (
                   <button
                     onClick={() => onDeleteAudio(selectedEntry)}
-                    className="text-[10.5px] text-faint transition hover:text-brand"
+                    className="text-micro text-faint transition hover:text-brand"
                   >
                     只删除原始录音
                   </button>
                 )}
                 <button
                   onClick={() => onDelete(selectedEntry)}
-                  className="text-[10.5px] text-faint transition hover:text-[#FF8390]"
+                  className="text-micro text-faint transition hover:text-[#FF8390]"
                 >
                   删除这篇日记
                 </button>
@@ -207,7 +208,7 @@ function DateRail({
               ref={active ? activeRef : undefined}
               onClick={() => onSelect(item.date)}
               aria-label={`查看${item.week}${item.day}日的日记`}
-              className="relative flex w-[62px] shrink-0 flex-col items-center rounded-[17px] border py-[10px] transition active:scale-95"
+              className="relative flex w-[62px] shrink-0 flex-col items-center rounded-tile border py-[10px] transition active:scale-95"
               style={{
                 background: active
                   ? "linear-gradient(135deg, rgba(48,82,164,0.75), rgba(82,55,135,0.78))"
@@ -221,11 +222,11 @@ function DateRail({
                   {item.count}
                 </span>
               )}
-              <span className={`text-[9.5px] ${active ? "text-[#EEF3FF]" : "text-faint"}`}>
+              <span className={`text-micro ${active ? "text-[#EEF3FF]" : "text-faint"}`}>
                 {item.week}
               </span>
               <span className="py-[5px] text-[19px] leading-none">{item.emoji ?? "·"}</span>
-              <span className={`text-[10px] ${active ? "text-[#EEF3FF]" : "text-sub"}`}>
+              <span className={`text-micro ${active ? "text-[#EEF3FF]" : "text-sub"}`}>
                 {item.month}/{item.day}
               </span>
             </button>
@@ -250,37 +251,37 @@ function DayHero({
   const canPlay = entry.has_audio && entry.status !== "draft";
   return (
     <div
-      className="mt-[10px] overflow-hidden rounded-[23px] border border-[#7D9EE8]/25 p-[19px]"
+      className="mt-[10px] overflow-hidden rounded-card border border-[#7D9EE8]/25 p-[19px]"
       style={{
         background:
           "radial-gradient(190px circle at 100% 0%, rgba(111,165,255,0.22), transparent), linear-gradient(135deg, #171D31, #11141F)",
       }}
     >
-      <div className="text-[10px] tracking-[1.4px] text-[#9DBCFF]">
+      <div className="text-micro tracking-[1.4px] text-brand-lite">
         {diaryLabel(entry.local_date)} · VOICE NOTE
       </div>
       <div className="mt-[7px] text-[18px] font-bold leading-[1.55] text-ink">
         {entryTitle(entry)}
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <span className="text-[20px] leading-none">{entryEmoji(entry)}</span>
-        <span className="text-[11.5px] text-sub">
+        <span className="text-heading leading-none">{entryEmoji(entry)}</span>
+        <span className="text-caption text-sub">
           {entry.emotions[0] ?? statusText(entry.status)}
         </span>
       </div>
-      <div className="mt-[17px] flex items-center gap-[11px] rounded-[15px] border border-white/[0.07] bg-[#050812]/[0.48] px-3 py-[11px]">
+      <div className="mt-[17px] flex items-center gap-[11px] rounded-tile border border-white/[0.07] bg-[#050812]/[0.48] px-3 py-[11px]">
         <button
           onClick={onTogglePlay}
           disabled={!canPlay}
           aria-label={isPlaying ? "暂停这篇语音日记" : "播放这篇语音日记"}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-btn-g text-[11px] text-white transition active:scale-95 disabled:opacity-35"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-btn-g text-caption text-white transition active:scale-95 disabled:opacity-35"
         >
           {isPlaying ? "Ⅱ" : "▶"}
         </button>
         <div className="min-w-0 flex-1">
           <StaticWave seed={Math.max(seed, 1)} />
         </div>
-        <span className="shrink-0 text-[9.5px] tabular-nums text-faint">
+        <span className="shrink-0 text-micro tabular-nums text-faint">
           {formatDuration(entry.duration_ms)}
         </span>
       </div>
@@ -289,7 +290,7 @@ function DayHero({
 }
 
 function PendingLine({ text }: { text: string }) {
-  return <p className="mt-[11px] text-[11.5px] leading-[1.7] text-faint">{text}</p>;
+  return <p className="mt-[11px] text-caption leading-[1.7] text-faint">{text}</p>;
 }
 
 function TranscriptEditor({
@@ -323,12 +324,12 @@ function TranscriptEditor({
   if (!editing) {
     return (
       <>
-        <p className="mt-[11px] whitespace-pre-wrap text-[12.5px] leading-[1.75] text-[#C8CEDA]">
+        <p className="mt-[11px] whitespace-pre-wrap text-footnote leading-[1.75] text-[#C8CEDA]">
           {entry.transcript}
         </p>
         <button
           onClick={() => setEditing(true)}
-          className="mt-2.5 text-[10.5px] text-brand"
+          className="mt-2.5 text-micro text-brand"
         >
           修订转写
         </button>
@@ -343,10 +344,11 @@ function TranscriptEditor({
         onChange={(event) => setValue(event.target.value)}
         maxLength={20_000}
         rows={7}
-        className="w-full resize-y rounded-[14px] border border-[#5E96FF]/25 bg-black/15 px-3 py-2.5 text-[12.5px] leading-[1.75] text-[#C8CEDA] outline-none focus:border-[#5E96FF]/60"
+        className="w-full resize-y rounded-tile border border-brand/25 bg-black/15 px-3 py-2.5 text-footnote leading-[1.75] text-[#C8CEDA] outline-none focus:border-brand/60"
       />
       <div className="mt-2 flex items-center gap-3">
-        <button
+        <Button
+          size="sm"
           disabled={saving || !value.trim()}
           onClick={async () => {
             setSaving(true);
@@ -359,17 +361,16 @@ function TranscriptEditor({
               setSaving(false);
             }
           }}
-          className="rounded-chip bg-btn-g px-3.5 py-1.5 text-[10.5px] text-white disabled:opacity-45"
         >
           {saving ? "保存中…" : "保存并重新分析"}
-        </button>
+        </Button>
         <button
           disabled={saving}
           onClick={() => {
             setValue(entry.transcript ?? "");
             setEditing(false);
           }}
-          className="text-[10.5px] text-faint"
+          className="text-micro text-faint"
         >
           取消
         </button>
@@ -394,33 +395,33 @@ function SameDayEntries({
   return (
     <div className="mt-[18px] flex flex-col gap-2.5">
       <div className="flex items-baseline gap-3">
-        <span className="text-[15px] font-bold text-ink">当天的其他声音</span>
-        <span className="ml-auto text-[9.5px] text-faint">{entries.length} 篇</span>
+        <span className="text-lead font-bold text-ink">当天的其他声音</span>
+        <span className="ml-auto text-micro text-faint">{entries.length} 篇</span>
       </div>
       {entries.map((entry, index) => (
         <div
           key={entry.entry_id}
-          className="flex items-center gap-[11px] rounded-[17px] border border-line bg-card px-3 py-[13px]"
+          className="flex items-center gap-[11px] rounded-tile border border-line bg-card px-3 py-[13px]"
         >
           <button
             onClick={() => onTogglePlay(entry)}
             disabled={!entry.has_audio || entry.status === "draft"}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5E96FF]/12 text-[10px] text-brand disabled:opacity-35"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand/12 text-micro text-brand disabled:opacity-35"
           >
             {playingEntryId === entry.entry_id ? "Ⅱ" : "▶"}
           </button>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[11.5px] font-semibold text-ink">{entryTitle(entry)}</div>
-            <div className="mt-1 flex items-center gap-2 text-[9.5px] text-faint">
+            <div className="truncate text-caption font-semibold text-ink">{entryTitle(entry)}</div>
+            <div className="mt-1 flex items-center gap-2 text-micro text-faint">
               <StaticWave seed={index + 31} />
               <span className="shrink-0">{formatDuration(entry.duration_ms)}</span>
             </div>
           </div>
-          <button onClick={() => onDelete(entry)} className="text-[10px] text-faint">
+          <button onClick={() => onDelete(entry)} className="text-micro text-faint">
             删除
           </button>
           {entry.status === "failed" && (
-            <button onClick={() => onRetry(entry)} className="text-[10px] text-brand">
+            <button onClick={() => onRetry(entry)} className="text-micro text-brand">
               重试
             </button>
           )}
@@ -433,23 +434,20 @@ function SameDayEntries({
 function EmptyState({ onStartRecording }: { onStartRecording: () => void }) {
   return (
     <div
-      className="mt-5 flex flex-col items-center rounded-[23px] px-[22px] py-[38px] text-center"
+      className="mt-5 flex flex-col items-center rounded-card px-[22px] py-[38px] text-center"
       style={{
         background: "var(--color-card)",
         border: "1px dashed rgba(111,165,255,0.28)",
       }}
     >
       <span className="text-[32px] text-sub">◌</span>
-      <span className="mt-3 text-[16px] font-bold text-ink">今天还没有留下声音</span>
-      <p className="mt-[7px] text-[11.5px] leading-[1.5] text-sub">
+      <span className="mt-3 text-subtitle font-bold text-ink">今天还没有留下声音</span>
+      <p className="mt-[7px] text-caption leading-[1.5] text-sub">
         不需要组织好语言，从此刻最真实的感受开始就好。
       </p>
-      <button
-        onClick={onStartRecording}
-        className="mt-[18px] rounded-chip bg-btn-g px-5 py-[11px] text-[12px] font-semibold text-white transition active:scale-95"
-      >
+      <Button size="md" className="mt-[18px]" onClick={onStartRecording}>
         记录今天
-      </button>
+      </Button>
     </div>
   );
 }
@@ -476,8 +474,8 @@ function Archive({
   return (
     <div className="mt-[18px] flex flex-col gap-2.5">
       <div className="flex items-baseline gap-3">
-        <span className="text-[15px] font-bold text-ink">全部日期记录</span>
-        <span className="ml-auto text-[9.5px] text-faint">{entries.length} 篇 · 按时间倒序</span>
+        <span className="text-lead font-bold text-ink">全部日期记录</span>
+        <span className="ml-auto text-micro text-faint">{entries.length} 篇 · 按时间倒序</span>
       </div>
       <div className="flex flex-col gap-2">
         {days.map(([date, dayEntries]) => {
@@ -489,26 +487,26 @@ function Archive({
             <button
               key={date}
               onClick={() => onSelect(date)}
-              className="flex items-center gap-[11px] rounded-[17px] border px-3 py-[13px] text-left transition active:scale-[0.98]"
+              className="flex items-center gap-[11px] rounded-tile border px-3 py-[13px] text-left transition active:scale-[0.98]"
               style={{
                 background: active ? "rgba(94,150,255,0.08)" : "var(--color-card)",
                 borderColor: active ? "rgba(111,165,255,0.32)" : "var(--color-line)",
               }}
             >
               <div className="flex w-[42px] shrink-0 flex-col items-center">
-                <span className="text-[15px] font-bold text-ink">{dayNumber(date)}</span>
-                <span className="text-[8.5px] text-faint">{monthNumber(date)}月</span>
+                <span className="text-lead font-bold text-ink">{dayNumber(date)}</span>
+                <span className="text-micro text-faint">{monthNumber(date)}月</span>
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
-                <span className="truncate text-[11.5px] font-semibold text-ink">
+                <span className="truncate text-caption font-semibold text-ink">
                   {entryTitle(latest)}
                 </span>
-                <span className="truncate text-[9.5px] text-faint">
+                <span className="truncate text-micro text-faint">
                   {entryEmoji(latest)} {dayEntries.length > 1 ? `${dayEntries.length} 篇 · ` : ""}
                   {latest.keywords.map((keyword) => `#${keyword}`).join(" · ")}
                 </span>
               </div>
-              <span className="text-[16px] text-[#70809E]">›</span>
+              <span className="text-subtitle text-[#70809E]">›</span>
             </button>
           );
         })}
