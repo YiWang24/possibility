@@ -6,7 +6,15 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import type { CardGameKind, GameCard } from "./data";
-import { CardGameEngine } from "./engine";
+import { loadCardGameConfig } from "./catalog";
+import {
+  CardGameSessionCoordinator,
+  pinnedCardGameCatalogVersion,
+} from "./session";
+import {
+  CardGameEngine,
+  userScopedCardGameStorage,
+} from "./engine";
 import { FanArc } from "./FanArc";
 import { LifeResult, RelationResult } from "./ResultViews";
 import { BackButton, Foot, PRESSURE_COLORS, withAlpha } from "./ui";
@@ -17,6 +25,17 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
+function pressureColor(engine: CardGameEngine): string {
+  const index = Math.max(
+    0,
+    Math.min(
+      PRESSURE_COLORS.length - 1,
+      engine.pressure - engine.pressureMin,
+    ),
+  );
+  return PRESSURE_COLORS[index];
+}
+
 export function GameView({ kind }: { kind: CardGameKind }) {
   const router = useRouter();
   /* 引擎在客户端挂载后创建（构造时会从 localStorage 恢复局内快照，避免 SSR 水合不一致） */
@@ -24,9 +43,67 @@ export function GameView({ kind }: { kind: CardGameKind }) {
   const [, bump] = useReducer((n: number) => n + 1, 0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [sessionSync, setSessionSync] =
+    useState<CardGameSessionCoordinator | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    setEngine(new CardGameEngine(kind));
+    let active = true;
+    void (async () => {
+      try {
+        const pinnedVersion = await pinnedCardGameCatalogVersion(kind);
+        const { config, envelope } = await loadCardGameConfig(
+          kind,
+          pinnedVersion,
+        );
+        let candidate: CardGameSessionCoordinator | null = null;
+        if (envelope) {
+          try {
+            candidate = await CardGameSessionCoordinator.create(
+              kind,
+              envelope.version,
+            );
+          } catch {
+            // The legacy final-result save remains available if session
+            // bootstrap is temporarily offline.
+          }
+        }
+        const nextEngine = new CardGameEngine(
+          kind,
+          config,
+          candidate
+            ? userScopedCardGameStorage(candidate.userId)
+            : undefined,
+        );
+        let coordinator: CardGameSessionCoordinator | null = null;
+        if (candidate) {
+          // A legacy in-progress snapshot has no action history to replay on
+          // the server. Finish that one through the legacy save path instead
+          // of fabricating earlier actions.
+          if (
+            candidate.resumed ||
+            nextEngine.phase === "intro" ||
+            nextEngine.phase === "select"
+          ) {
+            coordinator = candidate;
+          } else {
+            candidate.clearLocalState();
+          }
+        }
+        if (!active) return;
+        if (coordinator) nextEngine.scenarioSeed = coordinator.seed;
+        setSessionSync(coordinator);
+        setEngine(nextEngine);
+        setLoadError(null);
+      } catch {
+        if (active) {
+          setLoadError("这套牌库尚未缓存，请联网后重试。");
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [kind]);
 
   const act = useCallback(
@@ -38,11 +115,31 @@ export function GameView({ kind }: { kind: CardGameKind }) {
   );
 
   if (!engine) {
-    return <div className="min-h-dvh screen-bg" />;
+    return (
+      <div className="flex min-h-dvh items-center justify-center screen-bg px-6">
+        {loadError
+          ? (
+            <div className="w-full max-w-sm rounded-card border border-line bg-card p-5 text-center">
+              <div className="text-[15px] font-semibold text-ink">牌库加载失败</div>
+              <p className="mt-2 text-[12px] leading-[1.7] text-sub">
+                {loadError}
+              </p>
+              <button
+                className="mt-4 rounded-chip bg-raised px-5 py-2 text-[12px] font-semibold text-ink"
+                onClick={() => router.back()}
+              >
+                返回卡牌大厅
+              </button>
+            </div>
+          )
+          : <div className="text-[12px] text-faint">加载最新牌库…</div>}
+      </div>
+    );
   }
   return (
     <GameBody
       engine={engine}
+      sessionSync={sessionSync}
       act={act}
       router={router}
       isSaving={isSaving}
@@ -55,6 +152,7 @@ export function GameView({ kind }: { kind: CardGameKind }) {
 
 function GameBody({
   engine,
+  sessionSync,
   act,
   router,
   isSaving,
@@ -63,6 +161,7 @@ function GameBody({
   setSaveError,
 }: {
   engine: CardGameEngine;
+  sessionSync: CardGameSessionCoordinator | null;
   act: (fn: () => void) => void;
   router: ReturnType<typeof useRouter>;
   isSaving: boolean;
@@ -83,13 +182,15 @@ function GameBody({
         return {
           title: `选择${cfg.title.slice(0, 2)}底牌`,
           sub: `向下滑动浏览全部 ${cfg.cards.length} 张`,
-          progressText: `已选 ${engine.selected.length}/9`,
+          progressText:
+            `已选 ${engine.selected.length}/${engine.initialSelectCount}`,
         };
       case "trade":
         return {
           title: "交换底牌",
-          sub: "选择 2 张牌作为代价",
-          progressText: `已选 ${engine.tradePick.length}/2`,
+          sub: `选择 ${engine.discardPerTrade} 张牌作为代价`,
+          progressText:
+            `已选 ${engine.tradePick.length}/${engine.discardPerTrade}`,
         };
       case "result":
         return { title: "这一局的回望", sub: "结果默认仅自己可见", progressText: "完成" };
@@ -130,19 +231,31 @@ function GameBody({
     setSaveError(null);
     setIsSaving(true);
     try {
-      await callFunction("save-profile", engine.buildSavePayload());
+      if (sessionSync) {
+        await sessionSync.complete();
+      } else {
+        await callFunction("save-profile", engine.buildSavePayload());
+      }
       engine.clearProgressAfterSync();
       if (cfg.kind === "life") {
-        useToast.getState().show("三张底牌已融入动态画像并同步");
+        useToast.getState().show(
+          `${engine.finalCardCount} 张底牌已融入动态画像并同步`,
+        );
       } else {
         useToast
           .getState()
-          .show(`${cfg.title.slice(0, 2)}中最关心的三点已写入画像：${tags.join(" · ")}`);
+          .show(
+            `${cfg.title.slice(0, 2)}中最关心的 ${engine.finalCardCount} 点已写入画像：${
+              tags.join(" · ")
+            }`,
+          );
       }
       close();
     } catch {
       setIsSaving(false);
-      setSaveError("请检查网络后重试。你的三张底牌、取舍记录和画像关键词都已安全留在本机。");
+      setSaveError(
+        `请检查网络后重试。你的 ${engine.finalCardCount} 张底牌、取舍记录和画像关键词都已安全留在本机。`,
+      );
     }
   };
 
@@ -181,10 +294,34 @@ function GameBody({
           className="flex min-h-0 flex-1 flex-col"
         >
           {phase === "intro" && <IntroPhase engine={engine} act={act} />}
-          {phase === "select" && <SelectPhase engine={engine} act={act} />}
-          {phase === "draw" && <DrawPhase engine={engine} act={act} />}
-          {phase === "decision" && <DecisionPhase engine={engine} act={act} />}
-          {phase === "trade" && <TradePhase engine={engine} act={act} />}
+          {phase === "select" && (
+            <SelectPhase
+              engine={engine}
+              act={act}
+              sessionSync={sessionSync}
+            />
+          )}
+          {phase === "draw" && (
+            <DrawPhase
+              engine={engine}
+              act={act}
+              sessionSync={sessionSync}
+            />
+          )}
+          {phase === "decision" && (
+            <DecisionPhase
+              engine={engine}
+              act={act}
+              sessionSync={sessionSync}
+            />
+          )}
+          {phase === "trade" && (
+            <TradePhase
+              engine={engine}
+              act={act}
+              sessionSync={sessionSync}
+            />
+          )}
           {phase === "result" && (
             <div className="flex min-h-0 flex-1 flex-col">
               <div className="no-scrollbar flex-1 overflow-y-auto">
@@ -219,7 +356,7 @@ function GameBody({
                     : saveError === null
                       ? cfg.kind === "life"
                         ? "保存到我的私密画像"
-                        : "保存最关心的三点"
+                        : `保存最关心的 ${engine.finalCardCount} 点`
                       : "重试云端同步"
                 }
                 enabled={!isSaving}
@@ -308,7 +445,15 @@ function IntroPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
 
 /* ============ 选牌 ============ */
 
-function SelectPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => void) => void }) {
+function SelectPhase({
+  engine,
+  act,
+  sessionSync,
+}: {
+  engine: CardGameEngine;
+  act: (fn: () => void) => void;
+  sessionSync: CardGameSessionCoordinator | null;
+}) {
   const cfg = engine.config;
   const accent = cfg.accent;
   return (
@@ -326,14 +471,20 @@ function SelectPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => 
               <span className="text-[9.5px] text-faint">已选</span>
               <span className="text-[20px] font-extrabold leading-tight" style={{ color: accent }}>
                 {engine.selected.length}
-                <span className="text-[11px] font-normal text-faint">/9</span>
+                <span className="text-[11px] font-normal text-faint">
+                  /{engine.initialSelectCount}
+                </span>
               </span>
             </div>
           </div>
           <div className="h-1 overflow-hidden rounded-chip bg-raised">
             <div
               className="h-full rounded-chip transition-all duration-300"
-              style={{ width: `${(engine.selected.length / 9) * 100}%`, background: accent }}
+              style={{
+                width:
+                  `${(engine.selected.length / engine.initialSelectCount) * 100}%`,
+                background: accent,
+              }}
             />
           </div>
           <div className="text-[10.5px] text-faint">没有标准答案，此刻的选择只代表这一局</div>
@@ -350,12 +501,21 @@ function SelectPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => 
       </div>
       <Foot
         title={
-          engine.selected.length === 9
-            ? "带着这 9 张牌出发"
-            : `还需选择 ${9 - engine.selected.length} 张`
+          engine.selected.length === engine.initialSelectCount
+            ? `带着这 ${engine.initialSelectCount} 张牌出发`
+            : `还需选择 ${
+              engine.initialSelectCount - engine.selected.length
+            } 张`
         }
-        enabled={engine.selected.length === 9}
-        onClick={() => act(() => engine.confirmSelection())}
+        enabled={engine.selected.length === engine.initialSelectCount}
+        onClick={() => {
+          const selected = [...engine.selected];
+          act(() => engine.confirmSelection());
+          sessionSync?.record({
+            action_type: "confirm_selection",
+            card_keys: selected,
+          });
+        }}
       />
     </div>
   );
@@ -420,12 +580,20 @@ function SelectCard({
 
 /* ============ 抽牌 ============ */
 
-function DrawPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => void) => void }) {
+function DrawPhase({
+  engine,
+  act,
+  sessionSync,
+}: {
+  engine: CardGameEngine;
+  act: (fn: () => void) => void;
+  sessionSync: CardGameSessionCoordinator | null;
+}) {
   const cfg = engine.config;
   const accent = cfg.accent;
   const options = engine.scenarioOptions;
   const severity = engine.severityMeta;
-  const pressureColor = PRESSURE_COLORS[engine.pressure - 1];
+  const currentPressureColor = pressureColor(engine);
   const stage = engine.stageMeta;
   return (
     <div className="no-scrollbar flex-1 overflow-y-auto">
@@ -438,28 +606,38 @@ function DrawPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => vo
           <p className="mt-1.5 text-[12px] text-sub">
             {engine.acceptStreak > 0
               ? `你已连续接受 ${engine.acceptStreak} 次，压力正在加码。`
-              : "命运放下了五张牌。凭直觉，抽一张。"}
+              : `命运放下了 ${engine.scenarioChoiceCount} 张牌。凭直觉，抽一张。`}
           </p>
         </div>
 
         {/* 压力表（原型 .fate-pressure） */}
         <div
           className="rounded-[14px] bg-card p-[13px]"
-          style={{ border: `1px solid ${withAlpha(pressureColor, 0.3)}` }}
+          style={{
+            border: `1px solid ${withAlpha(currentPressureColor, 0.3)}`,
+          }}
         >
           <div className="flex items-center justify-between">
             <span className="text-[10.5px] text-faint">{cfg.pressureLabel}</span>
-            <span className="text-[12.5px] font-bold" style={{ color: pressureColor }}>
+            <span
+              className="text-[12.5px] font-bold"
+              style={{ color: currentPressureColor }}
+            >
               {severity.name}
             </span>
           </div>
           <div className="mt-2 flex gap-[5px]">
-            {[1, 2, 3, 4].map((level) => (
+            {Array.from(
+              { length: engine.pressureMax - engine.pressureMin + 1 },
+              (_, index) => engine.pressureMin + index,
+            ).map((level) => (
               <div
                 key={level}
                 className="h-1 flex-1 rounded-chip transition-colors duration-300"
                 style={{
-                  background: level <= engine.pressure ? pressureColor : "var(--color-raised)",
+                  background: level <= engine.pressure
+                    ? currentPressureColor
+                    : "var(--color-raised)",
                 }}
               />
             ))}
@@ -468,7 +646,17 @@ function DrawPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => vo
         </div>
 
         {/* 可滑动扇形牌弧 */}
-        <FanArc options={options} accent={accent} onDraw={(s) => act(() => engine.draw(s))} />
+        <FanArc
+          options={options}
+          accent={accent}
+          onDraw={(scenario) => {
+            act(() => engine.draw(scenario));
+            sessionSync?.record({
+              action_type: "draw_scenario",
+              scenario_key: scenario.key,
+            });
+          }}
+        />
 
         <div className="text-center text-[10.5px] text-faint">左右滑动牌弧 · 点击其中一张</div>
       </div>
@@ -478,12 +666,20 @@ function DrawPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => vo
 
 /* ============ 决策 ============ */
 
-function DecisionPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => void) => void }) {
+function DecisionPhase({
+  engine,
+  act,
+  sessionSync,
+}: {
+  engine: CardGameEngine;
+  act: (fn: () => void) => void;
+  sessionSync: CardGameSessionCoordinator | null;
+}) {
   const cfg = engine.config;
   const accent = cfg.accent;
   const scenario = engine.current!;
   const severity = engine.severityMeta;
-  const pressureColor = PRESSURE_COLORS[engine.pressure - 1];
+  const currentPressureColor = pressureColor(engine);
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="no-scrollbar flex-1 overflow-y-auto">
@@ -516,18 +712,19 @@ function DecisionPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () =
           <span
             className="rounded-chip px-3 py-1.5 text-[11px] font-semibold"
             style={{
-              color: pressureColor,
-              background: withAlpha(pressureColor, 0.1),
-              border: `1px solid ${withAlpha(pressureColor, 0.4)}`,
+              color: currentPressureColor,
+              background: withAlpha(currentPressureColor, 0.1),
+              border: `1px solid ${withAlpha(currentPressureColor, 0.4)}`,
             }}
           >
-            {severity.name} · 拒绝需交换 2 张
+            {severity.name} · 拒绝需交换 {engine.discardPerTrade} 张
           </span>
 
           <p className="text-center text-[11.5px] leading-[1.8] text-sub">
             接受它，会保留所有底牌，但下一轮会继续加码；
             <br />
-            拒绝它，则放下 2 张底牌。直到手中自然只剩三张。
+            拒绝它，则放下 {engine.discardPerTrade} 张底牌。直到手中自然只剩
+            {engine.finalCardCount} 张。
           </p>
 
           {/* 持有条 */}
@@ -546,7 +743,14 @@ function DecisionPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () =
       <div className="border-t border-line px-5 pt-3 pb-[14px]">
         <div className="mx-auto flex w-full max-w-[680px] gap-3">
           <button
-            onClick={() => act(() => engine.accept())}
+            onClick={() => {
+              const scenarioKey = engine.current?.key;
+              act(() => engine.accept());
+              sessionSync?.record({
+                action_type: "accept_scenario",
+                scenario_key: scenarioKey,
+              });
+            }}
             className="flex-1 rounded-chip bg-btn-g py-[14px] text-[13.5px] font-semibold text-white transition active:scale-[0.97]"
           >
             接受它
@@ -571,7 +775,15 @@ function DecisionPhase({ engine, act }: { engine: CardGameEngine; act: (fn: () =
 
 /* ============ 交换 ============ */
 
-function TradePhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => void) => void }) {
+function TradePhase({
+  engine,
+  act,
+  sessionSync,
+}: {
+  engine: CardGameEngine;
+  act: (fn: () => void) => void;
+  sessionSync: CardGameSessionCoordinator | null;
+}) {
   const cfg = engine.config;
   const accent = cfg.accent;
   return (
@@ -592,7 +804,8 @@ function TradePhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
             }}
           >
             为了让“{engine.current?.title ?? ""}”不发生，请从仍持有的 {engine.held.length}{" "}
-            张底牌中放下 2 张。最后三张会被保留。
+            张底牌中放下 {engine.discardPerTrade} 张。最后
+            {engine.finalCardCount} 张会被保留。
           </p>
 
           <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
@@ -641,7 +854,7 @@ function TradePhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
             }
           />
           <ReasonField
-            label="为什么愿意放弃这 2 张牌？"
+            label={`为什么愿意放弃这 ${engine.discardPerTrade} 张牌？`}
             hint="没有标准答案"
             placeholder="例如：这些东西可以以后再争取……"
             value={engine.reasonAbandon}
@@ -658,9 +871,22 @@ function TradePhase({ engine, act }: { engine: CardGameEngine; act: (fn: () => v
         </div>
       </div>
       <Foot
-        title="确认交换 2 张牌"
-        enabled={engine.tradePick.length === 2}
-        onClick={() => act(() => engine.confirmTrade())}
+        title={`确认交换 ${engine.discardPerTrade} 张牌`}
+        enabled={engine.tradePick.length === engine.discardPerTrade}
+        onClick={() => {
+          const scenarioKey = engine.current?.key;
+          const cardKeys = [...engine.tradePick];
+          const reasonCannotAccept = engine.reasonCannotAccept.trim();
+          const reasonAbandon = engine.reasonAbandon.trim();
+          act(() => engine.confirmTrade());
+          sessionSync?.record({
+            action_type: "trade_cards",
+            scenario_key: scenarioKey,
+            card_keys: cardKeys,
+            reason_cannot_accept: reasonCannotAccept,
+            reason_abandon: reasonAbandon,
+          });
+        }}
       />
     </div>
   );

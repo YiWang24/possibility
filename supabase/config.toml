@@ -97,6 +97,12 @@ verify_jwt = true
 [functions.save-profile]
 verify_jwt = true
 
+[functions.card-game-catalog]
+verify_jwt = false
+
+[functions.card-game-session]
+verify_jwt = true
+
 [functions.get-profile]
 verify_jwt = true
 

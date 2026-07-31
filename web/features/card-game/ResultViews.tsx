@@ -28,7 +28,7 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
         {cfg.glyph}
       </motion.div>
       <h2 className="text-center text-[19px] font-bold text-ink">
-        {cfg.title.slice(0, 2)}中，你最关心这三点
+        {cfg.title.slice(0, 2)}中，你最关心这 {engine.finalCardCount} 点
       </h2>
       <p className="text-center text-[12px] leading-[1.8] text-sub">
         {engine.groupNarrative}
@@ -68,7 +68,7 @@ export function RelationResult({ engine }: { engine: CardGameEngine }) {
         </div>
         <p className="mt-2 text-[11.5px] leading-[1.8] text-sub">
           本次经历了 {engine.round} 轮情境，接受 {engine.accepted.length} 次、主动交换{" "}
-          {engine.traded.length} 次。这三点会成为画像的优先信号。
+          {engine.traded.length} 次。这 {engine.finalCardCount} 点会成为画像的优先信号。
         </p>
       </div>
     </div>
@@ -130,7 +130,10 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
         </ResultBlock>
       )}
 
-      <ResultBlock kicker="将融入动态画像的三张底牌" tint="#5E96FF">
+      <ResultBlock
+        kicker={`将融入动态画像的 ${engine.finalCardCount} 张底牌`}
+        tint="#5E96FF"
+      >
         <div className="flex w-full gap-2">
           {a.held.map((card, i) => (
             <motion.div
@@ -193,7 +196,8 @@ export function LifeResult({ engine }: { engine: CardGameEngine }) {
       >
         <span className="text-[11px] text-[#8EE7C8]">◉</span>
         <p className="text-[10px] leading-[1.7] text-faint">
-          三张人生底牌会作为画像信号融入动态数字形象；其余 {a.hiddenTraits.length}{" "}
+          {engine.finalCardCount} 张人生底牌会作为画像信号融入动态数字形象；其余{" "}
+          {a.hiddenTraits.length}{" "}
           条深层推断仍默认私密，只用于帮助数字人理解你。
         </p>
       </div>

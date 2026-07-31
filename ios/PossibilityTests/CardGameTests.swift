@@ -140,6 +140,77 @@ final class CardGameTests: XCTestCase {
         XCTAssertEqual(engine.phase, .intro)
         XCTAssertFalse(CardGameLocalRecord.hasProgress(.social, store: store))
     }
+
+    func testServerRulesDriveCountsWithoutChangingEngineCode() {
+        let base = CardGameData.config(.life)
+        let rules = CardGameCatalog.Rules(
+            initialSelectCount: 5,
+            finalCardCount: 3,
+            discardPerTrade: 2,
+            scenarioChoiceCount: 2,
+            pressure: .init(
+                initial: 1,
+                min: 1,
+                max: 4,
+                acceptDelta: 1,
+                tradeDelta: -1
+            ),
+            scenarioSelection: "nearest_pressure_unseen_v1",
+            stageBasis: "trade_count",
+            allowRedraw: true
+        )
+        let config = CardGameConfig(
+            kind: .life,
+            title: base.title,
+            eyebrow: base.eyebrow,
+            introTitle: base.introTitle,
+            introCopy: base.introCopy,
+            rules: base.rules,
+            selectTitle: base.selectTitle,
+            cardPrefix: base.cardPrefix,
+            severityMeta: base.severityMeta,
+            pressureLabel: base.pressureLabel,
+            cards: Array(base.cards.prefix(6)),
+            scenarioRounds: base.scenarioRounds,
+            groupCopy: base.groupCopy,
+            accent: base.accent,
+            glyph: base.glyph,
+            dynamicRules: rules
+        )
+        let engine = CardGameEngine(kind: .life, config: config, store: store)
+
+        engine.start()
+        config.cards.prefix(engine.initialSelectCount).forEach {
+            _ = engine.toggleSelect($0.id)
+        }
+        engine.confirmSelection()
+        XCTAssertEqual(engine.scenarioOptions.count, 2)
+        engine.draw(try! XCTUnwrap(engine.scenarioOptions.first))
+        engine.beginTrade()
+        engine.heldCards.prefix(engine.discardPerTrade).forEach {
+            _ = engine.toggleTrade($0.id)
+        }
+        engine.confirmTrade()
+
+        XCTAssertEqual(engine.phase, .result)
+        XCTAssertEqual(engine.held.count, 3)
+    }
+
+    func testLegacyLocalStateMigratesOnceIntoCurrentUserScope() {
+        CardGameLocalRecord.markDone(.life, store: store)
+        CardGameLocalRecord.saveProgress(
+            Data("snapshot".utf8),
+            for: .life,
+            store: store
+        )
+
+        XCTAssertTrue(CardGameLocalRecord.isDone(.life, scope: "user-a", store: store))
+        XCTAssertNotNil(CardGameLocalRecord.progressData(.life, scope: "user-a", store: store))
+        XCTAssertFalse(CardGameLocalRecord.isDone(.life, scope: "user-b", store: store))
+        XCTAssertNil(CardGameLocalRecord.progressData(.life, scope: "user-b", store: store))
+        XCTAssertFalse(CardGameLocalRecord.isDone(.life, store: store))
+        XCTAssertNil(CardGameLocalRecord.progressData(.life, store: store))
+    }
 }
 
 @MainActor

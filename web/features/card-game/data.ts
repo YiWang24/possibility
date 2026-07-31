@@ -1,7 +1,12 @@
 /* 卡牌游戏数据 —— 1:1 移植自 iOS CardGameData.swift（原型 LIFE_BASE_CARDS / LIFE_STAGES / RELATIONSHIP_CARDS / VALUE_CARD_GAMES） */
 
+import type {
+  CardGameCatalog,
+  CardGameRules,
+} from "@possibility/shared-types";
+
 export const CARD_GAME_KINDS = ["life", "marriage", "family", "social"] as const;
-export type CardGameKind = (typeof CARD_GAME_KINDS)[number];
+export type CardGameKind = string;
 
 /* 结果写入的画像维度（life 走人生底牌签名） */
 export function targetDimension(kind: CardGameKind): string | null {
@@ -14,6 +19,8 @@ export function targetDimension(kind: CardGameKind): string | null {
       return "family";
     case "social":
       return "social";
+    default:
+      return kind;
   }
 }
 
@@ -26,6 +33,7 @@ export interface GameCard {
 }
 
 export interface GameScenario {
+  key?: string;
   title: string;
   copy: string;
   theme: string;
@@ -54,6 +62,17 @@ export interface CardGameConfig {
   glyph: string;
   /** 是否包含内容提示 */
   contentWarning?: string;
+  /** Server catalog metadata. Absent only for the built-in emergency fallback. */
+  catalogVersion?: number;
+  contentHash?: string;
+  engineKey?: string;
+  dynamicRules?: CardGameRules;
+  stageMeta?: {
+    age: string;
+    name: string;
+    activateAfterTrades: number;
+  }[];
+  sourceCatalog?: CardGameCatalog;
 }
 
 export function scenariosForTradeCount(config: CardGameConfig, traded: number): GameScenario[] {
@@ -195,6 +214,10 @@ const life: CardGameConfig = {
   glyph: "◇",
   contentWarning:
     "内容提示：游戏包含疾病、家庭冲突、暴力与死亡等敏感情境。它不是心理诊断，结果默认仅自己可见。",
+  stageMeta: lifeRoundMeta.map((stage, index) => ({
+    ...stage,
+    activateAfterTrades: index,
+  })),
 };
 
 /* ============ 婚姻卡牌 ============ */
@@ -410,12 +433,14 @@ const social: CardGameConfig = {
   glyph: "◎",
 };
 
-const CONFIGS: Record<CardGameKind, CardGameConfig> = { life, marriage, family, social };
+const CONFIGS: Record<string, CardGameConfig> = { life, marriage, family, social };
 
 export function cardGameConfig(kind: CardGameKind): CardGameConfig {
-  return CONFIGS[kind];
+  const config = CONFIGS[kind];
+  if (!config) throw new Error(`No built-in fallback catalog for ${kind}`);
+  return config;
 }
 
 export function isCardGameKind(value: string): value is CardGameKind {
-  return (CARD_GAME_KINDS as readonly string[]).includes(value);
+  return /^[a-z][a-z0-9_]{0,63}$/.test(value);
 }

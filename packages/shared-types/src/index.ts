@@ -1,2 +1,9 @@
-export type { Database, Tables, TablesInsert, TablesUpdate, Enums } from './database.types'
-export * from './api'
+export type {
+  Database,
+  Enums,
+  Tables,
+  TablesInsert,
+  TablesUpdate,
+} from "./database.types";
+export * from "./api";
+export * from "./card-game";

@@ -2,18 +2,31 @@ import Foundation
 
 // MARK: - 卡牌游戏数据（迁移自原型 LIFE_BASE_CARDS / LIFE_STAGES / RELATIONSHIP_CARDS / VALUE_CARD_GAMES）
 
-enum CardGameKind: String, CaseIterable, Identifiable, Hashable, Sendable {
-    case life, marriage, family, social
+struct CardGameKind: RawRepresentable, CaseIterable, Identifiable, Hashable, Codable, Sendable {
+    let rawValue: String
+
+    init?(rawValue: String) {
+        guard rawValue.range(of: #"^[a-z][a-z0-9_]{0,63}$"#, options: .regularExpression) != nil else {
+            return nil
+        }
+        self.rawValue = rawValue
+    }
+
+    static let life = CardGameKind(rawValue: "life")!
+    static let marriage = CardGameKind(rawValue: "marriage")!
+    static let family = CardGameKind(rawValue: "family")!
+    static let social = CardGameKind(rawValue: "social")!
+    static let allCases: [CardGameKind] = [.life, .marriage, .family, .social]
+
     var id: String { rawValue }
 
     /// 结果写入的画像维度（life 走人生底牌签名）
     var targetDimension: DimensionKey? {
-        switch self {
-        case .life: return nil
-        case .marriage: return .love
-        case .family: return .family
-        case .social: return .social
-        }
+        if self == .life { return nil }
+        if self == .marriage { return .love }
+        if self == .family { return .family }
+        if self == .social { return .social }
+        return nil
     }
 }
 
@@ -26,6 +39,7 @@ struct GameCard: Identifiable, Hashable, Sendable {
 }
 
 struct GameScenario: Hashable, Sendable {
+    var key: String? = nil
     let title: String
     let copy: String
     let theme: String
@@ -54,21 +68,422 @@ struct CardGameConfig: Sendable {
     let glyph: String
     /// 是否包含内容提示
     var contentWarning: String? = nil
+    var catalogVersion: Int = 1
+    var contentHash: String? = nil
+    var engineKey: String = "trade_down_v1"
+    var dynamicRules: CardGameCatalog.Rules? = nil
+    var stageMeta: [StageMeta] = []
+
+    struct StageMeta: Hashable, Sendable {
+        let age: String
+        let name: String
+        let activateAfterTrades: Int
+    }
 
     func scenarios(forTradeCount traded: Int) -> [GameScenario] {
-        scenarioRounds[min(traded, scenarioRounds.count - 1)]
+        guard !scenarioRounds.isEmpty else { return [] }
+        if stageMeta.isEmpty {
+            return scenarioRounds[min(traded, scenarioRounds.count - 1)]
+        }
+        let activeIndex = stageMeta.enumerated()
+            .filter { $0.element.activateAfterTrades <= traded }
+            .max { $0.element.activateAfterTrades < $1.element.activateAfterTrades }?
+            .offset ?? 0
+        return scenarioRounds[min(activeIndex, scenarioRounds.count - 1)]
+    }
+}
+
+// MARK: - Server catalog v1 contract
+
+struct CardGameCatalogEnvelope: Codable, Sendable {
+    let gameId: UUID
+    let gameKey: String
+    let versionId: UUID
+    let version: Int
+    let contentHash: String
+    let engineKey: String
+    let analysisKey: String
+    let catalog: CardGameCatalog
+
+    enum CodingKeys: String, CodingKey {
+        case version, catalog
+        case gameId = "game_id"
+        case gameKey = "game_key"
+        case versionId = "version_id"
+        case contentHash = "content_hash"
+        case engineKey = "engine_key"
+        case analysisKey = "analysis_key"
+    }
+}
+
+struct CardGameCatalog: Codable, Sendable {
+    struct Game: Codable, Sendable {
+        let key: String
+        let title: String
+        let eyebrow: String
+        let introTitle: String
+        let introCopy: String
+        let profileDimension: String?
+        let contentWarning: String?
+
+        enum CodingKeys: String, CodingKey {
+            case key, title, eyebrow
+            case introTitle = "intro_title"
+            case introCopy = "intro_copy"
+            case profileDimension = "profile_dimension"
+            case contentWarning = "content_warning"
+        }
+    }
+
+    struct Rules: Codable, Sendable {
+        struct Pressure: Codable, Sendable {
+            let initial: Int
+            let min: Int
+            let max: Int
+            let acceptDelta: Int
+            let tradeDelta: Int
+
+            enum CodingKeys: String, CodingKey {
+                case initial, min, max
+                case acceptDelta = "accept_delta"
+                case tradeDelta = "trade_delta"
+            }
+        }
+
+        let initialSelectCount: Int
+        let finalCardCount: Int
+        let discardPerTrade: Int
+        let scenarioChoiceCount: Int
+        let pressure: Pressure
+        let scenarioSelection: String
+        let stageBasis: String
+        let allowRedraw: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case pressure
+            case initialSelectCount = "initial_select_count"
+            case finalCardCount = "final_card_count"
+            case discardPerTrade = "discard_per_trade"
+            case scenarioChoiceCount = "scenario_choice_count"
+            case scenarioSelection = "scenario_selection"
+            case stageBasis = "stage_basis"
+            case allowRedraw = "allow_redraw"
+        }
+    }
+
+    struct Display: Codable, Sendable {
+        struct PressureLabel: Codable, Sendable {
+            let level: Int
+            let title: String
+            let description: String
+        }
+        struct RuleCopy: Codable, Sendable {
+            let title: String
+            let description: String
+        }
+
+        let accent: String
+        let glyph: String
+        let cardBackAsset: String
+        let pressureLabels: [PressureLabel]
+        let ruleCopy: [RuleCopy]
+
+        enum CodingKeys: String, CodingKey {
+            case accent, glyph
+            case cardBackAsset = "card_back_asset"
+            case pressureLabels = "pressure_labels"
+            case ruleCopy = "rule_copy"
+        }
+    }
+
+    struct Group: Codable, Sendable {
+        let key: String
+        let title: String
+        let aiDescription: String
+
+        enum CodingKeys: String, CodingKey {
+            case key, title
+            case aiDescription = "ai_description"
+        }
+    }
+
+    struct Card: Codable, Sendable {
+        let key: String
+        let title: String
+        let description: String
+        let glyph: String
+        let groupKey: String
+        let sortOrder: Int
+        let enabled: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case key, title, description, glyph, enabled
+            case groupKey = "group_key"
+            case sortOrder = "sort_order"
+        }
+    }
+
+    struct Stage: Codable, Sendable {
+        let key: String
+        let title: String
+        let subtitle: String
+        let activateAfterTrades: Int
+        let sortOrder: Int
+
+        enum CodingKeys: String, CodingKey {
+            case key, title, subtitle
+            case activateAfterTrades = "activate_after_trades"
+            case sortOrder = "sort_order"
+        }
+    }
+
+    struct Scenario: Codable, Sendable {
+        let key: String
+        let stageKey: String
+        let title: String
+        let description: String
+        let themeKey: String
+        let severity: Int
+        let sortOrder: Int
+        let enabled: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case key, title, description, severity, enabled
+            case stageKey = "stage_key"
+            case themeKey = "theme_key"
+            case sortOrder = "sort_order"
+        }
+    }
+
+    let schemaVersion: Int
+    let game: Game
+    let rules: Rules
+    let display: Display
+    let groups: [Group]
+    let cards: [Card]
+    let stages: [Stage]
+    let scenarios: [Scenario]
+
+    enum CodingKeys: String, CodingKey {
+        case game, rules, display, groups, cards, stages, scenarios
+        case schemaVersion = "schema_version"
+    }
+}
+
+struct CardGameManifestResponse: Codable, Sendable {
+    struct Item: Codable, Identifiable, Hashable, Sendable {
+        let gameKey: String
+        let title: String
+        let introCopy: String
+        let accent: String
+        let glyph: String
+        let version: Int
+        let contentHash: String
+        let sortOrder: Int
+
+        var id: String { gameKey }
+        var kind: CardGameKind? { CardGameKind(rawValue: gameKey) }
+
+        enum CodingKeys: String, CodingKey {
+            case title, accent, glyph, version
+            case gameKey = "game_key"
+            case introCopy = "intro_copy"
+            case contentHash = "content_hash"
+            case sortOrder = "sort_order"
+        }
+    }
+
+    let schemaVersion: Int
+    let games: [Item]
+
+    enum CodingKeys: String, CodingKey {
+        case games
+        case schemaVersion = "schema_version"
+    }
+}
+
+struct RemoteCardGameSession: Codable, Sendable {
+    struct State: Codable, Sendable {
+        let phase: String
+        let selectedCardKeys: [String]
+        let heldCardKeys: [String]
+        let seenScenarioKeys: [String]
+        let currentScenarioKey: String?
+        let roundCount: Int
+        let acceptCount: Int
+        let tradeCount: Int
+        let pressure: Int
+
+        enum CodingKeys: String, CodingKey {
+            case phase, pressure
+            case selectedCardKeys = "selected_card_keys"
+            case heldCardKeys = "held_card_keys"
+            case seenScenarioKeys = "seen_scenario_keys"
+            case currentScenarioKey = "current_scenario_key"
+            case roundCount = "round_count"
+            case acceptCount = "accept_count"
+            case tradeCount = "trade_count"
+        }
+    }
+
+    let id: UUID
+    let clientSessionId: UUID
+    let gameKey: String
+    let catalogVersion: Int
+    let status: String
+    let seed: UInt32
+    let stateVersion: Int
+    let lastActionSeq: Int
+    let state: State
+    let completedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, status, seed, state
+        case clientSessionId = "client_session_id"
+        case gameKey = "game_key"
+        case catalogVersion = "catalog_version"
+        case stateVersion = "state_version"
+        case lastActionSeq = "last_action_seq"
+        case completedAt = "completed_at"
+    }
+}
+
+struct CardGameSyncAction: Codable, Sendable {
+    let sequence: Int
+    let actionType: String
+    var scenarioKey: String?
+    var cardKeys: [String] = []
+    var reasonCannotAccept: String?
+    var reasonAbandon: String?
+    var createdAt: String = ISO8601DateFormatter().string(from: Date())
+
+    enum CodingKeys: String, CodingKey {
+        case sequence
+        case actionType = "action_type"
+        case scenarioKey = "scenario_key"
+        case cardKeys = "card_keys"
+        case reasonCannotAccept = "reason_cannot_accept"
+        case reasonAbandon = "reason_abandon"
+        case createdAt = "created_at"
+    }
+}
+
+extension CardGameConfig {
+    init(envelope: CardGameCatalogEnvelope) throws {
+        guard envelope.catalog.schemaVersion == 1,
+              envelope.engineKey == "trade_down_v1",
+              let kind = CardGameKind(rawValue: envelope.gameKey),
+              envelope.catalog.game.key == envelope.gameKey,
+              envelope.catalog.rules.initialSelectCount > envelope.catalog.rules.finalCardCount,
+              envelope.catalog.rules.discardPerTrade > 0,
+              (envelope.catalog.rules.initialSelectCount - envelope.catalog.rules.finalCardCount)
+                % envelope.catalog.rules.discardPerTrade == 0
+        else {
+            throw CocoaError(.coderInvalidValue)
+        }
+
+        let catalog = envelope.catalog
+        let groupByKey = Dictionary(uniqueKeysWithValues: catalog.groups.map { ($0.key, $0) })
+        let sortedStages = catalog.stages.sorted {
+            if $0.activateAfterTrades == $1.activateAfterTrades {
+                return $0.sortOrder < $1.sortOrder
+            }
+            return $0.activateAfterTrades < $1.activateAfterTrades
+        }
+        let cards = catalog.cards
+            .filter(\.enabled)
+            .sorted { $0.sortOrder < $1.sortOrder }
+            .map {
+                GameCard(
+                    id: $0.key,
+                    name: $0.title,
+                    glyph: $0.glyph,
+                    group: groupByKey[$0.groupKey]?.title ?? $0.groupKey,
+                    copy: $0.description
+                )
+            }
+        guard cards.count >= catalog.rules.initialSelectCount else {
+            throw CocoaError(.coderInvalidValue)
+        }
+
+        self.init(
+            kind: kind,
+            title: catalog.game.title,
+            eyebrow: catalog.game.eyebrow,
+            introTitle: catalog.game.introTitle,
+            introCopy: catalog.game.introCopy,
+            rules: catalog.display.ruleCopy.map { ($0.title, $0.description) },
+            selectTitle: "选择你想带走的底牌",
+            cardPrefix: kind.rawValue.uppercased(),
+            severityMeta: catalog.display.pressureLabels
+                .sorted { $0.level < $1.level }
+                .map { (name: $0.title, copy: $0.description) },
+            pressureLabel: "情境压力",
+            cards: cards,
+            scenarioRounds: sortedStages.map { stage in
+                catalog.scenarios
+                    .filter { $0.enabled && $0.stageKey == stage.key }
+                    .sorted { $0.sortOrder < $1.sortOrder }
+                    .map {
+                        GameScenario(
+                            key: $0.key,
+                            title: $0.title,
+                            copy: $0.description,
+                            theme: $0.themeKey,
+                            severity: $0.severity
+                        )
+                    }
+            },
+            groupCopy: Dictionary(
+                uniqueKeysWithValues: catalog.groups.map { ($0.title, $0.aiDescription) }
+            ),
+            accent: UInt32(catalog.display.accent.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16)
+                ?? 0x8F7BFF,
+            glyph: catalog.display.glyph,
+            contentWarning: catalog.game.contentWarning,
+            catalogVersion: envelope.version,
+            contentHash: envelope.contentHash,
+            engineKey: envelope.engineKey,
+            dynamicRules: catalog.rules,
+            stageMeta: sortedStages.map {
+                StageMeta(
+                    age: $0.subtitle,
+                    name: $0.title,
+                    activateAfterTrades: $0.activateAfterTrades
+                )
+            }
+        )
     }
 }
 
 enum CardGameData {
 
     static func config(_ kind: CardGameKind) -> CardGameConfig {
-        switch kind {
-        case .life: return life
-        case .marriage: return marriage
-        case .family: return family
-        case .social: return social
-        }
+        if kind == .life { return life }
+        if kind == .marriage { return marriage }
+        if kind == .family { return family }
+        if kind == .social { return social }
+        return placeholder(kind)
+    }
+
+    private static func placeholder(_ kind: CardGameKind) -> CardGameConfig {
+        CardGameConfig(
+            kind: kind,
+            title: "卡牌探索",
+            eyebrow: "CARD GAME",
+            introTitle: "正在加载最新牌库",
+            introCopy: "牌库由服务端管理，加载失败时请检查网络后重试。",
+            rules: [],
+            selectTitle: "选择底牌",
+            cardPrefix: kind.rawValue.uppercased(),
+            severityMeta: [(name: "加载中", copy: "")],
+            pressureLabel: "情境压力",
+            cards: [],
+            scenarioRounds: [[]],
+            groupCopy: [:],
+            accent: 0x8F7BFF,
+            glyph: "◇"
+        )
     }
 
     // MARK: 人生卡牌

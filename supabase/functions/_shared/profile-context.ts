@@ -7,6 +7,7 @@ import {
   profileFactsContext,
 } from "./profile-facts.ts";
 import { trackEvent } from "./track.ts";
+import { cardGameRunsContext } from "./card-game-context.ts";
 
 /**
  * 用请求用户的 RLS 客户端读取其本人画像。任一查询失败都 fail closed，
@@ -19,7 +20,7 @@ export async function loadProfileContext(
   userId: string,
   purpose: ProfileContextPurpose,
 ): Promise<ProfileContext> {
-  const [profileResult, factResult] = await Promise.all([
+  const [profileResult, factResult, cardRunResult] = await Promise.all([
     db.from("profiles")
       .select("profile_revision")
       .eq("id", userId)
@@ -33,6 +34,11 @@ export async function loadProfileContext(
       .order("user_confirmed", { ascending: false })
       .order("confidence", { ascending: false })
       .order("last_supported_at", { ascending: false }),
+    db.from("card_game_runs")
+      .select("ai_snapshot,completed_at")
+      .eq("user_id", userId)
+      .order("completed_at", { ascending: false })
+      .limit(20),
   ]);
 
   if (profileResult.error || factResult.error) {
@@ -58,7 +64,20 @@ export async function loadProfileContext(
     purpose,
     Number(profileResult.data?.profile_revision ?? 0),
   );
-  if (context.dimensions.length > 0) {
+  const cardContext = cardRunResult.error
+    ? { text: "", gameKeys: [] as string[] }
+    : cardGameRunsContext(cardRunResult.data ?? []);
+  if (cardRunResult.error) {
+    console.error(JSON.stringify({
+      level: "error",
+      event: "card_game_ai_context_load_failed",
+      purpose,
+      card_game_error: cardRunResult.error.code ?? null,
+    }));
+  } else if (cardContext.text) {
+    context.text = [context.text, cardContext.text].filter(Boolean).join("\n");
+  }
+  if (context.dimensions.length > 0 || cardContext.gameKeys.length > 0) {
     trackEvent(userId, ServerEvent.PROFILE_AI_CONTEXT_USED, {
       purpose,
       dimensions: context.dimensions.join(","),
@@ -71,6 +90,7 @@ export async function loadProfileContext(
       private_fact_count: context.facts.filter((fact) =>
         fact.visibility === "private"
       ).length,
+      card_game_count: cardContext.gameKeys.length,
     });
   }
   return context;

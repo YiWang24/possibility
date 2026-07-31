@@ -274,6 +274,174 @@ internal enum PublicSchema {
       case userId = "user_id"
     }
   }
+  internal struct CardGameActionsSelect: Codable, Hashable, Sendable, Identifiable {
+    internal let actionType: String
+    internal let cardKeys: [String]
+    internal let createdAt: String
+    internal let id: Int64
+    internal let pressureAfter: Int32?
+    internal let pressureBefore: Int32?
+    internal let reasonAbandon: String?
+    internal let reasonCannotAccept: String?
+    internal let scenarioKey: String?
+    internal let sequence: Int32
+    internal let sessionId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case actionType = "action_type"
+      case cardKeys = "card_keys"
+      case createdAt = "created_at"
+      case id = "id"
+      case pressureAfter = "pressure_after"
+      case pressureBefore = "pressure_before"
+      case reasonAbandon = "reason_abandon"
+      case reasonCannotAccept = "reason_cannot_accept"
+      case scenarioKey = "scenario_key"
+      case sequence = "sequence"
+      case sessionId = "session_id"
+    }
+  }
+  internal struct CardGameActionsInsert: Codable, Hashable, Sendable, Identifiable {
+    internal let actionType: String
+    internal let cardKeys: [String]?
+    internal let createdAt: String?
+    internal let id: Int64?
+    internal let pressureAfter: Int32?
+    internal let pressureBefore: Int32?
+    internal let reasonAbandon: String?
+    internal let reasonCannotAccept: String?
+    internal let scenarioKey: String?
+    internal let sequence: Int32
+    internal let sessionId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case actionType = "action_type"
+      case cardKeys = "card_keys"
+      case createdAt = "created_at"
+      case id = "id"
+      case pressureAfter = "pressure_after"
+      case pressureBefore = "pressure_before"
+      case reasonAbandon = "reason_abandon"
+      case reasonCannotAccept = "reason_cannot_accept"
+      case scenarioKey = "scenario_key"
+      case sequence = "sequence"
+      case sessionId = "session_id"
+    }
+  }
+  internal struct CardGameActionsUpdate: Codable, Hashable, Sendable, Identifiable {
+    internal let actionType: String?
+    internal let cardKeys: [String]?
+    internal let createdAt: String?
+    internal let id: Int64?
+    internal let pressureAfter: Int32?
+    internal let pressureBefore: Int32?
+    internal let reasonAbandon: String?
+    internal let reasonCannotAccept: String?
+    internal let scenarioKey: String?
+    internal let sequence: Int32?
+    internal let sessionId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case actionType = "action_type"
+      case cardKeys = "card_keys"
+      case createdAt = "created_at"
+      case id = "id"
+      case pressureAfter = "pressure_after"
+      case pressureBefore = "pressure_before"
+      case reasonAbandon = "reason_abandon"
+      case reasonCannotAccept = "reason_cannot_accept"
+      case scenarioKey = "scenario_key"
+      case sequence = "sequence"
+      case sessionId = "session_id"
+    }
+  }
+  internal struct CardGameCatalogVersionsSelect: Codable, Hashable, Sendable {
+    internal let analysisKey: String
+    internal let catalog: AnyJSON
+    internal let catalogSchemaVersion: Int16
+    internal let contentHash: String?
+    internal let createdAt: String
+    internal let createdBy: UUID?
+    internal let engineKey: String
+    internal let gameId: UUID
+    internal let id: UUID
+    internal let isCurrent: Bool
+    internal let publishedAt: String?
+    internal let status: String
+    internal let version: Int32
+    internal enum CodingKeys: String, CodingKey {
+      case analysisKey = "analysis_key"
+      case catalog = "catalog"
+      case catalogSchemaVersion = "catalog_schema_version"
+      case contentHash = "content_hash"
+      case createdAt = "created_at"
+      case createdBy = "created_by"
+      case engineKey = "engine_key"
+      case gameId = "game_id"
+      case id = "id"
+      case isCurrent = "is_current"
+      case publishedAt = "published_at"
+      case status = "status"
+      case version = "version"
+    }
+  }
+  internal struct CardGameCatalogVersionsInsert: Codable, Hashable, Sendable {
+    internal let analysisKey: String?
+    internal let catalog: AnyJSON
+    internal let catalogSchemaVersion: Int16?
+    internal let contentHash: String?
+    internal let createdAt: String?
+    internal let createdBy: UUID?
+    internal let engineKey: String?
+    internal let gameId: UUID
+    internal let id: UUID?
+    internal let isCurrent: Bool?
+    internal let publishedAt: String?
+    internal let status: String?
+    internal let version: Int32
+    internal enum CodingKeys: String, CodingKey {
+      case analysisKey = "analysis_key"
+      case catalog = "catalog"
+      case catalogSchemaVersion = "catalog_schema_version"
+      case contentHash = "content_hash"
+      case createdAt = "created_at"
+      case createdBy = "created_by"
+      case engineKey = "engine_key"
+      case gameId = "game_id"
+      case id = "id"
+      case isCurrent = "is_current"
+      case publishedAt = "published_at"
+      case status = "status"
+      case version = "version"
+    }
+  }
+  internal struct CardGameCatalogVersionsUpdate: Codable, Hashable, Sendable {
+    internal let analysisKey: String?
+    internal let catalog: AnyJSON?
+    internal let catalogSchemaVersion: Int16?
+    internal let contentHash: String?
+    internal let createdAt: String?
+    internal let createdBy: UUID?
+    internal let engineKey: String?
+    internal let gameId: UUID?
+    internal let id: UUID?
+    internal let isCurrent: Bool?
+    internal let publishedAt: String?
+    internal let status: String?
+    internal let version: Int32?
+    internal enum CodingKeys: String, CodingKey {
+      case analysisKey = "analysis_key"
+      case catalog = "catalog"
+      case catalogSchemaVersion = "catalog_schema_version"
+      case contentHash = "content_hash"
+      case createdAt = "created_at"
+      case createdBy = "created_by"
+      case engineKey = "engine_key"
+      case gameId = "game_id"
+      case id = "id"
+      case isCurrent = "is_current"
+      case publishedAt = "published_at"
+      case status = "status"
+      case version = "version"
+    }
+  }
   internal struct CardGameResultsSelect: Codable, Hashable, Sendable {
     internal let accepted: AnyJSON
     internal let createdAt: String
@@ -332,6 +500,288 @@ internal enum PublicSchema {
       case rounds = "rounds"
       case traded = "traded"
       case userId = "user_id"
+    }
+  }
+  internal struct CardGameRunsSelect: Codable, Hashable, Sendable {
+    internal let aiSnapshot: AnyJSON
+    internal let analysisKey: String
+    internal let analysisSchemaVersion: Int16
+    internal let completedAt: String
+    internal let discardedCardKeys: [String]
+    internal let displaySnapshot: AnyJSON
+    internal let finalCardKeys: [String]
+    internal let gameId: UUID
+    internal let gameVersionId: UUID
+    internal let id: UUID
+    internal let initialCardKeys: [String]
+    internal let metrics: AnyJSON
+    internal let sessionId: UUID
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case aiSnapshot = "ai_snapshot"
+      case analysisKey = "analysis_key"
+      case analysisSchemaVersion = "analysis_schema_version"
+      case completedAt = "completed_at"
+      case discardedCardKeys = "discarded_card_keys"
+      case displaySnapshot = "display_snapshot"
+      case finalCardKeys = "final_card_keys"
+      case gameId = "game_id"
+      case gameVersionId = "game_version_id"
+      case id = "id"
+      case initialCardKeys = "initial_card_keys"
+      case metrics = "metrics"
+      case sessionId = "session_id"
+      case userId = "user_id"
+    }
+  }
+  internal struct CardGameRunsInsert: Codable, Hashable, Sendable {
+    internal let aiSnapshot: AnyJSON
+    internal let analysisKey: String
+    internal let analysisSchemaVersion: Int16
+    internal let completedAt: String?
+    internal let discardedCardKeys: [String]
+    internal let displaySnapshot: AnyJSON
+    internal let finalCardKeys: [String]
+    internal let gameId: UUID
+    internal let gameVersionId: UUID
+    internal let id: UUID?
+    internal let initialCardKeys: [String]
+    internal let metrics: AnyJSON
+    internal let sessionId: UUID
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case aiSnapshot = "ai_snapshot"
+      case analysisKey = "analysis_key"
+      case analysisSchemaVersion = "analysis_schema_version"
+      case completedAt = "completed_at"
+      case discardedCardKeys = "discarded_card_keys"
+      case displaySnapshot = "display_snapshot"
+      case finalCardKeys = "final_card_keys"
+      case gameId = "game_id"
+      case gameVersionId = "game_version_id"
+      case id = "id"
+      case initialCardKeys = "initial_card_keys"
+      case metrics = "metrics"
+      case sessionId = "session_id"
+      case userId = "user_id"
+    }
+  }
+  internal struct CardGameRunsUpdate: Codable, Hashable, Sendable {
+    internal let aiSnapshot: AnyJSON?
+    internal let analysisKey: String?
+    internal let analysisSchemaVersion: Int16?
+    internal let completedAt: String?
+    internal let discardedCardKeys: [String]?
+    internal let displaySnapshot: AnyJSON?
+    internal let finalCardKeys: [String]?
+    internal let gameId: UUID?
+    internal let gameVersionId: UUID?
+    internal let id: UUID?
+    internal let initialCardKeys: [String]?
+    internal let metrics: AnyJSON?
+    internal let sessionId: UUID?
+    internal let userId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case aiSnapshot = "ai_snapshot"
+      case analysisKey = "analysis_key"
+      case analysisSchemaVersion = "analysis_schema_version"
+      case completedAt = "completed_at"
+      case discardedCardKeys = "discarded_card_keys"
+      case displaySnapshot = "display_snapshot"
+      case finalCardKeys = "final_card_keys"
+      case gameId = "game_id"
+      case gameVersionId = "game_version_id"
+      case id = "id"
+      case initialCardKeys = "initial_card_keys"
+      case metrics = "metrics"
+      case sessionId = "session_id"
+      case userId = "user_id"
+    }
+  }
+  internal struct CardGameSessionsSelect: Codable, Hashable, Sendable {
+    internal let acceptCount: Int32
+    internal let clientSessionId: UUID
+    internal let completedAt: String?
+    internal let currentScenarioKey: String?
+    internal let gameId: UUID
+    internal let gameVersionId: UUID
+    internal let heldCardKeys: [String]
+    internal let id: UUID
+    internal let lastActionSeq: Int32
+    internal let phase: String
+    internal let pressure: Int32
+    internal let roundCount: Int32
+    internal let seed: Int64
+    internal let seenScenarioKeys: [String]
+    internal let selectedCardKeys: [String]
+    internal let startedAt: String
+    internal let stateVersion: Int32
+    internal let status: String
+    internal let tradeCount: Int32
+    internal let updatedAt: String
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case acceptCount = "accept_count"
+      case clientSessionId = "client_session_id"
+      case completedAt = "completed_at"
+      case currentScenarioKey = "current_scenario_key"
+      case gameId = "game_id"
+      case gameVersionId = "game_version_id"
+      case heldCardKeys = "held_card_keys"
+      case id = "id"
+      case lastActionSeq = "last_action_seq"
+      case phase = "phase"
+      case pressure = "pressure"
+      case roundCount = "round_count"
+      case seed = "seed"
+      case seenScenarioKeys = "seen_scenario_keys"
+      case selectedCardKeys = "selected_card_keys"
+      case startedAt = "started_at"
+      case stateVersion = "state_version"
+      case status = "status"
+      case tradeCount = "trade_count"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct CardGameSessionsInsert: Codable, Hashable, Sendable {
+    internal let acceptCount: Int32?
+    internal let clientSessionId: UUID
+    internal let completedAt: String?
+    internal let currentScenarioKey: String?
+    internal let gameId: UUID
+    internal let gameVersionId: UUID
+    internal let heldCardKeys: [String]?
+    internal let id: UUID
+    internal let lastActionSeq: Int32?
+    internal let phase: String?
+    internal let pressure: Int32?
+    internal let roundCount: Int32?
+    internal let seed: Int64
+    internal let seenScenarioKeys: [String]?
+    internal let selectedCardKeys: [String]?
+    internal let startedAt: String?
+    internal let stateVersion: Int32?
+    internal let status: String?
+    internal let tradeCount: Int32?
+    internal let updatedAt: String?
+    internal let userId: UUID
+    internal enum CodingKeys: String, CodingKey {
+      case acceptCount = "accept_count"
+      case clientSessionId = "client_session_id"
+      case completedAt = "completed_at"
+      case currentScenarioKey = "current_scenario_key"
+      case gameId = "game_id"
+      case gameVersionId = "game_version_id"
+      case heldCardKeys = "held_card_keys"
+      case id = "id"
+      case lastActionSeq = "last_action_seq"
+      case phase = "phase"
+      case pressure = "pressure"
+      case roundCount = "round_count"
+      case seed = "seed"
+      case seenScenarioKeys = "seen_scenario_keys"
+      case selectedCardKeys = "selected_card_keys"
+      case startedAt = "started_at"
+      case stateVersion = "state_version"
+      case status = "status"
+      case tradeCount = "trade_count"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct CardGameSessionsUpdate: Codable, Hashable, Sendable {
+    internal let acceptCount: Int32?
+    internal let clientSessionId: UUID?
+    internal let completedAt: String?
+    internal let currentScenarioKey: String?
+    internal let gameId: UUID?
+    internal let gameVersionId: UUID?
+    internal let heldCardKeys: [String]?
+    internal let id: UUID?
+    internal let lastActionSeq: Int32?
+    internal let phase: String?
+    internal let pressure: Int32?
+    internal let roundCount: Int32?
+    internal let seed: Int64?
+    internal let seenScenarioKeys: [String]?
+    internal let selectedCardKeys: [String]?
+    internal let startedAt: String?
+    internal let stateVersion: Int32?
+    internal let status: String?
+    internal let tradeCount: Int32?
+    internal let updatedAt: String?
+    internal let userId: UUID?
+    internal enum CodingKeys: String, CodingKey {
+      case acceptCount = "accept_count"
+      case clientSessionId = "client_session_id"
+      case completedAt = "completed_at"
+      case currentScenarioKey = "current_scenario_key"
+      case gameId = "game_id"
+      case gameVersionId = "game_version_id"
+      case heldCardKeys = "held_card_keys"
+      case id = "id"
+      case lastActionSeq = "last_action_seq"
+      case phase = "phase"
+      case pressure = "pressure"
+      case roundCount = "round_count"
+      case seed = "seed"
+      case seenScenarioKeys = "seen_scenario_keys"
+      case selectedCardKeys = "selected_card_keys"
+      case startedAt = "started_at"
+      case stateVersion = "state_version"
+      case status = "status"
+      case tradeCount = "trade_count"
+      case updatedAt = "updated_at"
+      case userId = "user_id"
+    }
+  }
+  internal struct CardGamesSelect: Codable, Hashable, Sendable {
+    internal let createdAt: String
+    internal let gameKey: String
+    internal let id: UUID
+    internal let sortOrder: Int32
+    internal let status: String
+    internal let updatedAt: String
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case gameKey = "game_key"
+      case id = "id"
+      case sortOrder = "sort_order"
+      case status = "status"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct CardGamesInsert: Codable, Hashable, Sendable {
+    internal let createdAt: String?
+    internal let gameKey: String
+    internal let id: UUID?
+    internal let sortOrder: Int32?
+    internal let status: String?
+    internal let updatedAt: String?
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case gameKey = "game_key"
+      case id = "id"
+      case sortOrder = "sort_order"
+      case status = "status"
+      case updatedAt = "updated_at"
+    }
+  }
+  internal struct CardGamesUpdate: Codable, Hashable, Sendable {
+    internal let createdAt: String?
+    internal let gameKey: String?
+    internal let id: UUID?
+    internal let sortOrder: Int32?
+    internal let status: String?
+    internal let updatedAt: String?
+    internal enum CodingKeys: String, CodingKey {
+      case createdAt = "created_at"
+      case gameKey = "game_key"
+      case id = "id"
+      case sortOrder = "sort_order"
+      case status = "status"
+      case updatedAt = "updated_at"
     }
   }
   internal struct ConversationsSelect: Codable, Hashable, Sendable {

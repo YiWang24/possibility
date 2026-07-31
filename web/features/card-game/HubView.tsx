@@ -4,33 +4,77 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { type CardGameKind, cardGameConfig } from "./data";
-import { CardGameLocalRecord } from "./engine";
+import {
+  type CardGameManifestItem,
+  loadCardGameManifest,
+} from "./catalog";
+import {
+  CARD_GAME_KINDS,
+  type CardGameKind,
+  cardGameConfig,
+} from "./data";
+import {
+  CardGameLocalRecord,
+  defaultStorage,
+  userScopedCardGameStorage,
+} from "./engine";
 import { BackButton, withAlpha } from "./ui";
 import { hue } from "@/lib/theme";
+import { supabase } from "@/lib/supabase";
 
 export function HubView() {
   const router = useRouter();
   /** 已完成 / 进行中的卡牌局（本地标记），驱动角标 */
   const [completedKinds, setCompletedKinds] = useState<Set<CardGameKind>>(new Set());
   const [progressKinds, setProgressKinds] = useState<Set<CardGameKind>>(new Set());
+  const [games, setGames] = useState<CardGameManifestItem[]>([]);
 
-  const refresh = useCallback(() => {
-    setCompletedKinds(CardGameLocalRecord.doneKinds());
-    setProgressKinds(CardGameLocalRecord.progressKinds());
+  const refresh = useCallback(async () => {
+    const remote = await loadCardGameManifest();
+    const available = remote.length > 0
+      ? remote
+      : CARD_GAME_KINDS.map((kind, index) => {
+        const config = cardGameConfig(kind);
+        return {
+          game_key: kind,
+          title: config.title,
+          intro_copy: config.introCopy,
+          accent: config.accent,
+          glyph: config.glyph,
+          version: 1,
+          content_hash: "fallback",
+          sort_order: (index + 1) * 10,
+        };
+      });
+    setGames(available);
+    let store = defaultStorage();
+    try {
+      const { data } = await supabase().auth.getSession();
+      if (data.session?.user.id) {
+        store = userScopedCardGameStorage(data.session.user.id, store);
+      }
+    } catch {
+      // Status badges may temporarily use the legacy local cache.
+    }
+    const kinds = available.map((game) => game.game_key);
+    setCompletedKinds(CardGameLocalRecord.doneKinds(store, kinds));
+    setProgressKinds(CardGameLocalRecord.progressKinds(store, kinds));
   }, []);
 
   useEffect(() => {
-    refresh();
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
+    void refresh();
+    const refreshOnFocus = () => void refresh();
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshOnFocus);
     return () => {
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshOnFocus);
     };
   }, [refresh]);
 
   const launch = (kind: CardGameKind) => router.push(`/card-game/${kind}`);
+  const life = games.find((game) => game.game_key === "life");
+  const secondaryGames = games.filter((game) => game.game_key !== "life");
 
   /** 完成、进行中或本地已完成但云端待同步的角标 */
   const statusBadge = (kind: CardGameKind) => {
@@ -78,7 +122,7 @@ export function HubView() {
           }}
         >
           <p className="text-[12px] leading-[1.8] text-sub">
-            每套卡牌都会让你在有限的底牌里做选择。留下的三张，会成为画像的一部分。
+            每套卡牌都会让你在有限的底牌里做选择。最终留下的牌，会成为画像的一部分。
           </p>
         </motion.div>
 
@@ -87,7 +131,8 @@ export function HubView() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.05 }}
-          onClick={() => launch("life")}
+          onClick={() => life && launch(life.game_key)}
+          disabled={!life}
           className="relative overflow-hidden rounded-[18px] p-4 text-left transition active:scale-[0.98]"
           style={{
             background:
@@ -113,10 +158,10 @@ export function HubView() {
                   LIFE CARDS · 5–8 分钟
                 </div>
                 <div className="mt-1 text-[15.5px] font-bold text-ink">
-                  人生卡牌：你最后会留下什么？
+                  {life?.title ?? "正在加载人生卡牌…"}
                 </div>
                 <div className="mt-0.5 text-[11px] text-sub">
-                  从 18 张底牌带走 9 张，在命运加码中留下最后 3 张
+                  {life?.intro_copy ?? "正在读取最新牌库"}
                 </div>
               </div>
               {statusBadge("life")}
@@ -142,16 +187,10 @@ export function HubView() {
           </div>
         </motion.button>
 
-        <div className="pt-1 text-[11px] tracking-[1px] text-faint">关系专题 · 各约 3 分钟</div>
+        <div className="pt-1 text-[11px] tracking-[1px] text-faint">更多专题</div>
 
-        {(
-          [
-            ["marriage", "婚姻中，你最后会守住什么？"],
-            ["family", "家庭里，你最想守住的三点"],
-            ["social", "人际交往中，你的真实优先级"],
-          ] as [CardGameKind, string][]
-        ).map(([kind, sub], i) => {
-          const cfg = cardGameConfig(kind);
+        {secondaryGames.map((game, i) => {
+          const kind = game.game_key;
           return (
             <motion.button
               key={kind}
@@ -160,17 +199,26 @@ export function HubView() {
               transition={{ duration: 0.35, delay: 0.1 + i * 0.05 }}
               onClick={() => launch(kind)}
               className="flex items-center gap-[13px] rounded-[16px] bg-card px-[15px] py-[14px] text-left transition active:scale-[0.98]"
-              style={{ border: `1px solid ${withAlpha(cfg.accent, 0.24)}` }}
+              style={{
+                border: `1px solid ${withAlpha(game.accent, 0.24)}`,
+              }}
             >
               <span
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] text-[17px]"
-                style={{ color: cfg.accent, background: withAlpha(cfg.accent, 0.13) }}
+                style={{
+                  color: game.accent,
+                  background: withAlpha(game.accent, 0.13),
+                }}
               >
-                {cfg.glyph}
+                {game.glyph}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-semibold text-ink">{cfg.title}</div>
-                <div className="mt-[3px] text-[11px] text-sub">{sub}</div>
+                <div className="text-[14px] font-semibold text-ink">
+                  {game.title}
+                </div>
+                <div className="mt-[3px] line-clamp-2 text-[11px] text-sub">
+                  {game.intro_copy}
+                </div>
               </div>
               {statusBadge(kind)}
               <span className="text-[15px] text-faint">›</span>
