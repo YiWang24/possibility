@@ -10,6 +10,10 @@ on:
       - '.github/workflows/web.yml'
   workflow_dispatch:
 
+# 纯检查工作流：GITHUB_TOKEN 只需要读仓库，不给默认的可写权限
+permissions:
+  contents: read
+
 jobs:
   web-check:
     name: 类型 / 设计 token 护栏 / 构建
