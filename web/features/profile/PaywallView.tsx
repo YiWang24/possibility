@@ -7,6 +7,7 @@
    成功后 toast + 展示成功态；解锁档回调 onUnlocked 刷新主页解锁态。 */
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { useAuthGate } from "@/components/auth/AuthGate";
 import { useData } from "@/stores/data";
@@ -136,7 +137,7 @@ export function PaywallView({
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-1">
                 <h2 className="text-[18px] font-semibold text-ink">解锁 TA 的完整经验</h2>
-                <span className="text-[11.5px] text-sub">选择一档权益，继续你的转型准备</span>
+                <span className="text-caption text-sub">选择一档权益，继续你的转型准备</span>
               </div>
               <button
                 aria-label="关闭"
@@ -159,7 +160,7 @@ export function PaywallView({
               ))}
             </div>
 
-            <p className="mt-3.5 text-[11px] leading-[1.6] text-faint">{PAY_NOTE}</p>
+            <p className="mt-3.5 text-caption leading-[1.6] text-faint">{PAY_NOTE}</p>
           </>
         )}
       </motion.div>
@@ -180,34 +181,30 @@ function TierCard({
 }) {
   return (
     <div
-      className="flex flex-col gap-3 rounded-[22px] border p-[18px]"
+      className="flex flex-col gap-3 rounded-card border p-[18px]"
       style={{ background: tier.bg, borderColor: tier.border }}
     >
       <div className="flex items-end justify-between gap-2">
         <div className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-2 text-[10px] tracking-[2px] text-[#9DBCFF]">
+          <span className="flex items-center gap-2 text-micro tracking-[2px] text-brand-lite">
             {tier.eyebrow}
             {tier.featured && (
-              <span className="rounded-chip bg-[#5E96FF]/15 px-2 py-0.5 text-[9px] tracking-normal text-brand">
+              <span className="rounded-chip bg-brand/15 px-2 py-0.5 text-micro tracking-normal text-brand">
                 最超值
               </span>
             )}
           </span>
-          <span className="text-[15px] font-semibold text-ink">{tier.title}</span>
+          <span className="text-lead font-semibold text-ink">{tier.title}</span>
         </div>
         <span className="shrink-0 text-white">
           <span className="text-[22px] font-bold">¥{tier.price}</span>
-          <span className="text-[11px] text-sub"> / {tier.unit}</span>
+          <span className="text-caption text-sub"> / {tier.unit}</span>
         </span>
       </div>
-      <p className="text-[12px] leading-[1.6] text-sub">{tier.desc}</p>
-      <button
-        onClick={onPay}
-        disabled={disabled}
-        className="mt-1 w-full rounded-chip bg-btn-g py-[13px] text-[13.5px] font-semibold text-white transition active:scale-[0.97] disabled:opacity-50"
-      >
+      <p className="text-footnote leading-[1.6] text-sub">{tier.desc}</p>
+      <Button size="lg" className="mt-1 w-full" onClick={onPay} disabled={disabled}>
         {processing ? "处理中…" : tier.cta}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -220,17 +217,14 @@ function SuccessView({ tier, onClose }: { tier: Tier; onClose: () => void }) {
       : "TA 会尽快与你确认，可在消息中追问具体细节。";
   return (
     <div className="flex flex-col items-center pt-5 text-center">
-      <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-[#3ED9A4]/14 text-[28px] font-bold text-teal">
+      <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-teal/14 text-[28px] font-bold text-teal">
         ✓
       </span>
       <h2 className="mt-4 text-[18px] font-semibold text-ink">{title}</h2>
-      <p className="mt-2 text-[12px] leading-[1.6] text-sub">{sub}</p>
-      <button
-        onClick={onClose}
-        className="mt-6 w-full rounded-chip bg-btn-g py-[15px] text-[15px] font-semibold text-white transition active:scale-[0.97]"
-      >
+      <p className="mt-2 text-footnote leading-[1.6] text-sub">{sub}</p>
+      <Button size="lg" className="mt-6 w-full" onClick={onClose}>
         好的
-      </button>
+      </Button>
     </div>
   );
 }

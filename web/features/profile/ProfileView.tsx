@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { BackButton } from "@/features/card-game/ui";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { OrbView } from "@/components/ui/OrbView";
 import { useToast } from "@/components/ui/Toast";
@@ -74,13 +76,10 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
   if (!traveler) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center md:min-h-[calc(100dvh-74px)]">
-        <p className="text-[14px] text-sub">没有找到这位旅人。</p>
-        <button
-          onClick={() => router.back()}
-          className="rounded-chip border border-line bg-raised px-5 py-2.5 text-[13px] text-ink"
-        >
+        <p className="text-callout text-sub">没有找到这位旅人。</p>
+        <Button variant="tonal" onClick={() => router.back()}>
           返回
-        </button>
+        </Button>
       </div>
     );
   }
@@ -92,10 +91,10 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
         <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
           <BackButton onClick={() => router.back()} />
           <div className="min-w-0 flex-1">
-            <div className="truncate text-[16px] font-semibold tracking-[0.5px] text-ink">
+            <div className="truncate text-subtitle font-semibold tracking-[0.5px] text-ink">
               {traveler.name}
             </div>
-            <div className="text-[11px] text-faint">真实经历 · 已验证</div>
+            <div className="text-caption text-faint">真实经历 · 已验证</div>
           </div>
           <button
             aria-label="更多"
@@ -136,12 +135,10 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <h1 className="text-[21px] font-bold tracking-[0.5px] text-ink">{traveler.name}</h1>
-                    <span className="rounded-chip border border-[#5E96FF]/26 bg-[#5E96FF]/13 px-[7px] py-[3px] text-[10px] text-[#AFC8FF]">
-                      经历已验证
-                    </span>
+                    <Badge size="sm">经历已验证</Badge>
                   </div>
                   {detail && (
-                    <span className="text-[12px] text-sub">
+                    <span className="text-footnote text-sub">
                       {[detail.age ? `${detail.age} 岁` : null, detail.city].filter(Boolean).join(" · ")}
                     </span>
                   )}
@@ -149,14 +146,14 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
               </div>
 
               {detail && (detail.from_role || detail.to_role) && (
-                <div className="mt-[18px] text-[15px] font-semibold text-ink">
+                <div className="mt-[18px] text-lead font-semibold text-ink">
                   {detail.from_role}
                   <span className="text-brand"> → </span>
                   {detail.to_role}
                 </div>
               )}
               {detail && (detail.years || detail.result) && (
-                <div className="mt-[7px] text-[12px] text-sub">
+                <div className="mt-[7px] text-footnote text-sub">
                   {[detail.years, detail.result].filter(Boolean).join(" · ")}
                 </div>
               )}
@@ -164,12 +161,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
               {traveler.tags.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-[7px]">
                   {traveler.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-chip border border-[#5E96FF]/20 bg-[#5E96FF]/11 px-2.5 py-1.5 text-[11px] text-[#C6D7FF]"
-                    >
-                      {tag}
-                    </span>
+                    <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>
               )}
@@ -189,7 +181,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
                     className="relative flex-1 pb-2.5 pt-[15px] text-center"
                   >
                     <span
-                      className={`text-[11.5px] ${active ? "font-semibold text-ink" : "text-faint"}`}
+                      className={`text-caption ${active ? "font-semibold text-ink" : "text-faint"}`}
                     >
                       {t.label}
                     </span>
@@ -230,13 +222,10 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           {/* 底部咨询付费栏 */}
           <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
             <div className="mx-auto w-full max-w-measure px-4 py-3">
-              <button
-                onClick={() => setShowPaywall(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-btn-g py-[15px] text-[13px] font-semibold text-white shadow-[0_8px_14px_rgba(79,125,255,0.55)] transition active:scale-[0.97]"
-              >
+              <Button size="lg" className="w-full" onClick={() => setShowPaywall(true)}>
                 向 TA 咨询
-                <span className="text-[15px] font-bold">¥{consultPrice}</span>
-              </button>
+                <span className="text-lead font-bold">¥{consultPrice}</span>
+              </Button>
             </div>
           </div>
         </>
