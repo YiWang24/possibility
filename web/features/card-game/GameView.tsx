@@ -17,7 +17,8 @@ import {
 } from "./engine";
 import { FanArc } from "./FanArc";
 import { LifeResult, RelationResult } from "./ResultViews";
-import { BackButton, Foot, PRESSURE_COLORS, withAlpha } from "./ui";
+import { Foot, PRESSURE_COLORS, withAlpha } from "./ui";
+import { FocusShell } from "@/components/shell/FocusShell";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 
@@ -260,30 +261,16 @@ function GameBody({
   };
 
   return (
-    <div className="flex min-h-dvh flex-col screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
-      {/* 顶栏 */}
-      <div className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
-          <BackButton onClick={back} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[15.5px] font-bold text-ink">{topInfo.title}</div>
-            <div className="truncate text-[10.5px] text-faint">{topInfo.sub}</div>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-[5px]">
-            <div className="h-1 w-[70px] overflow-hidden rounded-chip bg-raised">
-              <div
-                className="h-full rounded-chip transition-all duration-300"
-                style={{
-                  width: `${engine.progress() * 100}%`,
-                  background: `linear-gradient(90deg, ${accent}, ${withAlpha(accent, 0.6)})`,
-                }}
-              />
-            </div>
-            <div className="text-[10px] tabular-nums text-faint">{topInfo.progressText}</div>
-          </div>
-        </div>
-      </div>
-
+    /* 专注模式：一局卡牌有明确的开始与结束，中途顶着一条全站导航既削弱专注，
+       也正是「第二 navbar」的来源。全站导航由 AppShell 依 isFocusRoute 收起。 */
+    <FocusShell
+      title={topInfo.title}
+      subtitle={topInfo.sub}
+      onExit={back}
+      exitLabel="退出这局"
+      progress={engine.progress()}
+      progressLabel={topInfo.progressText}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={`${phase}:${engine.round}`}
@@ -366,7 +353,7 @@ function GameBody({
           )}
         </motion.div>
       </AnimatePresence>
-    </div>
+    </FocusShell>
   );
 }
 

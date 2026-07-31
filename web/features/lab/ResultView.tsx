@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { FocusShell } from "@/components/shell/FocusShell";
 import { HueBandHeader } from "@/components/ui/Avatar";
 import { TagPill, PrimaryButton, SectionHeader } from "@/components/ui/Basics";
 import { mockAvatarById } from "@/lib/theme";
@@ -54,27 +55,17 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
   const active = specs[tab];
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]">
-      {/* 顶栏 */}
-      <div className="sticky top-0 z-10 border-b border-line bg-paper/70 backdrop-blur-md md:top-[var(--nav-h)]">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-[22px] py-3">
-          <button
-            onClick={onBack}
-            aria-label="返回"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-raised text-ink transition active:scale-95"
-          >
-            ‹
-          </button>
-          <div className="min-w-0">
-            <div className="text-[16px] font-semibold tracking-[0.8px] text-ink">推演结果</div>
-            <div className="truncate text-[11px] text-faint">
-              {data.choice} · {data.horizonLabel}后
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto w-full max-w-measure px-5 pt-4 pb-10">
+    /* 推演结果是 /lab 内的阶段态而非独立路由，AppShell 的 isFocusRoute 判定
+       不到它，所以显式用 overlay 铺成全屏浮层。它同样是一个「模式」：
+       看完结果要么重新选择、要么离开，不该顶着一条返回横条。 */
+    <FocusShell
+      overlay
+      title="推演结果"
+      subtitle={`${data.choice} · ${data.horizonLabel}后`}
+      onExit={onBack}
+      exitLabel="返回实验室"
+    >
+      <div className="shell-gutter mx-auto w-full max-w-shell pb-10 pt-4">
         {/* 头部说明 + 分段控件 */}
         <p className="text-[12px] leading-[1.7] text-sub">
           「<span className="font-bold text-ink">{data.question}</span>
@@ -137,7 +128,7 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
           <PrimaryButton title="重新选择" wide onClick={onBack} />
         </div>
       </div>
-    </div>
+    </FocusShell>
   );
 }
 

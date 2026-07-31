@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/shell/PageShell";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { PersonaRail } from "@/features/home/PersonaRail";
-import { BackButton } from "@/features/card-game/ui";
 import { useToast } from "@/components/ui/Toast";
 import {
   deleteDiaryEntry,
@@ -315,19 +315,19 @@ export function DiaryDetail() {
           <PersonaRail caption="你每天留下的声音会汇进这里 —— 日记是画像最诚实的原料。" />
         }
         header={
-          <div className="flex items-center gap-[13px]">
-            <BackButton onClick={() => router.back()} />
-            <div className="min-w-0 flex-1">
-              <div className="text-[16px] font-semibold tracking-[0.8px] text-ink xl:text-[19px]">语音日记</div>
-              <div className="text-[11px] text-faint">听见每天的自己，也看见长期变化</div>
-            </div>
-            <button
-              onClick={() => void downloadExport()}
-              className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-[10.5px] text-sub"
-            >
-              导出
-            </button>
-          </div>
+          <PageHeading
+            eyebrow="VOICE DIARY"
+            title="语音日记"
+            description="听见每天的自己，也看见长期变化"
+            trailing={
+              <button
+                onClick={() => void downloadExport()}
+                className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-[11px] text-sub transition hover:border-white/25 hover:text-ink"
+              >
+                导出
+              </button>
+            }
+          />
         }
       >
         <div className="w-full">

@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { PageShell } from "@/components/shell/PageShell";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { PersonaRail } from "@/features/home/PersonaRail";
 import type { RemoteConversation } from "@/lib/models";
 import { ChatModel, type ChatEntryPoint } from "./store";
@@ -19,7 +20,7 @@ import { ChatNextPanel } from "./NextPanel";
 import { InputBar } from "./InputBar";
 import { ChatSummaryView } from "./SummaryPanel";
 import { ChatHistorySheet } from "./HistorySheet";
-import { BackButton, HistoryButton } from "./ChatChrome";
+import { HistoryButton } from "./ChatChrome";
 
 /** 订阅 ChatModel（Observable 语义 → useSyncExternalStore） */
 function useChatModel(model: ChatModel): number {
@@ -116,19 +117,15 @@ export function ChatView({
           />
         }
         header={
-          <div className="flex items-center gap-3">
-            <BackButton onClick={() => router.back()} />
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[16px] font-semibold tracking-[0.8px] text-ink xl:text-[19px]">
-                {model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
-              </span>
-              <span className="text-[11px] text-faint">和你的动态画像一起想清楚</span>
-            </div>
-            <div className="flex-1" />
-            {model.historyEntries.length > 0 ? (
-              <HistoryButton onClick={() => model.setShowHistory(true)} />
-            ) : null}
-          </div>
+          <PageHeading
+            title={model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
+            description="和你的动态画像一起想清楚"
+            trailing={
+              model.historyEntries.length > 0 ? (
+                <HistoryButton onClick={() => model.setShowHistory(true)} />
+              ) : null
+            }
+          />
         }
       >
         {/* 消息流走文档流，滚动条是页面的那一条。

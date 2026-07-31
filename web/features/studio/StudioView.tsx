@@ -5,7 +5,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/shell/PageShell";
-import { BackButton } from "@/features/card-game/ui";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { SectionHeader } from "@/components/ui/Basics";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import { useHome } from "@/features/home/store";
@@ -52,13 +52,11 @@ export function StudioView() {
       {/* 页头不再是第二条 sticky 栏 —— 全站已有顶栏，再钉一条只会和它抢层级 */}
       <PageShell
         header={
-          <div className="flex items-center gap-[13px]">
-            <BackButton onClick={() => router.back()} />
-            <div className="min-w-0 flex-1">
-              <div className="text-[16px] font-semibold tracking-[0.8px] text-ink xl:text-[19px]">画像工坊</div>
-              <div className="text-[11px] text-faint">用测评与关键词，持续雕刻更立体的自己</div>
-            </div>
-          </div>
+          <PageHeading
+            eyebrow="PORTRAIT STUDIO"
+            title="画像工坊"
+            description="用测评与关键词，持续雕刻更立体的自己"
+          />
         }
       >
         <div className="flex w-full flex-col gap-6">

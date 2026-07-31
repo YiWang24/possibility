@@ -8,35 +8,16 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { isActiveSection, isFocusRoute, PRIMARY_ROUTES, TABS } from "@/lib/nav";
 import { TabIcon } from "./TabIcon";
-
-const TABS = [
-  { key: "home", href: "/", label: "认识你自己" },
-  { key: "lab", href: "/lab", label: "人生实验室" },
-  { key: "community", href: "/community", label: "万花筒社区" },
-  { key: "me", href: "/me", label: "我的主页" },
-];
-
-const PRIMARY_ROUTES = new Set(TABS.map((tab) => tab.href));
-
-const SECTION_ROUTES: Record<string, string[]> = {
-  home: ["/", "/chat", "/diary", "/assessment", "/card-game", "/studio"],
-  lab: ["/lab"],
-  community: ["/community", "/bounty", "/traveler"],
-  me: ["/me"],
-};
-
-function matchesRoute(pathname: string, route: string) {
-  return route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
-}
-
-function isActive(pathname: string, key: string) {
-  return SECTION_ROUTES[key]?.some((route) => matchesRoute(pathname, route)) ?? false;
-}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const showMobileNav = PRIMARY_ROUTES.has(pathname);
+  /* 任务流（测评、卡牌局中）收起全站导航：它是一个模式而不是一个页面，
+     顶着导航既削弱专注，也正是「第二 navbar」观感的来源。 */
+  const focus = isFocusRoute(pathname);
+  const showMobileNav = !focus && PRIMARY_ROUTES.has(pathname);
+  const isActive = isActiveSection;
 
   return (
     <div className="min-h-dvh screen-bg">
@@ -50,6 +31,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* 桌面顶部导航：品牌、主导航与一句轻量状态各占一列，主导航始终居中。
           容器与页面内容共用 max-w-shell + shell-gutter —— 原来顶栏锁 1280px、
           页面锁 1184/1536，logo 与其正下方的内容差出 78px，桌面上没有一条对得齐的竖线。 */}
+      {!focus && (
       <header className="sticky top-0 z-50 hidden border-b border-white/[0.06] bg-paper/78 backdrop-blur-2xl md:block">
         <div className="shell-gutter relative mx-auto grid h-[var(--nav-h)] w-full max-w-shell grid-cols-[150px_1fr_150px] items-center lg:grid-cols-[190px_1fr_190px]">
           <Link
@@ -115,13 +97,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
+      )}
 
       {/* 内容区 */}
       <main
         id="main-content"
         tabIndex={-1}
         className={cn(
-          "min-h-dvh min-w-0 outline-none md:min-h-[calc(100dvh-var(--nav-h))]",
+          "min-h-dvh min-w-0 outline-none",
+          !focus && "md:min-h-[calc(100dvh-var(--nav-h))]",
           showMobileNav ? "pb-[86px] md:pb-0" : "pb-0"
         )}
       >

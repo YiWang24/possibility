@@ -15,21 +15,6 @@ export function withAlpha(hex: string, alpha: number): string {
 /** 压力等级 1–4 颜色（iOS pressureColor） */
 export const PRESSURE_COLORS = ["#7CABFF", "#D9B563", "#FF9A6B", "#F06A6A"];
 
-/** 圆形返回按钮（iOS topBar chevron） */
-export function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label="返回"
-      className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-raised text-ink transition active:scale-95"
-    >
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
-        <path d="M9.5 3 5 7.5 9.5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
-
 /** 底部主按钮条（iOS foot） */
 export function Foot({
   title,
