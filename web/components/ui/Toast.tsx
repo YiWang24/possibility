@@ -3,17 +3,21 @@ import { create } from "zustand";
 
 let token = 0;
 
+/** 默认停留时长：短提示（「已保存」一类）够读两遍 */
+const DEFAULT_DURATION_MS = 2000;
+
 export const useToast = create<{
   message: string | null;
-  show: (text: string) => void;
+  /** duration 用于「注册验证邮件已发送」这类需要看清邮箱地址的长文案 */
+  show: (text: string, durationMs?: number) => void;
 }>((set) => ({
   message: null,
-  show: (text: string) => {
+  show: (text: string, durationMs = DEFAULT_DURATION_MS) => {
     set({ message: text });
     const current = ++token;
     setTimeout(() => {
       if (current === token) set({ message: null });
-    }, 2000);
+    }, durationMs);
   },
 }));
 

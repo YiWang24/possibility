@@ -263,6 +263,11 @@ enum KeyboardHelper {
 
 // MARK: Toast
 
+/// 默认停留时长：短提示（「已保存」一类）够读两遍。
+/// 放在类外：@MainActor 类的 static 属性做默认参数值会在 nonisolated 上下文求值，
+/// Swift 6 语言模式下直接报错。
+private let defaultToastDuration: Duration = .seconds(2)
+
 /// 轻提示中心（原型 toast()）—— 环境注入，根部 ToastHost 呈现
 @Observable
 @MainActor
@@ -270,12 +275,13 @@ final class ToastCenter {
     private(set) var message: String?
     private var token = 0
 
-    func show(_ text: String) {
+    /// - Parameter duration: 供「注册验证邮件已发送」这类需要看清邮箱地址的长文案延长
+    func show(_ text: String, duration: Duration = defaultToastDuration) {
         message = text
         token += 1
         let current = token
         Task {
-            try? await Task.sleep(for: .seconds(2))
+            try? await Task.sleep(for: duration)
             if current == token { message = nil }
         }
     }

@@ -87,6 +87,11 @@ enum AppTab: Hashable {
 struct RootView: View {
     @Environment(SupabaseService.self) private var supabase
 
+    /// Toast 中心挂在根部而不是 MainTabView：登录墙也要能提示（注册后那封验证邮件），
+    /// 且注册成功会立刻把 AuthWallView 换成 MainTabView —— 若中心归后者所有，
+    /// 这一换就是个全新实例，刚排进去的提示随旧实例一起没了。
+    @State private var toast = ToastCenter()
+
     var body: some View {
         Group {
             if !supabase.isReady {
@@ -98,6 +103,8 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: supabase.isAuthenticated)
+        .environment(toast)
+        .overlay(ToastHost(message: toast.message))
     }
 }
 
@@ -120,7 +127,6 @@ struct SplashView: View {
 
 struct MainTabView: View {
     @State private var router = AppRouter()
-    @State private var toast = ToastCenter()
 
     var body: some View {
         @Bindable var router = router
@@ -143,9 +149,8 @@ struct MainTabView: View {
         }
         .tint(Theme.blue)
         .background(Theme.stage.ignoresSafeArea())
-        .environment(toast)
         .environment(router)
-        .overlay(ToastHost(message: toast.message))
+        // ToastCenter 与 ToastHost 由 RootView 提供（登录墙同样需要）
     }
 }
 

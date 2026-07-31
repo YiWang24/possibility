@@ -19,6 +19,7 @@ struct LoginSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(SupabaseService.self) private var supabase
+    @Environment(ToastCenter.self) private var toast
 
     private enum Mode { case signIn, signUp }
     @State private var mode: Mode = .signIn
@@ -240,7 +241,16 @@ struct LoginSheet: View {
         Task {
             do {
                 switch mode {
-                case .signUp: try await supabase.signUp(email: address, password: password)
+                case .signUp:
+                    let sent = try await supabase.signUp(email: address, password: password)
+                    // 注册即登录：本页马上随登录墙消失，提示只能交给根部 toast。
+                    // 措辞要说清「不验证也能用」，否则用户会以为卡在验证这一步。
+                    toast.show(
+                        sent
+                            ? "验证邮件已发送至 \(address)，稍后验证即可，不影响使用"
+                            : "验证邮件发送失败，不影响使用，可稍后在「我」里重发",
+                        duration: .seconds(5)
+                    )
                 case .signIn: try await supabase.signIn(email: address, password: password)
                 }
                 busy = false
@@ -307,15 +317,19 @@ struct AuthWallView: View {
     }
 }
 
+// ToastCenter 由 RootView 注入（注册成功提示要跨越登录墙 → 主界面的切换），
+// 预览没有 RootView，得各自补一个，否则 @Environment 取不到值直接崩在 canvas。
 #Preview("登录墙") {
     AuthWallView()
         .environment(SupabaseService())
+        .environment(ToastCenter())
         .preferredColorScheme(.dark)
 }
 
 #Preview("补登录 sheet") {
     LoginSheet()
         .environment(SupabaseService())
+        .environment(ToastCenter())
         .preferredColorScheme(.dark)
         .background(Theme.paper)
 }

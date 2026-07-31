@@ -1,0 +1,18 @@
+<!--
+  注册后补发的邮箱验证信（signInWithOtp 走 magic_link 模板）。
+  语气要点：验证是可选的，不点也能继续用 —— 否则用户会以为账号被卡住了。
+  本地由 config.toml 的 [auth.email.template.magic_link] 引用；
+  线上需在 Dashboard → Auth → Email Templates 粘贴同一份。
+-->
+<h2>验证你的邮箱</h2>
+
+<p>你刚刚用这个邮箱注册了 Possibility。点下面的链接确认它确实属于你：</p>
+
+<p><a href="{{ .ConfirmationURL }}">验证邮箱地址</a></p>
+
+<p>
+  <strong>不验证也不影响使用</strong>——你的账号已经可以正常登录。
+  验证过的邮箱才能在忘记密码时找回账号，建议抽空点一下。
+</p>
+
+<p>如果这不是你本人的操作，忽略这封邮件即可。</p>

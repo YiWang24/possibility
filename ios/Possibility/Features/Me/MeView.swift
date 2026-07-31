@@ -406,6 +406,19 @@ struct MeView: View {
 
                 Divider().overlay(Theme.line)
 
+                // 邮箱验证不拦登录，所以这里是「补发」而非「去验证」：注册时那封漏收了可再来一次
+                accountRow("重发邮箱验证链接", tint: Theme.sub) {
+                    guard !accountBusy, let address = supabase.currentUser?.email else { return }
+                    accountBusy = true
+                    Task {
+                        let sent = await supabase.sendVerificationEmail(to: address)
+                        accountBusy = false
+                        toast.show(sent ? "验证链接已重新发送至 \(address)" : "发送失败，请稍后再试")
+                    }
+                }
+
+                Divider().overlay(Theme.line)
+
                 accountRow("退出登录", tint: Theme.sub) {
                     guard !accountBusy else { return }
                     accountBusy = true

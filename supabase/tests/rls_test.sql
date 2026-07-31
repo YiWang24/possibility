@@ -29,26 +29,40 @@ begin
 end
 $$;
 
--- ==================== 1. 公开内容：匿名可读、不可写 ====================
+-- ==================== 1. 内容表：匿名既读不到也写不进 ====================
+-- 20260730170500 起四张内容表收成 authenticated 专属。anon 角色对应的不是「匿名用户」
+-- （匿名登录已停用），而是「只带客户端里那把 publishable key、没有任何用户 JWT」的裸
+-- 请求 —— 以前它能直接拉走 traveler_details.full_text 这类标着付费解锁的正文。
 set local role anon;
 do $$
 begin
-  if (select count(*) from public.travelers) <> 12 then
-    raise exception 'anon should read all 12 seeded travelers';
-  end if;
-  if (select count(*) from public.traveler_details) <> 12 then
-    raise exception 'anon should read all 12 traveler_details';
-  end if;
-  if (select count(*) from public.traveler_services) <> 10 then
-    raise exception 'anon should read all 10 traveler_services';
-  end if;
-  if (select count(*) from public.bounties) <> 3 then
-    raise exception 'anon should read all 3 seeded bounties';
-  end if;
-  -- 相似旅人（万花筒「相似」模式候选）应恰为 id 1,2,4,5。
-  if (select count(*) from public.travelers where is_similar) <> 4 then
-    raise exception 'expected exactly 4 similar travelers in seed';
-  end if;
+  -- 读：策略（to authenticated）与表授权（revoke select from anon）两道闸都关着，
+  -- 所以连 select 都过不去，报的是 42501 insufficient_privilege 而非返回 0 行。
+  begin
+    perform count(*) from public.travelers;
+    raise exception 'anon read of travelers unexpectedly succeeded';
+  exception
+    when insufficient_privilege then null;
+  end;
+  begin
+    perform count(*) from public.traveler_details;
+    raise exception 'anon read of traveler_details unexpectedly succeeded';
+  exception
+    when insufficient_privilege then null;
+  end;
+  begin
+    perform count(*) from public.traveler_services;
+    raise exception 'anon read of traveler_services unexpectedly succeeded';
+  exception
+    when insufficient_privilege then null;
+  end;
+  begin
+    perform count(*) from public.bounties;
+    raise exception 'anon read of bounties unexpectedly succeeded';
+  exception
+    when insufficient_privilege then null;
+  end;
+
   -- 匿名写入内容表必须被拒。
   begin
     insert into public.bounties (question, reward, responses)
@@ -66,6 +80,36 @@ begin
     when insufficient_privilege then null;
   end;
 
+end
+$$;
+reset role;
+
+-- ==================== 1b. 已登录用户：内容表照常可读（种子数量钳制） ====================
+-- 收口只针对 anon；登录后内容必须一条不少，否则登录墙就把正常用户也挡住了。
+select set_config(
+  'request.jwt.claim.sub',
+  '11111111-1111-4111-8111-111111111111',
+  true
+);
+set local role authenticated;
+do $$
+begin
+  if (select count(*) from public.travelers) <> 12 then
+    raise exception 'authenticated should read all 12 seeded travelers';
+  end if;
+  if (select count(*) from public.traveler_details) <> 12 then
+    raise exception 'authenticated should read all 12 traveler_details';
+  end if;
+  if (select count(*) from public.traveler_services) <> 10 then
+    raise exception 'authenticated should read all 10 traveler_services';
+  end if;
+  if (select count(*) from public.bounties) <> 3 then
+    raise exception 'authenticated should read all 3 seeded bounties';
+  end if;
+  -- 相似旅人（万花筒「相似」模式候选）应恰为 id 1,2,4,5。
+  if (select count(*) from public.travelers where is_similar) <> 4 then
+    raise exception 'expected exactly 4 similar travelers in seed';
+  end if;
 end
 $$;
 reset role;
