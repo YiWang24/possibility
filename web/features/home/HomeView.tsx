@@ -3,7 +3,7 @@
    问候 · 语音日记 · AI 发问 · 人生卡牌入口 · 动态画像。移动端单列，md 起画像五维双栏。 */
 
 import { useEffect } from "react";
-import { PageContainer } from "@/components/shell/PageContainer";
+import { PageShell } from "@/components/shell/PageShell";
 import { useHome } from "./store";
 import { DiaryCard } from "./DiaryCard";
 import { AskCard } from "./AskCard";
@@ -39,7 +39,7 @@ export function HomeView() {
   }, [loadPortrait, loadDiaryOverview]);
 
   return (
-    <PageContainer>
+    <PageShell>
       {/* 问候 */}
       <header className="flex items-end justify-between gap-6">
         <div className="flex flex-col gap-1.5">
@@ -77,6 +77,6 @@ export function HomeView() {
       <div className="mt-6 lg:mt-12">
         <PortraitSection />
       </div>
-    </PageContainer>
+    </PageShell>
   );
 }

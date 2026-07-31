@@ -47,9 +47,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         跳到主要内容
       </a>
 
-      {/* 桌面顶部导航：品牌、主导航与一句轻量状态各占一列，主导航始终居中。 */}
+      {/* 桌面顶部导航：品牌、主导航与一句轻量状态各占一列，主导航始终居中。
+          容器与页面内容共用 max-w-shell + shell-gutter —— 原来顶栏锁 1280px、
+          页面锁 1184/1536，logo 与其正下方的内容差出 78px，桌面上没有一条对得齐的竖线。 */}
       <header className="sticky top-0 z-50 hidden border-b border-white/[0.06] bg-paper/78 backdrop-blur-2xl md:block">
-        <div className="relative mx-auto grid h-[74px] w-full max-w-[1280px] grid-cols-[150px_1fr_150px] items-center px-5 lg:grid-cols-[190px_1fr_190px] lg:px-8">
+        <div className="shell-gutter relative mx-auto grid h-[var(--nav-h)] w-full max-w-shell grid-cols-[150px_1fr_150px] items-center lg:grid-cols-[190px_1fr_190px]">
           <Link
             href="/"
             aria-label="万花筒首页"
@@ -119,7 +121,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         id="main-content"
         tabIndex={-1}
         className={cn(
-          "min-h-dvh min-w-0 outline-none md:min-h-[calc(100dvh-74px)]",
+          "min-h-dvh min-w-0 outline-none md:min-h-[calc(100dvh-var(--nav-h))]",
           showMobileNav ? "pb-[86px] md:pb-0" : "pb-0"
         )}
       >

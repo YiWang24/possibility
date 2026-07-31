@@ -82,12 +82,15 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
 
       {/* 画像卡 */}
       <div className="kaleido-card px-5 pb-[18px] pt-[22px] xl:px-8 xl:pb-7 xl:pt-8">
+        {/* 出血抵消父卡片的内边距。xl 档卡片是 px-8 pt-8，原来固定 -mx-5 -mt-[22px]
+            在大屏上会漏出 12px 的边，这次一并对上。 */}
         <PersonaStage
           model={model}
           userName={USER_NAME}
           summary={remotePersona?.summary}
           hasLifeCards={signatureCards.length >= 3}
           paused={paused}
+          bleed="-mx-5 -mt-[22px] xl:-mx-8 xl:-mt-8"
         />
 
         {/* 人生底牌签名 */}
