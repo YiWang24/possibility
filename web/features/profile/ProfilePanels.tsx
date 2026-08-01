@@ -6,7 +6,10 @@
    可提供服务 services（consult / materials / companion 三档，CTA 触发付费墙）。
    未解锁时「完整故事」「经验与建议」以 LockedBlock 打码浮层触发付费墙。 */
 import { useState } from "react";
-import { ChipToggle, SectionHeader } from "@/components/ui/Basics";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { SectionHeader } from "@/components/ui/page-header";
 import {
   ADVICE_KINDS,
   adviceTips,
@@ -30,7 +33,7 @@ export function LockedBlock({
   return (
     <button
       onClick={onClick}
-      className="relative flex w-full items-center justify-center overflow-hidden rounded-[20px] border border-[#6FA5FF]/20 p-[19px] text-center transition active:scale-[0.98]"
+      className="relative flex w-full items-center justify-center overflow-hidden rounded-card border border-brand-bright/20 p-[19px] text-center transition active:scale-[0.98]"
       style={{
         background:
           "linear-gradient(135deg,rgba(27,31,43,0.96) 0%,rgba(18,21,31,0.96) 100%)",
@@ -48,8 +51,8 @@ export function LockedBlock({
       </div>
       <div className="relative flex flex-col items-center gap-1.5">
         <LockIcon />
-        <span className="text-[13.5px] font-semibold text-ink">{title}</span>
-        <span className="text-[11px] leading-[1.5] text-sub">{hint}</span>
+        <span className="text-body font-semibold text-ink">{title}</span>
+        <span className="text-caption leading-[1.5] text-sub">{hint}</span>
       </div>
     </button>
   );
@@ -88,7 +91,7 @@ export function StoryPanel({
     <div className="flex flex-col gap-[18px]">
       {/* 一句话金句 */}
       <div
-        className="rounded-card border border-[#6FA5FF]/25 p-[22px] text-[15px] font-medium leading-[1.75] text-ink"
+        className="rounded-card border border-brand-bright/25 p-[22px] text-lead font-medium leading-[1.75] text-ink"
         style={{
           background:
             "linear-gradient(135deg,rgba(94,150,255,0.15) 0%,rgba(143,123,255,0.08) 100%)",
@@ -100,8 +103,8 @@ export function StoryPanel({
       {detail && (
         <>
           <div className="flex flex-col gap-2.5">
-            <h3 className="text-[15px] font-semibold text-ink">我的转型故事</h3>
-            <p className="text-[13.5px] leading-[1.75] text-[#C8CDDA]">{detail.intro}</p>
+            <h3 className="text-lead font-semibold text-ink">我的转型故事</h3>
+            <p className="text-body leading-[1.75] text-[#C8CDDA]">{detail.intro}</p>
           </div>
 
           {/* 事实卡 */}
@@ -113,10 +116,10 @@ export function StoryPanel({
 
           {/* 完整故事（付费） */}
           {unlocked ? (
-            <div className="flex flex-col gap-2.5 rounded-[20px] border border-line bg-card p-[18px]">
-              <h4 className="text-[13.5px] font-semibold text-[#B9CCFF]">完整故事 · 最难的一关</h4>
-              <p className="text-[13px] leading-[1.75] text-sub">{detail.full_text}</p>
-            </div>
+            <Card elevation="flat" className="flex flex-col gap-2.5 p-[18px]">
+              <h4 className="text-body font-semibold text-brand-lite">完整故事 · 最难的一关</h4>
+              <p className="text-body leading-[1.75] text-sub">{detail.full_text}</p>
+            </Card>
           ) : (
             <LockedBlock
               title="解锁完整故事 · 最难的一关"
@@ -132,9 +135,9 @@ export function StoryPanel({
 
 function Fact({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-[16px] border border-line bg-card py-[13px]">
-      <span className="text-[15px] font-semibold text-ink">{value}</span>
-      <span className="text-[10px] text-faint">{label}</span>
+    <div className="flex flex-col items-center gap-1 rounded-tile border border-line bg-card py-[13px]">
+      <span className="text-lead font-semibold text-ink">{value}</span>
+      <span className="text-micro text-faint">{label}</span>
     </div>
   );
 }
@@ -160,12 +163,12 @@ export function TimelinePanel({ traveler }: { traveler: Traveler }) {
           />
         ))}
       </div>
-      <div className="mt-2 flex flex-col gap-2.5 rounded-[20px] border border-line bg-card p-[18px]">
-        <h4 className="text-[13.5px] font-semibold text-[#B9CCFF]">轨迹说明</h4>
-        <p className="text-[13px] leading-[1.7] text-sub">
+      <Card elevation="flat" className="mt-2 flex flex-col gap-2.5 p-[18px]">
+        <h4 className="text-body font-semibold text-brand-lite">轨迹说明</h4>
+        <p className="text-body leading-[1.7] text-sub">
           以上节点由本人补充，并结合公开履历完成基础验证。经历只代表个人路径，不构成标准答案。
         </p>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -204,21 +207,21 @@ function TimelineNode({
       </div>
       <button
         onClick={onToggle}
-        className="ml-[15px] mb-3 flex-1 rounded-[18px] border border-line bg-card p-[15px] text-left transition active:scale-[0.99] md:ml-0"
+        className="ml-[15px] mb-3 flex-1 rounded-tile border border-line bg-card p-[15px] text-left transition active:scale-[0.99] md:ml-0"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col gap-1">
-            <span className="text-[11px] font-semibold text-brand">{age}</span>
-            <span className="text-[14px] font-semibold text-ink">{title}</span>
+            <span className="text-caption font-semibold text-brand">{age}</span>
+            <span className="text-callout font-semibold text-ink">{title}</span>
           </div>
           <span
-            className="text-[15px] text-faint transition-transform"
+            className="text-lead text-faint transition-transform"
             style={{ transform: open ? "rotate(90deg)" : "none" }}
           >
             ›
           </span>
         </div>
-        {open && <p className="mt-2.5 text-[12px] leading-[1.6] text-sub">{detail}</p>}
+        {open && <p className="mt-2.5 text-footnote leading-[1.6] text-sub">{detail}</p>}
       </button>
     </div>
   );
@@ -248,30 +251,32 @@ export function AdvicePanel({
       <SectionHeader title="把踩过的坑留给后来人" trailing={unlocked ? "全部可见" : "解锁后可见"} />
       <div className="flex flex-wrap gap-[7px]">
         {ADVICE_KINDS.map((a) => (
-          <ChipToggle key={a.kind} label={a.label} isOn={kind === a.kind} onClick={() => setKind(a.kind)} />
+          <Chip key={a.kind} selected={kind === a.kind} onClick={() => setKind(a.kind)}>
+            {a.label}
+          </Chip>
         ))}
       </div>
 
       {unlocked ? (
-        <div className="flex flex-col rounded-[20px] border border-line bg-card p-[19px]">
-          <span className="text-[10px] tracking-[2px] text-brand">
+        <Card elevation="flat" className="flex flex-col p-[19px]">
+          <span className="text-micro tracking-[2px] text-brand">
             {ADVICE_KINDS.find((a) => a.kind === kind)?.label}
           </span>
-          <h4 className="mt-2 text-[15px] font-semibold leading-[1.4] text-ink">
+          <h4 className="mt-2 text-lead font-semibold leading-[1.4] text-ink">
             {ADVICE_TITLES[kind]}
           </h4>
           <div className="mt-3.5 flex flex-col gap-2.5">
             {tips.map((tip, i) => (
               <div key={i} className="flex items-start gap-2.5">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] bg-[#3ED9A4]/12 text-[10px] text-teal">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[7px] bg-teal/12 text-micro text-teal">
                   {i + 1}
                 </span>
-                <p className="text-[12px] leading-[1.6] text-[#C9CFDC]">{tip}</p>
+                <p className="text-footnote leading-[1.6] text-[#C9CFDC]">{tip}</p>
               </div>
             ))}
-            {tips.length === 0 && <p className="text-[12px] text-faint">暂无该类建议。</p>}
+            {tips.length === 0 && <p className="text-footnote text-faint">暂无该类建议。</p>}
           </div>
-        </div>
+        </Card>
       ) : (
         <LockedBlock
           title="解锁 TA 的踩坑建议"
@@ -305,22 +310,22 @@ export function ServicePanel({
           <ServiceCard key={service.id} service={service} onClick={() => onCheckout(service)} />
         ))}
       </div>
-      <div className="mt-1.5 flex flex-col rounded-[20px] border border-line bg-card p-[18px]">
+      <Card elevation="flat" className="mt-1.5 flex flex-col p-[18px]">
         {SERVICE_STEPS.map(([title, sub], i) => (
           <div key={i}>
             <div className="flex items-start gap-3 py-2.5">
-              <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-[#5E96FF]/13 text-[10px] text-brand">
+              <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-brand/13 text-micro text-brand">
                 {i + 1}
               </span>
               <div className="flex flex-col gap-0.5">
-                <span className="text-[12.5px] font-medium text-ink">{title}</span>
-                <span className="text-[11px] text-faint">{sub}</span>
+                <span className="text-footnote font-medium text-ink">{title}</span>
+                <span className="text-caption text-faint">{sub}</span>
               </div>
             </div>
             {i < SERVICE_STEPS.length - 1 && <div className="h-px bg-line" />}
           </div>
         ))}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -377,40 +382,37 @@ function ServiceCard({
   const accent = serviceAccent(service.kind);
   return (
     <div
-      className="flex flex-col gap-3 rounded-[24px] border p-[21px]"
+      className="flex flex-col gap-3 rounded-card border p-[21px]"
       style={{ background: accent.bg, borderColor: accent.border }}
     >
       <div className="flex items-end justify-between gap-2">
         <div className="flex flex-col gap-1.5">
-          <span className="text-[10px] tracking-[2.5px] text-[#9DBCFF]">
+          <span className="text-micro tracking-[2.5px] text-brand-lite">
             {serviceKindLabel(service.kind)}
           </span>
-          <span className="text-[16px] font-semibold text-ink">{service.title}</span>
+          <span className="text-subtitle font-semibold text-ink">{service.title}</span>
         </div>
         <span className="shrink-0 text-white">
           <span className="text-[25px] font-bold">¥{service.price}</span>
-          <span className="text-[11px] text-sub"> / {service.unit}</span>
+          <span className="text-caption text-sub"> / {service.unit}</span>
         </span>
       </div>
-      <p className="text-[12px] leading-[1.6] text-sub">{service.description}</p>
+      <p className="text-footnote leading-[1.6] text-sub">{service.description}</p>
       {service.tags.length > 0 && (
         <div className="flex flex-wrap gap-[7px]">
           {service.tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-chip bg-white/[0.055] px-2.5 py-[7px] text-[11px] text-[#C8CEDD]"
+              className="rounded-chip bg-white/[0.055] px-2.5 py-[7px] text-caption text-[#C8CEDD]"
             >
               {tag}
             </span>
           ))}
         </div>
       )}
-      <button
-        onClick={onClick}
-        className="mt-1 w-full rounded-chip bg-btn-g py-3.5 text-[13.5px] font-semibold text-white transition active:scale-[0.97]"
-      >
+      <Button size="lg" className="mt-1 w-full" onClick={onClick}>
         {serviceCtaLabel(service.kind)}
-      </button>
+      </Button>
     </div>
   );
 }

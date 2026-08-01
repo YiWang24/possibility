@@ -228,16 +228,16 @@ export function DialView({
       <div
         className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 px-11 text-center"
       >
-        <div className="text-[10.5px] tracking-[3px] text-faint">时间旋钮</div>
+        <div className="text-micro tracking-[3px] text-faint">时间旋钮</div>
         <div
-          className={`min-h-[28px] text-[17px] font-bold ${
+          className={`min-h-[28px] text-title font-bold ${
             isHot || pick ? "text-brand" : "text-ink"
           }`}
         >
           {pick ?? "把选择卡拖进来"}
         </div>
-        <div className="text-[12px] text-sub tabular-nums">
-          推演 <span className="text-[20px] font-bold text-brand">{current.label}</span> 后的你
+        <div className="text-footnote text-sub tabular-nums">
+          推演 <span className="text-heading font-bold text-brand">{current.label}</span> 后的你
         </div>
       </div>
     </div>

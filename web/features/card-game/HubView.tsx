@@ -88,7 +88,7 @@ export function HubView() {
     const color = pendingSync ? "#FFB096" : done ? "#8EE7C8" : "#9DBCFF";
     return (
       <span
-        className="shrink-0 rounded-chip px-2 py-1 text-[9.5px] font-semibold"
+        className="shrink-0 rounded-chip px-2 py-1 text-micro font-semibold"
         style={{
           color,
           background: withAlpha(color, 0.12),
@@ -122,7 +122,7 @@ export function HubView() {
           transition={{ duration: 0.35, delay: 0.05 }}
           onClick={() => life && launch(life.game_key)}
           disabled={!life}
-          className="relative overflow-hidden rounded-[18px] p-4 text-left transition active:scale-[0.98]"
+          className="relative overflow-hidden rounded-tile p-4 text-left transition active:scale-[0.98]"
           style={{
             background:
               "radial-gradient(150px circle at 100% 0%, rgba(143,123,255,0.3), transparent), linear-gradient(135deg,#1B1A38,#241A45,#141329)",
@@ -143,18 +143,18 @@ export function HubView() {
                 />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[9.5px] font-semibold tracking-[1.8px] text-[#B6A8FF]">
+                <div className="text-micro font-semibold tracking-[1.8px] text-[#B6A8FF]">
                   LIFE CARDS · 5–8 分钟
                 </div>
-                <div className="mt-1 text-[15.5px] font-bold text-ink">
+                <div className="mt-1 text-lead font-bold text-ink">
                   {life?.title ?? "正在加载人生卡牌…"}
                 </div>
-                <div className="mt-0.5 text-[11px] text-sub">
+                <div className="mt-0.5 text-caption text-sub">
                   {life?.intro_copy ?? "正在读取最新牌库"}
                 </div>
               </div>
               {statusBadge("life")}
-              <span className="text-[16px] text-faint">›</span>
+              <span className="text-subtitle text-faint">›</span>
             </div>
             <div className="flex gap-2">
               {(
@@ -168,8 +168,8 @@ export function HubView() {
                   key={no}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-chip bg-white/6 py-[7px]"
                 >
-                  <span className="text-[9.5px] font-bold text-[#B6A8FF]">{no}</span>
-                  <span className="text-[10.5px] text-sub">{label}</span>
+                  <span className="text-micro font-bold text-[#B6A8FF]">{no}</span>
+                  <span className="text-micro text-sub">{label}</span>
                 </div>
               ))}
             </div>
@@ -177,7 +177,7 @@ export function HubView() {
         </motion.button>
 
         {secondaryGames.length > 0 && (
-          <div className="pt-1 text-[11px] tracking-[1px] text-faint">更多专题</div>
+          <div className="pt-1 text-caption tracking-[1px] text-faint">更多专题</div>
         )}
 
         {secondaryGames.map((game, i) => {
@@ -189,13 +189,13 @@ export function HubView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: 0.1 + i * 0.05 }}
               onClick={() => launch(kind)}
-              className="flex items-center gap-[13px] rounded-[16px] bg-card px-[15px] py-[14px] text-left transition active:scale-[0.98]"
+              className="flex items-center gap-[13px] rounded-tile bg-card px-[15px] py-[14px] text-left transition active:scale-[0.98]"
               style={{
                 border: `1px solid ${withAlpha(game.accent, 0.24)}`,
               }}
             >
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] text-[17px]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-field text-title"
                 style={{
                   color: game.accent,
                   background: withAlpha(game.accent, 0.13),
@@ -204,15 +204,15 @@ export function HubView() {
                 {game.glyph}
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-semibold text-ink">
+                <div className="text-callout font-semibold text-ink">
                   {game.title}
                 </div>
-                <div className="mt-[3px] line-clamp-2 text-[11px] text-sub">
+                <div className="mt-[3px] line-clamp-2 text-caption text-sub">
                   {game.intro_copy}
                 </div>
               </div>
               {statusBadge(kind)}
-              <span className="text-[15px] text-faint">›</span>
+              <span className="text-lead text-faint">›</span>
             </motion.button>
           );
         })}

@@ -6,7 +6,9 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { FocusShell } from "@/components/shell/FocusShell";
 import { HueBandHeader } from "@/components/ui/Avatar";
-import { TagPill, PrimaryButton, SectionHeader } from "@/components/ui/Basics";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/page-header";
 import { mockAvatarById } from "@/lib/theme";
 import type { Traveler } from "@/lib/models";
 import { CardIconMark } from "./CardIcon";
@@ -67,7 +69,7 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
     >
       <div className="shell-gutter mx-auto w-full max-w-shell pb-10 pt-4">
         {/* 头部说明 + 分段控件 */}
-        <p className="text-[12px] leading-[1.7] text-sub">
+        <p className="text-footnote leading-[1.7] text-sub">
           「<span className="font-bold text-ink">{data.question}</span>
           」的三种可能 —— 先看一般情况，再看两端。
         </p>
@@ -76,7 +78,7 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
             <button
               key={i}
               onClick={() => setTab(i)}
-              className={`flex-1 rounded-chip py-[9px] text-[13px] transition ${
+              className={`flex-1 rounded-chip py-[9px] text-body transition ${
                 tab === i ? "bg-btn-g font-semibold text-white" : "text-sub"
               }`}
             >
@@ -120,12 +122,14 @@ export function ResultView({ data, onBack }: { data: SimResultData; onBack: () =
               ))}
             </div>
           ) : (
-            <p className="mt-2 text-[11.5px] text-faint">暂无匹配到的相似旅人。</p>
+            <p className="mt-2 text-caption text-faint">暂无匹配到的相似旅人。</p>
           )}
         </div>
 
-        <div className="mt-6">
-          <PrimaryButton title="重新选择" wide onClick={onBack} />
+        <div className="mt-6 flex justify-center">
+          <Button size="lg" className="min-w-[230px]" onClick={onBack}>
+            重新选择
+          </Button>
         </div>
       </div>
     </FocusShell>
@@ -150,10 +154,10 @@ function ScenarioPanel({ spec }: { spec: TabSpec }) {
           className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full"
           style={{ background: `radial-gradient(circle, ${hexA(accent, 0.4)}, transparent 70%)` }}
         />
-        <div className="relative text-[11px] tracking-[2.5px]" style={{ color: accent }}>
+        <div className="relative text-caption tracking-[2.5px]" style={{ color: accent }}>
           {eyebrow}
         </div>
-        <h3 className="relative mt-2.5 text-[16px] font-bold leading-[1.7] text-ink">
+        <h3 className="relative mt-2.5 text-subtitle font-bold leading-[1.7] text-ink">
           {scenario.headline}
         </h3>
       </div>
@@ -167,8 +171,8 @@ function ScenarioPanel({ spec }: { spec: TabSpec }) {
               i < scenario.dimensions.length - 1 ? "border-b border-line" : ""
             }`}
           >
-            <span className="w-[60px] shrink-0 text-[12px] text-faint">{dim.label}</span>
-            <span className="text-[13px] leading-[1.6] text-ink">{dim.text}</span>
+            <span className="w-[60px] shrink-0 text-footnote text-faint">{dim.label}</span>
+            <span className="text-body leading-[1.6] text-ink">{dim.text}</span>
           </div>
         ))}
       </div>
@@ -182,7 +186,7 @@ function ScenarioPanel({ spec }: { spec: TabSpec }) {
       {/* 最关键的条件 */}
       {scenario.key_condition && (
         <div
-          className="rounded-[16px] border border-dashed px-[18px] py-[15px] text-[12.5px] leading-[1.7]"
+          className="rounded-tile border border-dashed px-[18px] py-[15px] text-footnote leading-[1.7]"
           style={{
             background: "linear-gradient(90deg, rgba(94,150,255,0.12), rgba(215,244,100,0.08))",
             borderColor: "rgba(111,165,255,0.45)",
@@ -201,13 +205,13 @@ function ListCard({ title, dot, items }: { title: string; dot: string; items: st
     <div className="kaleido-card p-4">
       <div className="flex items-center gap-1.5">
         <span className="h-[7px] w-[7px] rounded-full" style={{ background: dot }} />
-        <span className="text-[12px] font-semibold text-ink">{title}</span>
+        <span className="text-footnote font-semibold text-ink">{title}</span>
       </div>
       <div className="mt-2.5 flex flex-col gap-2.5">
         {items.map((item, i) => (
           <div key={i} className="flex gap-2">
             <span className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-faint" />
-            <span className="text-[11.5px] leading-[1.6] text-sub">{item}</span>
+            <span className="text-caption leading-[1.6] text-sub">{item}</span>
           </div>
         ))}
       </div>
@@ -226,24 +230,24 @@ function FloorTestPanel({ carryIds }: { carryIds: string[] }) {
 
   return (
     <div className="rounded-sheet border p-[17px]" style={{ background: "#11151D", borderColor: "rgba(255,122,77,0.24)" }}>
-      <div className="text-[8.5px] font-semibold tracking-[2.2px] text-[#FF9B77]">
+      <div className="text-micro font-semibold tracking-[2.2px] text-[#FF9B77]">
         FLOOR TEST · 底线压力测试
       </div>
-      <h4 className="mt-1.5 text-[15px] font-bold leading-[1.5] text-ink">
+      <h4 className="mt-1.5 text-lead font-bold leading-[1.5] text-ink">
         最坏的结果，会击穿你带进来的底线吗？
       </h4>
-      <p className="mt-1.5 text-[10.5px] leading-[1.6] text-sub">
+      <p className="mt-1.5 text-micro leading-[1.6] text-sub">
         逐张确认：如果这个结局真的发生，这张底线卡还守得住吗？
       </p>
 
       <div className="mt-3 flex flex-col gap-3">
         {cards.map((card) => (
-          <div key={card.id} className="rounded-[14px] bg-raised p-[13px]">
+          <div key={card.id} className="rounded-tile bg-raised p-[13px]">
             <div className="flex items-center gap-2 text-[#FF9B77]">
               <CardIconMark icon={card.icon} size={13} />
-              <span className="text-[13px] font-semibold text-ink">{card.name}</span>
+              <span className="text-body font-semibold text-ink">{card.name}</span>
             </div>
-            <p className="mt-2 text-[11.5px] leading-[1.8] text-sub">{card.risk}</p>
+            <p className="mt-2 text-caption leading-[1.8] text-sub">{card.risk}</p>
             <div className="mt-2.5 flex gap-[9px]">
               <FloorButton
                 title="最差如此，仍可承受"
@@ -264,24 +268,24 @@ function FloorTestPanel({ carryIds }: { carryIds: string[] }) {
 
       {allAnswered && (
         <div
-          className="mt-3 rounded-[14px] border p-[14px]"
+          className="mt-3 rounded-tile border p-[14px]"
           style={{
             background: pass ? "rgba(62,217,164,0.08)" : "rgba(255,122,77,0.08)",
             borderColor: pass ? "rgba(62,217,164,0.3)" : "rgba(255,122,77,0.3)",
           }}
         >
           <div
-            className="text-[9px] font-semibold tracking-[1.6px]"
+            className="text-micro font-semibold tracking-[1.6px]"
             style={{ color: pass ? "#3ED9A4" : "#FF9B77" }}
           >
             {pass ? "可以继续转变 · 但不是盲目乐观" : "暂时不要直接跨过去"}
           </div>
-          <div className="mt-1.5 text-[13px] font-bold leading-[1.5] text-ink">
+          <div className="mt-1.5 text-body font-bold leading-[1.5] text-ink">
             {pass
               ? `你看见了最差结果，也确认它没有击穿带入的 ${cards.length} 张底线卡。`
               : `最坏结果会击穿：${rejected.join("、")}`}
           </div>
-          <p className="mt-1.5 text-[11.5px] leading-[1.8] text-sub">
+          <p className="mt-1.5 text-caption leading-[1.8] text-sub">
             {pass
               ? "这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这些底线分别保留现实缓冲。"
               : "这不等于你不适合改变。先为这些底线建立保护条件，再回来重新测试。"}
@@ -307,7 +311,7 @@ function FloorButton({
   return (
     <button
       onClick={onClick}
-      className="flex-1 rounded-chip py-[9px] text-[10.5px] transition active:scale-[0.97]"
+      className="flex-1 rounded-chip py-[9px] text-micro transition active:scale-[0.97]"
       style={{
         color: on ? tint : "var(--color-sub)",
         fontWeight: on ? 600 : 400,
@@ -328,13 +332,13 @@ function BottomLinePanel({ analysis }: { analysis: BottomLineOut }) {
   const border = ok ? "rgba(62,217,164,0.24)" : "rgba(255,122,77,0.24)";
   return (
     <div className="rounded-sheet border p-[17px]" style={{ background: "#11151D", borderColor: border }}>
-      <div className="text-[8.5px] font-semibold tracking-[2.2px]" style={{ color: accent }}>
+      <div className="text-micro font-semibold tracking-[2.2px]" style={{ color: accent }}>
         BOTTOM LINE · 底线分析
       </div>
-      <h4 className="mt-1.5 text-[15px] font-bold leading-[1.5] text-ink">
+      <h4 className="mt-1.5 text-lead font-bold leading-[1.5] text-ink">
         {ok ? "最坏的结果，仍在你的底线之内" : "最坏的结果，可能击穿你的底线"}
       </h4>
-      <p className="mt-1.5 text-[10.5px] leading-[1.6] text-sub">
+      <p className="mt-1.5 text-micro leading-[1.6] text-sub">
         {ok
           ? "结合你带走的底线卡与三种结局推演，这条路的最差情况大概率守得住。"
           : "结合你带走的底线卡与三种结局推演，先为下面的风险建立保护条件，再考虑迈出这一步。"}
@@ -351,16 +355,16 @@ function BottomLinePanel({ analysis }: { analysis: BottomLineOut }) {
 
 function BulletList({ title, dot, items }: { title: string; dot: string; items: string[] }) {
   return (
-    <div className="mt-3 rounded-[14px] bg-raised p-[13px]">
+    <div className="mt-3 rounded-tile bg-raised p-[13px]">
       <div className="flex items-center gap-1.5">
         <span className="h-[7px] w-[7px] rounded-full" style={{ background: dot }} />
-        <span className="text-[12px] font-semibold text-ink">{title}</span>
+        <span className="text-footnote font-semibold text-ink">{title}</span>
       </div>
       <div className="mt-2 flex flex-col gap-2">
         {items.map((item, i) => (
           <div key={i} className="flex gap-2">
             <span className="mt-[6px] h-1 w-1 shrink-0 rounded-full bg-faint" />
-            <span className="text-[11.5px] leading-[1.7] text-sub">{item}</span>
+            <span className="text-caption leading-[1.7] text-sub">{item}</span>
           </div>
         ))}
       </div>
@@ -374,7 +378,7 @@ function SimCard({ traveler }: { traveler: Traveler }) {
   return (
     <Link
       href={`/traveler/${traveler.id}`}
-      className="block w-[168px] shrink-0 overflow-hidden rounded-[18px] border border-line bg-card transition active:scale-[0.98]"
+      className="block w-[168px] shrink-0 overflow-hidden rounded-tile border border-line bg-card transition active:scale-[0.98]"
     >
       <HueBandHeader
         initial={traveler.initial}
@@ -384,12 +388,12 @@ function SimCard({ traveler }: { traveler: Traveler }) {
         imageSrc={mockAvatarById(traveler.id)}
       />
       <div className="px-[14px] pb-[14px] pt-5">
-        <div className="text-[13px] font-semibold text-ink">{traveler.name}</div>
-        <p className="mt-[5px] line-clamp-2 text-[11px] leading-[1.5] text-sub">{traveler.quote}</p>
+        <div className="text-body font-semibold text-ink">{traveler.name}</div>
+        <p className="mt-[5px] line-clamp-2 text-caption leading-[1.5] text-sub">{traveler.quote}</p>
         {traveler.tags.length > 0 && (
           <div className="mt-[7px] flex gap-[5px]">
             {traveler.tags.slice(0, 2).map((tag) => (
-              <TagPill key={tag} text={tag} />
+              <Badge key={tag}>{tag}</Badge>
             ))}
           </div>
         )}

@@ -70,8 +70,8 @@ export function HomeView() {
             </h1>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-0.5">
-            <span className="text-[12px] text-sub">已探索</span>
-            <span className="text-aurora text-[16px] font-bold xl:text-[19px]">
+            <span className="text-footnote text-sub">已探索</span>
+            <span className="text-aurora text-subtitle font-bold xl:text-[19px]">
               第 {exploredDays} 天
             </span>
           </div>

@@ -80,13 +80,13 @@ function LoginWall() {
               </h1>
             </div>
           </div>
-          <p className="max-w-[36ch] pl-7 text-[13px] leading-[1.9] text-sub lg:max-w-[48ch] lg:pl-10 lg:text-[15px]">
+          <p className="max-w-[36ch] pl-7 text-body leading-[1.9] text-sub lg:max-w-[48ch] lg:pl-10 lg:text-lead">
             画像、推演与社区都绑定在你的账号上。
             用邮箱注册一个可以找回的身份，换设备也能接着往下走。
           </p>
-          <p className="hidden max-w-[42ch] border-l border-sub/25 pl-5 font-serif text-[12.5px] leading-[1.9] text-faint lg:ml-10 lg:block">
+          <p className="hidden max-w-[42ch] border-l border-sub/25 pl-5 font-serif text-footnote leading-[1.9] text-faint lg:ml-10 lg:block">
             <span className="block">离每个人最远的，就是他自己。</span>
-            <span className="mt-1 block text-[11px]">——尼采《道德的系谱》</span>
+            <span className="mt-1 block text-caption">——尼采《道德的系谱》</span>
           </p>
         </header>
 

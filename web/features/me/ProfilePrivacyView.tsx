@@ -264,8 +264,8 @@ export function ProfilePrivacyView({
           >
             <div className="flex items-center border-b border-line px-5 py-4">
               <div className="flex flex-col">
-                <span className="text-[17px] font-bold text-ink">个人档案与 AI 隐私</span>
-                <span className="text-[10.5px] text-faint">每条事实只分为公开或私人</span>
+                <span className="text-title font-bold text-ink">个人档案与 AI 隐私</span>
+                <span className="text-micro text-faint">每条事实只分为公开或私人</span>
               </div>
               <button
                 type="button"
@@ -279,11 +279,11 @@ export function ProfilePrivacyView({
 
             <div className="flex-1 overflow-y-auto px-5 py-5">
               {loading && !snapshot ? (
-                <div className="py-16 text-center text-[12px] text-faint">正在读取个人档案…</div>
+                <div className="py-16 text-center text-footnote text-faint">正在读取个人档案…</div>
               ) : (
                 <div className="flex flex-col gap-5">
                   {error && (
-                    <div className="rounded-[14px] border border-[#FF7A4D]/30 bg-[#FF7A4D]/10 px-3.5 py-3 text-[11.5px] text-orange">
+                    <div className="rounded-tile border border-orange/30 bg-orange/10 px-3.5 py-3 text-caption text-orange">
                       {error}
                     </div>
                   )}
@@ -291,53 +291,53 @@ export function ProfilePrivacyView({
                   <section className="flex flex-col gap-3">
                     <div className="flex items-end justify-between">
                       <div className="flex flex-col">
-                        <span className="text-[14px] font-bold text-ink">画像事实</span>
-                        <span className="text-[10.5px] text-faint">
+                        <span className="text-callout font-bold text-ink">画像事实</span>
+                        <span className="text-micro text-faint">
                           版本 {snapshot?.profile_revision ?? 0} · 只显示当前有效事实
                         </span>
                       </div>
                       <button
                         type="button"
                         onClick={() => void load()}
-                        className="text-[11px] text-brand"
+                        className="text-caption text-brand"
                       >
                         刷新
                       </button>
                     </div>
 
                     {Object.keys(grouped).length === 0 ? (
-                      <div className="kaleido-card py-8 text-center text-[12px] text-faint">
+                      <div className="kaleido-card py-8 text-center text-footnote text-faint">
                         还没有画像事实
                       </div>
                     ) : (
                       DIMENSION_KEYS.filter((key) => grouped[key]?.length).map((dimension) => (
                         <div key={dimension} className="kaleido-card flex flex-col gap-3 p-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-[13px] font-bold text-ink">
+                            <span className="text-body font-bold text-ink">
                               {DIMENSION_LABELS[dimension]}
                             </span>
                             <button
                               type="button"
                               onClick={() => setConfirm({ kind: "dimension", dimension })}
-                              className="text-[10.5px] text-orange"
+                              className="text-micro text-orange"
                             >
                               删除整个维度
                             </button>
                           </div>
                           {grouped[dimension].map((fact) => (
-                            <div key={fact.id} className="rounded-[12px] bg-raised px-3 py-2.5">
+                            <div key={fact.id} className="rounded-field bg-raised px-3 py-2.5">
                               <div className="flex items-start gap-3">
                                 <div className="min-w-0 flex-1">
-                                  <div className="text-[12px] font-medium leading-relaxed text-ink">
+                                  <div className="text-footnote font-medium leading-relaxed text-ink">
                                     {fact.value}
                                   </div>
-                                  <div className="mt-1 text-[9.5px] text-faint">
+                                  <div className="mt-1 text-micro text-faint">
                                     {SOURCE_LABELS[fact.source] ?? fact.source} · 置信度{" "}
                                     {Math.round(Number(fact.confidence) * 100)}%
                                   </div>
                                 </div>
                                 {fact.user_confirmed ? (
-                                  <span className="shrink-0 rounded-chip bg-[#3ED9A4]/12 px-2 py-1 text-[9.5px] text-[#8EE7C8]">
+                                  <span className="shrink-0 rounded-chip bg-teal/12 px-2 py-1 text-micro text-teal-lite">
                                     已确认
                                   </span>
                                 ) : (
@@ -345,7 +345,7 @@ export function ProfilePrivacyView({
                                     type="button"
                                     disabled={busy === `fact:${fact.id}`}
                                     onClick={() => void confirmFact(fact)}
-                                    className="shrink-0 rounded-chip bg-[#5E96FF]/12 px-2 py-1 text-[9.5px] text-brand disabled:opacity-50"
+                                    className="shrink-0 rounded-chip bg-brand/12 px-2 py-1 text-micro text-brand disabled:opacity-50"
                                   >
                                     确认准确
                                   </button>
@@ -353,9 +353,9 @@ export function ProfilePrivacyView({
                                 <button
                                   disabled={busy === `visibility:${fact.id}`}
                                   onClick={() => void setVisibility(fact)}
-                                  className={`shrink-0 rounded-chip px-2 py-1 text-[9.5px] disabled:opacity-50 ${
+                                  className={`shrink-0 rounded-chip px-2 py-1 text-micro disabled:opacity-50 ${
                                     fact.visibility === "public"
-                                      ? "bg-[#3ED9A4]/12 text-[#8EE7C8]"
+                                      ? "bg-teal/12 text-teal-lite"
                                       : "bg-white/[0.06] text-sub"
                                   }`}
                                 >
@@ -371,21 +371,21 @@ export function ProfilePrivacyView({
 
                   <section className="flex flex-col gap-3">
                     <div className="flex flex-col">
-                      <span className="text-[14px] font-bold text-ink">待你确认的理解</span>
-                      <span className="text-[10.5px] text-faint">
+                      <span className="text-callout font-bold text-ink">待你确认的理解</span>
+                      <span className="text-micro text-faint">
                         Chat 和日记只能提出候选，不会直接覆盖正式画像
                       </span>
                     </div>
                     {(snapshot?.proposals ?? []).length === 0 ? (
-                      <div className="kaleido-card py-7 text-center text-[12px] text-faint">
+                      <div className="kaleido-card py-7 text-center text-footnote text-faint">
                         暂无待确认内容
                       </div>
                     ) : (
                       (snapshot?.proposals ?? []).map((proposal) => (
                         <div key={proposal.id} className="kaleido-card flex flex-col gap-3 p-4">
                           <div>
-                            <div className="text-[12px] font-medium text-ink">{proposal.value}</div>
-                            <div className="mt-1 text-[9.5px] text-faint">
+                            <div className="text-footnote font-medium text-ink">{proposal.value}</div>
+                            <div className="mt-1 text-micro text-faint">
                               {DIMENSION_LABELS[proposal.dimension] ?? proposal.dimension}
                               {" · "}
                               {SOURCE_LABELS[proposal.source_type] ?? proposal.source_type}
@@ -396,14 +396,14 @@ export function ProfilePrivacyView({
                             <button
                               disabled={busy === `proposal:${proposal.id}`}
                               onClick={() => void reviewProposal(proposal, false)}
-                              className="flex-1 rounded-chip border border-line py-2 text-[11px] text-sub disabled:opacity-50"
+                              className="flex-1 rounded-chip border border-line py-2 text-caption text-sub disabled:opacity-50"
                             >
                               不是这样
                             </button>
                             <button
                               disabled={busy === `proposal:${proposal.id}`}
                               onClick={() => void reviewProposal(proposal, true)}
-                              className="flex-1 rounded-chip bg-brand py-2 text-[11px] font-semibold text-white disabled:opacity-50"
+                              className="flex-1 rounded-chip bg-brand py-2 text-caption font-semibold text-white disabled:opacity-50"
                             >
                               确认加入
                             </button>
@@ -415,13 +415,13 @@ export function ProfilePrivacyView({
 
                   <section className="flex flex-col gap-3">
                     <div className="flex flex-col">
-                      <span className="text-[14px] font-bold text-ink">最近 AI 使用记录</span>
-                      <span className="text-[10.5px] text-faint">
+                      <span className="text-callout font-bold text-ink">最近 AI 使用记录</span>
+                      <span className="text-micro text-faint">
                         仅记录用途和维度，不保存发送给模型的原文
                       </span>
                     </div>
                     {(snapshot?.access_receipts ?? []).length === 0 ? (
-                      <div className="kaleido-card py-7 text-center text-[12px] text-faint">
+                      <div className="kaleido-card py-7 text-center text-footnote text-faint">
                         暂无长期画像使用记录
                       </div>
                     ) : (
@@ -429,18 +429,18 @@ export function ProfilePrivacyView({
                         {snapshot!.access_receipts.slice(0, 20).map((receipt) => (
                           <div key={receipt.id} className="flex flex-col gap-1.5 px-4 py-3">
                             <div className="flex items-center justify-between">
-                              <span className="text-[12px] font-semibold text-ink">
+                              <span className="text-footnote font-semibold text-ink">
                                 {PURPOSE_LABELS[receipt.purpose] ?? receipt.purpose}
                               </span>
-                              <span className="text-[9.5px] text-faint">
+                              <span className="text-micro text-faint">
                                 {new Date(receipt.created_at).toLocaleString("zh-CN")}
                               </span>
                             </div>
-                            <span className="text-[10.5px] text-sub">
+                            <span className="text-micro text-sub">
                               使用：{receipt.dimensions.map((d) => DIMENSION_LABELS[d] ?? d).join("、")}
                               {" · "}版本 {receipt.profile_revision}
                             </span>
-                            <span className="text-[9.5px] text-faint">
+                            <span className="text-micro text-faint">
                               公开 {receipt.public_fact_count} 条 · 私人 {receipt.private_fact_count} 条
                             </span>
                           </div>
@@ -451,8 +451,8 @@ export function ProfilePrivacyView({
 
                   <section className="flex flex-col gap-3 pb-8">
                     <div className="flex flex-col">
-                      <span className="text-[14px] font-bold text-ink">数据管理</span>
-                      <span className="text-[10.5px] text-faint">
+                      <span className="text-callout font-bold text-ink">数据管理</span>
+                      <span className="text-micro text-faint">
                         公开事实会进入公开主页；私人事实只服务于你本人
                       </span>
                     </div>
@@ -478,9 +478,9 @@ export function ProfilePrivacyView({
 
             {confirm && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/70 px-7">
-                <div className="w-full max-w-[360px] rounded-[20px] border border-line bg-card p-5">
-                  <div className="text-[15px] font-bold text-ink">确认操作</div>
-                  <p className="mt-2 text-[11.5px] leading-relaxed text-sub">
+                <div className="w-full max-w-[360px] rounded-card border border-line bg-card p-5">
+                  <div className="text-lead font-bold text-ink">确认操作</div>
+                  <p className="mt-2 text-caption leading-relaxed text-sub">
                     {confirm.kind === "dimension"
                       ? `将永久删除“${DIMENSION_LABELS[confirm.dimension]}”及其来源记录。`
                       : "全部画像事实将永久删除，主页基础资料不会受到影响。"}
@@ -489,14 +489,14 @@ export function ProfilePrivacyView({
                     <button
                       type="button"
                       onClick={() => setConfirm(null)}
-                      className="flex-1 rounded-chip border border-line py-2.5 text-[12px] text-sub"
+                      className="flex-1 rounded-chip border border-line py-2.5 text-footnote text-sub"
                     >
                       取消
                     </button>
                     <button
                       type="button"
                       onClick={() => void runConfirmedAction()}
-                      className="flex-1 rounded-chip bg-[#FF7A4D] py-2.5 text-[12px] font-semibold text-white"
+                      className="flex-1 rounded-chip bg-orange py-2.5 text-footnote font-semibold text-white"
                     >
                       确认
                     </button>
@@ -532,10 +532,10 @@ function PrivacyAction({
       className="flex items-center gap-3 px-4 py-3.5 text-left disabled:opacity-50"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className={`text-[12.5px] font-semibold ${destructive ? "text-orange" : "text-ink"}`}>
+        <span className={`text-footnote font-semibold ${destructive ? "text-orange" : "text-ink"}`}>
           {title}
         </span>
-        <span className="text-[9.5px] text-faint">{detail}</span>
+        <span className="text-micro text-faint">{detail}</span>
       </div>
       <span className="text-faint">›</span>
     </button>

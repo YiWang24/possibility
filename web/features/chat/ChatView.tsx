@@ -108,7 +108,7 @@ export function ChatView({
               model.crossroads?.summary ? (
                 <div className="kaleido-card p-4">
                   <div className="text-eyebrow text-faint">已澄清的岔路口</div>
-                  <p className="mt-2 text-[12.5px] leading-[1.75] text-sub">
+                  <p className="mt-2 text-footnote leading-[1.75] text-sub">
                     {model.crossroads.summary}
                   </p>
                 </div>
@@ -144,7 +144,7 @@ export function ChatView({
               <div className="pt-2.5">
                 <button
                   onClick={() => model.retry()}
-                  className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#AFC7FF] px-[15px] py-[9px] rounded-chip bg-[#5E96FF]/10 border border-[#6FA5FF]/30 transition active:scale-[0.96]"
+                  className="inline-flex items-center gap-1.5 text-footnote font-semibold text-brand-lite px-[15px] py-[9px] rounded-chip bg-brand/10 border border-brand-bright/30 transition active:scale-[0.96]"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <path d="M20 11a8 8 0 1 0-1.5 5M20 5v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

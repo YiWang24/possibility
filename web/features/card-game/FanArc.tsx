@@ -82,7 +82,7 @@ export function FanArc({
                   setPicked(i);
                   setTimeout(() => onDraw(scenario), 320);
                 }}
-                className="card-game-back absolute flex items-center justify-center overflow-hidden rounded-[16px] transition-transform active:scale-[0.94] lg:rounded-[20px]"
+                className="card-game-back absolute flex items-center justify-center overflow-hidden rounded-tile transition-transform active:scale-[0.94] lg:rounded-card"
                 style={{
                   left: cx - cardWidth / 2,
                   top: cy - cardHeight / 2,
@@ -95,9 +95,9 @@ export function FanArc({
                     : "0 6px 18px rgba(0,0,0,0.45)",
                 }}
               >
-                <span className="absolute inset-[10px] rounded-[11px] border border-white/[0.07] lg:inset-[14px] lg:rounded-[14px]" />
+                <span className="absolute inset-[10px] rounded-field border border-white/[0.07] lg:inset-[14px] lg:rounded-tile" />
                 <span
-                  className="absolute h-12 w-12 rotate-45 rounded-[12px] border border-violet-soft/35 bg-violet-soft/[0.035] lg:h-16 lg:w-16 lg:rounded-[16px]"
+                  className="absolute h-12 w-12 rotate-45 rounded-field border border-violet-soft/35 bg-violet-soft/[0.035] lg:h-16 lg:w-16 lg:rounded-tile"
                   style={{
                     boxShadow: isSelected
                       ? `0 0 28px ${withAlpha(accent, 0.25)}`

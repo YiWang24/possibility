@@ -4,7 +4,8 @@
  * 推演结果作为内部阶段态（ResultView），以便携带数据。 */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PageShell } from "@/components/shell/PageShell";
-import { PageHeader, SectionHeader, PrimaryButton } from "@/components/ui/Basics";
+import { Button } from "@/components/ui/button";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
 import { OrbView } from "@/components/ui/OrbView";
 import { useToast } from "@/components/ui/Toast";
 import { useData } from "@/stores/data";
@@ -288,37 +289,34 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
           <div className="flex min-w-0 flex-col">
             {/* 问题卡 */}
             <div className="kaleido-card px-5 py-[18px] xl:px-7 xl:py-6">
-              <div className="text-[11px] tracking-[2.5px] text-faint">当前探索问题</div>
+              <div className="text-caption tracking-[2.5px] text-faint">当前探索问题</div>
               {editing ? (
                 <div className="mt-2 flex flex-col gap-2.5">
                   <textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     rows={3}
-                    className="w-full resize-none rounded-[14px] border border-brand/40 bg-[#060810]/50 px-[14px] py-3 text-[14px] leading-[1.6] text-ink focus:outline-none"
+                    className="w-full resize-none rounded-tile border border-brand/40 bg-[#060810]/50 px-[14px] py-3 text-callout leading-[1.6] text-ink focus:outline-none"
                   />
                   <div className="flex justify-end gap-3">
-                    <button onClick={() => setEditing(false)} className="text-[12.5px] text-faint">
+                    <button onClick={() => setEditing(false)} className="text-footnote text-faint">
                       取消
                     </button>
-                    <button
-                      onClick={saveEdit}
-                      className="rounded-chip bg-btn-g px-5 py-2 text-[12.5px] font-semibold text-white"
-                    >
+                    <Button size="sm" onClick={saveEdit}>
                       确定
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <p className="mt-2 text-[16.5px] font-bold leading-[1.6] text-ink">{question}</p>
+                  <p className="mt-2 text-subtitle font-bold leading-[1.6] text-ink">{question}</p>
                   <div className="mt-2.5 flex justify-end">
                     <button
                       onClick={() => {
                         setDraft(question);
                         setEditing(true);
                       }}
-                      className="text-[12px] text-brand"
+                      className="text-footnote text-brand"
                     >
                       更换问题 ›
                     </button>
@@ -341,9 +339,9 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
                   <button
                     key={key}
                     onClick={() => setHorizonKey(key)}
-                    className={`shrink-0 rounded-chip border px-[14px] py-2 text-[12px] tabular-nums transition ${
+                    className={`shrink-0 rounded-chip border px-[14px] py-2 text-footnote tabular-nums transition ${
                       on
-                        ? "bg-btn-g font-semibold text-white border-[#6FA5FF]/60"
+                        ? "bg-btn-g font-semibold text-white border-brand-bright/60"
                         : "bg-raised text-sub border-line"
                     }`}
                   >
@@ -352,7 +350,7 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
                 );
               })}
             </div>
-            <p className="mt-3 text-center text-[11px] tracking-[1px] text-faint">
+            <p className="mt-3 text-center text-caption tracking-[1px] text-faint">
               拖动旋钮，从 7 天到 10 年任意停留
             </p>
           </div>
@@ -364,13 +362,13 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
               <SectionHeader title="我的选择卡" trailing="点选，或拖进转盘" />
               <GestureHint />
               {choicesLoading && (
-                <div className="flex w-fit items-center gap-2 rounded-chip border border-[#6FA5FF]/22 bg-[#5E96FF]/8 px-3 py-1.5">
+                <div className="flex w-fit items-center gap-2 rounded-chip border border-brand-bright/22 bg-brand/8 px-3 py-1.5">
                   <span className="h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent" />
-                  <span className="text-[10px] text-sub">正在根据当前问题生成专属选择卡……</span>
+                  <span className="text-micro text-sub">正在根据当前问题生成专属选择卡……</span>
                 </div>
               )}
               {!choicesLoading && remoteChoices.length === 0 && (
-                <button onClick={() => void loadChoices()} className="w-fit text-[11.5px] font-semibold text-brand">
+                <button onClick={() => void loadChoices()} className="w-fit text-caption font-semibold text-brand">
                   重新生成选择卡
                 </button>
               )}
@@ -458,8 +456,8 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
             {/* 底线卡 */}
             <div className="mt-6 flex flex-col gap-3.5">
               <div className="flex items-center justify-between">
-                <h2 className="text-[15px] font-bold text-ink">什么要一起带走？</h2>
-                <span className="text-[12px] tabular-nums">
+                <h2 className="text-lead font-bold text-ink">什么要一起带走？</h2>
+                <span className="text-footnote tabular-nums">
                   <span className="font-bold text-brand">{carry.length}</span>
                   <span className="text-faint">/3</span>
                 </span>
@@ -472,7 +470,7 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
                     <button
                       key={card.id}
                       onClick={() => toggleCarry(card.id)}
-                      className="flex w-[130px] shrink-0 flex-col items-start gap-1.5 rounded-[14px] border px-3 py-3 text-left transition active:scale-[0.97] lg:w-auto"
+                      className="flex w-[130px] shrink-0 flex-col items-start gap-1.5 rounded-tile border px-3 py-3 text-left transition active:scale-[0.97] lg:w-auto"
                       style={{
                         background: on ? "rgba(94,150,255,0.1)" : "var(--color-card)",
                         borderColor: on ? "rgba(111,165,255,0.65)" : "var(--color-line)",
@@ -482,8 +480,8 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
                       <span className={on ? "text-brand" : "text-sub"}>
                         <CardIconMark icon={card.icon} size={14} />
                       </span>
-                      <span className="text-[12.5px] font-semibold text-ink">{card.name}</span>
-                      <span className="text-[9.5px] text-faint">{card.source}</span>
+                      <span className="text-footnote font-semibold text-ink">{card.name}</span>
+                      <span className="text-micro text-faint">{card.source}</span>
                     </button>
                   );
                 })}
@@ -491,10 +489,12 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
             </div>
 
             {/* 开始推演 */}
-            <div className="mt-[26px]">
-              <PrimaryButton title="开始推演" wide enabled={!!pick && !loading} onClick={runSim} />
+            <div className="mt-[26px] flex justify-center">
+              <Button size="lg" className="min-w-[230px]" disabled={!pick || loading} onClick={runSim}>
+                开始推演
+              </Button>
             </div>
-            <p className="mt-3.5 text-center text-[11px] leading-[1.7] text-faint">
+            <p className="mt-3.5 text-center text-caption leading-[1.7] text-faint">
               推演基于你的动态画像与 1,842 位相似旅人的真实经历
               <br />
               它不是预言，是一面镜子
@@ -506,13 +506,13 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
       {/* 拖拽浮标 */}
       {dragChoice && (
         <div
-          className="pointer-events-none fixed z-[60] flex items-center gap-2 rounded-[16px] border border-[#6FA5FF]/55 bg-[#161A26]/95 px-[18px] py-3 shadow-[0_0_24px_rgba(79,125,255,0.35)]"
+          className="pointer-events-none fixed z-[60] flex items-center gap-2 rounded-tile border border-brand-bright/55 bg-raised/95 px-[18px] py-3 shadow-[0_0_24px_rgba(79,125,255,0.35)]"
           style={{ left: dragPoint.x, top: dragPoint.y, transform: "translate(-50%, -50%)" }}
         >
           <span className="text-brand">
             <CardIconMark icon={dragChoice.icon} size={14} />
           </span>
-          <span className="text-[14px] font-semibold text-ink">{dragChoice.name}</span>
+          <span className="text-callout font-semibold text-ink">{dragChoice.name}</span>
         </div>
       )}
 
@@ -521,7 +521,7 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
         <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center gap-[22px] bg-[#08090F]/95 px-10">
           <OrbView size={110} />
           <div className="text-[18px] font-bold text-ink">正在推演 {pick}</div>
-          <div className="text-[12.5px] text-sub">{LOAD_STEPS[Math.min(loadStep, LOAD_STEPS.length - 1)]}</div>
+          <div className="text-footnote text-sub">{LOAD_STEPS[Math.min(loadStep, LOAD_STEPS.length - 1)]}</div>
         </div>
       )}
     </>
@@ -532,8 +532,8 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
 
 function GestureHint() {
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-[9.5px]">
-      <span className="rounded-chip border border-[#8F7BFF]/17 bg-[#8F7BFF]/10 px-[7px] py-[3px] text-[9px] text-[#D9D0F5]">
+    <div className="flex flex-wrap items-center gap-1.5 text-micro">
+      <span className="rounded-chip border border-violet-soft/17 bg-violet-soft/10 px-[7px] py-[3px] text-micro text-[#D9D0F5]">
         手势
       </span>
       <span className="text-[#B6BED0]">单击选中</span>
@@ -597,7 +597,7 @@ function ChoiceCardBody({
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      className="relative flex h-[148px] w-[116px] cursor-pointer touch-none flex-col items-start overflow-hidden rounded-[18px] px-[13px] py-[17px]"
+      className="relative flex h-[148px] w-[116px] cursor-pointer touch-none flex-col items-start overflow-hidden rounded-tile px-[13px] py-[17px]"
       style={{
         background: `radial-gradient(120px circle at 82% -12%, ${hexA(accent, 0.17)}, transparent), ${
           isOn ? "linear-gradient(135deg, rgba(94,150,255,0.26), rgba(143,123,255,0.13)), " : ""
@@ -610,10 +610,10 @@ function ChoiceCardBody({
       }}
     >
       <CardIconChip icon={choice.icon} accent={accent} emphasized={isOn} />
-      <div className="mt-2.5 text-[13px] font-semibold leading-[1.4] text-ink">{choice.name}</div>
-      <div className="mt-1.5 text-[10.5px] leading-[1.5] text-sub">{choice.desc}</div>
+      <div className="mt-2.5 text-body font-semibold leading-[1.4] text-ink">{choice.name}</div>
+      <div className="mt-1.5 text-micro leading-[1.5] text-sub">{choice.desc}</div>
       {isOn && (
-        <div className="absolute right-3 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-btn-g text-[11px] font-bold text-white">
+        <div className="absolute right-3 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-btn-g text-caption font-bold text-white">
           ✓
         </div>
       )}
@@ -625,7 +625,7 @@ function ChoiceCardBody({
             onRemove();
           }}
           aria-label="删除这张卡"
-          className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-black/40 text-[12px] text-faint transition hover:text-ink"
+          className="absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-black/40 text-footnote text-faint transition hover:text-ink"
         >
           ×
         </button>
@@ -640,7 +640,7 @@ function CreateCard({ active, onClick }: { active: boolean; onClick: () => void 
   return (
     <button
       onClick={onClick}
-      className="relative flex h-[148px] w-[116px] flex-col items-start overflow-hidden rounded-[18px] px-[13px] py-[17px] text-left"
+      className="relative flex h-[148px] w-[116px] flex-col items-start overflow-hidden rounded-tile px-[13px] py-[17px] text-left"
       style={{
         background: `radial-gradient(120px circle at 82% -12%, ${hexA(MAGENTA, 0.15)}, transparent), ${
           active ? "linear-gradient(135deg, rgba(227,92,193,0.24), rgba(143,123,255,0.14)), " : ""
@@ -651,11 +651,11 @@ function CreateCard({ active, onClick }: { active: boolean; onClick: () => void 
       }}
     >
       <CardIconChip icon="custom" accent={MAGENTA} emphasized={active} />
-      <div className="mt-2.5 text-[13px] font-semibold text-[#E3D9F4]">自定义选择</div>
-      <div className="mt-1.5 text-[10.5px] leading-[1.5] text-[#777F93]">写下真正在考虑的那条路</div>
+      <div className="mt-2.5 text-body font-semibold text-[#E3D9F4]">自定义选择</div>
+      <div className="mt-1.5 text-micro leading-[1.5] text-[#777F93]">写下真正在考虑的那条路</div>
       {active && (
         <div
-          className="absolute right-3 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white"
+          className="absolute right-3 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-caption font-bold text-white"
           style={{ background: "linear-gradient(135deg, #E35CC1, #8F7BFF)" }}
         >
           ✓
@@ -682,36 +682,36 @@ function CustomEditor({
 }) {
   return (
     <div
-      className="flex flex-col gap-2.5 rounded-[17px] border p-[13px]"
+      className="flex flex-col gap-2.5 rounded-tile border p-[13px]"
       style={{
         background: "linear-gradient(135deg, rgba(94,150,255,0.08), rgba(227,92,193,0.055))",
         borderColor: "rgba(143,161,255,0.19)",
       }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[12px] font-semibold text-ink">写一张自己的选择卡</span>
-        <span className="text-[9px] text-faint">名称 ≤18 字 · 描述 ≤42 字</span>
+        <span className="text-footnote font-semibold text-ink">写一张自己的选择卡</span>
+        <span className="text-micro text-faint">名称 ≤18 字 · 描述 ≤42 字</span>
       </div>
       <input
         value={name}
         onChange={(e) => onName(e.target.value)}
         placeholder="选择名称，例如：去大厂做 AI"
-        className="rounded-[11px] border border-white/10 bg-[#060810]/54 px-[11px] py-[9px] text-[11.5px] text-ink placeholder:text-faint focus:outline-none"
+        className="rounded-field border border-white/10 bg-[#060810]/54 px-[11px] py-[9px] text-caption text-ink placeholder:text-faint focus:outline-none"
       />
       <textarea
         value={desc}
         onChange={(e) => onDesc(e.target.value)}
         placeholder="一句话描述这条路"
         rows={2}
-        className="resize-none rounded-[11px] border border-white/10 bg-[#060810]/54 px-[11px] py-[9px] text-[11.5px] text-ink placeholder:text-faint focus:outline-none"
+        className="resize-none rounded-field border border-white/10 bg-[#060810]/54 px-[11px] py-[9px] text-caption text-ink placeholder:text-faint focus:outline-none"
       />
       <div className="flex justify-end gap-3">
-        <button onClick={onCancel} className="text-[11.5px] text-faint">
+        <button onClick={onCancel} className="text-caption text-faint">
           取消
         </button>
-        <button onClick={onAdd} className="rounded-chip bg-btn-g px-4 py-[7px] text-[11.5px] font-semibold text-white">
+        <Button size="sm" onClick={onAdd}>
           加入牌堆
-        </button>
+        </Button>
       </div>
     </div>
   );

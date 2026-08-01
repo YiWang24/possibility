@@ -19,7 +19,7 @@ export function LoginSheet({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center md:items-center md:p-6">
+        <div className="fixed inset-0 z-70 flex items-end justify-center md:items-center md:p-6">
           {/* 背景遮罩：点击即放弃登录 */}
           <motion.div
             className="absolute inset-0 bg-black/60"
@@ -30,7 +30,7 @@ export function LoginSheet({
           />
           {/* 移动全宽 sheet / 桌面居中 modal */}
           <motion.div
-            className="relative w-full md:w-[420px] max-h-[85vh] overflow-y-auto no-scrollbar bg-[#10131C] border border-line rounded-t-sheet md:rounded-sheet shadow-[0_18px_50px_rgba(0,0,0,0.7)]"
+            className="relative w-full md:w-[420px] max-h-[85vh] overflow-y-auto no-scrollbar bg-card border border-line rounded-t-sheet md:rounded-sheet shadow-pop"
             initial={{ y: 48, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 48, opacity: 0 }}
@@ -42,15 +42,15 @@ export function LoginSheet({
             <div className="flex flex-col gap-4 px-[22px] pt-6 pb-7">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-1.5">
-                  <div className="text-[17px] font-bold text-ink">登录 Possibility</div>
-                  <div className="text-[11.5px] text-sub">
+                  <div className="text-title font-bold text-ink">登录 Possibility</div>
+                  <div className="text-caption text-sub">
                     会话已过期，重新登录后继续刚才的操作。
                   </div>
                 </div>
                 <button
                   onClick={onClose}
                   aria-label="关闭"
-                  className="shrink-0 w-7 h-7 -mr-1 rounded-chip bg-raised border border-line text-sub text-[13px] leading-none transition active:scale-[0.92]"
+                  className="shrink-0 w-7 h-7 -mr-1 rounded-chip bg-raised border border-line text-sub text-body leading-none transition active:scale-[0.97]"
                 >
                   ✕
                 </button>

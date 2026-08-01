@@ -40,7 +40,7 @@ export function PersonaHero({
             {userName}的
             <span className="text-aurora">{model.shapeName}</span>
           </h2>
-          <p className="max-w-[46ch] text-[13px] leading-[1.9] text-sub xl:text-[14px]">
+          <p className="max-w-[46ch] text-body leading-[1.9] text-sub xl:text-callout">
             {summary && summary.length > 0
               ? summary
               : started
@@ -52,8 +52,8 @@ export function PersonaHero({
         {/* 完成度 */}
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
-            <span className="text-[11.5px] text-faint">画像完成度</span>
-            <span className="text-[12px] tabular-nums text-sub">
+            <span className="text-caption text-faint">画像完成度</span>
+            <span className="text-footnote tabular-nums text-sub">
               {completion.completed}/{completion.total} · {completion.percent}%
             </span>
           </div>
@@ -68,13 +68,13 @@ export function PersonaHero({
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => router.push("/studio")}
-            className="rounded-chip bg-btn-g px-[22px] py-3 text-[13px] font-semibold text-white transition active:scale-[0.97]"
+            className="rounded-chip bg-btn-g px-[22px] py-3 text-body font-semibold text-white transition active:scale-[0.97]"
           >
             {started ? "继续雕刻画像" : "开始塑造画像"}
           </button>
           <button
             onClick={() => router.push("/lab")}
-            className="rounded-chip border border-line px-[18px] py-3 text-[13px] font-medium text-sub transition hover:border-brand/45 hover:text-ink"
+            className="rounded-chip border border-line px-[18px] py-3 text-body font-medium text-sub transition hover:border-brand/45 hover:text-ink"
           >
             拿它去推演一次 ›
           </button>

@@ -1,6 +1,8 @@
 "use client";
 /* 输入栏 —— 移植自 iOS ChatView.inputBar（回车/发送按钮续轮，流式时禁用发送） */
 
+import { Button } from "@/components/ui/button";
+
 export function InputBar({
   value,
   disabled,
@@ -29,15 +31,11 @@ export function InputBar({
           }}
           placeholder="想到什么，直接问…"
           enterKeyHint="send"
-          className="flex-1 text-[13.5px] text-ink placeholder:text-faint px-[18px] py-3 rounded-chip bg-raised border border-line outline-none focus:border-[#6FA5FF]/60"
+          className="flex-1 text-body text-ink placeholder:text-faint px-[18px] py-3 rounded-chip bg-raised border border-line outline-none focus:border-brand-bright/60"
         />
-        <button
-          onClick={onSend}
-          disabled={disabled}
-          className="text-[13px] font-semibold text-white px-[22px] py-3 rounded-chip bg-btn-g transition active:scale-[0.96] disabled:opacity-40"
-        >
+        <Button onClick={onSend} disabled={disabled}>
           发送
-        </button>
+        </Button>
       </div>
     </div>
   );

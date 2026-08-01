@@ -83,9 +83,9 @@ export function PersonaStage({
       />
 
       {/* LIVE 徽标 */}
-      <div className="absolute left-[15px] top-[14px] flex items-center gap-1.5 rounded-chip border border-[#C6DAFF]/18 bg-[#070B18]/54 px-[9px] py-[5px] text-[#DCE8FF]">
+      <div className="absolute left-[15px] top-[14px] flex items-center gap-1.5 rounded-chip border border-brand-lite/18 bg-[#070B18]/54 px-[9px] py-[5px] text-[#DCE8FF]">
         <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-teal" />
-        <span className="text-[8.5px] font-semibold tracking-[1.8px]">LIVE PROFILE FORM</span>
+        <span className="text-micro font-semibold tracking-[1.8px]">LIVE PROFILE FORM</span>
       </div>
 
       {/* caption */}
@@ -93,8 +93,8 @@ export function PersonaStage({
         <div
           className={
             size === "hero" || size === "fill"
-              ? "text-[15px] font-semibold text-ink xl:text-[17px]"
-              : "text-[12.5px] font-semibold text-ink"
+              ? "text-lead font-semibold text-ink xl:text-title"
+              : "text-footnote font-semibold text-ink"
           }
         >
           {userName} · 动态数字形象
@@ -103,8 +103,8 @@ export function PersonaStage({
           <div
             className={
               size === "fill" || size === "hero"
-                ? "line-clamp-2 text-[11.5px] text-sub"
-                : "line-clamp-2 text-[9.5px] text-faint"
+                ? "line-clamp-2 text-caption text-sub"
+                : "line-clamp-2 text-micro text-faint"
             }
           >
             {metaText}
@@ -114,7 +114,7 @@ export function PersonaStage({
 
       {/* inset 描边 */}
       <div
-        className="pointer-events-none absolute inset-[10px] rounded-[16px] border"
+        className="pointer-events-none absolute inset-[10px] rounded-tile border"
         style={{
           borderColor: hasLifeCards ? "rgba(174,174,255,0.22)" : "rgba(172,201,255,0.12)",
           boxShadow: `0 0 15px rgba(94,150,255,${hasLifeCards ? 0.13 : 0.08})`,

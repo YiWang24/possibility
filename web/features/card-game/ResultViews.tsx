@@ -20,7 +20,7 @@ function AiResultNotice({ aiResult, onRetry }: NarrativeProps) {
   const failed = status === "failed";
   return (
     <div
-      className="flex flex-col gap-2 rounded-[13px] border px-3.5 py-3 md:flex-row md:items-center md:justify-between"
+      className="flex flex-col gap-2 rounded-field border px-3.5 py-3 md:flex-row md:items-center md:justify-between"
       style={{
         borderColor: ready
           ? "rgba(62,217,164,0.22)"
@@ -35,7 +35,7 @@ function AiResultNotice({ aiResult, onRetry }: NarrativeProps) {
       }}
     >
       <div className="min-w-0">
-        <div className="flex items-center gap-2 text-[10.5px] font-semibold text-ink">
+        <div className="flex items-center gap-2 text-micro font-semibold text-ink">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
               status === "generating" || status === "pending" ? "animate-pulse" : ""
@@ -52,7 +52,7 @@ function AiResultNotice({ aiResult, onRetry }: NarrativeProps) {
                 ? "AI 正在理解这一局的取舍"
                 : "正在验证并保存本局证据"}
         </div>
-        <p className="mt-1 text-[9.5px] leading-[1.65] text-faint">
+        <p className="mt-1 text-micro leading-[1.65] text-faint">
           {ready
             ? "文案基于本局选择与理由生成；最终卡牌、分数和行为事实仍由规则引擎决定。"
             : failed
@@ -64,7 +64,7 @@ function AiResultNotice({ aiResult, onRetry }: NarrativeProps) {
         <button
           type="button"
           onClick={onRetry}
-          className="shrink-0 self-start rounded-chip border border-white/10 bg-white/[0.045] px-3 py-1.5 text-[10px] font-semibold text-ink transition active:scale-[0.97] md:self-auto"
+          className="shrink-0 self-start rounded-chip border border-white/10 bg-white/[0.045] px-3 py-1.5 text-micro font-semibold text-ink transition active:scale-[0.97] md:self-auto"
         >
           重试 AI 解读
         </button>
@@ -105,7 +105,7 @@ export function RelationResult({
       <h2 className="text-center text-[19px] font-bold text-ink">
         {narrative?.headline ?? `${cfg.title.slice(0, 2)}中，你最关心这 ${engine.finalCardCount} 点`}
       </h2>
-      <p className="text-center text-[12px] leading-[1.8] text-sub">
+      <p className="text-center text-footnote leading-[1.8] text-sub">
         {narrative?.summary ?? engine.groupNarrative}
         {!narrative && (
           <>
@@ -136,28 +136,28 @@ export function RelationResult({
       {narrative && (
         <div className="grid w-full gap-3 md:grid-cols-2">
           <ResultBlock kicker="AI REFLECTION · 本局观察" tint="#8F7BFF" className="md:col-span-2">
-            <p className="text-[12px] leading-[1.85] text-ink/92">{narrative.truth.text}</p>
+            <p className="text-footnote leading-[1.85] text-ink/92">{narrative.truth.text}</p>
           </ResultBlock>
           <ResultBlock kicker="INNER TENSION · 内在张力" tint="#E35CC1">
-            <p className="text-[11.5px] leading-[1.8] text-sub">{narrative.tension.text}</p>
+            <p className="text-caption leading-[1.8] text-sub">{narrative.tension.text}</p>
           </ResultBlock>
           <ResultBlock kicker="POSSIBLE BLIND SPOT · 可能的盲点" tint="#FF7A4D">
-            <p className="text-[11.5px] leading-[1.8] text-sub">{narrative.blind_spot.text}</p>
+            <p className="text-caption leading-[1.8] text-sub">{narrative.blind_spot.text}</p>
           </ResultBlock>
           <ResultBlock kicker="带回现实的问题" tint="#9DBCFF" className="md:col-span-2">
-            <p className="text-[12px] leading-[1.8] text-ink/90">{narrative.reflection_question.text}</p>
+            <p className="text-footnote leading-[1.8] text-ink/90">{narrative.reflection_question.text}</p>
           </ResultBlock>
         </div>
       )}
 
-      <div className="w-full rounded-[16px] border border-line bg-card p-[15px]">
-        <div className="text-[9px] font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
+      <div className="w-full rounded-tile border border-line bg-card p-[15px]">
+        <div className="text-micro font-semibold tracking-[2px]" style={{ color: withAlpha(accent, 0.9) }}>
           SIGNAL · 可写入画像
         </div>
-        <div className="mt-2 text-[14.5px] font-bold text-ink">
+        <div className="mt-2 text-callout font-bold text-ink">
           {cards.map((c) => c.name).join(" · ")}
         </div>
-        <p className="mt-2 text-[11.5px] leading-[1.8] text-sub">
+        <p className="mt-2 text-caption leading-[1.8] text-sub">
           本次经历了 {engine.round} 轮情境，接受 {engine.accepted.length} 次、自主交换{" "}
           {voluntaryTrades} 次、压力强制交换 {forcedTrades} 次。这 {engine.finalCardCount}
           点会成为画像的优先信号。
@@ -193,20 +193,20 @@ export function LifeResult({
             <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(11,14,23,0.15)_5%,rgba(11,14,23,0.78)_95%)]" />
           </motion.div>
           <div>
-            <div className="text-[9.5px] font-semibold tracking-[2px] text-faint">
+            <div className="text-micro font-semibold tracking-[2px] text-faint">
               你的动态数字人 · 新切面
             </div>
             <div className="text-aurora mt-2 text-[24px] font-extrabold lg:text-[30px]">
               {narrative?.headline ?? a.title}
             </div>
-            <p className="mt-2 max-w-[42ch] text-[11.5px] leading-[1.75] text-sub">
+            <p className="mt-2 max-w-[42ch] text-caption leading-[1.75] text-sub">
               {narrative?.summary ?? "这不是在判断你好或不好，而是在看代价出现时，你最先保护了什么。"}
             </p>
           </div>
         </div>
 
         <div>
-          <div className="text-[9px] font-semibold tracking-[1.8px] text-brand">
+          <div className="text-micro font-semibold tracking-[1.8px] text-brand">
             最终留下的 {engine.finalCardCount} 张人生底牌
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2.5">
@@ -229,10 +229,10 @@ export function LifeResult({
 
       <div className="grid gap-4 md:grid-cols-2">
         <ResultBlock kicker="THE TRUTH BENEATH · 内心真相" tint="#8F7BFF" className="md:col-span-2">
-          <p className="text-[12px] leading-[1.85] text-ink/92 lg:text-[13px]">
+          <p className="text-footnote leading-[1.85] text-ink/92 lg:text-body">
             {narrative?.truth.text ?? a.truth}
           </p>
-          <p className="text-[9.5px] text-faint">
+          <p className="text-micro text-faint">
             判断来自你留下、放下和为之接受挫折的牌，而不只是最终结果。
           </p>
         </ResultBlock>
@@ -241,20 +241,20 @@ export function LifeResult({
           <ResultBlock kicker="YOUR OWN WORDS · 你亲口说出的线索" tint="#3ED9A4" className="md:col-span-2">
             <div className="grid w-full gap-2.5 md:grid-cols-2">
               {a.voiceQuotes.map((quote) => (
-                <div key={`${quote.label}:${quote.text}`} className="w-full rounded-[10px] bg-white/[0.035] p-3">
-                  <div className="text-[10.5px] font-semibold text-[#8EE7C8]">{quote.label}</div>
-                  <div className="mt-1 text-[11.5px] italic leading-[1.7] text-sub">“{quote.text}”</div>
+                <div key={`${quote.label}:${quote.text}`} className="w-full rounded-field bg-white/[0.035] p-3">
+                  <div className="text-micro font-semibold text-teal-lite">{quote.label}</div>
+                  <div className="mt-1 text-caption italic leading-[1.7] text-sub">“{quote.text}”</div>
                 </div>
               ))}
             </div>
-            <p className="text-[11px] leading-[1.7] text-sub">{a.reasonInsight}</p>
+            <p className="text-caption leading-[1.7] text-sub">{a.reasonInsight}</p>
           </ResultBlock>
         )}
 
         <ResultBlock kicker="你的心理倾向光谱" tint="#8F7BFF">
           {a.spectrum.map((row, i) => (
             <div key={`${row.left}:${row.right}`} className="w-full">
-              <div className="flex justify-between text-[10px] text-faint">
+              <div className="flex justify-between text-micro text-faint">
                 <span>{row.left}</span><span>{row.right}</span>
               </div>
               <div className="relative mt-[5px] h-[14px]">
@@ -272,26 +272,26 @@ export function LifeResult({
         </ResultBlock>
 
         <ResultBlock kicker="INNER TENSION · 内在张力" tint="#E35CC1">
-          <div className="text-[13px] font-bold text-ink">你想拥有的，和你会拿去交换的</div>
-          <p className="text-[11.5px] leading-[1.8] text-sub">
+          <div className="text-body font-bold text-ink">你想拥有的，和你会拿去交换的</div>
+          <p className="text-caption leading-[1.8] text-sub">
             {narrative?.tension.text ?? a.tension}
           </p>
         </ResultBlock>
 
         <ResultBlock kicker="POSSIBLE BLIND SPOT · 可能的盲点" tint="#FF7A4D">
-          <p className="text-[11.5px] leading-[1.8] text-sub">
+          <p className="text-caption leading-[1.8] text-sub">
             {narrative?.blind_spot.text ?? a.blindspot}
           </p>
         </ResultBlock>
 
         <ResultBlock kicker="留给真实生活的一个问题" tint="#9DBCFF">
-          <p className="text-[12px] leading-[1.8] text-ink/90">
+          <p className="text-footnote leading-[1.8] text-ink/90">
             {narrative?.reflection_question.text ?? a.reflection}
           </p>
         </ResultBlock>
       </div>
 
-      <div className="grid gap-2.5 rounded-[14px] border border-teal/15 bg-teal/[0.045] p-3.5 text-[10px] leading-[1.7] text-faint md:grid-cols-2">
+      <div className="grid gap-2.5 rounded-tile border border-teal/15 bg-teal/[0.045] p-3.5 text-micro leading-[1.7] text-faint md:grid-cols-2">
         <p>
           本次推断基于：接受 {a.acceptedCount} 次、自主交换 {voluntaryTrades} 次、压力强制交换{" "}
           {forcedTrades} 次、最终保留 {a.held.length} 张底牌。它是一面自我探索的镜子，不是心理诊断。

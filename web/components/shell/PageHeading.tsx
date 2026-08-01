@@ -42,7 +42,7 @@ export function PageHeading({
         {eyebrow && !up ? <span className="text-eyebrow text-faint">{eyebrow}</span> : null}
         <h1 className="text-display font-bold text-ink">{title}</h1>
         {description ? (
-          <p className="max-w-[62ch] text-[13px] leading-[1.8] text-sub">{description}</p>
+          <p className="max-w-[62ch] text-body leading-[1.8] text-sub">{description}</p>
         ) : null}
       </div>
       {trailing ? <div className="flex shrink-0 items-center gap-2">{trailing}</div> : null}
@@ -59,7 +59,7 @@ function Breadcrumb({
 }) {
   return (
     <nav aria-label="面包屑" className="min-w-0">
-      <ol className="flex min-w-0 items-center gap-1.5 text-[12px] text-faint">
+      <ol className="flex min-w-0 items-center gap-1.5 text-footnote text-faint">
         <li className="shrink-0">
           <Link
             href={parent.href}

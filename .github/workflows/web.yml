@@ -1,0 +1,44 @@
+name: Web
+
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'packages/**'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/web.yml'
+  workflow_dispatch:
+
+# 纯检查工作流：GITHUB_TOKEN 只需要读仓库，不给默认的可写权限
+permissions:
+  contents: read
+
+jobs:
+  web-check:
+    name: 类型 / 设计 token 护栏 / 构建
+    runs-on: ubuntu-latest
+    steps:
+      # action 一律锁定到 commit SHA：tag 是可变引用，SonarCloud 视为供应链风险
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: pnpm --filter @possibility/web run typecheck
+
+      # 设计 token 护栏：裸 hex / 任意字号 / 任意圆角 / 任意阴影
+      # 按文件 ratchet —— 存量只许减少，新增代码必须走 token。
+      - name: 设计 token 护栏
+        run: pnpm --filter @possibility/web run lint:tokens
+
+      - name: 构建
+        run: pnpm --filter @possibility/web run build

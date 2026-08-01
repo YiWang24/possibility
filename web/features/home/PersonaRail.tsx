@@ -66,7 +66,7 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
         />
 
         <div className="flex flex-col gap-3 px-4 pb-4 pt-3.5">
-          {caption ? <p className="text-[11.5px] leading-[1.7] text-sub">{caption}</p> : null}
+          {caption ? <p className="text-caption leading-[1.7] text-sub">{caption}</p> : null}
 
           {/* 完成度 */}
           <div className="flex items-center gap-2.5">
@@ -76,7 +76,7 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
                 style={{ width: `${completion.percent}%` }}
               />
             </div>
-            <span className="text-[11px] tabular-nums text-sub">
+            <span className="text-caption tabular-nums text-sub">
               {completion.completed}/{completion.total}
             </span>
           </div>
@@ -91,20 +91,20 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
                 <li key={key}>
                   <button
                     onClick={() => router.push("/studio")}
-                    className={`flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition ${
+                    className={`flex w-full items-center gap-2.5 rounded-field px-2.5 py-2 text-left transition ${
                       isLit ? "bg-brand/12 ring-1 ring-brand/35" : "hover:bg-white/[0.035]"
                     }`}
                   >
                     <span
-                      className="grid size-[22px] shrink-0 place-items-center rounded-[8px] text-[11px]"
+                      className="grid size-[22px] shrink-0 place-items-center rounded-lg text-caption"
                       style={{ background: `${cfg.tint}26`, color: cfg.tint }}
                     >
                       {cfg.icon}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[12px] font-medium text-ink">{cfg.title}</span>
+                      <span className="block text-footnote font-medium text-ink">{cfg.title}</span>
                       <span
-                        className={`block truncate text-[10.5px] ${
+                        className={`block truncate text-micro ${
                           value ? "text-faint" : "text-brand"
                         }`}
                       >
@@ -112,7 +112,7 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
                       </span>
                     </span>
                     {isLit ? (
-                      <span className="shrink-0 rounded-chip bg-brand/22 px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.06em] text-[#BBD2FF]">
+                      <span className="shrink-0 rounded-chip bg-brand/22 px-1.5 py-0.5 text-micro font-semibold tracking-[0.06em] text-brand-lite">
                         刚点亮
                       </span>
                     ) : null}
@@ -124,7 +124,7 @@ export function PersonaRail({ highlight = [], footer, caption }: PersonaRailProp
 
           <button
             onClick={() => router.push("/studio")}
-            className="mt-0.5 self-start text-[11.5px] font-medium text-brand transition hover:text-[#8FB6FF]"
+            className="mt-0.5 self-start text-caption font-medium text-brand transition hover:text-brand-lite"
           >
             补全画像 ›
           </button>

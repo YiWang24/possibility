@@ -6,6 +6,7 @@
 
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
@@ -107,13 +108,13 @@ function EditSheet({
           <button
             onClick={onClose}
             aria-label="返回"
-            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-raised text-[15px] font-semibold text-ink transition active:scale-95"
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-raised text-lead font-semibold text-ink transition active:scale-95"
           >
             ‹
           </button>
           <div className="flex flex-col">
-            <span className="text-[16px] font-bold text-ink">{meta.title}</span>
-            <span className="text-[10.5px] text-faint">{meta.subtitle}</span>
+            <span className="text-subtitle font-bold text-ink">{meta.title}</span>
+            <span className="text-micro text-faint">{meta.subtitle}</span>
           </div>
         </div>
 
@@ -137,12 +138,9 @@ function EditSheet({
 
         {/* 保存栏 */}
         <div className="border-t border-line px-5 py-3.5">
-          <button
-            onClick={save}
-            className="w-full rounded-chip bg-btn-g py-[15px] text-[14px] font-semibold text-white transition active:scale-[0.97]"
-          >
+          <Button size="lg" className="w-full" onClick={save}>
             {meta.save}
-          </button>
+          </Button>
         </div>
       </motion.div>
     </div>
@@ -166,19 +164,19 @@ function Field({
 }) {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <span className="text-[10.5px] text-faint">{label}</span>
+      <span className="text-micro text-faint">{label}</span>
       {multiline ? (
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           rows={3}
-          className="resize-none rounded-[12px] border border-line bg-raised px-3 py-2.5 text-[13.5px] text-ink placeholder:text-faint focus:outline-none"
+          className="resize-none rounded-field border border-line bg-raised px-3 py-2.5 text-body text-ink placeholder:text-faint focus:outline-none"
         />
       ) : (
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-[12px] border border-line bg-raised px-3 py-2.5 text-[13.5px] text-ink placeholder:text-faint focus:outline-none"
+          className="rounded-field border border-line bg-raised px-3 py-2.5 text-body text-ink placeholder:text-faint focus:outline-none"
         />
       )}
     </div>
@@ -188,8 +186,8 @@ function Field({
 function SectionTitle({ title, note }: { title: string; note: string }) {
   return (
     <div className="flex items-baseline justify-between">
-      <span className="text-[13.5px] font-bold text-ink">{title}</span>
-      <span className="text-[10.5px] text-faint">{note}</span>
+      <span className="text-body font-bold text-ink">{title}</span>
+      <span className="text-micro text-faint">{note}</span>
     </div>
   );
 }
@@ -209,7 +207,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="self-start text-[12.5px] text-brand transition active:scale-95">
+    <button onClick={onClick} className="self-start text-footnote text-brand transition active:scale-95">
       {label}
     </button>
   );
@@ -217,7 +215,7 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 
 function EditCard({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-2.5 rounded-[14px] border border-line bg-card p-3.5">{children}</div>
+    <div className="flex flex-col gap-2.5 rounded-tile border border-line bg-card p-3.5">{children}</div>
   );
 }
 
@@ -306,7 +304,7 @@ function StoryEditor({
         <EditCard key={idx}>
           <div className="flex items-center justify-between gap-2.5">
             <Field label="年龄" value={node.age} onChange={(v) => updateNode(idx, "age", v)} className="w-[120px]" />
-            <button onClick={() => removeNode(idx)} className="self-end pb-2.5 text-[11.5px] text-[#FF8A8A]">
+            <button onClick={() => removeNode(idx)} className="self-end pb-2.5 text-caption text-[#FF8A8A]">
               删除
             </button>
           </div>
@@ -358,8 +356,8 @@ function AdviceEditor({
       {draft.adviceModules.map((m) => (
         <EditCard key={m.id}>
           <div className="flex items-center justify-between">
-            <span className="text-[10.5px] text-faint">模块</span>
-            <button onClick={() => removeModule(m.id)} className="text-[11.5px] text-[#FF8A8A]">
+            <span className="text-micro text-faint">模块</span>
+            <button onClick={() => removeModule(m.id)} className="text-caption text-[#FF8A8A]">
               删除
             </button>
           </div>
@@ -375,7 +373,7 @@ function AdviceEditor({
         </EditCard>
       ))}
       <AddButton label="＋ 新增经验模块" onClick={addModule} />
-      <span className="text-[10.5px] text-faint">每个模块都可以独立增删；链接保存后可直接访问。</span>
+      <span className="text-micro text-faint">每个模块都可以独立增删；链接保存后可直接访问。</span>
     </div>
   );
 }
@@ -398,7 +396,7 @@ function ServiceEditor({
       {draft.services.map((s) => (
         <EditCard key={s.id}>
           <div className="flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-ink">{s.type}</span>
+            <span className="text-footnote font-semibold text-ink">{s.type}</span>
             <Toggle on={s.enabled} onChange={(v) => updateService(s.id, "enabled", v)} />
           </div>
           <Field label="服务标题" value={s.title} onChange={(v) => updateService(s.id, "title", v)} />

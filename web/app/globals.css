@@ -11,32 +11,81 @@
   --color-faint: #5a6172;
   --color-line: rgb(255 255 255 / 0.08);
 
-  /* shadcn 语义色 —— 映射到现有万花筒主题 */
+  /* shadcn 语义色 —— 完整映射到万花筒主题，保证 `npx shadcn add` 拉下来的组件开箱即用 */
   --color-background: var(--color-paper);
   --color-foreground: var(--color-ink);
   --color-popover: var(--color-card);
   --color-popover-foreground: var(--color-ink);
   --color-accent: var(--color-raised);
   --color-accent-foreground: var(--color-ink);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-raised);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-raised);
   --color-muted-foreground: var(--color-sub);
+  --color-card-foreground: var(--color-ink);
+  --color-destructive: var(--color-orange);
+  --color-destructive-foreground: #ffffff;
   --color-border: var(--color-line);
+  --color-input: var(--color-line);
   --color-ring: var(--color-brand);
 
   /* 品牌色 */
   --color-brand: #5e96ff;
   --color-brand-deep: #2f63e8;
+  --color-brand-bright: #6fa5ff; /* 按钮渐变起始色 / 悬停描边 —— 原先 14 处裸 hex */
+  --color-brand-lite: #9dbcff; /* 品牌 tint 上的文字色 —— 原先 14 处裸 hex */
   --color-violet-soft: #8f7bff;
   --color-pink: #f06acd;
   --color-magenta: #e35cc1;
   --color-orange: #ff7a4d;
   --color-apricot: #ffb067;
   --color-teal: #3ed9a4;
+  --color-teal-lite: #8ee7c8; /* teal tint 上的文字色 */
   --color-lime: #d7f464;
 
-  /* 圆角 */
-  --radius-card: 22px;
-  --radius-sheet: 30px;
-  --radius-chip: 999px;
+  /* 状态语义 —— 错误/成功/警告统一从品牌色板取，不再各写各的 */
+  --color-danger: var(--color-orange);
+  --color-success: var(--color-teal);
+  --color-warning: var(--color-apricot);
+
+  /* 圆角阶梯 —— 五档封顶。原代码 148 处 rounded-[..] 出现过 22 种值，一律吸附到这五档 */
+  --radius-field: 12px; /* 输入框、小控件 */
+  --radius-tile: 16px; /* 卡片内的小块面、次级面板 */
+  --radius-card: 22px; /* 标准卡片 */
+  --radius-sheet: 30px; /* 弹层、大容器 */
+  --radius-chip: 999px; /* 胶囊 */
+
+  /* 字阶 —— 固定档位，替代 36 种 text-[..px] 任意值。
+     半档（10.5/11.5/12.5…）一律吸附到最近的整档。 */
+  --text-micro: 10px; /* 最小注记：徽标、计数 */
+  --text-micro--line-height: 1.4;
+  --text-caption: 11px; /* 辅助说明、chip 文字 */
+  --text-caption--line-height: 1.5;
+  --text-footnote: 12px; /* 次要信息、标签 */
+  --text-footnote--line-height: 1.5;
+  --text-body: 13px; /* 正文默认 */
+  --text-body--line-height: 1.6;
+  --text-callout: 14px; /* 强调正文、输入框 */
+  --text-callout--line-height: 1.55;
+  --text-lead: 15px; /* 主按钮、导语 */
+  --text-lead--line-height: 1.5;
+  --text-subtitle: 16px; /* 小节标题 */
+  --text-subtitle--line-height: 1.45;
+  --text-title: 17px; /* 卡片标题 */
+  --text-title--line-height: 1.4;
+  --text-heading: 20px; /* 区块大标题（非流体） */
+  --text-heading--line-height: 1.35;
+
+  /* 阴影 —— 三档 + 一个品牌辉光。原代码 24 处 shadow-[..] 有 19 种值，
+     同一个蓝色按钮辉光存在 5 个变体，这里收敛为单一真源 */
+  --shadow-card: 0 2px 8px rgb(0 0 0 / 0.55);
+  --shadow-pop: 0 16px 50px rgb(0 0 0 / 0.5);
+  --shadow-glow: 0 8px 18px rgb(94 150 255 / 0.45);
+
+  /* 动效 —— 标准时长与缓动 */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
 
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC",
     "Segoe UI", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
@@ -199,7 +248,7 @@ html[data-auth="in"] [data-auth-branch="in"] {
   background: var(--color-card);
   border-radius: var(--radius-card);
   border: 1px solid var(--color-line);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.55);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 

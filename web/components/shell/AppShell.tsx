@@ -44,8 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="absolute size-2 rounded-full bg-paper shadow-[0_0_12px_rgb(143_123_255/0.8)]" />
             </span>
             <span className="leading-none">
-              <span className="block text-[9px] tracking-[2.8px] text-faint">POSSIBILITY</span>
-              <span className="mt-1.5 block text-[16px] font-semibold tracking-[0.08em] text-ink">
+              <span className="block text-micro tracking-[2.8px] text-faint">POSSIBILITY</span>
+              <span className="mt-1.5 block text-subtitle font-semibold tracking-[0.08em] text-ink">
                 万花筒
               </span>
             </span>
@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       asChild
                       active={active}
                       className={cn(
-                        "relative flex h-10 min-w-[82px] flex-row items-center justify-center gap-0 rounded-[14px] px-3 py-0 text-[13px] font-medium tracking-[0.01em] text-sub outline-none transition-all duration-200",
+                        "relative flex h-10 min-w-[82px] flex-row items-center justify-center gap-0 rounded-tile px-3 py-0 text-body font-medium tracking-[0.01em] text-sub outline-none transition-all duration-200",
                         "hover:bg-white/[0.045] hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/45",
                         active &&
                           "bg-raised/90 text-ink shadow-[0_6px_18px_rgb(0_0_0/0.24),inset_0_1px_0_rgb(255_255_255/0.06)] data-[active=true]:bg-raised/90 data-[active=true]:text-ink data-[active=true]:hover:bg-raised/90"
@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </NavigationMenuList>
           </NavigationMenu>
 
-          <div className="hidden items-center justify-self-end gap-2 text-[11px] text-faint lg:flex">
+          <div className="hidden items-center justify-self-end gap-2 text-caption text-faint lg:flex">
             <span className="size-1.5 rounded-full bg-teal shadow-[0_0_10px_rgb(62_217_164/0.7)]" />
             今天也有可能
           </div>
@@ -135,7 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       asChild
                       active={active}
                       className={cn(
-                        "flex min-h-[54px] w-full flex-col items-center justify-center gap-0.5 rounded-[16px] p-0 text-[9px] text-faint outline-none transition-all duration-200",
+                        "flex min-h-[54px] w-full flex-col items-center justify-center gap-0.5 rounded-tile p-0 text-micro text-faint outline-none transition-all duration-200",
                         "hover:bg-white/[0.04] hover:text-sub focus-visible:ring-2 focus-visible:ring-brand/45",
                         active &&
                           "bg-raised/75 text-brand shadow-[inset_0_1px_0_rgb(255_255_255/0.04)] data-[active=true]:bg-raised/75 data-[active=true]:text-brand data-[active=true]:hover:bg-raised/75 data-[active=true]:hover:text-brand"

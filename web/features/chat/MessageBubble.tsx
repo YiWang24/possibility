@@ -43,8 +43,8 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
            读起来要来回甩头 —— 再叠一层 ch 上限，按字数封顶而不是按容器比例。 */
         className={`max-w-[300px] px-4 py-[13px] leading-[1.55] whitespace-pre-wrap break-words md:max-w-[min(82%,52ch)] ${
           isUser
-            ? "text-white text-[14.5px] bg-[linear-gradient(135deg,#3E77F2,#2A50D6)] rounded-[20px] rounded-br-[6px]"
-            : "text-ink text-[14px] bg-card border border-line rounded-[20px] rounded-bl-[6px]"
+            ? "text-white text-callout bg-[linear-gradient(135deg,#3E77F2,#2A50D6)] rounded-card rounded-br-[6px]"
+            : "text-ink text-callout bg-card border border-line rounded-card rounded-bl-[6px]"
         }`}
       >
         <MarkdownText raw={message.text} />
@@ -58,7 +58,7 @@ export function ThinkingBubble() {
   return (
     <div className="flex items-center gap-2.5 pt-4">
       <OrbView size={18} />
-      <span className="text-[12px] text-faint">正在想…</span>
+      <span className="text-footnote text-faint">正在想…</span>
     </div>
   );
 }

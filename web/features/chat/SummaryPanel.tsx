@@ -2,7 +2,7 @@
 /* 探索总结页 —— 移植自 iOS ChatSummaryView（原型 chatSummaryPage）
  * 移动端全屏抽屉，md 起居中卡片。 */
 
-import { PrimaryButton } from "@/components/ui/Basics";
+import { Button } from "@/components/ui/button";
 import { ChatNextPanel } from "./NextPanel";
 import type { ChatModel } from "./store";
 
@@ -19,12 +19,12 @@ function SummaryCard({
 }) {
   return (
     <div
-      className="rounded-[20px] bg-card p-[18px]"
+      className="rounded-card bg-card p-[18px]"
       style={{ border: `1px solid ${accent ?? "var(--color-line)"}` }}
     >
-      <div className="text-[10px] tracking-[1.8px] text-[#91B1FF]">{eyebrow}</div>
-      <div className="text-[15px] font-semibold leading-[1.4] text-ink mt-2">{title}</div>
-      <p className="text-[13px] leading-[1.7] text-[#C6CDDE] mt-2">{body}</p>
+      <div className="text-micro tracking-[1.8px] text-brand-lite">{eyebrow}</div>
+      <div className="text-lead font-semibold leading-[1.4] text-ink mt-2">{title}</div>
+      <p className="text-body leading-[1.7] text-[#C6CDDE] mt-2">{body}</p>
     </div>
   );
 }
@@ -57,13 +57,13 @@ export function ChatSummaryView({
             「返回」会让人以为退回到了别的页面。 */}
         <div className="flex items-start gap-3 px-[22px] pb-3 pt-4">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-[16px] font-semibold tracking-[0.8px] text-ink">本次探索总结</span>
-            <span className="text-[11px] text-faint">不是定论，是此刻更清楚的你</span>
+            <span className="text-subtitle font-semibold tracking-[0.8px] text-ink">本次探索总结</span>
+            <span className="text-caption text-faint">不是定论，是此刻更清楚的你</span>
           </div>
           <button
             onClick={onClose}
             aria-label="关闭"
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-raised/70 text-[15px] text-sub transition hover:border-white/20 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/45"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-raised/70 text-lead text-sub transition hover:border-white/20 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/45"
           >
             ✕
           </button>
@@ -73,17 +73,17 @@ export function ChatSummaryView({
           <div className="flex flex-col gap-3">
             {/* hero */}
             <div
-              className="rounded-[24px] p-[22px]"
+              className="rounded-card p-[22px]"
               style={{
                 background: "linear-gradient(135deg,rgba(64,101,203,0.24),rgba(113,73,170,0.12))",
                 border: "1px solid rgba(111,165,255,0.25)",
               }}
             >
-              <div className="text-[10px] tracking-[2px] text-[#91B1FF]">
+              <div className="text-micro tracking-[2px] text-brand-lite">
                 {(model.displayTopic ?? "此刻的选择") + " · EXPLORATION NOTE"}
               </div>
               <div className="text-[22px] font-bold leading-[1.35] text-ink mt-2.5">{model.displayQuestion}</div>
-              <p className="text-[12px] leading-[1.6] text-sub mt-2">
+              <p className="text-footnote leading-[1.6] text-sub mt-2">
                 这份总结来自刚才的对话，只记录你此刻认可的理解，不替你下结论。
               </p>
             </div>
@@ -126,7 +126,7 @@ export function ChatSummaryView({
         </div>
 
         <div className="px-5 pt-2.5 pb-3">
-          <PrimaryButton title="完成本次探索" onClick={onFinish} />
+          <Button size="lg" className="w-full" onClick={onFinish}>完成本次探索</Button>
         </div>
       </div>
     </div>

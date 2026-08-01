@@ -1,0 +1,146 @@
+{
+  "app/opengraph-image.tsx": {
+    "hex": 7
+  },
+  "components/auth/AuthWall.tsx": {
+    "fontPx": 1
+  },
+  "components/shell/AppShell.tsx": {
+    "radius": 4,
+    "shadow": 7
+  },
+  "components/ui/card.tsx": {
+    "radius": 1
+  },
+  "components/ui/OrbView.tsx": {
+    "hex": 3
+  },
+  "features/card-game/FanArc.tsx": {
+    "fontPx": 2
+  },
+  "features/card-game/GameView.tsx": {
+    "hex": 7,
+    "fontPx": 12,
+    "radius": 4
+  },
+  "features/card-game/HubView.tsx": {
+    "hex": 11,
+    "radius": 2
+  },
+  "features/card-game/ResultViews.tsx": {
+    "hex": 15,
+    "fontPx": 4
+  },
+  "features/card-game/ui.tsx": {
+    "hex": 5
+  },
+  "features/card-game/ValueCardFace.tsx": {
+    "hex": 23,
+    "fontPx": 4,
+    "radius": 1
+  },
+  "features/chat/MessageBubble.tsx": {
+    "hex": 2,
+    "radius": 2
+  },
+  "features/chat/SummaryPanel.tsx": {
+    "hex": 1,
+    "fontPx": 1
+  },
+  "features/community/BountyCompose.tsx": {
+    "hex": 1
+  },
+  "features/community/BountyDetail.tsx": {
+    "hex": 8,
+    "fontPx": 2,
+    "shadow": 1
+  },
+  "features/community/KaleidoscopeDraw.tsx": {
+    "hex": 13,
+    "fontPx": 1,
+    "shadow": 1
+  },
+  "features/diary/DiaryDayView.tsx": {
+    "hex": 11,
+    "fontPx": 4
+  },
+  "features/diary/DiaryDetail.tsx": {
+    "hex": 3
+  },
+  "features/diary/DiarySummaryView.tsx": {
+    "hex": 5
+  },
+  "features/diary/ui.tsx": {
+    "hex": 2,
+    "fontPx": 1
+  },
+  "features/home/AskCard.tsx": {
+    "hex": 6,
+    "fontPx": 2
+  },
+  "features/home/DiaryCard.tsx": {
+    "hex": 3,
+    "fontPx": 1
+  },
+  "features/home/DimensionSheet.tsx": {
+    "hex": 4,
+    "fontPx": 1,
+    "shadow": 1
+  },
+  "features/home/HomeView.tsx": {
+    "fontPx": 1
+  },
+  "features/home/LifeEntryButton.tsx": {
+    "radius": 2
+  },
+  "features/home/PersonaStage.tsx": {
+    "hex": 5
+  },
+  "features/home/PortraitSection.tsx": {
+    "hex": 2
+  },
+  "features/lab/CardIcon.tsx": {
+    "hex": 1
+  },
+  "features/lab/DialView.tsx": {
+    "hex": 15,
+    "shadow": 2
+  },
+  "features/lab/LabView.tsx": {
+    "hex": 17,
+    "fontPx": 1,
+    "shadow": 1
+  },
+  "features/lab/ResultView.tsx": {
+    "hex": 23
+  },
+  "features/me/MeEditView.tsx": {
+    "hex": 4,
+    "shadow": 1
+  },
+  "features/me/MeView.tsx": {
+    "hex": 15,
+    "fontPx": 2,
+    "shadow": 1
+  },
+  "features/profile/PaywallView.tsx": {
+    "hex": 5,
+    "fontPx": 4
+  },
+  "features/profile/ProfilePanels.tsx": {
+    "hex": 11,
+    "fontPx": 1,
+    "radius": 1
+  },
+  "features/profile/ProfileView.tsx": {
+    "hex": 3,
+    "fontPx": 2
+  },
+  "features/studio/assessment/AssessmentView.tsx": {
+    "hex": 9,
+    "fontPx": 4
+  },
+  "features/studio/StudioView.tsx": {
+    "fontPx": 2
+  }
+}

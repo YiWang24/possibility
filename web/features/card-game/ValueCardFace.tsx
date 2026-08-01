@@ -71,7 +71,7 @@ export function ValueCardFace({
 
   return (
     <div
-      className={`group/card relative isolate flex h-full min-h-[150px] w-full overflow-hidden rounded-[16px] border text-left transition duration-300 hover:-translate-y-1 lg:min-h-[166px] ${
+      className={`group/card relative isolate flex h-full min-h-[150px] w-full overflow-hidden rounded-tile border text-left transition duration-300 hover:-translate-y-1 lg:min-h-[166px] ${
         isResult ? "min-h-[158px] lg:min-h-[178px]" : ""
       } ${className}`}
       style={surface}
@@ -80,7 +80,7 @@ export function ValueCardFace({
         aria-hidden
         className="pointer-events-none absolute -left-[42%] top-[-20%] h-[150%] w-[34%] rotate-[18deg] bg-gradient-to-r from-transparent via-white/[0.11] to-transparent opacity-0 blur-sm transition duration-700 group-hover/card:translate-x-[430%] group-hover/card:opacity-100"
       />
-      <span aria-hidden className="pointer-events-none absolute inset-[7px] rounded-[12px] border border-white/[0.07]" />
+      <span aria-hidden className="pointer-events-none absolute inset-[7px] rounded-field border border-white/[0.07]" />
       <span
         aria-hidden
         className="pointer-events-none absolute right-[-22px] top-[-24px] h-24 w-24 rounded-full blur-2xl"
@@ -106,7 +106,7 @@ export function ValueCardFace({
           </span>
           {!isResult && (
             <span
-              className="grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold transition"
+              className="grid h-5 w-5 place-items-center rounded-full border text-micro font-bold transition"
               style={{
                 color: selected ? "#fff" : withAlpha(palette.primary, 0.72),
                 borderColor: withAlpha(palette.primary, selected ? 0.8 : 0.3),
@@ -122,7 +122,7 @@ export function ValueCardFace({
 
         <div className={isResult ? "mt-3 flex flex-col items-center" : "mt-3"}>
           <div
-            className={`relative grid place-items-center rounded-[13px] border ${
+            className={`relative grid place-items-center rounded-field border ${
               isResult ? "h-14 w-14 lg:h-16 lg:w-16" : "h-11 w-11"
             }`}
             style={{
@@ -138,10 +138,10 @@ export function ValueCardFace({
         </div>
 
         <div className="mt-3 w-full">
-          <div className={`truncate font-semibold text-white ${isResult ? "text-[12.5px] lg:text-[14px]" : "text-[12.5px]"}`}>
+          <div className={`truncate font-semibold text-white ${isResult ? "text-footnote lg:text-callout" : "text-footnote"}`}>
             {card.name}
           </div>
-          <div className="mt-1 flex items-center gap-1.5 text-[8.5px] text-white/42">
+          <div className="mt-1 flex items-center gap-1.5 text-micro text-white/42">
             <span className="h-px flex-1 bg-gradient-to-r from-transparent to-white/12" />
             <span className="truncate">{card.group}</span>
             <span className="h-px flex-1 bg-gradient-to-l from-transparent to-white/12" />

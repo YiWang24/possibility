@@ -59,16 +59,16 @@ export function FocusShell({
       {/* 任务条：没有 border-b，靠留白与视口顶端分隔，避免又长成一条 navbar */}
       <div className="shell-gutter mx-auto flex w-full max-w-shell shrink-0 items-center gap-4 pb-2 pt-5 md:pt-6">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-[15px] font-semibold tracking-[0.5px] text-ink xl:text-[17px]">
+          <span className="truncate text-lead font-semibold tracking-[0.5px] text-ink xl:text-title">
             {title}
           </span>
           {subtitle ? (
-            <span className="truncate text-[11px] text-faint">{subtitle}</span>
+            <span className="truncate text-caption text-faint">{subtitle}</span>
           ) : null}
         </div>
 
         {meta ? (
-          <div className="hidden min-w-0 flex-1 items-center gap-6 text-[10.5px] text-faint lg:flex">
+          <div className="hidden min-w-0 flex-1 items-center gap-6 text-micro text-faint lg:flex">
             {meta}
           </div>
         ) : null}
@@ -82,7 +82,7 @@ export function FocusShell({
               />
             </div>
             {progressLabel ? (
-              <span className="shrink-0 text-[11px] tabular-nums text-faint">{progressLabel}</span>
+              <span className="shrink-0 text-caption tabular-nums text-faint">{progressLabel}</span>
             ) : null}
           </div>
         ) : meta ? null : (
@@ -93,7 +93,7 @@ export function FocusShell({
           onClick={onExit}
           aria-label={exitLabel}
           title={exitLabel}
-          className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-raised/70 text-[15px] text-sub transition hover:border-white/20 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/45"
+          className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-raised/70 text-lead text-sub transition hover:border-white/20 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/45"
         >
           ✕
         </button>

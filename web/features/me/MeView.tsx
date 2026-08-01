@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PageShell } from "@/components/shell/PageShell";
-import { PageHeader, SectionHeader, TagPill } from "@/components/ui/Basics";
+import { Badge } from "@/components/ui/badge";
+import { PageHeader, SectionHeader } from "@/components/ui/page-header";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/stores/auth";
@@ -196,37 +197,37 @@ export function MeView() {
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <div className="flex items-center gap-2">
                     <span className="text-[21px] font-bold text-ink">{profile.name}</span>
-                    <span className="rounded-chip border border-[#3ED9A4]/40 bg-[#3ED9A4]/13 px-2 py-[3px] text-[9.5px] font-semibold text-[#8EE7C8]">
+                    <Badge tone="teal" size="sm" className="font-semibold">
                       我的公开主页
-                    </span>
+                    </Badge>
                   </div>
-                  <span className="text-[12px] text-sub">
+                  <span className="text-footnote text-sub">
                     {profile.meta.age} 岁 · {profile.meta.city}
                   </span>
                 </div>
                 <button
                   onClick={() => requestEdit("basic")}
                   aria-label="编辑个人资料"
-                  className="ml-auto flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-line bg-raised text-[14px] text-ink transition active:scale-95"
+                  className="ml-auto flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full border border-line bg-raised text-callout text-ink transition active:scale-95"
                 >
                   ✎
                 </button>
               </div>
 
               {/* 转型条 */}
-              <div className="inline-flex w-fit items-center gap-2.5 rounded-chip border border-[#5E96FF]/28 bg-[#5E96FF]/[0.09] px-3.5 py-[9px] text-[13px] font-semibold">
+              <div className="inline-flex w-fit items-center gap-2.5 rounded-chip border border-brand/28 bg-brand/[0.09] px-3.5 py-[9px] text-body font-semibold">
                 <span className="text-sub">{profile.meta.from}</span>
                 <span className="text-brand">→</span>
                 <span className="text-ink">{profile.meta.to}</span>
               </div>
 
-              <span className="text-[11.5px] text-faint">
+              <span className="text-caption text-faint">
                 {profile.meta.years} · {profile.meta.result}
               </span>
 
               <div className="flex flex-wrap gap-[7px]">
                 {profile.tags.map((t) => (
-                  <TagPill key={t} text={t} />
+                  <Badge key={t}>{t}</Badge>
                 ))}
               </div>
             </div>
@@ -240,9 +241,9 @@ export function MeView() {
                   <button
                     key={key}
                     onClick={() => setTab(key)}
-                    className={`flex-1 rounded-chip border py-[9px] text-[12px] transition active:scale-[0.97] ${
+                    className={`flex-1 rounded-chip border py-[9px] text-footnote transition active:scale-[0.97] ${
                       on
-                        ? "bg-btn-g border-[#6FA5FF]/60 font-semibold text-white"
+                        ? "bg-btn-g border-brand-bright/60 font-semibold text-white"
                         : "border-line bg-raised text-sub"
                     }`}
                   >
@@ -276,8 +277,8 @@ export function MeView() {
               <SectionHeader title="账号" />
               <div className="kaleido-card flex flex-col">
                 <div className="flex items-center justify-between gap-3 px-4 py-3.5">
-                  <span className="shrink-0 text-[13px] text-sub">登录邮箱</span>
-                  <span className="truncate text-[13px] font-semibold text-[#8EE7C8]">
+                  <span className="shrink-0 text-body text-sub">登录邮箱</span>
+                  <span className="truncate text-body font-semibold text-teal-lite">
                     {email ?? "已登录"}
                   </span>
                 </div>
@@ -346,8 +347,8 @@ function AccountRow({
       onClick={onClick}
       className="flex items-center justify-between px-4 py-3.5 text-left transition active:scale-[0.99] disabled:opacity-60"
     >
-      <span className={`text-[13px] font-semibold ${tint}`}>{title}</span>
-      <span className="text-[15px] text-faint">›</span>
+      <span className={`text-body font-semibold ${tint}`}>{title}</span>
+      <span className="text-lead text-faint">›</span>
     </button>
   );
 }
@@ -373,7 +374,7 @@ function PersonaPanel({
       <SectionHeader title="我的动态画像" trailing="设置展示" isLink onTrailing={onEdit} />
       <div className="kaleido-card flex flex-col gap-3.5 p-3.5">
         {/* 数字形象画布 */}
-        <div className="relative h-[200px] overflow-hidden rounded-[16px] border border-[#ACC9FF]/12">
+        <div className="relative h-[200px] overflow-hidden rounded-tile border border-brand-lite/12">
           <div
             className="absolute inset-0"
             style={{
@@ -382,27 +383,27 @@ function PersonaPanel({
             }}
           />
           <PersonaCanvas model={model} />
-          <div className="absolute left-3.5 top-3.5 rounded-chip border border-[#C6DAFF]/18 bg-[#070B18]/54 px-[9px] py-[5px] text-[8.5px] font-semibold tracking-[1.8px] text-[#DCE8FF]">
+          <div className="absolute left-3.5 top-3.5 rounded-chip border border-brand-lite/18 bg-[#070B18]/54 px-[9px] py-[5px] text-micro font-semibold tracking-[1.8px] text-[#DCE8FF]">
             SYNCED LIVE FORM
           </div>
         </div>
 
         {/* 人生底牌 */}
         {lifeVisible && (
-          <div className="flex flex-col gap-2.5 rounded-[14px] bg-raised p-3">
+          <div className="flex flex-col gap-2.5 rounded-tile bg-raised p-3">
             <div className="flex items-center justify-between">
-              <span className="text-[12.5px] font-semibold text-ink">我的人生底牌</span>
-              <span className="text-[10px] text-faint">已参与数字形象生成</span>
+              <span className="text-footnote font-semibold text-ink">我的人生底牌</span>
+              <span className="text-micro text-faint">已参与数字形象生成</span>
             </div>
             <div className="flex gap-2">
               {lifeCards.map((c) => (
                 <div
                   key={c.name}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-[11px] py-2.5 text-white"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-field py-2.5 text-white"
                   style={{ background: hue(0).gradient }}
                 >
-                  <span className="text-[12px]">{c.glyph}</span>
-                  <span className="truncate text-[11.5px] font-medium">{c.name}</span>
+                  <span className="text-footnote">{c.glyph}</span>
+                  <span className="truncate text-caption font-medium">{c.name}</span>
                 </div>
               ))}
             </div>
@@ -410,7 +411,7 @@ function PersonaPanel({
         )}
 
         {items.length === 0 ? (
-          <div className="rounded-[14px] bg-raised py-7 text-center text-[12px] text-faint">
+          <div className="rounded-tile bg-raised py-7 text-center text-footnote text-faint">
             目前没有开启公开展示的画像内容
           </div>
         ) : (
@@ -422,7 +423,7 @@ function PersonaPanel({
                   style={{ width: `${(items.length / Math.max(totalCount, 1)) * 100}%` }}
                 />
               </div>
-              <span className="text-[11px] text-sub">
+              <span className="text-caption text-sub">
                 {items.length}/{totalCount} 已公开
               </span>
             </div>
@@ -431,18 +432,18 @@ function PersonaPanel({
               {items
                 .filter((it) => it.key !== "life" || (it.cards?.length ?? 0) === 0)
                 .map((it) => (
-                  <div key={it.key} className="flex items-center gap-3 rounded-[14px] bg-raised px-3 py-2.5">
+                  <div key={it.key} className="flex items-center gap-3 rounded-tile bg-raised px-3 py-2.5">
                     <span
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[11px] text-[14px]"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-field text-callout"
                       style={{ background: `${it.tint}26` }}
                     >
                       {it.glyph}
                     </span>
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="text-[13px] font-semibold text-ink">{it.label}</span>
-                      <span className="truncate text-[11px] text-sub">{it.value}</span>
+                      <span className="text-body font-semibold text-ink">{it.label}</span>
+                      <span className="truncate text-caption text-sub">{it.value}</span>
                     </div>
-                    <span className={`text-[10px] ${hasResult(it.value) ? "text-[#8EE7C8]" : "text-faint"}`}>
+                    <span className={`text-micro ${hasResult(it.value) ? "text-teal-lite" : "text-faint"}`}>
                       {hasResult(it.value) ? "已公开" : "待完善"}
                     </span>
                   </div>
@@ -471,13 +472,13 @@ function StoryPanel({
       <SectionHeader title="我的人生关键轨迹" trailing="编辑故事" isLink onTrailing={onEdit} />
       <MeTimeline nodes={profile.traj} />
 
-      <div className="rounded-[16px] border border-[#5E96FF]/24 bg-[#5E96FF]/[0.08] p-4 text-[14px] font-medium italic leading-relaxed text-[#C9D8FF]">
+      <div className="rounded-tile border border-brand/24 bg-brand/[0.08] p-4 text-callout font-medium italic leading-relaxed text-brand-lite">
         “{profile.quote}”
       </div>
 
       <div className="kaleido-card flex flex-col gap-2.5 p-4">
-        <span className="text-[14px] font-bold text-ink">我的转型故事</span>
-        <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-sub">{profile.meta.intro}</p>
+        <span className="text-callout font-bold text-ink">我的转型故事</span>
+        <p className="whitespace-pre-wrap text-footnote leading-relaxed text-sub">{profile.meta.intro}</p>
       </div>
 
       <div className="flex gap-2.5">
@@ -487,8 +488,8 @@ function StoryPanel({
       </div>
 
       <div className="kaleido-card flex flex-col gap-2.5 p-4">
-        <span className="text-[13.5px] font-bold text-ink">完整故事 · 最难的一关</span>
-        <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-sub">{profile.meta.full}</p>
+        <span className="text-body font-bold text-ink">完整故事 · 最难的一关</span>
+        <p className="whitespace-pre-wrap text-footnote leading-relaxed text-sub">{profile.meta.full}</p>
       </div>
     </div>
   );
@@ -496,9 +497,9 @@ function StoryPanel({
 
 function StoryFact({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-1 flex-col items-center gap-1 rounded-[14px] border border-line bg-card py-3.5">
-      <span className="text-aurora text-[16px] font-bold">{value}</span>
-      <span className="text-[10.5px] text-faint">{label}</span>
+    <div className="flex flex-1 flex-col items-center gap-1 rounded-tile border border-line bg-card py-3.5">
+      <span className="text-aurora text-subtitle font-bold">{value}</span>
+      <span className="text-micro text-faint">{label}</span>
     </div>
   );
 }
@@ -521,17 +522,17 @@ function MeTimeline({ nodes }: { nodes: TrajectoryNode[] }) {
           </div>
           <button
             onClick={() => setOpenIndex((cur) => (cur === idx ? -1 : idx))}
-            className="mb-3 ml-3.5 flex-1 rounded-[18px] border border-line bg-card p-3.5 text-left"
+            className="mb-3 ml-3.5 flex-1 rounded-tile border border-line bg-card p-3.5 text-left"
           >
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-0.5">
-                <span className="text-[11px] font-semibold text-brand">{node.age}</span>
-                <span className="text-[14px] font-semibold text-ink">{node.t}</span>
+                <span className="text-caption font-semibold text-brand">{node.age}</span>
+                <span className="text-callout font-semibold text-ink">{node.t}</span>
               </div>
-              <span className={`text-[15px] text-faint transition ${openIndex === idx ? "rotate-90" : ""}`}>›</span>
+              <span className={`text-lead text-faint transition ${openIndex === idx ? "rotate-90" : ""}`}>›</span>
             </div>
             {openIndex === idx && (
-              <p className="mt-2.5 text-[12px] leading-relaxed text-sub">{node.d}</p>
+              <p className="mt-2.5 text-footnote leading-relaxed text-sub">{node.d}</p>
             )}
           </button>
         </div>
@@ -557,11 +558,11 @@ function AdvicePanel({
       ) : (
         modules.map((m, index) => (
           <div key={m.id} className="kaleido-card flex flex-col gap-2.5 p-4">
-            <span className="text-[9.5px] font-semibold tracking-[2px] text-[#9DBCFF]">
+            <span className="text-micro font-semibold tracking-[2px] text-brand-lite">
               经验 {String(index + 1).padStart(2, "0")}
             </span>
-            <span className="text-[14.5px] font-bold text-ink">{m.title}</span>
-            <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-sub">{m.content}</p>
+            <span className="text-callout font-bold text-ink">{m.title}</span>
+            <p className="whitespace-pre-wrap text-footnote leading-relaxed text-sub">{m.content}</p>
             {m.links.length > 0 && (
               <div className="flex flex-wrap gap-[7px]">
                 {m.links.map((link, i) => (
@@ -570,7 +571,7 @@ function AdvicePanel({
                     href={link.url || undefined}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-chip bg-[#5E96FF]/10 px-2.5 py-1 text-[11px] text-brand"
+                    className="rounded-chip bg-brand/10 px-2.5 py-1 text-caption text-brand"
                   >
                     🔗 {link.label || "查看相关链接"}
                   </a>
@@ -604,12 +605,12 @@ function ServicePanel({
           <div key={s.id} className="kaleido-card flex flex-col gap-2.5 p-4">
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] tracking-[1.4px] text-[#9DBCFF]">{s.type}</span>
-                <span className="text-[15.5px] font-bold text-ink">{s.title}</span>
+                <span className="text-micro tracking-[1.4px] text-brand-lite">{s.type}</span>
+                <span className="text-lead font-bold text-ink">{s.title}</span>
               </div>
               <span className="text-aurora text-[19px] font-extrabold">¥{s.price}</span>
             </div>
-            <p className="text-[12px] leading-relaxed text-sub">{s.desc}</p>
+            <p className="text-footnote leading-relaxed text-sub">{s.desc}</p>
           </div>
         ))
       )}
@@ -619,7 +620,7 @@ function ServicePanel({
 
 function EmptyNote({ text }: { text: string }) {
   return (
-    <div className="rounded-[16px] border border-line bg-card py-7 text-center text-[12px] text-faint">
+    <div className="rounded-tile border border-line bg-card py-7 text-center text-footnote text-faint">
       {text}
     </div>
   );
@@ -662,12 +663,12 @@ function ConfirmDialog({
             exit={{ y: 48, opacity: 0 }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
           >
-            <h3 className="text-[16px] font-bold text-ink">{title}</h3>
-            <p className="mt-2 text-[12.5px] leading-relaxed text-sub">{message}</p>
+            <h3 className="text-subtitle font-bold text-ink">{title}</h3>
+            <p className="mt-2 text-footnote leading-relaxed text-sub">{message}</p>
             <div className="mt-5 flex flex-col gap-2.5">
               <button
                 onClick={onConfirm}
-                className={`w-full rounded-chip py-3 text-[14px] font-semibold text-white transition active:scale-[0.97] ${
+                className={`w-full rounded-chip py-3 text-callout font-semibold text-white transition active:scale-[0.97] ${
                   destructive ? "bg-orange" : "bg-btn-g"
                 }`}
               >
@@ -675,7 +676,7 @@ function ConfirmDialog({
               </button>
               <button
                 onClick={onCancel}
-                className="w-full rounded-chip border border-line py-3 text-[14px] font-semibold text-sub transition active:scale-[0.97]"
+                className="w-full rounded-chip border border-line py-3 text-callout font-semibold text-sub transition active:scale-[0.97]"
               >
                 取消
               </button>
