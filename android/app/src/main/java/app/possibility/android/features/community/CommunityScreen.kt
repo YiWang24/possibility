@@ -61,6 +61,7 @@ import app.possibility.android.core.model.DemoData
 import app.possibility.android.core.model.Traveler
 import app.possibility.android.core.network.SupabaseService
 import app.possibility.android.core.theme.Theme
+import app.possibility.android.core.theme.fullBleedHorizontal
 import app.possibility.android.features.auth.AuthGateCenter
 import app.possibility.android.features.auth.AuthGateHost
 import app.possibility.android.features.profile.TravelerProfileSheet
@@ -131,7 +132,7 @@ fun CommunityScreen() {
                     SearchBar(searchText, onChange = { searchText = it }, onClear = { searchText = "" })
                     if (watchMode) {
                         // 全出血：抵消外层 22dp 水平内边距
-                        Box(Modifier.fillMaxWidth().padding(horizontal = (-22).dp)) {
+                        Box(Modifier.fillMaxWidth().fullBleedHorizontal(22.dp)) {
                             WatchModeView(
                                 travelers = travelers,
                                 searchQuery = searchText,
