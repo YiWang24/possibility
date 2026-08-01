@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/shell/Providers";
-import { SUPABASE_URL } from "@/lib/config";
+import { bootScript } from "@/lib/boot-prefetch";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 import {
   BRAND_STAGE,
   SITE_DESCRIPTION,
@@ -67,27 +68,27 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-/**
- * 首屏分支提示 —— 在第一次绘制前跑完，给 <html> 打上 data-auth。
+/* 引导脚本见 lib/boot-prefetch.ts，一段脚本担两件事：
  *
- * 服务端读不到 localStorage 里的会话，所以 SSR 产物同时包含「登录墙」和「应用外壳」
- * 两个分支（见 AuthWall），由这段脚本决定先显示哪一个，globals.css 负责隐藏另一个。
- * 没有它就只能二选一：要么已登录用户闪一下登录页，要么未登录用户先看空白。
+ * 1. 首屏分支提示 —— 给 <html> 打上 data-auth。服务端读不到 localStorage 里的会话，
+ *    所以 SSR 产物同时包含「登录墙」和「应用外壳」两个分支（见 AuthWall），由这段
+ *    脚本决定先显示哪一个，globals.css 负责隐藏另一个。没有它就只能二选一：要么
+ *    已登录用户闪一下登录页，要么未登录用户先看空白。
  *
- * 只作为绘制提示：key 存在不等于会话有效（可能已过期且刷不动）。真实状态仍由
- * supabase-js 解析，AuthWall 在 ready 之后收敛，最坏情况是外壳闪一下转登录页。
- * key 格式与 supabase-js 的默认 storageKey 对齐：sb-<project-ref>-auth-token。
+ *    只作为绘制提示：key 存在不等于会话有效（可能已过期且刷不动）。真实状态仍由
+ *    supabase-js 解析，AuthWall 在 ready 之后收敛，最坏情况是外壳闪一下转登录页。
  *
- * 拿不到解析阻塞的执行时机：放 layout 的 <head> 会被响应过滤掉，next/script 的
- * beforeInteractive 只是推进 __next_s 队列，而 React 连 body 里的裸内联 script
- * 也会转成同样的队列形式。所以它是「尽早」而非「保证首绘前」，globals.css 据此
- * 用中性缺省兜底。想要真正的服务端分支判定，得把会话从 localStorage 挪到 cookie。
+ * 2. 首屏取数抢跑 —— 顺手用同一份会话把 get-profile / list-diary 提前发出去，
+ *    不必等 ~270KB JS 下完再水合。
+ *
+ * 关于执行时机：这里原本记的是「React 连 body 里的裸内联 script 也会转成 __next_s
+ * 队列形式，所以只是尽早、不保证首绘前」。在当前 Next 15 的生产产物里核对过，结论
+ * 已经不成立 —— 产物中 __next_s 出现 0 次，这段是货真价实的解析阻塞内联 script，
+ * 位置在 <body> 首节点，早于那 16 个 async chunk 的下载。抢跑正是靠这一点成立。
+ *
+ * globals.css 的中性缺省仍然保留：它兜的是「脚本被 CSP/插件拦掉」这类情形，代价为零。
+ * 想要真正的服务端分支判定，得把会话从 localStorage 挪到 cookie。
  */
-function authHintScript(supabaseUrl: string): string {
-  return `try{var r=new URL(${JSON.stringify(supabaseUrl)}).hostname.split(".")[0];` +
-    `document.documentElement.dataset.auth=localStorage.getItem("sb-"+r+"-auth-token")?"in":"out"}` +
-    `catch(e){document.documentElement.dataset.auth="out"}`;
-}
 
 /* 根布局只负责 html/body 与全站 Provider。导航外壳挂在 (app) route group 的
    layout 里，而不是这里 —— 否则将来任何一条落在 (app) 之外的路由（独立落地页、
@@ -108,10 +109,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href={SUPABASE_URL} />
       </head>
       <body>
-        {/* 放 body 第一个节点，尽早执行。实测能赶在首绘之前落地，但拿不到
-            解析阻塞的保证（见 authHintScript 注释），所以 globals.css 的缺省
-            是「两个分支都不显示」，而不是赌某一支。 */}
-        <script dangerouslySetInnerHTML={{ __html: authHintScript(SUPABASE_URL) }} />
+        {/* 必须是 body 第一个节点：抢跑越早发出，能与 JS 下载重叠的部分越多。 */}
+        <script
+          dangerouslySetInnerHTML={{ __html: bootScript(SUPABASE_URL, SUPABASE_ANON_KEY) }}
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

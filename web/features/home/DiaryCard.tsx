@@ -12,6 +12,7 @@ import {
   listDiaryEntries,
   uploadDiaryAudio,
 } from "@/features/diary/api";
+import { DIARY_LIST_BODY } from "@/lib/boot-prefetch";
 import {
   dayString,
   entryEmoji,
@@ -118,7 +119,9 @@ export function DiaryCard() {
 
   const refresh = useCallback(async () => {
     try {
-      const response = await listDiaryEntries({ limit: 100 });
+      /* 参数走共享常量：与首页 store 的探索天数请求同参，才能被 callFunction
+         合流成一次网络请求（并命中引导脚本的抢跑）。 */
+      const response = await listDiaryEntries(DIARY_LIST_BODY);
       setEntries(response.entries ?? []);
     } catch {
       setEntries([]);
