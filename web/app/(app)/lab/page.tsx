@@ -11,7 +11,7 @@ function LabPageInner() {
 
 export default function LabPage() {
   return (
-    <Suspense fallback={<div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]" />}>
+    <Suspense fallback={<div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-var(--nav-h))]" />}>
       <LabPageInner />
     </Suspense>
   );

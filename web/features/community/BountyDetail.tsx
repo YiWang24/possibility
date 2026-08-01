@@ -7,7 +7,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { BackButton } from "@/features/card-game/ui";
+import { PageShell } from "@/components/shell/PageShell";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { TagPill } from "@/components/ui/Basics";
 import { useToast } from "@/components/ui/Toast";
@@ -136,21 +137,21 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
   };
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
-      {/* 顶栏 */}
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[74px]">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
-          <BackButton onClick={() => router.back()} />
-          <div className="min-w-0 flex-1">
-            <div className="text-[16px] font-bold tracking-[0.5px] text-ink">悬赏详情</div>
-            <div className="text-[10.5px] text-faint">
-              {statusText} · {responseCount}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-5 pb-28 pt-4">
+    <div className="screen-bg">
+      {/* 面包屑取代 sticky 返回横条。标题改用悬赏问题本身而不是「悬赏详情」——
+          页面标题应该说清这一页是什么，层级交给面包屑说。 */}
+      <PageShell
+        header={
+          /* 标题用悬赏问题本身而不是「悬赏详情」—— 页面标题该说清这一页是什么。
+             但拉取未回来时 question 是占位串，那时退回稳定的通用标题，
+             免得面包屑和 h1 一起显示「这条悬赏正在加载…」。 */
+          <PageHeading
+            title={loaded && remote ? question : "悬赏详情"}
+            description={`${statusText} · ${responseCount}`}
+          />
+        }
+      >
+      <div className="flex w-full flex-col gap-4 pb-28">
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
@@ -158,8 +159,6 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
             ))}
           </div>
         )}
-
-        <h1 className="text-[21px] font-bold leading-[1.5] text-ink">{question}</h1>
 
         {/* 发布者 */}
         <div className="flex items-center gap-[11px]">
@@ -222,10 +221,11 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
           </div>
         )}
       </div>
+      </PageShell>
 
       {/* 底部动作栏 */}
       <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
-        <div className="mx-auto w-full max-w-measure px-5 py-3">
+        <div className="shell-gutter mx-auto w-full max-w-shell py-3">
           <button
             onClick={onSend}
             disabled={sent}

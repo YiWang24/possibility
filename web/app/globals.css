@@ -48,10 +48,13 @@
   --breakpoint-xl: 1440px;
   --breakpoint-2xl: 1760px;
 
-  /* 内容宽度令牌 —— 三档：阅读流 / 应用页 / 看板 */
-  --container-measure: 48rem; /* 768px：长文、对话、单步流程的经典行宽 */
-  --container-app: 74rem; /* 1184px：常规应用页，主栏 + 右轨 */
-  --container-board: 96rem; /* 1536px：卡片看板、社区多列 */
+  /* 内容宽度令牌 —— 全站只有一个外框。
+     旧的三档（app 1184 / board 1536 / measure 768）让 navbar、首页、社区、对话
+     各自居中在不同宽度上，桌面上出现 4 条内容左边界，谁也对不齐谁。
+     现在 navbar 与所有页面共用 shell，中轴线唯一；宽度差异靠主栏/轨的分栏比例表达。 */
+  --container-shell: 96rem; /* 1536px：全站唯一外框 */
+  --container-measure: 44rem; /* 704px：正文段落行宽上限，用于主栏内部而非页面外框 */
+  --rail: 21rem; /* 336px：画像伴随轨 */
 }
 
 /* 左侧栏占位宽度的单一真源。全站主导航是顶部 navbar（见 AppShell），
@@ -61,6 +64,9 @@
 :root {
   color-scheme: dark;
   --shell-sidebar: 0px;
+  /* 顶栏高度的单一真源。原来 74px 被硬编码在 15+ 处（sticky 偏移、
+     min-h 计算、轨的 sticky 起点），改一次要改一片，必然漏。 */
+  --nav-h: 74px;
 }
 
 /* 页面级固定条：贴主区左沿而不是视口左沿 */
