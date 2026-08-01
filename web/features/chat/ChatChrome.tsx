@@ -1,19 +1,7 @@
 "use client";
-/* 对话页公共小组件：返回按钮 + 历史入口图标按钮（移植自 iOS BackButton / 顶栏历史按钮） */
-
-export function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label="返回"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-raised border border-line text-ink transition active:scale-95"
-    >
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
-        <path d="M9.5 3 5 7.5 9.5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
-}
+/* 对话页公共小组件：历史入口图标按钮。
+   原本这里还有一个 BackButton —— 详情页统一改用面包屑后已无调用方，连同
+   card-game/ui.tsx 里的重复定义一起删除。 */
 
 export function HistoryButton({ onClick }: { onClick: () => void }) {
   return (

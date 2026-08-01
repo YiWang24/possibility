@@ -1,6 +1,8 @@
 "use client";
-/* 动态画像区 —— 移植 iOS HomeView.portraitSection + PortraitCard。
-   分区标题（探索更多画像 → /studio）+ 尼采引文 + 画像卡（数字形象舞台 / 人生底牌 / 完成度 / 五维行）。 */
+/* 动态画像区 —— 分区标题（探索更多画像 → /studio）+ 尼采引文 + 底牌 + 六维行。
+   数字形象舞台与完成度已上移到首页 hero（PersonaHero）：一张卡不该同时
+   承担「展示形象 / 列底牌 / 报完成度 / 排六维」四件事，桌面上那正是
+   「信息层级分散」的来源 —— 用户看不出这块的主角是谁。 */
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,7 +11,6 @@ import { hue } from "@/lib/theme";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import { useData } from "@/stores/data";
 import { useHome } from "./store";
-import { PersonaStage } from "./PersonaStage";
 import { DimensionSheet } from "./DimensionSheet";
 
 interface PortraitDim {
@@ -21,12 +22,9 @@ interface PortraitDim {
   key: DimensionKey | null;
 }
 
-const USER_NAME = "老己";
-
-export function PortraitSection({ paused = false }: { paused?: boolean }) {
+export function PortraitSection() {
   const router = useRouter();
   const filledDims = useHome((s) => s.filledDims);
-  const remotePersona = useHome((s) => s.remotePersona);
   const cardGames = useData((s) => s.profile?.card_games);
   const selectedKeywords = useHome((s) => s.selectedKeywords);
   const saveDimension = useHome((s) => s.saveDimension);
@@ -34,14 +32,6 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
   const signatureCards = useMemo(
     () => useHome.getState().lifeSignatureCards(),
     [cardGames],
-  );
-  const model = useMemo(
-    () => useHome.getState().personaModel(),
-    [filledDims, remotePersona, cardGames],
-  );
-  const completion = useMemo(
-    () => useHome.getState().completion(),
-    [filledDims],
   );
 
   const [activeDim, setActiveDim] = useState<DimensionKey | null>(null);
@@ -81,18 +71,10 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
       </div>
 
       {/* 画像卡 */}
-      <div className="kaleido-card px-5 pb-[18px] pt-[22px] xl:px-8 xl:pb-7 xl:pt-8">
-        <PersonaStage
-          model={model}
-          userName={USER_NAME}
-          summary={remotePersona?.summary}
-          hasLifeCards={signatureCards.length >= 3}
-          paused={paused}
-        />
-
+      <div className="kaleido-card px-5 py-5 xl:px-8 xl:py-7">
         {/* 人生底牌签名 */}
         {signatureCards.length > 0 && (
-          <div className="mt-3.5 rounded-tile border border-line bg-raised p-3.5">
+          <div className="rounded-tile border border-line bg-raised p-3.5">
             <div className="flex items-center justify-between">
               <span className="text-body font-semibold text-ink">我的人生底牌</span>
               <span className="text-micro text-faint">已参与数字形象生成</span>
@@ -112,21 +94,8 @@ export function PortraitSection({ paused = false }: { paused?: boolean }) {
           </div>
         )}
 
-        {/* 完成度进度条 */}
-        <div className="mt-[18px] flex max-w-[250px] items-center gap-2.5">
-          <div className="h-[5px] flex-1 overflow-hidden rounded-chip bg-raised">
-            <div
-              className="h-full rounded-chip bg-aurora transition-all duration-500"
-              style={{ width: `${completion.percent}%` }}
-            />
-          </div>
-          <span className="text-caption tabular-nums text-sub">
-            {completion.completed}/{completion.total} · {completion.percent}%
-          </span>
-        </div>
-
         {/* 六维行 —— 桌面 3 列正好两行满栅格，不留豁口 */}
-        <div className="mt-4 flex flex-col gap-2.5 md:grid md:grid-cols-2 md:gap-2.5 xl:grid-cols-3 xl:gap-3">
+        <div className="flex flex-col gap-2.5 md:mt-4 md:grid md:grid-cols-2 md:gap-2.5 xl:grid-cols-3 xl:gap-3">
           {dims.map((dim) => {
             const isTodo = !dim.value;
             return (

@@ -3,7 +3,7 @@
  * 问题卡 → 时间旋钮 → 动态选择卡扇形牌堆（点/拖入转盘）+ 自定义卡 → 底线卡 → 推演。
  * 推演结果作为内部阶段态（ResultView），以便携带数据。 */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PageContainer } from "@/components/shell/PageContainer";
+import { PageShell } from "@/components/shell/PageShell";
 import { Button } from "@/components/ui/button";
 import { PageHeader, SectionHeader } from "@/components/ui/page-header";
 import { OrbView } from "@/components/ui/OrbView";
@@ -275,7 +275,7 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
 
   return (
     <>
-      <PageContainer>
+      <PageShell>
         <PageHeader
           eyebrow="LIFE LAB"
           title="人生实验室"
@@ -501,7 +501,7 @@ export function LabView({ initialQuestion }: { initialQuestion?: string }) {
             </p>
           </div>
         </div>
-      </PageContainer>
+      </PageShell>
 
       {/* 拖拽浮标 */}
       {dragChoice && (

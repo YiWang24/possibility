@@ -4,7 +4,6 @@
 
 import { Button } from "@/components/ui/button";
 import { ChatNextPanel } from "./NextPanel";
-import { BackButton } from "./ChatChrome";
 import type { ChatModel } from "./store";
 
 function SummaryCard({
@@ -54,12 +53,20 @@ export function ChatSummaryView({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
       <div className="relative z-10 flex h-dvh w-full flex-col screen-bg md:h-[90dvh] md:max-w-[640px] md:rounded-sheet md:border md:border-line md:overflow-hidden">
-        <div className="flex items-center gap-3 px-[22px] pt-4 pb-3">
-          <BackButton onClick={onClose} />
-          <div className="flex flex-col gap-0.5">
+        {/* 弹层用右上角 ✕ 关闭，不用左侧 ‹ 返回 —— 这是一层浮层而不是下一屏，
+            「返回」会让人以为退回到了别的页面。 */}
+        <div className="flex items-start gap-3 px-[22px] pb-3 pt-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <span className="text-subtitle font-semibold tracking-[0.8px] text-ink">本次探索总结</span>
             <span className="text-caption text-faint">不是定论，是此刻更清楚的你</span>
           </div>
+          <button
+            onClick={onClose}
+            aria-label="关闭"
+            className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-raised/70 text-lead text-sub transition hover:border-white/20 hover:text-ink focus-visible:ring-2 focus-visible:ring-brand/45"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto no-scrollbar px-5 pt-2 pb-5">

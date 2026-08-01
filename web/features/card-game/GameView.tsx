@@ -26,7 +26,8 @@ import {
 import { FanArc } from "./FanArc";
 import { LifeResult, RelationResult } from "./ResultViews";
 import { ValueCardFace, valueCardPalette } from "./ValueCardFace";
-import { BackButton, Foot, PRESSURE_COLORS, withAlpha } from "./ui";
+import { Foot, PRESSURE_COLORS, withAlpha } from "./ui";
+import { FocusShell } from "@/components/shell/FocusShell";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
@@ -497,46 +498,34 @@ function GameBody({
   };
 
   return (
-    <div className="card-game-stage flex h-dvh flex-col md:h-[calc(100dvh-74px)]">
-      {/* 顶栏 */}
-      <div className="border-b border-white/[0.07] bg-[#090b17]/80 backdrop-blur-xl">
-        <div className="mx-auto flex w-full max-w-[1184px] items-center gap-3 px-5 py-3 lg:px-6 xl:px-0">
-          <BackButton onClick={back} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-callout font-semibold text-ink lg:text-lead">
-              {topInfo.title}
-            </div>
-            <div className="truncate text-micro text-faint lg:hidden">{topInfo.sub}</div>
-          </div>
-          <div className="hidden items-center gap-6 text-micro text-faint lg:flex">
-            {phase === "intro"
-              ? <span>从选择底牌开始，看见你在代价出现时保护什么</span>
-              : phase === "select"
-                ? <span>已选择 <b className="font-semibold text-sub">{engine.selected.length}</b> / {engine.initialSelectCount} 张底牌</span>
-                : <>
-                  <span>第 <b className="font-semibold text-sub">{engine.round + 1}</b> 轮</span>
-                  <span>当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌</span>
-                </>}
-            <span>目标 · 留下 <b className="font-semibold text-sub">{engine.finalCardCount}</b> 张底牌</span>
-            <span className="rounded-chip border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 text-sub">
-              {topInfo.sub}
-            </span>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-[5px]">
-            <div className="h-1 w-[72px] overflow-hidden rounded-chip bg-raised lg:w-[94px]">
-              <div
-                className="h-full rounded-chip transition-all duration-300"
-                style={{
-                  width: `${engine.progress() * 100}%`,
-                  background: `linear-gradient(90deg, ${accent}, ${withAlpha(accent, 0.6)})`,
-                }}
-              />
-            </div>
-            <div className="text-micro tabular-nums text-faint">{topInfo.progressText}</div>
-          </div>
-        </div>
-      </div>
-
+    /* 专注模式：一局卡牌有明确的开始与结束，中途顶着全站导航既削弱专注，
+       原来那条全宽 border-b + backdrop-blur 的顶栏又会在它下面再画一条。
+       全站导航由 AppShell 依 isFocusRoute 收起；这里的顶栏并入 FocusShell，
+       原本挂在上面的轮次 / 持牌数上下文原样进 meta 槽，一条都没少。
+       fullHeight 保留 main 的固定高度牌桌结构（GameWorkspace 按一屏台面设计）。 */
+    <FocusShell
+      fullHeight
+      stageClassName="card-game-stage"
+      title={topInfo.title}
+      subtitle={topInfo.sub}
+      onExit={back}
+      exitLabel="退出这局"
+      progress={engine.progress()}
+      progressLabel={topInfo.progressText}
+      meta={
+        <>
+          {phase === "intro"
+            ? <span>从选择底牌开始，看见你在代价出现时保护什么</span>
+            : phase === "select"
+              ? <span>已选择 <b className="font-semibold text-sub">{engine.selected.length}</b> / {engine.initialSelectCount} 张底牌</span>
+              : <>
+                <span>第 <b className="font-semibold text-sub">{engine.round + 1}</b> 轮</span>
+                <span>当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌</span>
+              </>}
+          <span>目标 · 留下 <b className="font-semibold text-sub">{engine.finalCardCount}</b> 张底牌</span>
+        </>
+      }
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={`${phase}:${engine.round}`}
@@ -640,7 +629,7 @@ function GameBody({
           )}
         </motion.div>
       </AnimatePresence>
-    </div>
+    </FocusShell>
   );
 }
 

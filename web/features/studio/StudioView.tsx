@@ -4,7 +4,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BackButton } from "@/features/card-game/ui";
+import { PageShell } from "@/components/shell/PageShell";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { SectionHeader } from "@/components/ui/page-header";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import { useHome } from "@/features/home/store";
@@ -47,19 +48,18 @@ export function StudioView() {
   const bfDims: DimScore[] | null = bigfive ? hydrateDims("bigfive", bigfive.dims) : null;
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
-      {/* 顶栏 */}
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/80 backdrop-blur md:top-[74px]">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-[13px] px-[22px] pt-3 pb-2.5">
-          <BackButton onClick={() => router.back()} />
-          <div className="min-w-0 flex-1">
-            <div className="text-subtitle font-semibold tracking-[0.8px] text-ink">画像工坊</div>
-            <div className="text-caption text-faint">用测评与关键词，持续雕刻更立体的自己</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto flex w-full max-w-measure flex-col gap-6 px-[22px] pb-12 pt-5">
+    <div className="screen-bg">
+      {/* 页头不再是第二条 sticky 栏 —— 全站已有顶栏，再钉一条只会和它抢层级 */}
+      <PageShell
+        header={
+          <PageHeading
+            eyebrow="PORTRAIT STUDIO"
+            title="画像工坊"
+            description="用测评与关键词，持续雕刻更立体的自己"
+          />
+        }
+      >
+        <div className="flex w-full flex-col gap-6">
         {/* ============ 大五人格主卡 ============ */}
         <section className="flex flex-col gap-3">
           <SectionHeader title="人格底色 · 大五人格" trailing={bigfive ? "重新测评 ›" : undefined} isLink onTrailing={() => router.push("/assessment/bigfive")} />
@@ -206,7 +206,8 @@ export function StudioView() {
             })}
           </div>
         </section>
-      </div>
+        </div>
+      </PageShell>
 
       <DimensionSheet
         dimKey={activeDim}

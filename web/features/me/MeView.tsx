@@ -5,8 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { PageContainer } from "@/components/shell/PageContainer";
-import { PageGrid } from "@/components/shell/PageGrid";
+import { PageShell } from "@/components/shell/PageShell";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, SectionHeader } from "@/components/ui/page-header";
 import { TravelerAvatar } from "@/components/ui/Avatar";
@@ -179,18 +178,17 @@ export function MeView() {
 
   return (
     <>
-      <PageContainer>
-        <PageHeader
-          eyebrow="MY PUBLIC PAGE"
-          title="我的主页"
-          description="别人点开你的万花筒名片时看到的样子。"
-        />
-
-        {/* 桌面分栏：名片钉在左轨常驻，右侧翻 tab 时身份信息始终在场 */}
-        <PageGrid
-          className="mt-4 lg:mt-9"
-          railSide="start"
-          rail={
+      {/* 桌面分栏：名片钉在左轨常驻，右侧翻 tab 时身份信息始终在场 */}
+      <PageShell
+        header={
+          <PageHeader
+            eyebrow="MY PUBLIC PAGE"
+            title="我的主页"
+            description="别人点开你的万花筒名片时看到的样子。"
+          />
+        }
+        railSide="start"
+        rail={
             <div className="kaleido-card flex flex-col gap-3 p-[18px] xl:p-6">
               <div className="flex items-center gap-3.5">
                 <div className="relative shrink-0 rounded-full p-[3px]" style={{ background: hue(profile.hue).gradient }}>
@@ -306,8 +304,7 @@ export function MeView() {
                 <AccountRow title="注销账号" tint="text-orange" busy={accountBusy} onClick={() => setConfirm("delete")} />
               </div>
             </div>
-        </PageGrid>
-      </PageContainer>
+      </PageShell>
 
       {/* 编辑浮层 */}
       <MeEditView mode={editMode} onClose={() => setEditMode(null)} />

@@ -7,10 +7,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
-import { BackButton } from "@/features/card-game/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TravelerAvatar } from "@/components/ui/Avatar";
+import { PageShell } from "@/components/shell/PageShell";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { OrbView } from "@/components/ui/OrbView";
 import { useToast } from "@/components/ui/Toast";
 import { mockAvatarById } from "@/lib/theme";
@@ -75,7 +76,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
   if (!traveler) {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center md:min-h-[calc(100dvh-74px)]">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 screen-bg px-6 text-center md:min-h-[calc(100dvh-var(--nav-h))]">
         <p className="text-callout text-sub">没有找到这位旅人。</p>
         <Button variant="tonal" onClick={() => router.back()}>
           返回
@@ -85,37 +86,37 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
   }
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
-      {/* 顶栏 */}
-      <div className="sticky top-0 z-20 border-b border-line bg-paper/90 backdrop-blur md:top-[74px]">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 py-3">
-          <BackButton onClick={() => router.back()} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-subtitle font-semibold tracking-[0.5px] text-ink">
-              {traveler.name}
-            </div>
-            <div className="text-caption text-faint">真实经历 · 已验证</div>
-          </div>
-          <button
-            aria-label="更多"
-            onClick={() => show("更多操作：分享主页 · 举报 · 屏蔽")}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-raised text-[18px] leading-none text-sub"
-          >
-            ···
-          </button>
-        </div>
-      </div>
-
+    <div className="screen-bg">
+      {/* 原来是 sticky + backdrop-blur + 全宽 border 的返回横条，视觉特征与真
+          navbar 完全一致，紧贴全站导航下就成了第二条。改成面包屑：
+          「万花筒社区 › 林可」既说明身在第几层，也能一键跳回社区。 */}
+      <PageShell
+        header={
+          <PageHeading
+            title={traveler.name}
+            description="真实经历 · 已验证"
+            trailing={
+              <button
+                aria-label="更多"
+                onClick={() => show("更多操作：分享主页 · 举报 · 屏蔽")}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-raised text-[18px] leading-none text-sub transition hover:border-white/20 hover:text-ink"
+              >
+                ···
+              </button>
+            }
+          />
+        }
+      >
       {loading ? (
         <div className="flex min-h-[60dvh] items-center justify-center">
           <OrbView size={80} />
         </div>
       ) : (
         <>
-          {/* Hero */}
-          <div className="border-b border-line">
+          {/* Hero —— 由全宽色带改成卡片：全宽色带同样会在导航下再画一条横向分隔 */}
+          <div className="overflow-hidden rounded-card border border-line">
             <div
-              className="mx-auto w-full max-w-measure px-[22px] pb-5 pt-[22px]"
+              className="w-full px-[22px] pb-5 pt-[22px]"
               style={{
                 background:
                   "radial-gradient(220px circle at 100% 0%, rgba(94,150,255,0.28), transparent), linear-gradient(135deg,#111625 0%,#0B0E17 100%)",
@@ -168,10 +169,10 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
             </div>
           </div>
 
-          {/* Tab 栏 */}
-          {/* 页内 tab 栏叠在页眉之下：74px navbar + 57px 页眉 = 131px */}
-          <div className="sticky top-[57px] z-10 border-b border-line bg-paper/95 backdrop-blur md:top-[131px]">
-            <div className="mx-auto flex w-full max-w-measure">
+          {/* 页内 tab 栏：不再 sticky、不再全宽 border —— 页面上已经有一条全站
+              导航，再叠两条吸顶横条就是三层 navbar。它跟随内容滚走即可。 */}
+          <div className="mt-6 border-b border-line">
+            <div className="flex w-full">
               {TABS.map((t) => {
                 const active = tab === t.key;
                 return (
@@ -197,7 +198,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           </div>
 
           {/* Panel 内容 */}
-          <div className="mx-auto w-full max-w-measure px-5 pb-32 pt-5">
+          <div className="w-full pb-32 pt-5">
             {tab === "story" && (
               <StoryPanel
                 traveler={traveler}
@@ -221,7 +222,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
           {/* 底部咨询付费栏 */}
           <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
-            <div className="mx-auto w-full max-w-measure px-4 py-3">
+            <div className="shell-gutter mx-auto w-full max-w-shell py-3">
               <Button size="lg" className="w-full" onClick={() => setShowPaywall(true)}>
                 向 TA 咨询
                 <span className="text-lead font-bold">¥{consultPrice}</span>
@@ -230,6 +231,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
           </div>
         </>
       )}
+      </PageShell>
 
       <AnimatePresence>
         {showPaywall && (

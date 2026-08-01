@@ -39,8 +39,9 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={`flex pt-3.5 ${isUser ? "justify-end pl-10" : "justify-start pr-10"}`}>
       <div
-        /* 300px 是手机行宽；桌面 768px 消息列里会把每句话都压成窄条 */
-        className={`max-w-[300px] px-4 py-[13px] leading-[1.55] whitespace-pre-wrap break-words md:max-w-[82%] ${
+        /* 300px 是手机行宽。桌面主栏现在有 ~1000px，纯 82% 会让一句话拉成 820px 的长条，
+           读起来要来回甩头 —— 再叠一层 ch 上限，按字数封顶而不是按容器比例。 */
+        className={`max-w-[300px] px-4 py-[13px] leading-[1.55] whitespace-pre-wrap break-words md:max-w-[min(82%,52ch)] ${
           isUser
             ? "text-white text-callout bg-[linear-gradient(135deg,#3E77F2,#2A50D6)] rounded-card rounded-br-[6px]"
             : "text-ink text-callout bg-card border border-line rounded-card rounded-bl-[6px]"
