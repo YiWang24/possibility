@@ -42,6 +42,18 @@ const COALESCABLE: ReadonlySet<string> = new Set(["get-profile", "list-diary"]);
 /** 同参数在途请求。键与抢跑同源（requestKey），保证两套机制指的是同一个请求。 */
 const inFlight = new Map<string, Promise<unknown>>();
 
+/**
+ * 丢弃所有在途/抢跑结果。换账号时必须调用。
+ *
+ * 合流键只有函数名 + body，不含会话身份。登录/登出瞬间若正好有一个 get-profile 在途，
+ * 后面的强制刷新会被合流到**上一个账号**的响应上，还会被 loadProfile 的 60s TTL 缓存住。
+ * 窗口很窄但真实存在，而且是静默串号，所以在 auth 变更处直接把两个池子清掉。
+ */
+export function dropCachedCalls() {
+  inFlight.clear();
+  if (typeof window !== "undefined") delete window.__bootPrefetch;
+}
+
 /** 抢跑命中就用抢跑结果，否则走真实请求。合流层之下的单次执行体。 */
 async function runCall<T>(
   name: EdgeFunctionName,
