@@ -197,6 +197,7 @@ export type Database = {
           action_type: string
           card_keys: string[]
           created_at: string
+          decision_source: string | null
           id: number
           pressure_after: number | null
           pressure_before: number | null
@@ -210,6 +211,7 @@ export type Database = {
           action_type: string
           card_keys?: string[]
           created_at?: string
+          decision_source?: string | null
           id?: never
           pressure_after?: number | null
           pressure_before?: number | null
@@ -223,6 +225,7 @@ export type Database = {
           action_type?: string
           card_keys?: string[]
           created_at?: string
+          decision_source?: string | null
           id?: never
           pressure_after?: number | null
           pressure_before?: number | null
@@ -333,6 +336,16 @@ export type Database = {
       }
       card_game_runs: {
         Row: {
+          ai_narrative: Json | null
+          ai_narrative_attempts: number
+          ai_narrative_error_code: string | null
+          ai_narrative_generated_at: string | null
+          ai_narrative_generation_id: string | null
+          ai_narrative_model: string | null
+          ai_narrative_prompt_version: string | null
+          ai_narrative_schema_version: number | null
+          ai_narrative_started_at: string | null
+          ai_narrative_status: string
           ai_snapshot: Json
           analysis_key: string
           analysis_schema_version: number
@@ -349,6 +362,16 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_narrative?: Json | null
+          ai_narrative_attempts?: number
+          ai_narrative_error_code?: string | null
+          ai_narrative_generated_at?: string | null
+          ai_narrative_generation_id?: string | null
+          ai_narrative_model?: string | null
+          ai_narrative_prompt_version?: string | null
+          ai_narrative_schema_version?: number | null
+          ai_narrative_started_at?: string | null
+          ai_narrative_status?: string
           ai_snapshot: Json
           analysis_key: string
           analysis_schema_version: number
@@ -365,6 +388,16 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_narrative?: Json | null
+          ai_narrative_attempts?: number
+          ai_narrative_error_code?: string | null
+          ai_narrative_generated_at?: string | null
+          ai_narrative_generation_id?: string | null
+          ai_narrative_model?: string | null
+          ai_narrative_prompt_version?: string | null
+          ai_narrative_schema_version?: number | null
+          ai_narrative_started_at?: string | null
+          ai_narrative_status?: string
           ai_snapshot?: Json
           analysis_key?: string
           analysis_schema_version?: number

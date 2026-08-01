@@ -6,7 +6,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { BackButton, Foot, ResultBlock, withAlpha } from "@/features/card-game/ui";
+import { Foot, ResultBlock, withAlpha } from "@/features/card-game/ui";
+import { FocusShell } from "@/components/shell/FocusShell";
 import { useToast } from "@/components/ui/Toast";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
@@ -102,31 +103,17 @@ export function AssessmentView({ kind }: { kind: AssessmentKind }) {
   };
 
   return (
-    <div className="flex h-dvh flex-col screen-bg md:h-[calc(100dvh-74px)]">
-      {/* 顶栏 */}
-      <div className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
-          <BackButton onClick={back} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[15.5px] font-bold text-ink">{cfg.title}</div>
-            <div className="truncate text-[10.5px] text-faint">{cfg.sub}</div>
-          </div>
-          {phase === "quiz" && (
-            <div className="flex shrink-0 flex-col items-end gap-[5px]">
-              <div className="h-1 w-[70px] overflow-hidden rounded-chip bg-raised">
-                <div
-                  className="h-full rounded-chip bg-aurora transition-all duration-300"
-                  style={{ width: `${(answeredCount / itemCount) * 100}%` }}
-                />
-              </div>
-              <div className="text-[10px] tabular-nums text-faint">
-                {answeredCount}/{itemCount}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
+    /* 专注模式：测评是有开始与结束的任务，不是一个可以随手逛开的页面。
+       全站导航由 AppShell 依 isFocusRoute 收起，这里只留任务条与退出。
+       退出用 ✕ 而不是 ‹ —— 用户要的是「离开这个测评」而非「回到上一屏」。 */
+    <FocusShell
+      title={cfg.title}
+      subtitle={cfg.sub}
+      onExit={back}
+      exitLabel="退出测评"
+      progress={phase === "quiz" ? answeredCount / itemCount : undefined}
+      progressLabel={phase === "quiz" ? `${answeredCount}/${itemCount}` : undefined}
+    >
       <AnimatePresence mode="wait">
         <motion.div
           key={phase}
@@ -159,7 +146,7 @@ export function AssessmentView({ kind }: { kind: AssessmentKind }) {
           )}
         </motion.div>
       </AnimatePresence>
-    </div>
+    </FocusShell>
   );
 }
 
@@ -176,7 +163,7 @@ function IntroPhase({
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-4 pb-[26px]">
           <div className="text-[9.5px] font-semibold tracking-[2.6px] text-brand">
             {cfg.kicker}
@@ -231,7 +218,7 @@ function QuizPhase({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-6 px-6 pt-8 pb-6">
           <div className="flex flex-col items-center gap-3 text-center">
             <span className="text-[11px] tracking-[2px] text-faint">
@@ -341,7 +328,7 @@ function ResultPhase({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="no-scrollbar flex-1 overflow-y-auto">
+      <div className="flex-1">
         <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-6 pt-5 pb-6">
           {/* 标题 */}
           <div className="flex flex-col gap-1.5">

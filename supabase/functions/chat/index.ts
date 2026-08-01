@@ -1,12 +1,9 @@
-import { propagateAttributes, startActiveObservation } from "@langfuse/tracing";
-import { structuredOutput } from "../_shared/llm.ts";
-import { streamChatReply } from "../_shared/chat-stream.ts";
+import { streamChatReply, structuredOutput } from "../_shared/llm-lazy.ts";
 import { requireUser } from "../_shared/auth.ts";
 import {
-  flushTraces,
   type LlmTrace,
   telemetryEnabled,
-} from "../_shared/telemetry.ts";
+} from "../_shared/telemetry-config.ts";
 import { runtimeConfig } from "../_shared/config.ts";
 import { preflightResponse } from "../_shared/cors.ts";
 import {
@@ -188,6 +185,9 @@ Deno.serve(async (req) => {
         if (!root) return;
         if (output !== undefined) root.update({ output });
         root.end();
+        // root 存在即代表遥测已开、telemetry.ts 早已被 span 那条路径求值过，
+        // 这里的 import 命中已加载的模块，不产生额外开销。
+        const { flushTraces } = await import("../_shared/telemetry.ts");
         await flushTraces();
       };
 
@@ -354,6 +354,11 @@ Deno.serve(async (req) => {
     };
 
     if (!telemetryEnabled) return buildResponse();
+    // 关了遥测就不该为 @langfuse/tracing 的模块求值买单——尤其是它会顺带拉起
+    // @opentelemetry/*。放在这里 import，未开遥测的部署启动时完全不碰这条依赖链。
+    const { propagateAttributes, startActiveObservation } = await import(
+      "@langfuse/tracing"
+    );
     return propagateAttributes(
       {
         traceName: llmTrace.name,

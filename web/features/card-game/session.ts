@@ -25,10 +25,41 @@ interface SessionResponse {
   session: CardGameSession;
 }
 
+export interface CardGameCompletion {
+  sessionId: string;
+  runId: string;
+}
+
+interface CompletionResponse {
+  ok: true;
+  run: { id: string; session_id: string };
+}
+
 const KEY_PREFIX = "card_game_sync_v2";
+const LAST_RESULT_PREFIX = "card_game_last_result_v1";
 
 function localKey(userId: string, gameKey: string): string {
   return `${KEY_PREFIX}:${userId}:${gameKey}`;
+}
+
+function lastResultKey(userId: string, gameKey: string): string {
+  return `${LAST_RESULT_PREFIX}:${userId}:${gameKey}`;
+}
+
+export async function lastCompletedCardGameSession(
+  gameKey: string,
+): Promise<string | null> {
+  try {
+    const { data } = await supabase().auth.getSession();
+    const userId = data.session?.user.id;
+    if (!userId) return null;
+    const raw = window.localStorage.getItem(lastResultKey(userId, gameKey));
+    if (!raw) return null;
+    const value = JSON.parse(raw) as { session_id?: unknown };
+    return typeof value.session_id === "string" ? value.session_id : null;
+  } catch {
+    return null;
+  }
 }
 
 function readLocal(userId: string, gameKey: string): LocalSyncState | null {
@@ -82,6 +113,7 @@ export class CardGameSessionCoordinator {
   private state: LocalSyncState;
   private started = false;
   private chain: Promise<void> = Promise.resolve();
+  private completion: Promise<CardGameCompletion> | null = null;
 
   private constructor(state: LocalSyncState, resumed: boolean) {
     this.state = state;
@@ -108,7 +140,7 @@ export class CardGameSessionCoordinator {
         catalog_version: catalogVersion,
         session_id: crypto.randomUUID(),
         client_session_id: crypto.randomUUID(),
-        seed: crypto.getRandomValues(new Uint32Array(1))[0] & 0x7fff_ffff,
+        seed: crypto.getRandomValues(new Uint32Array(1))[0] & 0x7fffffff,
         server_state_version: 0,
         last_synced_sequence: 0,
         pending_actions: [],
@@ -120,6 +152,10 @@ export class CardGameSessionCoordinator {
     );
   }
 
+  get sessionId(): string {
+    return this.state.session_id;
+  }
+
   record(
     input: {
       action_type: CardGameActionType;
@@ -127,6 +163,7 @@ export class CardGameSessionCoordinator {
       card_keys?: string[];
       reason_cannot_accept?: string | null;
       reason_abandon?: string | null;
+      decision_source?: CardGameAction["decision_source"];
     },
   ): void {
     const previous = this.state.pending_actions.at(-1)?.sequence ??
@@ -166,14 +203,23 @@ export class CardGameSessionCoordinator {
     return this.chain;
   }
 
-  async complete(): Promise<void> {
+  complete(): Promise<CardGameCompletion> {
+    if (this.completion) return this.completion;
+    this.completion = this.completeOnce().catch((error) => {
+      this.completion = null;
+      throw error;
+    });
+    return this.completion;
+  }
+
+  private async completeOnce(): Promise<CardGameCompletion> {
     // Use a fresh chain after an earlier background failure.
     this.chain = Promise.resolve();
     await this.flush();
     if (this.state.pending_actions.length > 0) {
       throw new Error("卡牌动作尚未同步");
     }
-    await callFunction<Record<string, unknown>>("card-game-session", {
+    const response = await callFunction<CompletionResponse>("card-game-session", {
       operation: "complete",
       session_id: this.state.session_id,
       expected_state_version: this.state.server_state_version,
@@ -181,6 +227,23 @@ export class CardGameSessionCoordinator {
     window.localStorage.removeItem(
       localKey(this.state.user_id, this.state.game_key),
     );
+    try {
+      window.localStorage.setItem(
+        lastResultKey(this.state.user_id, this.state.game_key),
+        JSON.stringify({
+          session_id: response.run.session_id,
+          run_id: response.run.id,
+          completed_at: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      // The run is still authoritative in Postgres; this pointer is only a
+      // reload optimization for the just-finished result screen.
+    }
+    return {
+      sessionId: response.run.session_id,
+      runId: response.run.id,
+    };
   }
 
   clearLocalState(): void {

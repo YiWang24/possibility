@@ -161,9 +161,13 @@ final class CardGameEngine {
     }
 
     var canTrade: Bool { held.count - discardPerTrade >= finalCardCount }
+    var canAccept: Bool { phase == .decision && pressure < pressureMax }
+    var isForcedTrade: Bool {
+        (phase == .decision || phase == .trade) && pressure >= pressureMax
+    }
 
     func accept() {
-        guard let current else { return }
+        guard canAccept, let current else { return }
         accepted.append((round, current, pressure))
         acceptStreak += 1
         pressure = min(
@@ -734,7 +738,8 @@ final class CardGameSessionCoordinator {
         scenarioKey: String? = nil,
         cardKeys: [String] = [],
         reasonCannotAccept: String? = nil,
-        reasonAbandon: String? = nil
+        reasonAbandon: String? = nil,
+        decisionSource: String? = nil
     ) {
         let previous = state.pendingActions.last?.sequence ?? state.lastSyncedSequence
         state.pendingActions.append(
@@ -744,7 +749,8 @@ final class CardGameSessionCoordinator {
                 scenarioKey: scenarioKey,
                 cardKeys: cardKeys,
                 reasonCannotAccept: reasonCannotAccept,
-                reasonAbandon: reasonAbandon
+                reasonAbandon: reasonAbandon,
+                decisionSource: decisionSource
             )
         )
         persist()

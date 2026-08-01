@@ -18,7 +18,9 @@ import {
   defaultStorage,
   userScopedCardGameStorage,
 } from "./engine";
-import { BackButton, withAlpha } from "./ui";
+import { withAlpha } from "./ui";
+import { PageShell } from "@/components/shell/PageShell";
+import { PageHeading } from "@/components/shell/PageHeading";
 import { hue } from "@/lib/theme";
 import { supabase } from "@/lib/supabase";
 
@@ -99,33 +101,20 @@ export function HubView() {
   };
 
   return (
-    <div className="min-h-dvh screen-bg md:min-h-[calc(100dvh-74px)]">
-      {/* 顶栏 */}
-      <div className="border-b border-line">
-        <div className="mx-auto flex w-full max-w-measure items-center gap-3 px-5 pt-[14px] pb-3">
-          <BackButton onClick={() => router.back()} />
-          <div className="text-[16px] font-bold text-ink">卡牌探索</div>
-        </div>
-      </div>
-
-      <div className="mx-auto flex w-full max-w-measure flex-col gap-4 px-[22px] pt-4 pb-[34px]">
-        {/* hero */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="relative overflow-hidden rounded-card p-5"
-          style={{
-            background:
-              "radial-gradient(190px circle at 100% 0%, rgba(143,123,255,0.28), transparent), linear-gradient(135deg,#141A34,#241A3E,#10132A)",
-            border: "1px solid rgba(143,123,255,0.28)",
-          }}
-        >
-          <p className="text-[12px] leading-[1.8] text-sub">
-            每套卡牌都会让你在有限的底牌里做选择。最终留下的牌，会成为画像的一部分。
-          </p>
-        </motion.div>
-
+    <div className="screen-bg">
+      {/* 原来这里是一条全宽 border-b 的「返回按钮 + 标题」横条，紧贴全站导航
+          之下就成了第二条 navbar。改成面包屑：不占独立横条，且比返回多告诉
+          用户身在第几层、还能直接跳回上级。 */}
+      <PageShell
+        header={
+          <PageHeading
+            eyebrow="LIFE CARDS"
+            title="卡牌探索"
+            description="每套卡牌都会让你在有限的底牌里做选择。最终留下的牌，会成为画像的一部分。"
+          />
+        }
+      >
+      <div className="flex w-full flex-col gap-4">
         {/* 人生卡牌主卡 */}
         <motion.button
           initial={{ opacity: 0, y: 14 }}
@@ -187,7 +176,9 @@ export function HubView() {
           </div>
         </motion.button>
 
-        <div className="pt-1 text-[11px] tracking-[1px] text-faint">更多专题</div>
+        {secondaryGames.length > 0 && (
+          <div className="pt-1 text-[11px] tracking-[1px] text-faint">更多专题</div>
+        )}
 
         {secondaryGames.map((game, i) => {
           const kind = game.game_key;
@@ -226,6 +217,7 @@ export function HubView() {
           );
         })}
       </div>
+      </PageShell>
     </div>
   );
 }

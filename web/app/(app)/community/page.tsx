@@ -1,4 +1,4 @@
-import { PageContainer } from "@/components/shell/PageContainer";
+import { PageShell } from "@/components/shell/PageShell";
 import { CommunityView } from "@/features/community/CommunityView";
 
 export const metadata = {
@@ -7,8 +7,8 @@ export const metadata = {
 
 export default function CommunityPage() {
   return (
-    <PageContainer size="board">
+    <PageShell>
       <CommunityView />
-    </PageContainer>
+    </PageShell>
   );
 }

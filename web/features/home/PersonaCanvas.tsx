@@ -243,6 +243,10 @@ function draw(ctx: CanvasRenderingContext2D, w: number, h: number, model: Person
   }
 }
 
+/* draw() 的坐标系被写死在这个高度上（iOS 舞台高 216pt）。
+   它现在是设计尺寸而不是渲染尺寸：舞台多高，整幅画就按比例放多大。 */
+const DESIGN_H = 216;
+
 export function PersonaCanvas({ model, paused = false }: { model: PersonaModel; paused?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -272,11 +276,17 @@ export function PersonaCanvas({ model, paused = false }: { model: PersonaModel; 
           canvas.width = pw;
           canvas.height = ph;
         }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, w, h);
+        /* draw() 里的坐标（aura 92×70、形体半径 ~68）是照抄 iOS 的绝对像素，
+           画布放大时形象不会跟着长，在首页 hero 那种大舞台上会缩成一枚小徽章。
+           这里不去改 draw 的上百个坐标，而是把它当成固定设计尺寸的矢量：
+           按舞台高度整体缩放，逻辑宽度反算回去，背景微尘仍铺满全宽。 */
+        const scale = h / DESIGN_H;
+        const logicalW = w / scale;
+        ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
+        ctx.clearRect(0, 0, logicalW, DESIGN_H);
         ctx.globalCompositeOperation = "source-over";
         // 原型 time 单位为 ms
-        draw(ctx, w, h, model, frozen ? 0 : now);
+        draw(ctx, logicalW, DESIGN_H, model, frozen ? 0 : now);
       }
     };
 
