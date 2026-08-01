@@ -3,7 +3,7 @@
    服务端状态经此拉取缓存；UI/客户端状态留在各页面组件（二者分治）。
    拉取失败一律回退 demo 种子（断网兜底，技术设计文档 §13）。 */
 import { create } from "zustand";
-import { callFunction, supabase } from "@/lib/supabase";
+import { callFunction, dropCachedCalls, supabase } from "@/lib/supabase";
 import {
   PRICE_UNLOCK_PROFILE,
   travelerDetailFromRow,
@@ -255,11 +255,15 @@ export const useData = create<DataState>()((set, get) => ({
   },
 
   async refreshAfterAuthChange() {
+    /* 先丢掉在途/抢跑结果：它们是用上一个账号的 token 发出去的，合流键不含会话身份，
+       不清就可能把旧账号的响应交给这次强制刷新（见 lib/supabase.ts dropCachedCalls）。 */
+    dropCachedCalls();
     get().invalidateProfile();
     await Promise.all([get().loadProfile(true), get().loadUnlocks()]);
   },
 
   resetUserCaches() {
+    dropCachedCalls();
     set({ profile: null, profileFetchedAt: 0, unlockedProfileIds: [] });
   },
 }));

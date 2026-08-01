@@ -4,6 +4,7 @@
    服务端画像经 useData（get-profile）拉取；本地维度用 localStorage 持久化（对齐 iOS UserDefaults）。 */
 
 import { create } from "zustand";
+import { DIARY_LIST_BODY } from "@/lib/boot-prefetch";
 import { callFunction } from "@/lib/supabase";
 import { useData } from "@/stores/data";
 import { DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
@@ -228,8 +229,11 @@ export const useHome = create<HomeState>()((set, get) => ({
   exploredDays: 1,
 
   async loadDiaryOverview() {
+    /* 参数走共享常量：抢跑名单和 DiaryCard 用的是同一份 body，三处一致才能命中
+       抢跑并与 DiaryCard 的请求合流成一次。这里写死别的数就会静默退化成多发一次
+       请求（不会取错数据）。 */
     const res = await withTimeout(20000, () =>
-      callFunction<{ entries: RemoteDiaryEntry[] }>("list-diary", { limit: 50 }),
+      callFunction<{ entries: RemoteDiaryEntry[] }>("list-diary", { ...DIARY_LIST_BODY }),
     );
     if (!res) return;
     const rows = res.entries ?? [];
