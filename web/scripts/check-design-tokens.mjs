@@ -113,18 +113,19 @@ function definedContainerTokens() {
 }
 
 const allowedMaxW = new Set([...TAILWIND_MAX_W, ...definedContainerTokens()]);
-const deadWidthClasses = [];
-for (const dir of SCAN_DIRS) {
-  for (const file of listTsx(join(WEB_ROOT, dir))) {
-    const source = readFileSync(file, "utf8");
-    for (const m of source.matchAll(/\bmax-w-([a-z0-9][a-z0-9-]*)\b/g)) {
-      const name = m[1];
-      if (name.startsWith("screen-")) continue;
-      if (allowedMaxW.has(name)) continue;
-      deadWidthClasses.push({ file: relative(WEB_ROOT, file), cls: `max-w-${name}` });
-    }
-  }
+
+/** 单个文件里引用了但生成不出 CSS 的 max-w 类 */
+function deadWidthClassesIn(file) {
+  const source = readFileSync(file, "utf8");
+  const names = [...source.matchAll(/\bmax-w-([a-z0-9][a-z0-9-]*)\b/g)].map((m) => m[1]);
+  return names
+    .filter((name) => !name.startsWith("screen-") && !allowedMaxW.has(name))
+    .map((name) => ({ file: relative(WEB_ROOT, file), cls: `max-w-${name}` }));
 }
+
+const deadWidthClasses = SCAN_DIRS.flatMap((dir) =>
+  listTsx(join(WEB_ROOT, dir)).flatMap(deadWidthClassesIn),
+);
 
 if (deadWidthClasses.length) {
   console.error("❌ 死宽度类：引用了 globals.css 里不存在的容器 token\n");
