@@ -12,6 +12,13 @@
  *   radius   —— rounded-[..] 任意圆角（应使用 rounded-field/tile/card/sheet/chip）
  *   shadow   —— shadow-[..] 任意阴影（应使用 shadow-card/pop/glow）
  *
+ * 另有一项零容忍硬检查（不走 ratchet）：
+ *   死宽度类 —— max-w-<名字> 引用了 globals.css 里并不存在的容器 token。
+ *   Tailwind 对未知 utility 不报错、直接不生成 CSS，于是 max-width 静默变成
+ *   none：元素铺满视口，页面看起来「还能用」，只是宽得离谱。
+ *   PR #93 删掉 --container-board 时漏改 AuthWall，登录墙在 2560px 屏上
+ *   内容宽 2432px 上线，就是这么来的。存量必须为零。
+ *
  * 用法：
  *   node scripts/check-design-tokens.mjs           # 校验（CI 与本地）
  *   node scripts/check-design-tokens.mjs --update  # 修完存量后收紧基线
@@ -87,6 +94,47 @@ try {
   baseline = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
 } catch {
   console.error(`缺少基线文件 ${relative(WEB_ROOT, BASELINE_PATH)}，先运行 --update 生成。`);
+  process.exit(1);
+}
+
+/* ---- 零容忍：死宽度类 ---------------------------------------------------
+   Tailwind 内置的 max-w 关键字 + globals.css 定义的容器 token 之外的写法，
+   都会生成不出 CSS。任意值 max-w-[..] / max-w-(..) 不在此列，它们总能生成。 */
+const TAILWIND_MAX_W = new Set([
+  "none", "xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl",
+  "full", "min", "max", "fit", "prose", "screen",
+]);
+
+function definedContainerTokens() {
+  const css = readFileSync(join(WEB_ROOT, "app", "globals.css"), "utf8");
+  const names = new Set();
+  for (const m of css.matchAll(/--container-([a-z0-9-]+)\s*:/g)) names.add(m[1]);
+  return names;
+}
+
+const allowedMaxW = new Set([...TAILWIND_MAX_W, ...definedContainerTokens()]);
+const deadWidthClasses = [];
+for (const dir of SCAN_DIRS) {
+  for (const file of listTsx(join(WEB_ROOT, dir))) {
+    const source = readFileSync(file, "utf8");
+    for (const m of source.matchAll(/\bmax-w-([a-z0-9][a-z0-9-]*)\b/g)) {
+      const name = m[1];
+      if (name.startsWith("screen-")) continue;
+      if (allowedMaxW.has(name)) continue;
+      deadWidthClasses.push({ file: relative(WEB_ROOT, file), cls: `max-w-${name}` });
+    }
+  }
+}
+
+if (deadWidthClasses.length) {
+  console.error("❌ 死宽度类：引用了 globals.css 里不存在的容器 token\n");
+  for (const { file, cls } of deadWidthClasses) {
+    console.error(`  ${file}\n    ${cls} 生成不出 CSS，max-width 静默变成 none\n`);
+  }
+  console.error(
+    `当前可用：${[...allowedMaxW].filter((n) => !TAILWIND_MAX_W.has(n)).map((n) => `max-w-${n}`).join(" / ") || "（无自定义容器 token）"}\n` +
+      "删除或改名容器 token 时，务必同步全部调用点。",
+  );
   process.exit(1);
 }
 

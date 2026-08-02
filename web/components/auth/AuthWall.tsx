@@ -65,7 +65,7 @@ function ContentPlaceholder() {
 function LoginWall() {
   return (
     <main className="screen-bg flex min-h-dvh items-center">
-      <div className="shell-gutter mx-auto grid w-full max-w-board grid-cols-1 items-center gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(360px,26rem)] lg:gap-20 lg:py-20 xl:gap-28">
+      <div className="shell-gutter mx-auto grid w-full max-w-shell grid-cols-1 items-center gap-10 py-14 lg:grid-cols-[minmax(0,1fr)_minmax(360px,26rem)] lg:gap-20 lg:py-20 xl:gap-28">
         {/* 品牌头：左对齐 + 竖向极光细线，靠尺度对比而非居中大标题撑场 */}
         <header className="flex flex-col gap-6">
           <div className="flex gap-4 lg:gap-6">
