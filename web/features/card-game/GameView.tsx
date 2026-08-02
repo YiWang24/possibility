@@ -518,10 +518,9 @@ function GameBody({
             ? <span>从选择底牌开始，看见你在代价出现时保护什么</span>
             : phase === "select"
               ? <span>已选择 <b className="font-semibold text-sub">{engine.selected.length}</b> / {engine.initialSelectCount} 张底牌</span>
-              : <>
-                <span>第 <b className="font-semibold text-sub">{engine.round + 1}</b> 轮</span>
-                <span>当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌</span>
-              </>}
+              /* 「第 N 轮」不在这里重复：任务条右侧的 progressLabel 已经是它
+               （topInfo.progressText），两处同时出现是 main 原顶栏就带的冗余。 */
+            : <span>当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌</span>}
           <span>目标 · 留下 <b className="font-semibold text-sub">{engine.finalCardCount}</b> 张底牌</span>
         </>
       }

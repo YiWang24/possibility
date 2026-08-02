@@ -88,14 +88,28 @@ export function HomeView() {
         completion={completion}
       />
 
-      {/* 每日三件事：手机保持 日记 → 发问 → 卡牌 的纵向顺序（与 iOS 一致），
-          桌面平铺成三列。原来是「左列日记+卡牌 / 右列发问」的跨行栅格，
-          发问卡跨两行把行高撑开，日记与卡牌之间被顶出一大块空白。
-          三列等宽后没有跨行，也就没有那块补不上的洞。 */}
-      <div className="mt-5 grid grid-cols-1 items-stretch gap-[18px] lg:mt-7 lg:grid-cols-3 lg:gap-5 xl:gap-6">
-        <DiaryCard />
-        <AskCard />
-        <LifeEntryButton />
+      {/* 每日三件事。三张卡的内容体量差得很远：发问卡有标题+输入框+话题 chip
+          （约 330px），日记卡只有一行周历（约 180px），卡牌入口就一行（约 90px）。
+          等宽三列配 items-stretch 会把三者拉成同高，日记与卡牌于是各空出一大片 ——
+          线上实测确认了这一点。改回两栏：左列纵向摞日记+卡牌，右列发问跨两行，
+          栅格高度因此贴着内容走。
+          手机保持 日记 → 发问 → 卡牌 的纵向顺序（与 iOS 一致），所以用显式
+          col-start/row-start 定位而不是靠 DOM 顺序，也不用 order 兜底。
+          items-start 是关键：之前那版用 self-end 把卡牌压到行底，才在日记
+          下面顶出一道刻意的缝。
+          grid-rows-[auto_1fr] 同样关键：默认 auto 行会把发问卡跨行的富余高度
+          均摊给两行，日记与卡牌之间又会浮出约 70px；显式让第一行贴合日记、
+          富余全部落到第二行，卡牌就紧跟在日记下面。 */}
+      <div className="mt-5 grid grid-cols-1 items-start gap-[18px] lg:mt-7 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5 xl:gap-6">
+        <div className="lg:col-start-1 lg:row-start-1">
+          <DiaryCard />
+        </div>
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <AskCard />
+        </div>
+        <div className="lg:col-start-1 lg:row-start-2">
+          <LifeEntryButton />
+        </div>
       </div>
 
       {/* 画像维度通栏 —— 六维行需要宽度，塞进侧轨会挤成两列窄条 */}
