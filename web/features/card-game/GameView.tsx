@@ -319,6 +319,33 @@ export function GameView({ kind }: { kind: CardGameKind }) {
   );
 }
 
+/** 任务条中段随对局阶段变化的一句话。
+    单独成组件而不是在 meta 里写嵌套三元：三元嵌套要在脑子里回溯分支才读得懂，
+    Sonar 也按可维护性问题计（S3358）；放在模块级还能让 GameBody 的认知复杂度下降。
+    这里刻意不出「第 N 轮」—— 任务条右侧的 progressLabel 已经是它
+    （topInfo.progressText），两处同时出现是 main 原顶栏就带的冗余。 */
+function PhaseHint({
+  phase,
+  engine,
+}: Readonly<{ phase: CardGameEngine["phase"]; engine: CardGameEngine }>) {
+  if (phase === "intro") {
+    return <span>从选择底牌开始，看见你在代价出现时保护什么</span>;
+  }
+  if (phase === "select") {
+    return (
+      <span>
+        已选择 <b className="font-semibold text-sub">{engine.selected.length}</b> /{" "}
+        {engine.initialSelectCount} 张底牌
+      </span>
+    );
+  }
+  return (
+    <span>
+      当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌
+    </span>
+  );
+}
+
 function GameBody({
   engine,
   sessionSync,
@@ -497,28 +524,6 @@ function GameBody({
     }
   };
 
-  /* 任务条中段随阶段变化的一句话。抽成具名变量而不是内联嵌套三元 ——
-     嵌套三元要在脑子里回溯分支才读得懂，Sonar 也按可维护性问题计（S3358）。
-     这里不重复「第 N 轮」：任务条右侧的 progressLabel 已经是它
-     （topInfo.progressText），两处同时出现是 main 原顶栏就带的冗余。 */
-  let phaseHint: React.ReactNode;
-  if (phase === "intro") {
-    phaseHint = <span>从选择底牌开始，看见你在代价出现时保护什么</span>;
-  } else if (phase === "select") {
-    phaseHint = (
-      <span>
-        已选择 <b className="font-semibold text-sub">{engine.selected.length}</b> /{" "}
-        {engine.initialSelectCount} 张底牌
-      </span>
-    );
-  } else {
-    phaseHint = (
-      <span>
-        当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌
-      </span>
-    );
-  }
-
   return (
     /* 专注模式：一局卡牌有明确的开始与结束，中途顶着全站导航既削弱专注，
        原来那条全宽 border-b + backdrop-blur 的顶栏又会在它下面再画一条。
@@ -536,13 +541,7 @@ function GameBody({
       progressLabel={topInfo.progressText}
       meta={
         <>
-          {phase === "intro"
-            ? <span>从选择底牌开始，看见你在代价出现时保护什么</span>
-            : phase === "select"
-              ? <span>已选择 <b className="font-semibold text-sub">{engine.selected.length}</b> / {engine.initialSelectCount} 张底牌</span>
-              /* 「第 N 轮」不在这里重复：任务条右侧的 progressLabel 已经是它
-               （topInfo.progressText），两处同时出现是 main 原顶栏就带的冗余。 */
-            : <span>当前持有 <b className="font-semibold text-sub">{engine.held.length}</b> 张底牌</span>}
+          <PhaseHint phase={phase} engine={engine} />
           <span>目标 · 留下 <b className="font-semibold text-sub">{engine.finalCardCount}</b> 张底牌</span>
         </>
       }

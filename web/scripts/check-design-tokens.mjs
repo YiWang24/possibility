@@ -132,8 +132,12 @@ if (deadWidthClasses.length) {
   for (const { file, cls } of deadWidthClasses) {
     console.error(`  ${file}\n    ${cls} 生成不出 CSS，max-width 静默变成 none\n`);
   }
+  const usable = [...allowedMaxW]
+    .filter((n) => !TAILWIND_MAX_W.has(n))
+    .map((n) => "max-w-" + n)
+    .join(" / ");
   console.error(
-    `当前可用：${[...allowedMaxW].filter((n) => !TAILWIND_MAX_W.has(n)).map((n) => `max-w-${n}`).join(" / ") || "（无自定义容器 token）"}\n` +
+    `当前可用：${usable || "（无自定义容器 token）"}\n` +
       "删除或改名容器 token 时，务必同步全部调用点。",
   );
   process.exit(1);
