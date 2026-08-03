@@ -78,37 +78,38 @@ export function HomeView() {
         </header>
       }
     >
-      {/* 首页是画像主场：数字形象撑第一屏，其余页面里它退居右轨伴随。
-          原来它排在页面最后、被压成扁条，产品最核心的资产要滚一屏才看得见。 */}
-      <PersonaHero
-        model={model}
-        userName={USER_NAME}
-        summary={remotePersona?.summary}
-        hasLifeCards={hasLifeCards}
-        completion={completion}
-      />
+      {/* 首屏区块。DOM 顺序 = 手机顺序 = iOS 顺序：语音日记 → 发问 → 卡牌 → 动态画像。
+          桌面把画像 hero 用显式行列定位提到第一行通栏，不动 DOM、也不用 order 兜底。
 
-      {/* 每日三件事。三张卡的内容体量差得很远：发问卡有标题+输入框+话题 chip
-          （约 330px），日记卡只有一行周历（约 180px），卡牌入口就一行（约 90px）。
-          等宽三列配 items-stretch 会把三者拉成同高，日记与卡牌于是各空出一大片 ——
-          线上实测确认了这一点。改回两栏：左列纵向摞日记+卡牌，右列发问跨两行，
-          栅格高度因此贴着内容走。
-          手机保持 日记 → 发问 → 卡牌 的纵向顺序（与 iOS 一致），所以用显式
-          col-start/row-start 定位而不是靠 DOM 顺序，也不用 order 兜底。
-          items-start 是关键：之前那版用 self-end 把卡牌压到行底，才在日记
-          下面顶出一道刻意的缝。
-          grid-rows-[auto_1fr] 同样关键：默认 auto 行会把发问卡跨行的富余高度
-          均摊给两行，日记与卡牌之间又会浮出约 70px；显式让第一行贴合日记、
-          富余全部落到第二行，卡牌就紧跟在日记下面。 */}
-      <div className="mt-5 grid grid-cols-1 items-start gap-[18px] lg:mt-7 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-5 xl:gap-6">
-        <div className="lg:col-start-1 lg:row-start-1">
+          为什么不能让 hero 在 DOM 里排第一：那样手机上它会占掉约 610px，
+          语音日记被推到 y≈724 —— 视口才 844px，日常操作全落到第一屏之外。
+          「画像当主视觉」是桌面才成立的解法，手机一次只能看一屏，
+          第一屏必须留给每天要用的三件事。
+
+          三张卡的内容体量差得很远（发问约 330px / 日记约 130px / 卡牌约 87px），
+          等宽三列配 items-stretch 会把三者拉平、卡内各空一大片；两栏 +
+          items-start 才贴着内容走。grid-rows 的 auto 档同样关键：默认 auto 行会把
+          发问卡跨行的富余高度均摊给两行，日记与卡牌之间会浮出约 70px。 */}
+      <div className="mt-5 grid grid-cols-1 items-start gap-[18px] lg:mt-7 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] lg:gap-5 xl:gap-6">
+        <div className="lg:col-start-1 lg:row-start-2">
           <DiaryCard />
         </div>
-        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-2">
           <AskCard />
         </div>
-        <div className="lg:col-start-1 lg:row-start-2">
+        <div className="lg:col-start-1 lg:row-start-3">
           <LifeEntryButton />
+        </div>
+        {/* 手机上排在三件事之后（与 iOS 的「动态画像」压轴一致）；
+            桌面提到第一行通栏，成为首屏主视觉。 */}
+        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1">
+          <PersonaHero
+            model={model}
+            userName={USER_NAME}
+            summary={remotePersona?.summary}
+            hasLifeCards={hasLifeCards}
+            completion={completion}
+          />
         </div>
       </div>
 
