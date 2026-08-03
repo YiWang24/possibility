@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { PageShell } from "@/components/shell/PageShell";
 import { PageHeading } from "@/components/shell/PageHeading";
+import { MobileDetailHeader } from "@/components/shell/MobileDetailHeader";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -139,9 +140,16 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
 
   return (
     <div className="screen-bg">
+      <MobileDetailHeader
+        title="悬赏详情"
+        description={`${statusText} · ${responseCount}`}
+        onBack={() => router.back()}
+      />
       {/* 面包屑取代 sticky 返回横条。标题改用悬赏问题本身而不是「悬赏详情」——
           页面标题应该说清这一页是什么，层级交给面包屑说。 */}
       <PageShell
+        compactMobile
+        headerOnMobile={false}
         header={
           /* 标题用悬赏问题本身而不是「悬赏详情」—— 页面标题该说清这一页是什么。
              但拉取未回来时 question 是占位串，那时退回稳定的通用标题，
@@ -160,6 +168,10 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
             ))}
           </div>
         )}
+
+        {/* 桌面问题本身在 PageHeading；手机标题栏保持 iOS 的稳定页名，
+            具体问题回到内容区作为主标题。 */}
+        <h1 className="text-heading font-bold leading-[1.5] text-ink md:hidden">{question}</h1>
 
         {/* 发布者 */}
         <div className="flex items-center gap-[11px]">
@@ -226,7 +238,7 @@ export function BountyDetail({ bountyId }: { bountyId: number }) {
 
       {/* 底部动作栏 */}
       <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
-        <div className="shell-gutter mx-auto w-full max-w-shell py-3">
+        <div className="shell-gutter mx-auto w-full max-w-shell pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
           <Button size="lg" className="w-full" onClick={onSend} disabled={sent}>
             {sent ? "名片已发送 ✓" : "发送我的名片"}
           </Button>

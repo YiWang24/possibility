@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/shell/PageShell";
 import { PageHeading } from "@/components/shell/PageHeading";
+import { MobileDetailHeader } from "@/components/shell/MobileDetailHeader";
 import { PersonaRail } from "@/features/home/PersonaRail";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -307,10 +308,27 @@ export function DiaryDetail() {
 
   return (
     <div className="screen-bg">
+      <MobileDetailHeader
+        title="语音日记"
+        description="听见每天的自己，也看见长期变化"
+        onBack={() => router.back()}
+        trailing={
+          <button
+            onClick={() => void downloadExport()}
+            className="shrink-0 rounded-chip border border-white/10 px-3 py-1.5 text-micro text-sub"
+          >
+            导出
+          </button>
+        }
+      />
+
       {/* 日记同样把画像钉在右轨：每天说的话正是喂给画像的原料。
           原实现是 660px 的窄条居中在 1800px 屏上（利用率 37%），
           且自带第二条 sticky 顶栏与全站顶栏抢层级。 */}
       <PageShell
+        compactMobile
+        headerOnMobile={false}
+        railOnMobile={false}
         rail={
           <PersonaRail caption="你每天留下的声音会汇进这里 —— 日记是画像最诚实的原料。" />
         }

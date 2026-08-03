@@ -46,6 +46,8 @@ export function CommunityView() {
       [t.name, t.quote, t.bio, ...t.tags].join(" ").toLowerCase().includes(q),
     );
   }, [travelers, search]);
+  const travelerColumns = useMemo(() => splitAlternating(filteredTravelers), [filteredTravelers]);
+  const bountyColumns = useMemo(() => splitAlternating(bounties), [bounties]);
 
   const primaryAction = () => {
     if (tab === 0) setShowDraw(true);
@@ -88,19 +90,57 @@ export function CommunityView() {
             {filteredTravelers.length === 0 ? (
               <EmptyState text="没有匹配的旅人，换个关键词试试。" />
             ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-5 2xl:grid-cols-4">
-                {filteredTravelers.map((t) => (
-                  <TravelerCard key={t.id} traveler={t} href={`/traveler/${t.id}`} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 items-start gap-3 lg:hidden">
+                  {travelerColumns.map((column, index) => (
+                    <div key={index} className="flex min-w-0 flex-col gap-3">
+                      {column.map((traveler) => (
+                        <TravelerCard
+                          key={traveler.id}
+                          traveler={traveler}
+                          href={`/traveler/${traveler.id}`}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden grid-cols-3 gap-5 lg:grid 2xl:grid-cols-4">
+                  {filteredTravelers.map((traveler) => (
+                    <TravelerCard
+                      key={traveler.id}
+                      traveler={traveler}
+                      href={`/traveler/${traveler.id}`}
+                    />
+                  ))}
+                </div>
+              </>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:gap-5 xl:grid-cols-3">
-            {bounties.map((b) => (
-              <BountyCard key={b.id} bounty={b} onClick={() => router.push(`/bounty/${b.id}`)} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 items-start gap-3 lg:hidden">
+              {bountyColumns.map((column, index) => (
+                <div key={index} className="flex min-w-0 flex-col gap-3">
+                  {column.map((bounty) => (
+                    <BountyCard
+                      key={bounty.id}
+                      bounty={bounty}
+                      onClick={() => router.push(`/bounty/${bounty.id}`)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+            <div className="hidden gap-5 lg:grid lg:grid-cols-2 xl:grid-cols-3">
+              {bounties.map((bounty) => (
+                <BountyCard
+                  key={bounty.id}
+                  bounty={bounty}
+                  onClick={() => router.push(`/bounty/${bounty.id}`)}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -126,6 +166,12 @@ export function CommunityView() {
       </AnimatePresence>
     </>
   );
+}
+
+function splitAlternating<T>(items: T[]): [T[], T[]] {
+  const columns: [T[], T[]] = [[], []];
+  items.forEach((item, index) => columns[index % 2].push(item));
+  return columns;
 }
 
 function TabButton({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {

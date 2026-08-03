@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
 import { PageShell } from "@/components/shell/PageShell";
 import { PageHeading } from "@/components/shell/PageHeading";
+import { MobileDetailHeader } from "@/components/shell/MobileDetailHeader";
 import { PersonaRail } from "@/features/home/PersonaRail";
 import type { RemoteConversation } from "@/lib/models";
 import { ChatModel, type ChatEntryPoint } from "./store";
@@ -98,9 +99,22 @@ export function ChatView({
 
   return (
     <div className="screen-bg">
+      <MobileDetailHeader
+        title={model.displayTopic ? `探索 · ${model.displayTopic}` : "探索问题"}
+        description="和你的动态画像一起想清楚"
+        onBack={() => router.back()}
+        trailing={
+          model.historyEntries.length > 0 ? (
+            <HistoryButton onClick={() => model.setShowHistory(true)} />
+          ) : null
+        }
+      />
       {/* 桌面把画像钉在右轨：这段对话正是在改写它，让用户边说边看见。
           iOS 一次只能一屏，画像与对话必须分开；桌面没有这个约束。 */}
       <PageShell
+        compactMobile
+        headerOnMobile={false}
+        railOnMobile={false}
         rail={
           <PersonaRail
             caption="这次探索会喂给你的动态画像。说得越具体，它长得越像你。"
