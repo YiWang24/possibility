@@ -9,6 +9,7 @@
 | `features/` | 单个功能模块的设计稿：一份文档只讲一个功能 |
 | `design/` | 设计资产：原型、设计稿、图标、上架截图、图片母版 |
 | `marketing/` | 对外物料：海报、扑克牌等可出图的宣传件 |
+| `demo-video/` | 产品 demo 视频的 Remotion 工程（唯一的可运行工程，不是文档） |
 
 ---
 
@@ -56,3 +57,12 @@
 | [possibility-poker/](marketing/possibility-poker/) | 人生决策扑克牌（HTML 模板 + 出图提示词） |
 
 > `marketing/domains/` 为域名候选调研，暂未入库。
+
+## demo-video/ · 产品 Demo 视频
+
+| 内容 | 讲什么 |
+|---|---|
+| [README.md](demo-video/README.md) | Remotion 工程：一份剪辑表 (`src/kaleido/script.ts`) 驱动横屏 / 竖屏长版 / 竖屏短版三个成片 |
+
+独立的 npm 工程（不在 pnpm workspace 里），要在 `docs/demo-video/` 内 `npm i` 后使用。
+原始录屏与切片素材约 50MB 派生媒体，不入库——新克隆后先跑 `npm run clips` 重建。
