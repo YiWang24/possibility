@@ -30,7 +30,7 @@ export function Foot({
     /* sticky：测评页已改成文档流（不再是「外层 h-dvh + 内容 overflow-y-auto」
        那套页面里套页面的结构），底部操作栏得自己粘在视口底沿才留得住。
        卡牌局仍是固定高度牌桌，sticky 在那里无副作用。视觉沿用 main 的新样式。 */
-    <div className="sticky bottom-0 z-20 border-t border-white/[0.07] bg-[#090b17]/82 px-5 pb-[14px] pt-3 backdrop-blur-xl">
+    <div className="sticky bottom-0 z-20 border-t border-white/[0.07] bg-[#090b17]/82 px-5 pb-[max(14px,env(safe-area-inset-bottom))] pt-3 backdrop-blur-xl">
       <div className="mx-auto w-full max-w-[800px]">
         <Button size="lg" className="w-full" type="button" disabled={!enabled} onClick={onClick}>
           {title}

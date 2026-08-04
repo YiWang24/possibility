@@ -18,7 +18,7 @@ export function InputBar({
     /* sticky 贴主栏底沿：页面滚动时输入栏始终在手边，但滚动条仍然是页面那一条，
        不像原来那样靠「外层 h-dvh + 消息区 overflow-y-auto」在页面里再造一个页面。
        负边距把毛玻璃底衬拉到主栏两侧留白外，气泡滚过去才不会从边缘漏出来。 */
-    <div className="sticky bottom-0 z-20 -mx-[18px] border-t border-line bg-paper/80 px-[18px] pb-2 pt-3 backdrop-blur">
+    <div className="sticky bottom-0 z-20 -mx-[18px] border-t border-line bg-paper/80 px-[18px] pb-[max(8px,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
       <div className="flex w-full items-center gap-2.5">
         <input
           value={value}

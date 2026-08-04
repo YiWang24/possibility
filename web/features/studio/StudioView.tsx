@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageShell } from "@/components/shell/PageShell";
 import { PageHeading } from "@/components/shell/PageHeading";
+import { MobileDetailHeader } from "@/components/shell/MobileDetailHeader";
 import { SectionHeader } from "@/components/ui/page-header";
 import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions";
 import { useHome } from "@/features/home/store";
@@ -49,8 +50,15 @@ export function StudioView() {
 
   return (
     <div className="screen-bg">
+      <MobileDetailHeader
+        title="画像工坊"
+        description="用测评与关键词，持续雕刻更立体的自己"
+        onBack={() => router.back()}
+      />
       {/* 页头不再是第二条 sticky 栏 —— 全站已有顶栏，再钉一条只会和它抢层级 */}
       <PageShell
+        compactMobile
+        headerOnMobile={false}
         header={
           <PageHeading
             eyebrow="PORTRAIT STUDIO"

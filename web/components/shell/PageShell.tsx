@@ -20,6 +20,12 @@ interface PageShellProps {
   railSide?: RailSide;
   /** 侧轨是否 sticky 跟随。内容长于一屏的轨要关掉，否则底部会被裁掉 */
   stickyRail?: boolean;
+  /** 手机端是否也展示侧轨；详情页的画像伴随轨只属于桌面布局 */
+  railOnMobile?: boolean;
+  /** 页头是否在手机端可见；详情页可改用自己的 iOS 风格返回栏 */
+  headerOnMobile?: boolean;
+  /** 手机详情页使用 20px 内容边距，并紧贴自己的返回栏 */
+  compactMobile?: boolean;
   className?: string;
 }
 
@@ -29,16 +35,29 @@ export function PageShell({
   rail,
   railSide = "end",
   stickyRail = true,
+  railOnMobile = true,
+  headerOnMobile = true,
+  compactMobile = false,
   className = "",
 }: PageShellProps) {
+  const rootClassName = compactMobile
+    ? "shell-gutter mx-auto w-full max-w-shell pb-[calc(env(safe-area-inset-bottom)+40px)] pt-0 max-md:px-5 md:pb-16 md:pt-12 xl:pb-24 xl:pt-14"
+    : "shell-gutter mx-auto w-full max-w-shell pb-16 pt-[calc(env(safe-area-inset-top)+20px)] md:pt-12 xl:pb-24 xl:pt-14";
+  const splitClassName = header
+    ? `${headerOnMobile ? "mt-6" : "md:mt-6"} lg:mt-10 ${className}`
+    : className;
+
   return (
-    <div className="shell-gutter mx-auto w-full max-w-shell pb-16 pt-8 md:pt-12 xl:pb-24 xl:pt-14">
-      {header}
+    <div className={rootClassName}>
+      {header ? (
+        <div className={headerOnMobile ? undefined : "hidden md:block"}>{header}</div>
+      ) : null}
       <PageSplit
         rail={rail}
         railSide={railSide}
         stickyRail={stickyRail}
-        className={header ? `mt-6 lg:mt-10 ${className}` : className}
+        railOnMobile={railOnMobile}
+        className={splitClassName}
       >
         {children}
       </PageSplit>
@@ -54,12 +73,14 @@ function PageSplit({
   rail,
   railSide,
   stickyRail,
+  railOnMobile,
   className = "",
 }: {
   children: React.ReactNode;
   rail?: React.ReactNode;
   railSide: RailSide;
   stickyRail: boolean;
+  railOnMobile: boolean;
   className?: string;
 }) {
   if (!rail) {
@@ -78,7 +99,7 @@ function PageSplit({
   /* sticky 起点让开顶栏再留 32px 呼吸，否则轨滚上去会钻到顶栏底下 */
   const railNode = (
     <aside
-      className={`flex min-w-0 flex-col ${
+      className={`${railOnMobile ? "flex" : "hidden lg:flex"} min-w-0 flex-col ${
         stickyRail ? "lg:sticky lg:top-[calc(var(--nav-h)+2rem)] lg:self-start" : ""
       }`}
     >

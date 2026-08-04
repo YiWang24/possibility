@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "lint:tokens": "node scripts/check-design-tokens.mjs"
+    "lint:tokens": "node scripts/check-design-tokens.mjs",
+    "lint:mobile-parity": "node scripts/check-mobile-ios-parity.mjs"
   },
   "dependencies": {
     "@possibility/api-client": "workspace:*",

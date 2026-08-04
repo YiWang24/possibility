@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { PageShell } from "@/components/shell/PageShell";
 import { PageHeading } from "@/components/shell/PageHeading";
+import { MobileDetailHeader } from "@/components/shell/MobileDetailHeader";
 import { OrbView } from "@/components/ui/OrbView";
 import { useToast } from "@/components/ui/Toast";
 import { mockAvatarById } from "@/lib/theme";
@@ -87,10 +88,26 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
   return (
     <div className="screen-bg">
+      <MobileDetailHeader
+        title={traveler.name}
+        description="真实经历 · 已验证"
+        onBack={() => router.back()}
+        trailing={
+          <button
+            aria-label="更多"
+            onClick={() => show("更多操作：分享主页 · 举报 · 屏蔽")}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-raised text-title leading-none text-sub"
+          >
+            ···
+          </button>
+        }
+      />
       {/* 原来是 sticky + backdrop-blur + 全宽 border 的返回横条，视觉特征与真
           navbar 完全一致，紧贴全站导航下就成了第二条。改成面包屑：
           「万花筒社区 › 林可」既说明身在第几层，也能一键跳回社区。 */}
       <PageShell
+        compactMobile
+        headerOnMobile={false}
         header={
           <PageHeading
             title={traveler.name}
@@ -114,7 +131,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
       ) : (
         <>
           {/* Hero —— 由全宽色带改成卡片：全宽色带同样会在导航下再画一条横向分隔 */}
-          <div className="overflow-hidden rounded-card border border-line">
+          <div className="overflow-hidden border-y border-line max-md:-mx-5 md:rounded-card md:border">
             <div
               className="w-full px-[22px] pb-5 pt-[22px]"
               style={{
@@ -222,7 +239,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
 
           {/* 底部咨询付费栏 */}
           <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
-            <div className="shell-gutter mx-auto w-full max-w-shell py-3">
+            <div className="shell-gutter mx-auto w-full max-w-shell pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
               <Button size="lg" className="w-full" onClick={() => setShowPaywall(true)}>
                 向 TA 咨询
                 <span className="text-lead font-bold">¥{consultPrice}</span>
