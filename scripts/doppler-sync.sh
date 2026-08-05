@@ -17,11 +17,15 @@ fi
 SUPABASE="supabase"
 command -v supabase >/dev/null || SUPABASE="npx supabase"
 
-# supabase CLI ≥2.110 从 --env-file /dev/stdin 读到的是空内容，直接报
-# LegacySecretsNoArgumentsError；必须落成真实文件再传。文件只在内存盘之外存在几毫秒，
+# supabase CLI（本地实测 2.110，macOS）从 --env-file /dev/stdin 读到的是空内容，
+# 直接报 LegacySecretsNoArgumentsError；必须落成真实文件再传。
 # 用 umask 077 + trap 保证它不会以可读权限留在磁盘上。
+#
+# mktemp 必须写完整模板：BSD/macOS 的 `-t foo` 把参数当前缀，GNU coreutils 却要求
+# 模板里至少三个 X，`mktemp -t doppler-sync` 会在 CI（Linux）上直接报
+# "too few X's in template" 把部署打挂。带 X 的显式路径两边都成立。
 umask 077
-ENV_FILE="$(mktemp -t doppler-sync)"
+ENV_FILE="$(mktemp "${TMPDIR:-/tmp}/doppler-sync.XXXXXX")"
 trap 'rm -f "$ENV_FILE"' EXIT
 
 doppler secrets download --no-file --format env \
