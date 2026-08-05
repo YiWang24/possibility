@@ -1185,3 +1185,73 @@ DIARY_DAILY_ENTRY_LIMIT
 上线前还需要用用户明确授权的普通话、方言和中英混合录音做准确率评测。
 本地自动化验证只能证明请求格式、状态机、持久队列和数据一致性，不能替代真实
 语音质量验收。
+
+## 20. 真实 Azure 接入验证（2026-08-05）
+
+### 20.1 已接入的资源
+
+| 项 | 值 |
+| --- | --- |
+| 资源名 | `myspeechtotext`（资源组 `server`） |
+| Kind / SKU | `SpeechServices` / **F0（免费层）** |
+| 区域 | `eastus` |
+| Endpoint | `https://eastus.api.cognitive.microsoft.com/` |
+| api-version | `2025-10-15` |
+
+用真实录音实测确认：
+
+- **Fast Transcription 在 F0 免费层可用**，不需要升级到 S0。
+- 并发不受限：4 路并发请求全部 200，单请求约 1.8s（6.6s 音频）。
+- 容器格式：`audio/wav`（16k 单声道 PCM）与 `audio/mp4`（AAC，iOS 路径）均识别成功，
+  普通话置信度约 0.94。
+- `definition` 字段即使不带 `Content-Type: application/json` 也被接受——这正是
+  Deno `FormData` 追加字符串字段的行为，因此生产代码路径无需改动。
+
+Supabase Edge Function Secrets 已通过 `scripts/doppler-sync.sh prd` 从
+Doppler `possibility/prd` 同步，`AZURE_SPEECH_*`、`DIARY_WORKER_SECRET`、
+`DIARY_DAILY_ENTRY_LIMIT` 均已就位。
+
+### 20.2 Azure 错误契约与错误码映射
+
+Azure 用同一个 **422** 表达两件性质完全不同的事。此前实现把所有不可重试的 4xx
+一律折叠成 `TRANSCRIPTION_CONFIGURATION_ERROR`，导致用户录了段静音却看到"服务
+配置错误"，运维也无法把密钥失效从正常的用户输入问题里分辨出来。现按上游机器码
+拆分：
+
+| 场景 | HTTP | Azure `innerError.code` | 我方 `error_code` | 可重试 |
+| --- | --- | --- | --- | --- |
+| 无人声 / 无法识别语种 | 422 | `NoLanguageIdentified` | `TRANSCRIPTION_EMPTY` | 否 |
+| 音频损坏 / 格式不支持 | 422 | `InvalidAudioFormat` | `UNSUPPORTED_AUDIO` | 否 |
+| 其他 422 | 422 | 其他 | `TRANSCRIPTION_AUDIO_REJECTED` | 否 |
+| 密钥失效 / 端点错误 | 401、403 | — | `TRANSCRIPTION_CONFIGURATION_ERROR` | 否 |
+| 限流与上游故障 | 408、409、429、5xx | — | `TRANSCRIPTION_UPSTREAM_<status>` | 是 |
+
+只读取 Azure 的机器码，绝不透传上游 `message`：错误消息可能回显音频内容，而
+`error_code` 会落库（见 §11.3）。
+
+三类终态都不自动重试——重试只会重复消耗配额，恢复要靠用户重新录制或改用文字。
+用户主动触发的 `retry-diary-entry` 不受影响。
+
+### 20.3 验证方式
+
+- `supabase/functions/tests/diary_v2_test.ts`：注入 mock fetch 覆盖上述映射，
+  无需密钥，随 `npm run backend:check` 一起跑。
+- `supabase/functions/tests/transcription_live_test.ts`：直接调用生产函数
+  `transcribeDiaryAudio()` 打真实 Azure 端点。**未配置密钥或未授予 `--allow-env`
+  时整组跳过**，因此不会污染默认测试套件。这组用例存在的理由是 mock 永远证明不了
+  上游是否接受我们的请求——契约漂移、密钥失效、区域写错在 mock 下 100% 通过。
+
+  ```bash
+  doppler run --project possibility --config prd -- \
+    deno test --allow-net --allow-env --allow-read \
+      --config supabase/functions/deno.json \
+      supabase/functions/tests/transcription_live_test.ts
+  ```
+
+### 20.4 恢复用 Cron
+
+`pg_cron` 与 `pg_net` 此前**未安装**，§19 要求的恢复任务从未生效。缺了它，worker
+若在转写途中超时退出，pgmq 消息可见性到期后没有任何人再来消费，该条目会永远停在
+`transcribing`。现已在生产库安装扩展，并按
+`docs/engineering/diary-worker-cron.sql.example` 建好 `drain-diary-jobs`
+（每分钟一次，URL 与 secret 存 Vault）。
