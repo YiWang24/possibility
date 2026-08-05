@@ -254,3 +254,98 @@ Deno.test("Azure transcription marks rate limits retryable", async () => {
     assert(error.retryable);
   }
 });
+
+// Azure 把"没听到人声"和"这不是音频"都塞进 422。折叠成一个配置错误会让用户看到
+// 「服务配置错误」，也会让运维分不清密钥失效和用户录了段静音。响应样本取自真实
+// eastus 端点，见 transcription_live_test.ts。
+Deno.test("Azure 422 区分无人声、不支持格式与其他拒绝", async () => {
+  const cases: Array<[string, string]> = [
+    ["NoLanguageIdentified", "TRANSCRIPTION_EMPTY"],
+    ["InvalidAudioFormat", "UNSUPPORTED_AUDIO"],
+    ["SomethingElse", "TRANSCRIPTION_AUDIO_REJECTED"],
+  ];
+
+  for (const [innerCode, expected] of cases) {
+    const fetchImpl = (() =>
+      Promise.resolve(
+        Response.json({
+          code: "UnprocessableEntity",
+          message: "…",
+          innerError: { code: innerCode, message: "…" },
+        }, { status: 422 }),
+      )) as typeof fetch;
+    try {
+      await transcribeDiaryAudio(
+        new Blob(["voice"]),
+        "source.webm",
+        "audio/webm",
+        {
+          apiKey: "test-key",
+          endpoint: "https://speech.example.test",
+          apiVersion: "2025-10-15",
+          locales: ["zh-CN"],
+          fetchImpl,
+        },
+      );
+      throw new Error(`expected failure for ${innerCode}`);
+    } catch (error) {
+      assert(error instanceof TranscriptionError);
+      assert(error.code === expected, `${innerCode} → ${error.code}`);
+      // 三种都是终态：自动重试只会重复烧配额，恢复要靠用户重录或改用文字。
+      assert(!error.retryable);
+    }
+  }
+});
+
+Deno.test("Azure 422 错误体不可解析时回退到通用拒绝码", async () => {
+  const fetchImpl = (() =>
+    Promise.resolve(
+      new Response("<html>gateway</html>", { status: 422 }),
+    )) as typeof fetch;
+  try {
+    await transcribeDiaryAudio(
+      new Blob(["voice"]),
+      "source.webm",
+      "audio/webm",
+      {
+        apiKey: "test-key",
+        endpoint: "https://speech.example.test",
+        apiVersion: "2025-10-15",
+        locales: ["zh-CN"],
+        fetchImpl,
+      },
+    );
+    throw new Error("expected transcription failure");
+  } catch (error) {
+    assert(error instanceof TranscriptionError);
+    assert(error.code === "TRANSCRIPTION_AUDIO_REJECTED");
+    assert(!error.retryable);
+  }
+});
+
+// 401 必须留在配置错误里：这是唯一需要立刻报警的一类，不能被音频类错误淹没。
+Deno.test("Azure 401 仍然是配置错误", async () => {
+  const fetchImpl = (() =>
+    Promise.resolve(
+      Response.json({ error: { code: "401", message: "…" } }, { status: 401 }),
+    )) as typeof fetch;
+  try {
+    await transcribeDiaryAudio(
+      new Blob(["voice"]),
+      "source.webm",
+      "audio/webm",
+      {
+        apiKey: "test-key",
+        endpoint: "https://speech.example.test",
+        apiVersion: "2025-10-15",
+        locales: ["zh-CN"],
+        fetchImpl,
+      },
+    );
+    throw new Error("expected transcription failure");
+  } catch (error) {
+    assert(error instanceof TranscriptionError);
+    assert(error.code === "TRANSCRIPTION_CONFIGURATION_ERROR");
+    assert(!error.retryable);
+  }
+});
