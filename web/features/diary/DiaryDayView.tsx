@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DiaryEntry, DiarySummaryResponse } from "./data";
+import type { DiaryEntry, DiaryFailure, DiarySummaryResponse } from "./data";
 import {
   dayNumber,
+  diaryFailure,
   diaryLabel,
   entryEmoji,
   entryTitle,
@@ -66,6 +67,7 @@ export function DiaryDayView({
     [selectedEntries],
   );
   const selectedEntry = sortedSelected[0] ?? null;
+  const selectedFailure = selectedEntry ? diaryFailure(selectedEntry) : null;
   const dayKeywords = [
     ...new Set(sortedSelected.flatMap((entry) => entry.keywords)),
   ];
@@ -131,13 +133,21 @@ export function DiaryDayView({
                 title="详细语音内容"
                 note={`${formatDuration(selectedEntry.duration_ms)} · ${statusText(selectedEntry.status)}`}
               />
+              {selectedFailure && (
+                <p className="mt-[11px] rounded-tile border border-orange/30 bg-orange/10 px-3 py-2.5 text-footnote leading-[1.7] text-apricot">
+                  {selectedFailure.text}
+                </p>
+              )}
               <TranscriptEditor
                 entry={selectedEntry}
+                failure={selectedFailure}
                 onSave={(transcript) =>
                   onUpdateTranscript(selectedEntry, transcript)}
               />
               <div className="mt-4 flex items-center gap-4">
-                {selectedEntry.status === "failed" && (
+                {/* 只在重试真的可能成功时才给这个按钮：对静音或损坏的录音，
+                    重试会原样再失败一次，把用户困在死循环里。 */}
+                {selectedFailure?.recovery === "retry" && (
                   <button
                     onClick={() => onRetry(selectedEntry)}
                     className="text-micro font-medium text-brand"
@@ -295,9 +305,11 @@ function PendingLine({ text }: { text: string }) {
 
 function TranscriptEditor({
   entry,
+  failure,
   onSave,
 }: {
   entry: DiaryEntry;
+  failure: DiaryFailure | null;
   onSave: (transcript: string) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -309,15 +321,24 @@ function TranscriptEditor({
     setValue(entry.transcript ?? "");
   }, [entry.entry_id, entry.transcript]);
 
-  if (!entry.transcript) {
+  if (!entry.transcript && !editing) {
+    // 转不出文字的录音必须有一条出路。后端的 update-diary-transcript 接受 failed
+    // 状态，写入后会清掉 error_code 并重新分析；此前这里只有一行灰字，静音录音
+    // 就此走进死胡同——重试必然再失败，又没有地方手动补文字。
+    if (failure?.recovery === "rewrite") {
+      return (
+        <button
+          onClick={() => setEditing(true)}
+          className="mt-[11px] text-micro font-medium text-brand"
+        >
+          补充文字内容
+        </button>
+      );
+    }
+    // 失败原因已经由上方的提示条说明，这里不再重复一遍。
+    if (failure) return null;
     return (
-      <PendingLine
-        text={
-          entry.status === "failed"
-            ? "这次转写没有成功，原始录音仍然安全保留。"
-            : "原始录音已经保存，转写完成后会在这里显示全文。"
-        }
-      />
+      <PendingLine text="原始录音已经保存，转写完成后会在这里显示全文。" />
     );
   }
 
@@ -420,7 +441,8 @@ function SameDayEntries({
           <button onClick={() => onDelete(entry)} className="text-micro text-faint">
             删除
           </button>
-          {entry.status === "failed" && (
+          {/* 同上：只有瞬时故障才值得在这里给一键重试。 */}
+          {diaryFailure(entry)?.recovery === "retry" && (
             <button onClick={() => onRetry(entry)} className="text-micro text-brand">
               重试
             </button>
