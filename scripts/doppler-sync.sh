@@ -19,11 +19,11 @@ command -v supabase >/dev/null || SUPABASE="npx supabase"
 
 # supabase CLI（本地实测 2.110，macOS）从 --env-file /dev/stdin 读到的是空内容，
 # 直接报 LegacySecretsNoArgumentsError；必须落成真实文件再传。
-# 用 umask 077 + trap 保证它不会以可读权限留在磁盘上。
+# 用 umask 077 与 trap 保证它不会以可读权限留在磁盘上。
 #
-# mktemp 必须写完整模板：BSD/macOS 的 `-t foo` 把参数当前缀，GNU coreutils 却要求
-# 模板里至少三个 X，`mktemp -t doppler-sync` 会在 CI（Linux）上直接报
-# "too few X's in template" 把部署打挂。带 X 的显式路径两边都成立。
+# 临时文件名必须写成带 X 的完整路径模板。BSD/macOS 把 -t 的参数当作前缀，
+# 只给一个名字也能跑；GNU coreutils 却把它当模板，要求至少三个连续的 X，
+# 于是同样一行在 CI（Linux）上会以 "too few X's in template" 失败并打挂部署。
 umask 077
 ENV_FILE="$(mktemp "${TMPDIR:-/tmp}/doppler-sync.XXXXXX")"
 trap 'rm -f "$ENV_FILE"' EXIT
