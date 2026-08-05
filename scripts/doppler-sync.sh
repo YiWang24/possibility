@@ -21,11 +21,12 @@ command -v supabase >/dev/null || SUPABASE="npx supabase"
 # 直接报 LegacySecretsNoArgumentsError；必须落成真实文件再传。
 # 用 umask 077 与 trap 保证它不会以可读权限留在磁盘上。
 #
-# 临时文件名必须写成带 X 的完整路径模板。BSD/macOS 把 -t 的参数当作前缀，
-# 只给一个名字也能跑；GNU coreutils 却把它当模板，要求至少三个连续的 X，
-# 于是同样一行在 CI（Linux）上会以 "too few X's in template" 失败并打挂部署。
+# 名字里必须带至少三个连续的 X。BSD/macOS 把 -t 的参数当作前缀，只给一个名字
+# 也能跑；GNU coreutils 却把它当模板，缺了 X 就以 "too few X's in template"
+# 失败——同样一行在本机通过、在 CI（Linux）上打挂部署。带 X 两边都成立，
+# 且交给 mktemp 自己按 TMPDIR 选目录，不在脚本里写死路径。
 umask 077
-ENV_FILE="$(mktemp "${TMPDIR:-/tmp}/doppler-sync.XXXXXX")"
+ENV_FILE="$(mktemp -t doppler-sync.XXXXXX)"
 trap 'rm -f "$ENV_FILE"' EXIT
 
 doppler secrets download --no-file --format env \
