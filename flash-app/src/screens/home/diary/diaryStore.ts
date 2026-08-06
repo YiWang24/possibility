@@ -34,6 +34,72 @@ interface DiaryState {
   reset: () => void;
 }
 
+/**
+ * Dictation runs as a chain of engine sessions, not one long one.
+ *
+ * The recogniser ends a session on its own after a pause — `continuous` defaults to
+ * false in the host API and cannot be relied on even when requested. The product
+ * promise is "talk until you tap 完成", so when a session ends by itself we bank its
+ * text and open the next one. `onText` reports the full text of the *current* session
+ * only, so without banking, everything said before a pause would be lost.
+ */
+let committed = '';
+let live = '';
+let restarts = 0;
+/** Set while finishRecording is stopping, so onEnd does not reopen the session. */
+let finishing = false;
+
+/** How many self-restarts to allow before treating the engine as unusable. */
+const MAX_RESTARTS = 40;
+/** Time for the engine's last onText to arrive after stop() resolves. */
+const FINAL_TEXT_GRACE_MS = 350;
+
+function combined(): string {
+  if (committed === '') return live;
+  if (live === '') return committed;
+  return `${committed} ${live}`;
+}
+
+type SetState = (partial: Partial<DiaryState>) => void;
+
+/** Open one engine session, rechaining it when it ends before the user is done. */
+async function openSession(set: SetState, get: () => DiaryState): Promise<void> {
+  try {
+    await startAsrSession({
+      onText: (text) => {
+        live = text;
+        set({ transcript: combined() });
+      },
+      onError: (message, code) => {
+        // A pause-triggered no-speech is normal mid-dictation; onEnd rechains it.
+        if (code === 'no-speech' || code === 'aborted') return;
+        finishing = true;
+        set({ phase: 'error', error: message });
+      },
+      onEnd: () => {
+        if (finishing || get().phase !== 'recording') return;
+        // Bank this session's text, then continue listening.
+        if (live.trim() !== '') {
+          committed = combined();
+          live = '';
+          set({ transcript: committed });
+        }
+        restarts += 1;
+        if (restarts > MAX_RESTARTS) {
+          finishing = true;
+          set({ phase: 'error', error: '录音一直中断，请检查麦克风或稍后再试' });
+          return;
+        }
+        void openSession(set, get);
+      },
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '无法启动录音，请检查麦克风权限';
+    finishing = true;
+    set({ phase: 'error', error: message, asrSupported: isAsrAvailable() });
+  }
+}
+
 function buildEntry(
   date: Date,
   transcript: string,
@@ -62,7 +128,9 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
   asrSupported: isAsrAvailable(),
 
   setTranscript: (text) => {
-    // Host pushes the full transcript each time — overwrite, never append.
+    // Manual-entry path only; dictation goes through pushLive() below.
+    committed = text;
+    live = '';
     set({ transcript: text });
   },
 
@@ -71,37 +139,36 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
   },
 
   startRecording: async () => {
+    committed = '';
+    live = '';
+    restarts = 0;
+    finishing = false;
     set({ phase: 'recording', transcript: '', seconds: 0, error: null, analysisFailedDate: null });
-    try {
-      await startAsrSession({
-        onText: (text) => {
-          get().setTranscript(text);
-        },
-        onError: (message) => {
-          set({ phase: 'error', error: message });
-        },
-        onEnd: (reason) => {
-          if (reason === 'error') return;
-          // 'stop' is handled by finishRecording; nothing to do for a clean abort.
-        },
-      });
-    } catch (e) {
-      const message = e instanceof Error ? e.message : '无法启动录音，请检查麦克风权限';
-      set({ phase: 'error', error: message, asrSupported: isAsrAvailable() });
-    }
+    await openSession(set, get);
   },
 
   finishRecording: async () => {
     if (get().phase !== 'recording') return;
+    finishing = true;
     try {
       await stopAsrSession();
     } catch {
       // A failed stop still leaves whatever text already arrived usable.
     }
-    const { transcript, seconds } = get();
-    const text = transcript.trim();
+    // The engine may emit its last onText just after stop() resolves, so give that
+    // final chunk a moment to land rather than reading an empty transcript.
+    await new Promise((r) => setTimeout(r, FINAL_TEXT_GRACE_MS));
+
+    const seconds = get().seconds;
+    const text = combined().trim();
     if (text === '') {
-      set({ phase: 'error', error: '没有听清，靠近一点再说一次试试', transcript: '' });
+      set({
+        phase: 'error',
+        // Distinct from the host's own no-speech copy, so the two failures stay
+        // tellable apart when someone reports this.
+        error: '这段没有录到内容，可以再说一次，或直接手动写下来',
+        transcript: '',
+      });
       return;
     }
     set({ phase: 'analyzing' });
@@ -109,6 +176,10 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
   },
 
   cancelRecording: async () => {
+    // Before aborting, or onEnd would rechain a session the user just dismissed.
+    finishing = true;
+    committed = '';
+    live = '';
     try {
       await abortAsrSession();
     } catch {
@@ -150,10 +221,15 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
   },
 
   dismissError: () => {
-    set({ error: null, phase: 'idle' });
+    // An analysis failure leaves phase 'done' with the entry already saved, so only
+    // a genuine error state returns to idle — dismissing must not undo a save.
+    set({ error: null, phase: get().phase === 'error' ? 'idle' : get().phase });
   },
 
   reset: () => {
+    committed = '';
+    live = '';
+    finishing = true;
     set({ phase: 'idle', transcript: '', seconds: 0, error: null, analysisFailedDate: null });
   },
 }));
