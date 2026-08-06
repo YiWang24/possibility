@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import { DIARY_ENTRIES } from '@/data/diary';
-import { MONTH_EMOTION, MONTH_INSIGHTS, MONTH_THEMES, YEAR_CHAPTERS, YEAR_CLOSING, YEAR_KEYWORDS } from './diaryHelpers';
+import { useMemo, useState } from 'react';
+import { MONTH_EMOTION } from './diaryHelpers';
+import { useDiaryStore } from './diaryStore';
+import { mergeWithSeed } from './diaryStorage';
+import { FALLBACK_MONTH, FALLBACK_YEAR, summarizeDiary, type MonthSummary, type YearSummary } from './diarySummarize';
 
 interface DiarySummaryProps {
   period: 'month' | 'year';
@@ -9,24 +11,37 @@ interface DiarySummaryProps {
 
 export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
   const isMonth = period === 'month';
-  const monthEntryCount = DIARY_ENTRIES.length;
+  const recorded = useDiaryStore((s) => s.recorded);
+  const entries = useMemo(() => mergeWithSeed(recorded), [recorded]);
+  const monthEntryCount = entries.length;
+
   const [refreshing, setRefreshing] = useState(false);
-  const timer = useRef(0);
+  const [month, setMonth] = useState<MonthSummary>(FALLBACK_MONTH);
+  const [year, setYear] = useState<YearSummary>(FALLBACK_YEAR);
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(timer.current);
-    },
-    [],
-  );
-
+  // Generated on demand rather than on mount: it is the most expensive call in the app,
+  // and the scripted copy already reads correctly until the user asks for a refresh.
   const refresh = () => {
     if (refreshing) return;
     setRefreshing(true);
-    timer.current = window.setTimeout(() => {
+    void (async () => {
+      let generated = null;
+      try {
+        generated = await summarizeDiary(period, entries);
+      } catch {
+        // Keeps whatever is already on screen.
+      }
+      if (generated?.kind === 'month') setMonth(generated);
+      else if (generated?.kind === 'year') setYear(generated);
       setRefreshing(false);
-      showToast(isMonth ? '月度总结已根据最新日记更新' : '年度总结已根据最新日记更新');
-    }, 850);
+      showToast(
+        generated === null
+          ? '这次没能生成总结，先看看现有内容'
+          : isMonth
+            ? '月度总结已根据最新日记更新'
+            : '年度总结已根据最新日记更新',
+      );
+    })();
   };
 
   return (
@@ -35,7 +50,7 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
         <div>
           <div className="ey">{isMonth ? 'MONTHLY REVIEW' : 'YEARLY REVIEW'}</div>
           <h2>{isMonth ? '2026年7月' : '2026年度'}</h2>
-          <p>{isMonth ? `${String(monthEntryCount)}篇日记已纳入总结` : '143篇日记已纳入总结'}</p>
+          <p>{`${String(monthEntryCount)}篇日记已纳入总结`}</p>
         </div>
         <button type="button" className="diary-summary-refresh" data-testid="diary-summary-refresh" disabled={refreshing} onClick={refresh}>
           {refreshing ? '总结中…' : '更新总结'}
@@ -46,12 +61,8 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
         <>
           <div className="diary-summary-hero">
             <div className="cap">JULY IN VOICE · 2026年7月</div>
-            <h3>
-              这个月，你从“必须马上决定”
-              <br />
-              走向了“先用行动收集答案”
-            </h3>
-            <p>焦虑没有完全消失，但它不再只是反复盘旋，而是逐渐被拆成访谈、共创和项目复盘等可以验证的下一步。</p>
+            <h3>{month.headline}</h3>
+            <p>{month.intro}</p>
             <div className="diary-stat-grid">
               <div className="diary-stat">
                 <b>{monthEntryCount}</b>
@@ -87,12 +98,12 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
               <span>跨 {monthEntryCount} 篇日记</span>
             </div>
             <div className="diary-keywords">
-              {MONTH_THEMES.map((theme) => (
+              {month.themes.map((theme) => (
                 <span key={theme}>{theme}</span>
               ))}
             </div>
             <div className="diary-insight-list">
-              {MONTH_INSIGHTS.map((insight) => (
+              {month.insights.map((insight) => (
                 <div key={insight.title} className="diary-insight">
                   <div className="cap">{insight.cap}</div>
                   <b>{insight.title}</b>
@@ -106,12 +117,8 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
         <>
           <div className="diary-summary-hero">
             <div className="cap">YOUR 2026 · 年度声音</div>
-            <h3>
-              这一年，你在练习把人生
-              <br />
-              从“证明自己”还给“选择自己”
-            </h3>
-            <p>工作的熟练带来认可，也带来停滞感。你开始允许自己不立刻跳走，而是先靠近真正感兴趣的问题。</p>
+            <h3>{year.headline}</h3>
+            <p>{year.intro}</p>
             <div className="diary-stat-grid">
               <div className="diary-stat">
                 <b>143</b>
@@ -133,7 +140,7 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
               <span>按出现与情绪权重排序</span>
             </div>
             <div className="diary-keywords">
-              {YEAR_KEYWORDS.map((keyword) => (
+              {year.keywords.map((keyword) => (
                 <span key={keyword}>{keyword}</span>
               ))}
             </div>
@@ -144,7 +151,7 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
               <span>持续生成中</span>
             </div>
             <div className="diary-year-line">
-              {YEAR_CHAPTERS.map((chapter) => (
+              {year.chapters.map((chapter) => (
                 <div key={chapter.span} className="diary-year-node">
                   <span>{chapter.span}</span>
                   <b>{chapter.title}</b>
@@ -160,8 +167,8 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
             </div>
             <div className="diary-insight-list">
               <div className="diary-insight">
-                <b>{YEAR_CLOSING.title}</b>
-                <p>{YEAR_CLOSING.copy}</p>
+                <b>{year.closing.title}</b>
+                <p>{year.closing.copy}</p>
               </div>
             </div>
           </section>

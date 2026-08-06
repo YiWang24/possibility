@@ -1,10 +1,10 @@
 // 此刻的处境扫描 push (source: prototype #contextPage ~2474, `openContextScan`
-// ~3278, `saveContextScan` ~3291). Four situational questions gate the save.
-// The prototype also writes derived "观察" copy onto the 认识自己 page DOM
-// (#nowObservationTitle 等)，那些元素属于该页，此处仅保存并提示（从略）。
+// ~3278, `saveContextScan` ~3291). Four situational questions gate the save, then a
+// derived 观察 is generated from the answers — the slot the prototype left empty.
 
 import { useState } from 'react';
 import { useAppStore, usePushOpen } from '@/store/appStore';
+import { FALLBACK_OBSERVATION, observeContext, type ContextObservation } from './contextObserve';
 
 interface ContextQuestion {
   id: string;
@@ -25,12 +25,28 @@ export default function ContextPush() {
   const closePush = useAppStore((s) => s.closePush);
   const showToast = useAppStore((s) => s.showToast);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [observation, setObservation] = useState<ContextObservation | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const allAnswered = CONTEXT_QUESTIONS.every((question) => answers[question.id] !== undefined);
 
+  // Stay on the page to show the observation rather than closing straight away —
+  // it is the only thing the user gets back for answering.
   const save = (): void => {
-    closePush('contextPage');
-    showToast('已更新数字人 · 状态没有被写成人格');
+    if (saving) return;
+    setSaving(true);
+    const labelled = CONTEXT_QUESTIONS.map((q) => ({ question: q.q, answer: answers[q.id] ?? '' }));
+    void (async () => {
+      let result: ContextObservation | null = null;
+      try {
+        result = await observeContext(labelled);
+      } catch {
+        // Falls back to the descriptive copy below.
+      }
+      setObservation(result ?? FALLBACK_OBSERVATION);
+      setSaving(false);
+      showToast('已更新数字人 · 状态没有被写成人格');
+    })();
   };
 
   return (
@@ -85,9 +101,29 @@ export default function ContextPush() {
           </div>
         ))}
 
-        <button type="button" className="context-save" data-testid="context-save" disabled={!allAnswered} onClick={save}>
-          更新我的动态数字人
+        {observation !== null ? (
+          <div className="context-observation" data-testid="context-observation">
+            <div className="k">此刻的观察</div>
+            <h4>{observation.headline}</h4>
+            <p>{observation.body}</p>
+          </div>
+        ) : null}
+
+        <button type="button" className="context-save" data-testid="context-save" disabled={!allAnswered || saving} onClick={save}>
+          {saving ? '正在看你的处境…' : observation !== null ? '重新生成观察' : '更新我的动态数字人'}
         </button>
+        {observation !== null ? (
+          <button
+            type="button"
+            className="context-done"
+            data-testid="context-done"
+            onClick={() => {
+              closePush('contextPage');
+            }}
+          >
+            完成
+          </button>
+        ) : null}
       </div>
     </section>
   );
