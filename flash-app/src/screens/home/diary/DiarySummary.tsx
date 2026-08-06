@@ -34,13 +34,7 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
       if (generated?.kind === 'month') setMonth(generated);
       else if (generated?.kind === 'year') setYear(generated);
       setRefreshing(false);
-      showToast(
-        generated === null
-          ? '这次没能生成总结，先看看现有内容'
-          : isMonth
-            ? '月度总结已根据最新日记更新'
-            : '年度总结已根据最新日记更新',
-      );
+      showToast(generated === null ? '这次没能生成总结，先看看现有内容' : isMonth ? '月度总结已根据最新日记更新' : '年度总结已根据最新日记更新');
     })();
   };
 

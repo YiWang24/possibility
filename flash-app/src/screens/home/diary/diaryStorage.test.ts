@@ -95,7 +95,17 @@ describe('mergeWithSeed', () => {
   });
 
   it('adds recordings on dates the seed data does not cover', () => {
-    const mine = { date: '2026-08-06', label: '', emoji: '🙂', emotion: '', duration: '0:30', title: '新的一天', keywords: [], transcript: ['x'], recorded: true };
+    const mine = {
+      date: '2026-08-06',
+      label: '',
+      emoji: '🙂',
+      emotion: '',
+      duration: '0:30',
+      title: '新的一天',
+      keywords: [],
+      transcript: ['x'],
+      recorded: true,
+    };
     const merged = mergeWithSeed([mine]);
     expect(merged).toHaveLength(DIARY_ENTRIES.length + 1);
     expect(merged[0]?.date).toBe('2026-08-06');

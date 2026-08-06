@@ -56,10 +56,7 @@ const STAGE_PROMPT: Record<ChatStage, string> = {
 };
 
 function buildMessages(stage: ChatStage, topic: string | undefined, seedQuestion: string, turns: Turn[]): ChatMessage[] {
-  const guidance =
-    stage === 'clarify'
-      ? `\n\n供参考的提问方向（可以改写得更贴合他刚才说的话，不必照抄）：\n- ${promptsFor(topic).join('\n- ')}`
-      : '';
+  const guidance = stage === 'clarify' ? `\n\n供参考的提问方向（可以改写得更贴合他刚才说的话，不必照抄）：\n- ${promptsFor(topic).join('\n- ')}` : '';
   const messages: ChatMessage[] = [
     { role: 'system', content: `${BASE_PROMPT}\n\n${STAGE_PROMPT[stage]}${guidance}` },
     { role: 'user', content: `我想探索的问题：${seedQuestion}` },

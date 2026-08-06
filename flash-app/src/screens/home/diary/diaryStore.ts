@@ -34,7 +34,12 @@ interface DiaryState {
   reset: () => void;
 }
 
-function buildEntry(date: Date, transcript: string, seconds: number, analysis: { title: string; emotion: string; emoji: string; keywords: string[] } | null): DiaryEntry {
+function buildEntry(
+  date: Date,
+  transcript: string,
+  seconds: number,
+  analysis: { title: string; emotion: string; emoji: string; keywords: string[] } | null,
+): DiaryEntry {
   return {
     date: localIsoDate(date),
     label: diaryLabel(date),
@@ -160,12 +165,7 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
  * model call failed would be the worst outcome here, so a failure only leaves the
  * keywords empty and flags the day for retry.
  */
-async function persist(
-  set: (partial: Partial<DiaryState>) => void,
-  get: () => DiaryState,
-  text: string,
-  seconds: number,
-): Promise<void> {
+async function persist(set: (partial: Partial<DiaryState>) => void, get: () => DiaryState, text: string, seconds: number): Promise<void> {
   const now = new Date();
   const date = localIsoDate(now);
   let analysis = null;
