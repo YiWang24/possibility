@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppStore, usePushOpen, usePushPayload } from '@/store/appStore';
-import { SCENARIOS, getLabRun, scenarioIndex } from '@/data/lab-sim';
+import { getLabRun, getLabScenarios, scenarioIndex } from '@/data/lab-sim';
 import ScenarioPanel from '@/screens/lab/ScenarioPanel';
 import SimPeople from '@/screens/lab/SimPeople';
 
@@ -25,7 +25,10 @@ export default function ResultPush() {
     }
   }
 
+  // Both read during render, like the run data above: a new simulation replaces them
+  // while the push is closed, and opening it re-renders.
   const run = getLabRun();
+  const scenarios = getLabScenarios();
 
   return (
     <section className={`push${open ? ' open' : ''}`} id="resultPage" data-testid="push-resultPage">
@@ -55,7 +58,7 @@ export default function ResultPush() {
             「<b id="rsQText">{run.question}</b>」的三种可能 —— 先看一般情况，再看两端。
           </p>
           <div className="seg" id="rsSeg">
-            {SCENARIOS.map((s, i) => (
+            {scenarios.map((s, i) => (
               <button
                 key={s.key}
                 type="button"
@@ -71,7 +74,7 @@ export default function ResultPush() {
           </div>
         </div>
 
-        {SCENARIOS.map((s, i) => (
+        {scenarios.map((s, i) => (
           <ScenarioPanel key={s.key} scenario={s} active={i === tab} carry={run.carry} runKey={runKey} />
         ))}
 

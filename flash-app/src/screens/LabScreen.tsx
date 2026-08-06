@@ -3,8 +3,9 @@ import type { ScreenProps } from './types';
 import { useAppStore } from '@/store/appStore';
 import { CARRY_LIMIT, LAB_CHOICE_DECKS } from '@/data/lab';
 import type { CarryCardKey } from '@/data/lab';
-import { detectLabChoiceType, labLoadSteps, setLabRun } from '@/data/lab-sim';
-import type { CustomChoice } from '@/data/lab-sim';
+import { detectLabChoiceType, labLoadSteps, setLabRun, setLabScenarios } from '@/data/lab-sim';
+import type { CustomChoice, LabRun } from '@/data/lab-sim';
+import { applySimulation, simulateLabRun } from './lab/labSimulate';
 import LabQuestionCard from './lab/LabQuestionCard';
 import TimeDial from './lab/TimeDial';
 import ChoiceDeck from './lab/ChoiceDeck';
@@ -95,10 +96,7 @@ export default function LabScreen({ active }: ScreenProps) {
       showToast('先拖一张选择卡进实验室');
       return;
     }
-    const picked = pick;
-    const snapQuestion = question;
-    const snapYear = year;
-    const snapCarry = [...carry];
+    const run: LabRun = { question, pick, year, carry: [...carry] };
     const steps = labLoadSteps(carry.length);
 
     timersRef.current.forEach((t) => {
@@ -106,10 +104,12 @@ export default function LabScreen({ active }: ScreenProps) {
     });
     timersRef.current = [];
 
-    setLoadName(picked);
+    setLoadName(run.pick);
     setLoadStep(steps[0] ?? '');
     setLoading(true);
 
+    // The stepped copy now paces a real request rather than standing in for one. It
+    // cycles until the model answers, so a slow call reads as thinking, not as a stall.
     for (let i = 1; i < steps.length; i++) {
       const text = steps[i] ?? '';
       timersRef.current.push(
@@ -118,13 +118,30 @@ export default function LabScreen({ active }: ScreenProps) {
         }, i * STEP_MS),
       );
     }
-    timersRef.current.push(
-      window.setTimeout(() => {
-        setLoading(false);
-        setLabRun({ question: snapQuestion, pick: picked, year: snapYear, carry: snapCarry });
-        openPush('resultPage', { scenario: 'likely' });
-      }, steps.length * STEP_MS),
-    );
+
+    void (async () => {
+      const started = Date.now();
+      let generated = null;
+      try {
+        generated = await simulateLabRun(run);
+      } catch {
+        // Falls through to the seeded outcomes below.
+      }
+      // Never flash the overlay: let the copy finish at least one pass.
+      const elapsed = Date.now() - started;
+      const minimum = steps.length * STEP_MS;
+      if (elapsed < minimum) await new Promise((r) => setTimeout(r, minimum - elapsed));
+
+      timersRef.current.forEach((t) => {
+        window.clearTimeout(t);
+      });
+      timersRef.current = [];
+      setLabRun(run);
+      setLabScenarios(generated === null ? null : applySimulation(generated));
+      setLoading(false);
+      if (generated === null) showToast('这次没能生成专属推演，先看看示例结果');
+      openPush('resultPage', { scenario: 'likely' });
+    })();
   };
 
   const simBtnLabel = pick === null ? '先选择一条路' : carry.length > 0 ? `带着 ${String(carry.length)} 张底线卡开始推演` : '直接开始推演';

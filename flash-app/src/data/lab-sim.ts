@@ -187,6 +187,28 @@ export function setLabRun(next: LabRun): void {
   labRun.carry = [...next.carry];
 }
 
+/**
+ * Outcomes for the current run, generated per run and read by the result page.
+ *
+ * Held alongside labRun for the same reason: the appStore's PushPayload contract is
+ * fixed and only carries `scenario`. Null means the model was unavailable or gave
+ * nothing usable, and the result page falls back to SCENARIOS.
+ */
+let labScenarios: Scenario[] | null = null;
+
+export function setLabScenarios(next: Scenario[] | null): void {
+  labScenarios = next;
+}
+
+export function getLabScenarios(): Scenario[] {
+  return labScenarios ?? SCENARIOS;
+}
+
+/** True when the outcomes on screen were generated for this run, not seeded copy. */
+export function hasGeneratedScenarios(): boolean {
+  return labScenarios !== null;
+}
+
 /** Read a copy of the most recent推演 run. */
 export function getLabRun(): LabRun {
   return { question: labRun.question, pick: labRun.pick, year: labRun.year, carry: [...labRun.carry] };
