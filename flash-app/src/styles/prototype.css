@@ -483,6 +483,11 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   display:flex;flex-direction:column;
 }
 .push.open{transform:none}
+/* Ten push pages stay mounted (≈960 nodes, and most of the app's backdrop-filters
+   live in them). A closed one is translated fully off-screen, so `auto` lets the
+   browser skip its style/layout/paint entirely and restore it as it slides in —
+   unlike `hidden`, which would make the outgoing page vanish instead of sliding. */
+.push:not(.open){content-visibility:auto;contain-intrinsic-size:auto 100%}
 .push .top{flex:none;padding:64px 22px 12px;display:flex;align-items:center;gap:13px;background:linear-gradient(rgba(10,12,18,.96),rgba(10,12,18,.85));backdrop-filter:blur(8px);z-index:5}
 .backbtn{all:unset;cursor:pointer;box-sizing:border-box;width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-card)}
 .push .top h2{font-size:16px;font-weight:600;letter-spacing:.08em}
@@ -964,7 +969,7 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
      writes each frame stays a plain translate3d()+scale() with no calc() to re-parse. */
   margin:-77px 0 0 -77px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-  pointer-events:auto;will-change:transform,opacity;transform-origin:center;
+  pointer-events:auto;transform-origin:center;
   box-sizing:border-box;padding:12px 22px 10px;overflow:hidden;border-radius:50%;
   border:1px solid rgba(207,224,255,.23);
   /* No backdrop-filter here on purpose: 63 of these move at once, and blurring a live
@@ -1002,6 +1007,13 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .watch-user.is-search-hidden{opacity:0!important;pointer-events:none}
 .watch-user.is-focus{filter:brightness(1.16) saturate(1.14);border-color:rgba(222,233,255,.78);box-shadow:0 18px 40px -14px rgba(0,0,0,.82),0 0 38px rgba(94,150,255,.34),inset 0 0 28px rgba(255,255,255,.1);box-shadow:0 18px 40px -14px rgba(0,0,0,.82),0 0 38px color-mix(in srgb,var(--watch-glow) 42%,transparent),inset 0 0 28px rgba(255,255,255,.1)}
 .watch-user:active{filter:brightness(1.12)}
+/* will-change promotes each card to its own compositing layer, and it does that
+   whether or not the screen is visible. Screens are only hidden with
+   visibility:hidden, so leaving it on the base rule kept 63 layers alive
+   (~50MB of GPU memory at DPR 3) while the user was on any other tab. Scoped to
+   the active screen: the layers exist while the wall is on screen, where they are
+   worth ~2x the drag frame rate, and nowhere else. */
+.screen.on .watch-user{will-change:transform,opacity}
 /* While the wall is in motion (drag + inertia + snap) the centred card changes several
    times a second. Transitioning box-shadow/filter on every hand-off left a batch of
    nodes mid-repaint on each frame; snapping instead is both cheaper and more responsive.
