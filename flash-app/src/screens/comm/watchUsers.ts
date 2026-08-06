@@ -18,15 +18,18 @@ function watchHash(q: number, r: number, salt = 0): number {
   return (h ^ (h >>> 16)) >>> 0;
 }
 
-/** Deterministic community member at grid cell (q, r) — cached, LRU-trimmed. */
+/**
+ * Deterministic community member at grid cell (q, r) — cached, trimmed by insertion age.
+ *
+ * Reads deliberately do NOT re-insert to refresh recency: this runs for all 63 visible
+ * nodes on every animation frame, and the delete+set pair cost two Map mutations per
+ * node per frame. Since the wall pans continuously, oldest-inserted is a good proxy for
+ * furthest-away, so plain insertion-order eviction keeps the same working set.
+ */
 export function watchUserAt(q: number, r: number): User {
   const key = `${String(q)}:${String(r)}`;
   const cached = cache.get(key);
-  if (cached) {
-    cache.delete(key);
-    cache.set(key, cached);
-    return cached;
-  }
+  if (cached) return cached;
   const seed = watchHash(q, r);
   const base = USERS[seed % USERS.length];
   if (!base) throw new Error('watchUserAt: USERS is empty');
@@ -77,6 +80,29 @@ export function communityTextMatches(values: (string | undefined)[], query: stri
     .join(' ')
     .toLowerCase()
     .includes(query);
+}
+
+/** Lowercased haystack per user, built once — users are cached, so this stays warm. */
+const searchText = new WeakMap<User, string>();
+
+/**
+ * Search-match a watch user without rebuilding its haystack.
+ *
+ * The grid re-tests every visible node on each frame while panning; going through
+ * `watchSearchValues` + filter + join + toLowerCase there allocated four times per node
+ * per frame. The joined string only depends on the user, so it is memoised instead.
+ */
+export function watchUserMatches(u: User, query: string): boolean {
+  if (query === '') return true;
+  let text = searchText.get(u);
+  if (text === undefined) {
+    text = watchSearchValues(u)
+      .filter((v): v is string => v !== undefined)
+      .join(' ')
+      .toLowerCase();
+    searchText.set(u, text);
+  }
+  return text.includes(query);
 }
 
 /** World-space position of grid cell (q, r) (原型 watchWorldPoint). */

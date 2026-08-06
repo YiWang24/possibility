@@ -2,7 +2,15 @@ import { useEffect, useRef } from 'react';
 import { WATCH_COLS, WATCH_ROWS } from '@/data/community';
 import { registerWatchProfileUser, watchUserAt } from './watchUsers';
 import type { WatchState } from './watchMotion';
-import { beginWatchCommunity, centerCommunitySearchResult, endWatchCommunity, moveWatchCommunity, updateWatchCommunity } from './watchMotion';
+import {
+  beginWatchCommunity,
+  cancelWatchMotion,
+  centerCommunitySearchResult,
+  createWatchState,
+  endWatchCommunity,
+  moveWatchCommunity,
+  updateWatchCommunity,
+} from './watchMotion';
 
 const NODE_INDICES = Array.from(Array(WATCH_COLS * WATCH_ROWS).keys());
 
@@ -26,7 +34,7 @@ export default function WatchGrid({ query, onOpenUser }: WatchGridProps) {
     const stage = stageRef.current;
     if (!stage) return;
     const buttons = Array.from(stage.querySelectorAll<HTMLButtonElement>('.watch-user'));
-    const st: WatchState = { stage, buttons, x: 0, y: 0, drag: null, raf: null, resetTimer: null, justDragged: false, query: queryRef.current };
+    const st = createWatchState(stage, buttons, queryRef.current);
     stateRef.current = st;
     updateWatchCommunity(st);
 
@@ -63,7 +71,7 @@ export default function WatchGrid({ query, onOpenUser }: WatchGridProps) {
     stage.addEventListener('click', onClick);
 
     return () => {
-      if (st.raf !== null) cancelAnimationFrame(st.raf);
+      cancelWatchMotion(st);
       if (st.resetTimer !== null) clearTimeout(st.resetTimer);
       stage.removeEventListener('pointerdown', onDown);
       document.removeEventListener('pointermove', onMove);

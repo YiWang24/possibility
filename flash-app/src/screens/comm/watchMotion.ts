@@ -5,7 +5,7 @@
 import { HUES } from '@/data/users';
 import type { User } from '@/data/users';
 import { WATCH_COLS, WATCH_DX, WATCH_DY, WATCH_ROWS } from '@/data/community';
-import { cachedWatchEntries, communityTextMatches, watchSearchValues, watchUserAt, watchWorldPoint } from './watchUsers';
+import { cachedWatchEntries, watchUserAt, watchUserMatches, watchWorldPoint } from './watchUsers';
 
 export interface WatchDrag {
   pointerId: number;
@@ -24,19 +24,90 @@ export interface WatchDrag {
 export interface WatchState {
   stage: HTMLElement;
   buttons: HTMLButtonElement[];
+  /** World-space position per slot. Previously lived in data-wx/data-wy attributes,
+   *  which cost two attribute mutations per node per frame just to be read back here. */
+  wx: Float64Array;
+  wy: Float64Array;
+  /** Last value pushed to the DOM per slot, so a frame only writes what actually changed. */
+  cellQ: Float64Array;
+  cellR: Float64Array;
+  bound: Uint8Array;
+  zIndex: Int32Array;
+  hidden: Uint8Array;
+  /** Slot currently carrying `.is-focus`, or -1. */
+  focusSlot: number;
   x: number;
   y: number;
   drag: WatchDrag | null;
   raf: number | null;
+  /** Pending coalescing frame for pointermove (see scheduleWatchUpdate). */
+  tick: number | null;
   resetTimer: number | null;
   justDragged: boolean;
   query: string;
+  panning: boolean;
 }
 
-/** Fill a node's avatar/name/intro/tags once per (q,r) key (原型 bindWatchCard). */
-function bindWatchCard(btn: HTMLButtonElement, u: User, key: string): void {
-  if (btn.dataset['key'] === key) return;
-  btn.dataset['key'] = key;
+export function createWatchState(stage: HTMLElement, buttons: HTMLButtonElement[], query: string): WatchState {
+  const n = buttons.length;
+  return {
+    stage,
+    buttons,
+    wx: new Float64Array(n),
+    wy: new Float64Array(n),
+    cellQ: new Float64Array(n),
+    cellR: new Float64Array(n),
+    bound: new Uint8Array(n),
+    zIndex: new Int32Array(n).fill(Number.MIN_SAFE_INTEGER),
+    hidden: new Uint8Array(n),
+    focusSlot: -1,
+    x: 0,
+    y: 0,
+    drag: null,
+    raf: null,
+    tick: null,
+    resetTimer: null,
+    justDragged: false,
+    query,
+    panning: false,
+  };
+}
+
+/**
+ * Mark the wall as in motion for the whole drag → inertia → snap sequence.
+ *
+ * `.is-panning` switches off the per-node transition and focus filter. Those repaint all
+ * 63 nodes whenever the centred card changes, which happens several times a second while
+ * panning; full fidelity returns as soon as the wall settles.
+ */
+function setPanning(st: WatchState, on: boolean): void {
+  if (st.panning === on) return;
+  st.panning = on;
+  st.stage.classList.toggle('is-panning', on);
+}
+
+/**
+ * Run at most one layout pass per rendered frame.
+ *
+ * Touch panels sample well above the display refresh rate — a 2s drag delivered ~150
+ * pointermove events against 27 painted frames, so the old synchronous call did the
+ * whole 63-node pass five times over for every frame the user actually saw.
+ */
+function scheduleWatchUpdate(st: WatchState): void {
+  if (st.tick !== null) return;
+  st.tick = requestAnimationFrame(() => {
+    st.tick = null;
+    updateWatchCommunity(st);
+  });
+}
+
+/** Fill a node's avatar/name/intro/tags once per (q,r) cell (原型 bindWatchCard). */
+function bindWatchCard(st: WatchState, slot: number, btn: HTMLButtonElement, u: User, q: number, r: number): void {
+  if (st.bound[slot] === 1 && st.cellQ[slot] === q && st.cellR[slot] === r) return;
+  st.bound[slot] = 1;
+  st.cellQ[slot] = q;
+  st.cellR[slot] = r;
+  btn.dataset['key'] = `${String(q)}:${String(r)}`;
   btn.style.setProperty('--watch-glow', HUES[u.hue]?.a ?? '#5E96FF');
   const avatar = btn.querySelector('.watch-avatar');
   if (avatar instanceof HTMLImageElement) {
@@ -62,17 +133,21 @@ function bindWatchCard(btn: HTMLButtonElement, u: User, key: string): void {
 /** Reposition every node around the current pan offset (原型 updateWatchCommunity). */
 export function updateWatchCommunity(st: WatchState): void {
   let slot = 0;
-  let nearest: HTMLButtonElement | null = null;
+  let nearest = -1;
   let minDist = Infinity;
   let matchCount = 0;
   const query = st.query.trim().toLowerCase();
+  const searching = query !== '';
+  const halfCols = Math.floor(WATCH_COLS / 2);
+  const halfRows = Math.floor(WATCH_ROWS / 2);
   const centerQ = Math.round(-st.x / WATCH_DX);
-  for (let dq = -Math.floor(WATCH_COLS / 2); dq <= Math.floor(WATCH_COLS / 2); dq++) {
+  for (let dq = -halfCols; dq <= halfCols; dq++) {
     const q = centerQ + dq;
     const qOffset = (Math.abs(q) % 2) * (WATCH_DY / 2);
     const centerR = Math.round((-st.y - qOffset) / WATCH_DY);
-    for (let dr = -Math.floor(WATCH_ROWS / 2); dr <= Math.floor(WATCH_ROWS / 2); dr++) {
-      const btn = st.buttons[slot];
+    for (let dr = -halfRows; dr <= halfRows; dr++) {
+      const i = slot;
+      const btn = st.buttons[i];
       slot++;
       if (!btn) continue;
       const r = centerR + dr;
@@ -85,32 +160,52 @@ export function updateWatchCommunity(st: WatchState): void {
       const scale = 0.62 + focus * 0.58;
       const opacity = 0.28 + focus * 0.72;
       const u = watchUserAt(q, r);
-      const match = communityTextMatches(watchSearchValues(u), query);
-      bindWatchCard(btn, u, `${String(q)}:${String(r)}`);
-      btn.classList.toggle('is-search-hidden', !match);
-      btn.dataset['wx'] = String(wx);
-      btn.dataset['wy'] = String(wy);
-      btn.style.transform = `translate(calc(-50% + ${String(x)}px), calc(-50% + ${String(y)}px)) scale(${String(scale)})`;
-      btn.style.opacity = String(opacity);
-      btn.style.zIndex = String(100 - Math.round(dist / 10));
+      const match = !searching || watchUserMatches(u, query);
+      bindWatchCard(st, i, btn, u, q, r);
+      st.wx[i] = wx;
+      st.wy[i] = wy;
+      const hidden = match ? 0 : 1;
+      if (st.hidden[i] !== hidden) {
+        st.hidden[i] = hidden;
+        btn.classList.toggle('is-search-hidden', !match);
+      }
+      // translate3d + a margin-centred node, so no calc() has to be re-parsed per frame.
+      btn.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(4)})`;
+      btn.style.opacity = opacity.toFixed(4);
+      // z-index only picks paint order, and rewriting it re-sorts the stacking context.
+      // Bucketing it coarsely keeps the same near-card-on-top look while leaving the
+      // value untouched on most frames.
+      const z = 100 - Math.round(dist / 40);
+      if (st.zIndex[i] !== z) {
+        st.zIndex[i] = z;
+        btn.style.zIndex = String(z);
+      }
       if (match) {
         matchCount++;
         if (dist < minDist) {
           minDist = dist;
-          nearest = btn;
+          nearest = i;
         }
       }
     }
   }
-  for (const btn of st.buttons) btn.classList.toggle('is-focus', btn === nearest);
+  if (st.focusSlot !== nearest) {
+    st.buttons[st.focusSlot]?.classList.remove('is-focus');
+    if (nearest >= 0) st.buttons[nearest]?.classList.add('is-focus');
+    st.focusSlot = nearest;
+  }
   const empty = st.stage.querySelector('.watch-search-empty');
-  if (empty) empty.classList.toggle('show', query !== '' && matchCount === 0);
+  if (empty) empty.classList.toggle('show', searching && matchCount === 0);
 }
 
 export function cancelWatchMotion(st: WatchState): void {
   if (st.raf !== null) {
     cancelAnimationFrame(st.raf);
     st.raf = null;
+  }
+  if (st.tick !== null) {
+    cancelAnimationFrame(st.tick);
+    st.tick = null;
   }
 }
 
@@ -119,7 +214,7 @@ function findCommunitySearchTarget(st: WatchState, query: string): { q: number; 
   let best: { q: number; r: number } | null = null;
   let bestDist = Infinity;
   for (const [key, u] of cachedWatchEntries()) {
-    if (!communityTextMatches(watchSearchValues(u), query)) continue;
+    if (!watchUserMatches(u, query)) continue;
     const parts = key.split(':');
     const q = Number(parts[0]);
     const r = Number(parts[1]);
@@ -138,7 +233,7 @@ function findCommunitySearchTarget(st: WatchState, query: string): { q: number; 
       for (let r = centerR - radius; r <= centerR + radius; r++) {
         if (radius !== 0 && Math.abs(q - centerQ) !== radius && Math.abs(r - centerR) !== radius) continue;
         const u = watchUserAt(q, r);
-        if (communityTextMatches(watchSearchValues(u), query)) return { q, r };
+        if (watchUserMatches(u, query)) return { q, r };
       }
     }
   }
@@ -154,27 +249,29 @@ export function centerCommunitySearchResult(st: WatchState, query: string): bool
   st.x = -p.wx;
   st.y = -p.wy;
   updateWatchCommunity(st);
+  setPanning(st, false);
   return true;
 }
 
 function snapWatchCommunity(st: WatchState): void {
-  let nearest: HTMLButtonElement | null = null;
+  let nearest = -1;
   let minDist = Infinity;
-  for (const btn of st.buttons) {
-    if (btn.classList.contains('is-search-hidden')) continue;
-    const dist = Math.hypot(Number(btn.dataset['wx']) + st.x, Number(btn.dataset['wy']) + st.y);
+  for (let i = 0; i < st.buttons.length; i++) {
+    if (st.hidden[i] === 1) continue;
+    const dist = Math.hypot((st.wx[i] ?? 0) + st.x, (st.wy[i] ?? 0) + st.y);
     if (dist < minDist) {
       minDist = dist;
-      nearest = btn;
+      nearest = i;
     }
   }
-  if (!nearest) {
+  if (nearest < 0) {
     const query = st.query.trim().toLowerCase();
     if (query !== '') centerCommunitySearchResult(st, query);
+    setPanning(st, false);
     return;
   }
-  const tx = -Number(nearest.dataset['wx']);
-  const ty = -Number(nearest.dataset['wy']);
+  const tx = -(st.wx[nearest] ?? 0);
+  const ty = -(st.wy[nearest] ?? 0);
   const step = (): void => {
     st.x += (tx - st.x) * 0.18;
     st.y += (ty - st.y) * 0.18;
@@ -185,12 +282,19 @@ function snapWatchCommunity(st: WatchState): void {
       st.y = ty;
       updateWatchCommunity(st);
       st.raf = null;
+      setPanning(st, false);
     }
   };
   st.raf = requestAnimationFrame(step);
 }
 
 function runWatchInertia(st: WatchState, vx: number, vy: number): void {
+  // A coalescing frame from the final pointermove may still be queued; from here the
+  // inertia loop drives the updates, so let it not lay the grid out twice in one frame.
+  if (st.tick !== null) {
+    cancelAnimationFrame(st.tick);
+    st.tick = null;
+  }
   let mx = vx * 16;
   let my = vy * 16;
   const step = (): void => {
@@ -211,6 +315,7 @@ function runWatchInertia(st: WatchState, vx: number, vy: number): void {
 export function beginWatchCommunity(st: WatchState, e: PointerEvent): void {
   if (e.pointerType === 'mouse' && e.button !== 0) return;
   cancelWatchMotion(st);
+  setPanning(st, true);
   st.drag = {
     pointerId: e.pointerId,
     sx: e.clientX,
@@ -243,7 +348,7 @@ export function moveWatchCommunity(st: WatchState, e: PointerEvent): void {
   d.lt = now;
   st.x = d.startX + dx;
   st.y = d.startY + dy;
-  updateWatchCommunity(st);
+  scheduleWatchUpdate(st);
   e.preventDefault();
 }
 
@@ -252,13 +357,16 @@ export function endWatchCommunity(st: WatchState, e: PointerEvent): void {
   if (!d || e.pointerId !== d.pointerId) return;
   st.drag = null;
   st.stage.classList.remove('dragging');
-  if (d.moved) {
-    st.justDragged = true;
-    if (st.resetTimer !== null) clearTimeout(st.resetTimer);
-    st.resetTimer = window.setTimeout(() => {
-      st.justDragged = false;
-      st.resetTimer = null;
-    }, 100);
-    runWatchInertia(st, d.vx, d.vy);
+  if (!d.moved) {
+    setPanning(st, false);
+    return;
   }
+  st.justDragged = true;
+  if (st.resetTimer !== null) clearTimeout(st.resetTimer);
+  st.resetTimer = window.setTimeout(() => {
+    st.justDragged = false;
+    st.resetTimer = null;
+  }, 100);
+  // Stays panning: inertia and the snap that follows are exactly when smoothness matters.
+  runWatchInertia(st, d.vx, d.vy);
 }

@@ -911,7 +911,15 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
   background:conic-gradient(from 0deg,transparent 0 9%,rgba(94,150,255,.4) 9% 12%,transparent 12% 27%,rgba(227,92,193,.32) 27% 30%,transparent 30% 46%,rgba(255,122,77,.28) 46% 49%,transparent 49% 68%,rgba(143,123,255,.35) 68% 71%,transparent 71%);
   -webkit-mask:radial-gradient(circle,transparent 0 45%,#000 46% 47%,transparent 48% 66%,#000 67% 68%,transparent 69%);
   mask:radial-gradient(circle,transparent 0 45%,#000 46% 47%,transparent 48% 66%,#000 67% 68%,transparent 69%);
-  animation:orbspin 32s linear infinite;
+  animation:watchKaleidoSpin 32s linear infinite;
+}
+/* Needs its own keyframes rather than the shared `orbspin`: this element is centred with
+   translate(-50%,-50%), and orbspin's `to{transform:rotate(360deg)}` replaces the whole
+   transform. The mismatched lists fall back to matrix interpolation, so the ring slid off
+   centre instead of spinning. Carrying the translate through both stops keeps it put. */
+@keyframes watchKaleidoSpin{
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}
 }
 .watch-center-ring{
   position:absolute;left:50%;top:50%;width:190px;height:190px;pointer-events:none;
@@ -924,16 +932,22 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .watch-grid{position:absolute;inset:0;pointer-events:none}
 .watch-user{
   all:unset;cursor:pointer;position:absolute;left:50%;top:50%;width:154px;height:154px;
+  /* Centred with negative margins rather than translate(-50%,-50%), so the transform JS
+     writes each frame stays a plain translate3d()+scale() with no calc() to re-parse. */
+  margin:-77px 0 0 -77px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
   pointer-events:auto;will-change:transform,opacity;transform-origin:center;
   box-sizing:border-box;padding:12px 22px 10px;overflow:hidden;border-radius:50%;
   border:1px solid rgba(207,224,255,.23);
-  background:linear-gradient(145deg,rgba(29,38,64,.58),rgba(8,11,24,.38));
+  /* No backdrop-filter here on purpose: 63 of these move at once, and blurring a live
+     backdrop per node capped the WebView at ~12fps. What sits behind is a smooth
+     gradient, so the blur was all but invisible — the base fill is darkened instead to
+     keep the same glass density. */
+  background:linear-gradient(145deg,rgba(29,38,64,.74),rgba(8,11,24,.56));
   background:
     radial-gradient(circle at 25% 16%,rgba(255,255,255,.16),transparent 27%),
     radial-gradient(circle at 78% 76%,color-mix(in srgb,var(--watch-glow) 24%,transparent),transparent 52%),
-    linear-gradient(145deg,rgba(29,38,64,.58),rgba(8,11,24,.38));
-  -webkit-backdrop-filter:blur(12px) saturate(1.28);backdrop-filter:blur(12px) saturate(1.28);
+    linear-gradient(145deg,rgba(29,38,64,.74),rgba(8,11,24,.56));
   box-shadow:0 16px 36px -18px rgba(0,0,0,.84),0 0 24px rgba(94,150,255,.15),inset 0 0 26px rgba(255,255,255,.045);
   box-shadow:0 16px 36px -18px rgba(0,0,0,.84),0 0 26px color-mix(in srgb,var(--watch-glow) 18%,transparent),inset 0 0 26px rgba(255,255,255,.045);
   transition:border-color .18s,box-shadow .18s,filter .18s;
@@ -960,6 +974,12 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .watch-user.is-search-hidden{opacity:0!important;pointer-events:none}
 .watch-user.is-focus{filter:brightness(1.16) saturate(1.14);border-color:rgba(222,233,255,.78);box-shadow:0 18px 40px -14px rgba(0,0,0,.82),0 0 38px rgba(94,150,255,.34),inset 0 0 28px rgba(255,255,255,.1);box-shadow:0 18px 40px -14px rgba(0,0,0,.82),0 0 38px color-mix(in srgb,var(--watch-glow) 42%,transparent),inset 0 0 28px rgba(255,255,255,.1)}
 .watch-user:active{filter:brightness(1.12)}
+/* While the wall is in motion (drag + inertia + snap) the centred card changes several
+   times a second. Transitioning box-shadow/filter on every hand-off left a batch of
+   nodes mid-repaint on each frame; snapping instead is both cheaper and more responsive.
+   Same trick as .dial.dragging above. Full fidelity returns once the wall settles. */
+.watch-mode.is-panning .watch-user{transition:none}
+.watch-mode.is-panning .watch-user.is-focus{filter:none}
 .watch-avatar{
   position:relative;width:43px;height:43px;border-radius:50%;object-fit:cover;flex:none;
   border:1.5px solid rgba(255,255,255,.82);box-shadow:0 5px 15px rgba(0,0,0,.4),0 0 12px rgba(94,150,255,.22);
