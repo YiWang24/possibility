@@ -2,30 +2,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import { useAppStore, usePushOpen, usePushPayload } from '@/store/appStore';
 import NextActions from '@/screens/home/chat/NextActions';
 import ChatSummary from '@/screens/home/chat/ChatSummary';
-import {
-  CORRECTION_PROMPT_HTML,
-  clarifyFollowupHTML,
-  clarifyIntroHTML,
-  confirmAnalysisHTML,
-  correctionAckHTML,
-  insightHTML,
-} from '@/screens/home/chat/chatScript';
-
-type ChatStage = 'clarify' | 'review' | 'correction' | 'ready';
-
-type ChatItem =
-  | { kind: 'me'; text: string }
-  | { kind: 'ai'; html: string }
-  | { kind: 'think' }
-  | { kind: 'review-actions' }
-  | { kind: 'correction-actions' }
-  | { kind: 'next-actions' };
-
-interface Pending {
-  html: string;
-  then: 'none' | 'review' | 'correction' | 'next';
-  delay: number;
-}
+import { useChatConversation, type ChatItem } from '@/screens/home/chat/useChatConversation';
 
 const DEFAULT_SEED = '我最近一直在想一个问题，但还没理清。';
 
@@ -39,48 +16,10 @@ export default function ChatPush() {
   const topic = payload.topic;
   const seedQuestion = payload.question ?? DEFAULT_SEED;
 
-  const [items, setItems] = useState<ChatItem[]>([]);
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [stage, setStage] = useState<ChatStage>('clarify');
-  const [turn, setTurn] = useState(0);
-  const [pending, setPending] = useState<Pending | null>(null);
+  const { items, answers, busy, turns, send, confirmInsight, requestCorrection } = useChatConversation(open, seedQuestion, topic);
   const [input, setInput] = useState('');
   const [showSummary, setShowSummary] = useState(false);
-  const [prevOpen, setPrevOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  // Seed a fresh conversation on the closed→open transition (startChat).
-  if (open !== prevOpen) {
-    setPrevOpen(open);
-    if (open) {
-      setItems([{ kind: 'me', text: seedQuestion }, { kind: 'think' }]);
-      setAnswers([]);
-      setStage('clarify');
-      setTurn(0);
-      setInput('');
-      setShowSummary(false);
-      setPending({ html: clarifyIntroHTML(topic), then: 'none', delay: 900 });
-    }
-  }
-
-  // Reveal a pending assistant reply after its "thinking" delay (assistantAfter).
-  useEffect(() => {
-    if (pending === null) return;
-    const p = pending;
-    const timer = window.setTimeout(() => {
-      setItems((prev) => {
-        const next: ChatItem[] = [...prev.filter((it) => it.kind !== 'think'), { kind: 'ai', html: p.html }];
-        if (p.then === 'review') next.push({ kind: 'review-actions' });
-        else if (p.then === 'correction') next.push({ kind: 'correction-actions' });
-        else if (p.then === 'next') next.push({ kind: 'next-actions' });
-        return next;
-      });
-      setPending(null);
-    }, p.delay);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [pending]);
 
   // Keep the transcript pinned to the newest message (scrollBottom).
   useEffect(() => {
@@ -88,43 +27,11 @@ export default function ChatPush() {
     if (el !== null) el.scrollTop = el.scrollHeight;
   }, [items]);
 
-  const scheduleAssistant = (html: string, then: Pending['then'], delay = 700) => {
-    setItems((prev) => [...prev, { kind: 'think' }]);
-    setPending({ html, then, delay });
-  };
-
-  const dropActions = (list: ChatItem[]) => list.filter((it) => it.kind !== 'review-actions' && it.kind !== 'correction-actions');
-
   const sendChat = () => {
     const value = input.trim();
-    if (value === '' || pending !== null) return;
+    if (value === '' || busy) return;
     setInput('');
-    setItems((prev) => [...prev, { kind: 'me', text: value }]);
-    setAnswers((prev) => [...prev, value]);
-    if (stage === 'clarify' && turn === 0) {
-      setTurn(1);
-      scheduleAssistant(clarifyFollowupHTML(topic), 'none');
-    } else if (stage === 'clarify') {
-      setTurn(2);
-      setStage('review');
-      scheduleAssistant(insightHTML(answers[0], value), 'review', 800);
-    } else if (stage === 'correction') {
-      scheduleAssistant(correctionAckHTML(value), 'correction', 760);
-    }
-  };
-
-  const confirmInsight = () => {
-    if (pending !== null) return;
-    setItems((prev) => [...dropActions(prev), { kind: 'me', text: '嗯，这个理解比较接近我。' }]);
-    setStage('ready');
-    scheduleAssistant(confirmAnalysisHTML(answers[0], answers[1]), 'next', 820);
-  };
-
-  const requestCorrection = () => {
-    if (pending !== null) return;
-    setItems((prev) => [...dropActions(prev), { kind: 'me', text: '还不太对。' }]);
-    setStage('correction');
-    scheduleAssistant(CORRECTION_PROMPT_HTML, 'none');
+    send(value);
   };
 
   const goLab = () => {
@@ -152,6 +59,16 @@ export default function ChatPush() {
         return (
           <div key={index} className="msg ai">
             <div className="bubble" dangerouslySetInnerHTML={{ __html: item.html }} />
+          </div>
+        );
+      case 'ai-text':
+        // Model output. Rendered as text, never as HTML — the model is not a trusted
+        // source of markup, and `white-space: pre-wrap` keeps its paragraph breaks.
+        return (
+          <div key={index} className="msg ai">
+            <div className="bubble" style={{ whiteSpace: 'pre-wrap' }} data-testid="chat-ai-text">
+              {item.text}
+            </div>
           </div>
         );
       case 'think':
@@ -236,17 +153,19 @@ export default function ChatPush() {
               if (e.key === 'Enter') sendChat();
             }}
           />
-          <button type="button" className="c-send" data-testid="chat-send" disabled={pending !== null} onClick={sendChat}>
+          <button type="button" className="c-send" data-testid="chat-send" disabled={busy} onClick={sendChat}>
             发送
           </button>
         </div>
       </section>
 
-      {showSummary ? (
+      {/* Gated on `open` too, so closing the chat drops the summary without a reset effect. */}
+      {showSummary && open ? (
         <ChatSummary
           question={seedQuestion}
           topic={topic}
           answers={answers}
+          turns={turns()}
           onBack={() => {
             setShowSummary(false);
           }}
