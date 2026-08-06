@@ -10,6 +10,14 @@ export interface DiaryEntry {
   title: string;
   keywords: string[];
   transcript: string[];
+  /**
+   * True for entries the user actually dictated.
+   *
+   * ASR returns text only — it never produces an audio file — so these have nothing to
+   * play back, and the detail view hides the audio control for them rather than
+   * offering a button that cannot work. Absent on the seeded demo entries.
+   */
+  recorded?: boolean;
 }
 
 export const DIARY_ENTRIES: DiaryEntry[] = [

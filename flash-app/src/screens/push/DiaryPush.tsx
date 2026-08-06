@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAppStore, usePushOpen, usePushPayload } from '@/store/appStore';
 import DiaryDay from '@/screens/home/diary/DiaryDay';
 import DiarySummary from '@/screens/home/diary/DiarySummary';
-import { DEFAULT_DIARY_DATE, type DiaryView } from '@/screens/home/diary/diaryHelpers';
+import { defaultDiaryDate, type DiaryView } from '@/screens/home/diary/diaryHelpers';
+import { useDiaryStore } from '@/screens/home/diary/diaryStore';
+import { localIsoDate, mergeWithSeed } from '@/screens/home/diary/diaryStorage';
 
 const TABS: { view: DiaryView; label: string }[] = [
   { view: 'day', label: '每日记录' },
@@ -16,8 +18,13 @@ export default function DiaryPush() {
   const closePush = useAppStore((s) => s.closePush);
   const showToast = useAppStore((s) => s.showToast);
 
+  const recorded = useDiaryStore((s) => s.recorded);
+  const store = useDiaryStore;
+  const todayIso = useMemo(() => localIsoDate(new Date()), []);
+  const fallbackDate = useMemo(() => defaultDiaryDate(mergeWithSeed(recorded), todayIso), [recorded, todayIso]);
+
   const [view, setView] = useState<DiaryView>('day');
-  const [selectedDate, setSelectedDate] = useState(DEFAULT_DIARY_DATE);
+  const [selectedDate, setSelectedDate] = useState(fallbackDate);
   const [prevOpen, setPrevOpen] = useState(false);
 
   // Opening the push resets to the day view on the requested date (openVoiceDiary).
@@ -26,14 +33,15 @@ export default function DiaryPush() {
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (open) {
-      setSelectedDate(payload.date ?? DEFAULT_DIARY_DATE);
+      setSelectedDate(payload.date ?? fallbackDate);
       setView('day');
     }
   }
 
   const recordToday = () => {
     closePush('diaryPage');
-    showToast('开始记录今天的语音日记');
+    // The recorder UI lives on the home card, so start the session as we hand off.
+    void store.getState().startRecording();
   };
 
   return (

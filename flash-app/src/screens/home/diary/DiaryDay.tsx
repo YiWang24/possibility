@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { DIARY_ENTRIES } from '@/data/diary';
+import { useMemo, useState } from 'react';
 import { buildArchive, buildRail, diaryWaveHeights, getDiaryEntry } from './diaryHelpers';
+import { useDiaryStore } from './diaryStore';
+import { localIsoDate, mergeWithSeed } from './diaryStorage';
 
 interface DiaryDayProps {
   selectedDate: string;
@@ -9,14 +10,23 @@ interface DiaryDayProps {
   showToast: (msg: string) => void;
 }
 
+/** "7/12" / "7月" — read off the entry's own date instead of assuming a month. */
+function monthOf(date: string): string {
+  return String(Number(date.slice(5, 7)));
+}
+
 export default function DiaryDay({ selectedDate, onSelectDate, onRecordToday, showToast }: DiaryDayProps) {
   const [playing, setPlaying] = useState(false);
-  const entry = getDiaryEntry(selectedDate);
-  const rail = buildRail();
-  const archive = buildArchive();
+  const recorded = useDiaryStore((s) => s.recorded);
+  const todayIso = useMemo(() => localIsoDate(new Date()), []);
+  const entries = useMemo(() => mergeWithSeed(recorded), [recorded]);
+
+  const entry = getDiaryEntry(entries, selectedDate);
+  const rail = buildRail(entries, todayIso);
+  const archive = buildArchive(entries);
   const activeIndex = Math.max(
     0,
-    DIARY_ENTRIES.findIndex((item) => item.date === selectedDate),
+    entries.findIndex((item) => item.date === selectedDate),
   );
   const wave = diaryWaveHeights(activeIndex + 1);
 
@@ -32,7 +42,7 @@ export default function DiaryDay({ selectedDate, onSelectDate, onRecordToday, sh
         <div>
           <div className="ey">ALL VOICE NOTES</div>
           <h2>全部日记</h2>
-          <p>2026年7月 · 已记录 {DIARY_ENTRIES.length} 天</p>
+          <p>已记录 {entries.length} 天</p>
         </div>
       </div>
 
@@ -50,7 +60,9 @@ export default function DiaryDay({ selectedDate, onSelectDate, onRecordToday, sh
           >
             <span>{item.week}</span>
             <i>{item.emoji}</i>
-            <b>7/{item.day}</b>
+            <b>
+              {monthOf(item.date)}/{item.day}
+            </b>
           </button>
         ))}
       </div>
@@ -64,23 +76,35 @@ export default function DiaryDay({ selectedDate, onSelectDate, onRecordToday, sh
               <i>{entry.emoji}</i>
               <span>{entry.emotion}</span>
             </div>
-            <div className="diary-audio">
-              <button
-                type="button"
-                className={`diary-play${playing ? ' playing' : ''}`}
-                data-testid="diary-play"
-                aria-label={playing ? '暂停这篇语音日记' : '播放这篇语音日记'}
-                onClick={togglePlay}
-              >
-                {playing ? 'Ⅱ' : '▶'}
-              </button>
-              <div className="diary-wave-static">
-                {wave.map((h, i) => (
-                  <i key={i} style={{ height: `${String(h)}%` }} />
-                ))}
+            {/* Dictated entries have no audio to play — ASR returns text only. */}
+            {entry.recorded === true ? (
+              <div className="diary-audio" data-testid="diary-audio-recorded">
+                <div className="diary-wave-static">
+                  {wave.map((h, i) => (
+                    <i key={i} style={{ height: `${String(h)}%` }} />
+                  ))}
+                </div>
+                <span>{entry.duration} · 已转写</span>
               </div>
-              <span>{entry.duration}</span>
-            </div>
+            ) : (
+              <div className="diary-audio">
+                <button
+                  type="button"
+                  className={`diary-play${playing ? ' playing' : ''}`}
+                  data-testid="diary-play"
+                  aria-label={playing ? '暂停这篇语音日记' : '播放这篇语音日记'}
+                  onClick={togglePlay}
+                >
+                  {playing ? 'Ⅱ' : '▶'}
+                </button>
+                <div className="diary-wave-static">
+                  {wave.map((h, i) => (
+                    <i key={i} style={{ height: `${String(h)}%` }} />
+                  ))}
+                </div>
+                <span>{entry.duration}</span>
+              </div>
+            )}
           </article>
           <section className="diary-keyword-block">
             <div className="diary-block-head">
@@ -117,7 +141,7 @@ export default function DiaryDay({ selectedDate, onSelectDate, onRecordToday, sh
       <section className="diary-archive">
         <div className="diary-archive-head">
           <h3>全部日期记录</h3>
-          <span>{DIARY_ENTRIES.length} 篇 · 按时间倒序</span>
+          <span>{entries.length} 篇 · 按时间倒序</span>
         </div>
         <div className="diary-archive-list">
           {archive.map((diary) => (
@@ -132,7 +156,7 @@ export default function DiaryDay({ selectedDate, onSelectDate, onRecordToday, sh
             >
               <span className="diary-archive-date">
                 <b>{Number(diary.date.slice(-2))}</b>
-                <span>7月</span>
+                <span>{monthOf(diary.date)}月</span>
               </span>
               <span className="diary-archive-copy">
                 <b>{diary.title}</b>

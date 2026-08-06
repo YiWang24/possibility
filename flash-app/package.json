@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,cjs,mjs,json,css,scss,md,mdx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,cjs,mjs,json,css,scss,md,mdx}\"",
     "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {

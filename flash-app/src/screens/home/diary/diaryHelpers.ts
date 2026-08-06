@@ -1,15 +1,25 @@
 // Shared helpers + static summary copy for the 语音日记 detail push.
 // Source: prototype renderDiaryDay / renderDiarySummary (~3467–3615).
 
-import { DIARY_ENTRIES, type DiaryEntry } from '@/data/diary';
+import { type DiaryEntry } from '@/data/diary';
 
 export type DiaryView = 'day' | 'month' | 'year';
 
-/** Default open date — the newest recorded entry (matches openVoiceDiary fallback). */
-export const DEFAULT_DIARY_DATE = DIARY_ENTRIES[DIARY_ENTRIES.length - 1]?.date ?? '2026-07-23';
+/**
+ * Default open date — the newest entry, else today.
+ *
+ * These helpers take the entry list rather than reading DIARY_ENTRIES directly, so the
+ * detail push renders the merged set (seeded demo data + the user's real recordings)
+ * and stays pure enough to test.
+ */
+export function defaultDiaryDate(entries: DiaryEntry[], todayIso: string): string {
+  let newest = '';
+  for (const entry of entries) if (entry.date > newest) newest = entry.date;
+  return newest === '' ? todayIso : newest;
+}
 
-export function getDiaryEntry(date: string): DiaryEntry | undefined {
-  return DIARY_ENTRIES.find((entry) => entry.date === date);
+export function getDiaryEntry(entries: DiaryEntry[], date: string): DiaryEntry | undefined {
+  return entries.find((entry) => entry.date === date);
 }
 
 export interface RailDate {
@@ -19,23 +29,23 @@ export interface RailDate {
   emoji: string;
 }
 
-/** Build the horizontal date rail: every entry, plus a "今天" chip for 2026-07-23. */
-export function buildRail(): RailDate[] {
-  const rail: RailDate[] = DIARY_ENTRIES.map((diary) => ({
+/** Build the horizontal date rail: every entry, plus a "今天" chip when today is blank. */
+export function buildRail(entries: DiaryEntry[], todayIso: string): RailDate[] {
+  const rail: RailDate[] = entries.map((diary) => ({
     date: diary.date,
     day: String(Number(diary.date.slice(-2))),
     week: diary.label.split('·')[1]?.trim() ?? '记录',
     emoji: diary.emoji,
   }));
-  if (!rail.some((item) => item.date === '2026-07-23')) {
-    rail.push({ date: '2026-07-23', day: '23', week: '今天', emoji: '·' });
+  if (!rail.some((item) => item.date === todayIso)) {
+    rail.push({ date: todayIso, day: String(Number(todayIso.slice(-2))), week: '今天', emoji: '·' });
   }
   return [...rail].sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /** Archive list — every entry, newest first. */
-export function buildArchive(): DiaryEntry[] {
-  return [...DIARY_ENTRIES].sort((a, b) => b.date.localeCompare(a.date));
+export function buildArchive(entries: DiaryEntry[]): DiaryEntry[] {
+  return [...entries].sort((a, b) => b.date.localeCompare(a.date));
 }
 
 /** 24 waveform bar heights (%) seeded per entry (source: diaryWaveHTML). */
