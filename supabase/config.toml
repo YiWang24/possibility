@@ -120,6 +120,9 @@ verify_jwt = true
 [functions.analyze-diary]
 verify_jwt = true
 
+[functions.analyze-self-discovery]
+verify_jwt = true
+
 [functions.create-diary-entry]
 verify_jwt = true
 

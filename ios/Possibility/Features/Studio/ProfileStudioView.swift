@@ -77,6 +77,10 @@ struct ProfileStudioView: View {
                         assessmentScores: scores
                     )
                 },
+                onSaveSelfDiscovery: { likes, strengths in
+                    home.saveDimension(.like, keywords: likes, using: supabase)
+                    home.saveDimension(.skill, keywords: strengths, using: supabase)
+                },
                 onLaunchCardGame: { game in
                     activeDimension = nil
                     if let kind = CardGameKind(rawValue: game) {
@@ -187,7 +191,7 @@ struct ProfileStudioView: View {
         GridItemSpec(key: .family, mark: "⌂", markColor: 0x8EE7C8, markBg: 0x3ED9A4, title: "我在家庭关系中在意",
                      fallback: "关键词、家庭关系测评与家庭卡牌", assessment: .family),
         GridItemSpec(key: .social, mark: "◎", markColor: 0xBFD2FF, markBg: 0x5E96FF, title: "我在人际交往中在意",
-                     fallback: "关键词与人际交往卡牌", assessment: nil),
+                     fallback: "关键词、人际需要测评与人际交往卡牌", assessment: .social),
     ]
 
     private func gridState(_ spec: GridItemSpec) -> (meta: String, action: String, progress: Double?) {

@@ -39,6 +39,7 @@ import app.possibility.android.features.diary.DiaryDetailSheet
 import app.possibility.android.features.studio.AssessmentFlowSheet
 import app.possibility.android.features.studio.AssessmentKind
 import app.possibility.android.features.studio.ProfileStudioSheet
+import app.possibility.android.features.studio.SelfDiscoveryScreen
 
 // MARK: - 01 认识你自己（首页）—— 对应 ios/Possibility/Features/Home/HomeView.swift
 //
@@ -70,6 +71,7 @@ fun HomeScreen() {
     var diaryLaunch by remember { mutableStateOf(false) }
     var activeDimension by remember { mutableStateOf<DimensionKey?>(null) }
     var assessmentKind by remember { mutableStateOf<AssessmentKind?>(null) }
+    var showSelfDiscovery by remember { mutableStateOf(false) }
     var showStudio by remember { mutableStateOf(false) }
     var showCardHub by remember { mutableStateOf(false) }
 
@@ -118,11 +120,21 @@ fun HomeScreen() {
             initialSelected = model.selectedKeywords(key),
             onSave = { keywords -> model.saveDimension(key, keywords) },
             onStartAssessment = { kind -> activeDimension = null; assessmentKind = kind },
+            onStartSelfDiscovery = { activeDimension = null; showSelfDiscovery = true },
             onDismiss = { activeDimension = null },
         )
     }
     assessmentKind?.let { kind ->
         AssessmentFlowSheet(kind = kind, onDismiss = { assessmentKind = null })
+    }
+    if (showSelfDiscovery) {
+        SelfDiscoveryScreen(
+            onSave = { likes, strengths ->
+                model.saveDimension(DimensionKey.LIKE, likes)
+                model.saveDimension(DimensionKey.SKILL, strengths)
+            },
+            onDismiss = { showSelfDiscovery = false },
+        )
     }
     if (showStudio) {
         ProfileStudioSheet(onDismiss = { showStudio = false })

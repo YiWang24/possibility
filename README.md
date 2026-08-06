@@ -71,7 +71,7 @@ ChatGPT 能承接迷茫却给不出真人经验；小红书/知乎有真人经�
                                    ▼
 ┌──────────────────────────── Supabase ───────────────────────────────────┐
 │  Auth        Postgres 17 + RLS       Storage（音频）     Edge Functions  │
-│  匿名/Apple  33 migrations                               28 个（Deno TS）│
+│  匿名/Apple  33 migrations                               29 个（Deno TS）│
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │  密钥只存 Function Secrets
           ┌─────────────────────────┼──────────────────────┐
@@ -129,7 +129,7 @@ POST /match → 结构化输出 → 3 位结局不同的旅人 + 匹配理由
 | **Web** | Next.js 15 + React 19 + Tailwind 4 | App Router、cva 组件基元、zustand、framer-motion |
 | **流式聊天** | SSE（iOS 走 `URLSession.bytes`） | 绕过 `functions.invoke` 的缓冲，实现打字机效果 |
 | **后端 BaaS** | Supabase（Postgres + Auth + Storage + Edge Functions） | 一站式后端，匿名登录起步 |
-| **Edge Functions** | TypeScript / Deno 2 | 28 个函数，25 个强制 `verify_jwt` |
+| **Edge Functions** | TypeScript / Deno 2 | 29 个函数，26 个强制 `verify_jwt` |
 | **LLM** | DeepSeek `v4-flash`（Vercel AI SDK `ai@7`）| 对话 / 结构化 / 日记三个模型槽位，可独立灰度 |
 | **结构化输出** | JSON Schema 约束 | `_shared/schemas.ts` 10 套契约，不裸解析模型输出 |
 | **语音转写** | Azure AI Speech Fast Transcription | 密钥仅存 Function Secrets |
@@ -265,7 +265,7 @@ possibility/
 │
 ├── supabase/                    # 后端
 │   ├── migrations/              # 33 个 SQL migration
-│   ├── functions/               # 28 个 Edge Function（Deno TS）
+│   ├── functions/               # 29 个 Edge Function（Deno TS）
 │   │   ├── _shared/             # 公共层：llm · schemas · auth · sse · telemetry · sentry …
 │   │   ├── chat/ match/ simulate/ lab-choices/        # 对话与推演
 │   │   ├── create-diary-entry/ … diary-worker/        # 语音日记流水线
@@ -341,7 +341,7 @@ possibility/
 
 | 命令 | 说明 |
 |---|---|
-| `pnpm test` | 全量后端检查（fmt + lint + 28 个入口类型检查 + 单测）|
+| `pnpm test` | 全量后端检查（fmt + lint + 29 个入口类型检查 + 单测）|
 | `pnpm run backend:fmt` | 格式化后端代码 |
 | `pnpm run backend:check` | 同 `pnpm test` |
 | `pnpm run db:start` | 启动本地 Supabase |
@@ -362,13 +362,13 @@ apikey: <supabase-anon-key>
 Content-Type: application/json
 ```
 
-28 个函数按域分组，全部 `POST`。带 🤖 的会调用 LLM。
+29 个函数按域分组，全部 `POST`。带 🤖 的会调用 LLM。
 
 | 域 | 函数 |
 |---|---|
 | **对话与推演** | 🤖 `chat`（流式 SSE + 并行画像/岔路口信号）· 🤖 `match`（3 位旅人匹配 + 可解释理由）· 🤖 `simulate`（三种未来推演）· 🤖 `lab-choices`（实验室选择卡）|
 | **语音日记** | 🤖 `diary-worker`（队列消费：转写 + 分析 + 洞察）· 🤖 `analyze-diary`（直接文本分析）· `create-diary-entry` · `finalize-diary-entry` · `diary-summary`(入队) · `retry-diary-entry` · `update-diary-transcript` · `diary-audio-url` · `delete-diary-entry` · `delete-diary-audio` · `export-diary` · `list-diary` |
-| **画像与主页** | `save-profile` · `get-profile` · `profile-privacy` · 🤖 `persona`（动态数字形象）|
+| **画像与主页** | `save-profile` · `get-profile` · `profile-privacy` · 🤖 `persona`（动态数字形象）· 🤖 `analyze-self-discovery`（喜欢 × 擅长证据综合）|
 | **卡牌游戏** | `card-game-catalog`(公开目录) · `card-game-session` · 🤖 `card-game-result`（AI 叙事）|
 | **社区与会话** | 🤖 `community`（万花筒/悬赏/旅人）· `list-conversations` |
 | **账号** | `delete-account` · `merge-anonymous`(休眠) · `send-sms-hook`(休眠) |
@@ -394,10 +394,10 @@ RLS 不是可选项：`supabase/tests/` 下 4 套测试专门验证跨用户读�
 ### 安全基线
 
 1. **密钥隔离**：`DEEPSEEK_API_KEY` / `AZURE_SPEECH_KEY` 只存 Function Secrets（源头 Doppler），客户端只持受 RLS 约束的 anon key
-2. **JWT 校验**：28 个函数中 25 个 `verify_jwt = true`，3 个例外各有替代鉴权（见上表）
+2. **JWT 校验**：29 个函数中 26 个 `verify_jwt = true`，3 个例外各有替代鉴权（见上表）
 3. **RLS 二次约束**：写库经行级安全策略再次验证 `auth.uid()`，不信任函数层判断
 4. **输入校验**：`_shared/validate.ts` 统一长度与类型上限（message 4000 字符、transcript 20000、topic 40）
-5. **结构化输出**：10 套 JSON Schema 约束模型输出，不裸解析
+5. **结构化输出**：11 套 JSON Schema 约束模型输出，不裸解析
 6. **内容红线**：编码进 system prompt —— 不做诊断、不替用户决定、识别高风险转介
 
 ### 可观测性
