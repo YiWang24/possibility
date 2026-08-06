@@ -13,6 +13,12 @@ function requireText(path, text, reason) {
   }
 }
 
+function forbidText(path, text, reason) {
+  if (source(path).includes(text)) {
+    throw new Error(`${path}: ${reason}`);
+  }
+}
+
 function requireOrder(path, texts, reason) {
   const content = source(path);
   const positions = texts.map((text) => content.indexOf(text));
@@ -46,13 +52,91 @@ requireText(
 );
 requireOrder(
   "features/home/HomeView.tsx",
-  ["<DiaryCard", "<AskCard", "<LifeEntryButton", "<PersonaHero"],
+  ["<DiaryCard", "<AskCard", "<LifeEntryButton", "<PortraitSection"],
   "手机首页 DOM 顺序必须保持日记、发问、卡牌、画像",
 );
+requireOrder(
+  "features/home/PortraitSection.tsx",
+  ['title="我的动态画像"', "尼采《道德的系谱》", "<PersonaStage", "{/* 画像卡 */}"],
+  "动态数字形象必须位于画像引文之后、画像维度之前",
+);
 requireText(
-  "features/home/HomeView.tsx",
-  "lg:row-start-1",
-  "桌面可以提升画像 hero，但不得改变手机 DOM 顺序",
+  "lib/dimensions.ts",
+  'href: "/assessment/want-to-do"',
+  "我喜欢与我擅长必须保留“喜欢 × 擅长”探索入口",
+);
+requireText(
+  "features/studio/WantToDoView.tsx",
+  'saveDimension("like"',
+  "方法论结果必须写回“我喜欢”维度",
+);
+requireText(
+  "features/studio/WantToDoView.tsx",
+  'saveDimension("skill"',
+  "方法论结果必须写回“我擅长”维度",
+);
+requireText(
+  "features/studio/self-discovery.ts",
+  "用${strength?.tag ?? \"你的优势\"}，去探索${like.tag}",
+  "结果页必须把喜欢与擅长组合为可验证方向",
+);
+requireText(
+  "features/studio/WantToDoView.tsx",
+  '"analyze-self-discovery"',
+  "完整探索必须调用服务端 AI 分析",
+);
+requireText(
+  "features/studio/WantToDoView.tsx",
+  "写下真实答案，按回车添加",
+  "每个探索问题必须支持用户自由输入",
+);
+requireText(
+  "features/home/DimensionSheet.tsx",
+  "中文专业测评 · 跳转官方",
+  "动态画像工具必须区分站内探索与第三方官方测评",
+);
+requireText(
+  "lib/dimensions.ts",
+  "https://www.viacharacter.org/pro/xuan/account/register",
+  "我擅长必须保留可选择中文的 VIA 官方优势测评入口",
+);
+forbidText(
+  "lib/dimensions.ts",
+  "https://onetinterestprofiler.org/",
+  "不得加入仅提供英文作答的 O*NET 外部入口",
+);
+forbidText(
+  "lib/dimensions.ts",
+  "labs.psychology.illinois.edu",
+  "不得加入仅提供英文说明的 ECR-RS 外部入口",
+);
+requireText(
+  "features/studio/assessment/data.ts",
+  'kind: "social"',
+  "人际关系维度必须提供可写回画像的站内测评",
+);
+for (const [path, socialKind, discoveryMarker] of [
+  ["../ios/Possibility/Core/Models/AssessmentData.swift", "case holland, bigfive, strength, love, family, social", "enum SelfDiscoveryData"],
+  ["../android/app/src/main/java/app/possibility/android/features/studio/AssessmentData.kt", 'SOCIAL("social")', "object SelfDiscoveryData"],
+]) {
+  requireText(path, socialKind, `${path} 必须同步中文人际测评类型`);
+  const discoveryPath = path.includes("android")
+    ? "../android/app/src/main/java/app/possibility/android/features/studio/SelfDiscoveryScreen.kt"
+    : path;
+  requireText(discoveryPath, discoveryMarker, `${discoveryPath} 必须同步喜欢 × 擅长完整探索`);
+  requireText(discoveryPath, "value-contribution", `${discoveryPath} 必须保留全部 12 题的最后一题`);
+}
+for (const path of [
+  "../ios/Possibility/Core/Models/DimensionData.swift",
+  "../android/app/src/main/java/app/possibility/android/features/home/DimensionData.kt",
+]) {
+  requireText(path, "https://www.viacharacter.org/pro/xuan/account/register", `${path} 必须保留中文 VIA 官方入口`);
+  forbidText(path, "labs.psychology.illinois.edu", `${path} 不得加入仅提供英文说明的 ECR-RS 外部入口`);
+}
+requireText(
+  "../supabase/functions/analyze-self-discovery/index.ts",
+  'value.responses.length !== 12',
+  "完整探索必须覆盖全部 12 个原创证据问题",
 );
 requireText(
   "features/community/CommunityView.tsx",

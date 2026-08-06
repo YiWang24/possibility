@@ -47,6 +47,10 @@ export function DimensionSheet({
 
   if (!dimKey) return null;
   const cfg = DIMENSIONS[dimKey];
+  const toolGroups = [
+    { label: "站内探索", tools: cfg.tools.filter((tool) => !tool.externalHref) },
+    { label: "中文专业测评 · 跳转官方", tools: cfg.tools.filter((tool) => tool.externalHref) },
+  ].filter((group) => group.tools.length > 0);
 
   // 展示序：已选(不在当前批) + 当前批 + 自定义，去重
   const batchWords = cfg.batches[batch];
@@ -92,7 +96,13 @@ export function DimensionSheet({
   };
 
   const launchTool = (tool: (typeof cfg.tools)[number]) => {
-    if (tool.assessment) {
+    if (tool.externalHref) {
+      const opened = window.open(tool.externalHref, "_blank", "noopener,noreferrer");
+      if (!opened) window.location.assign(tool.externalHref);
+    } else if (tool.href) {
+      router.push(tool.href);
+      onClose();
+    } else if (tool.assessment) {
       router.push(`/assessment/${tool.assessment}`);
       onClose();
     } else if (tool.cardGame) {
@@ -215,24 +225,44 @@ export function DimensionSheet({
                 <span className="text-ink">或者，用小工具继续探索</span>
               </div>
 
-              <div className="mt-3 flex flex-col gap-[11px]">
-                {cfg.tools.map((tool) => (
-                  <button
-                    key={tool.name}
-                    onClick={() => launchTool(tool)}
-                    className="relative flex items-center gap-3 overflow-hidden rounded-tile border border-white/10 px-[15px] py-3.5 text-left transition active:scale-[0.98]"
-                    style={{
-                      background: `radial-gradient(150px circle at 100% 0%, rgba(255,255,255,0.12), transparent), ${tool.tint}`,
-                    }}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="text-body font-semibold text-ink">{tool.name}</div>
-                      <div className="mt-1 text-caption leading-relaxed text-sub">{tool.desc}</div>
+              <div className="mt-3 flex flex-col gap-4">
+                {toolGroups.map((group) => (
+                  <div key={group.label} className="flex flex-col gap-[11px]">
+                    <div className="flex items-center justify-between px-0.5 text-micro tracking-[1.2px] text-faint">
+                      <span>{group.label}</span>
+                      {group.label.includes("官方") && <span>仅保留中文作答工具</span>}
                     </div>
-                    <span className="shrink-0 rounded-chip bg-white/8 px-[9px] py-[3px] text-micro text-brand-lite">
-                      {tool.duration}
-                    </span>
-                  </button>
+                    {group.tools.map((tool) => (
+                      <button
+                        key={tool.name}
+                        onClick={() => launchTool(tool)}
+                        className="relative flex items-center gap-3 overflow-hidden rounded-tile border border-white/10 px-[15px] py-3.5 text-left transition active:scale-[0.98]"
+                        style={{
+                          background: `radial-gradient(150px circle at 100% 0%, rgba(255,255,255,0.12), transparent), ${tool.tint}`,
+                        }}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-body font-semibold text-ink">{tool.name}</div>
+                            {tool.externalHref && (
+                              <span className="rounded-chip border border-white/10 bg-white/6 px-2 py-0.5 text-micro text-brand-lite">
+                                官方 ↗
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 text-caption leading-relaxed text-sub">{tool.desc}</div>
+                          {tool.provider && (
+                            <div className="mt-2 text-micro leading-relaxed text-faint">
+                              {tool.provider} · {tool.access}
+                            </div>
+                          )}
+                        </div>
+                        <span className="shrink-0 rounded-chip bg-white/8 px-[9px] py-[3px] text-micro text-brand-lite">
+                          {tool.duration}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
 

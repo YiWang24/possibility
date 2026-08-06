@@ -3,7 +3,7 @@ import Foundation
 // MARK: - 测评数据（迁移自原型 HOLLAND_ITEMS / HOLLAND_META / DEMO_ASSESSMENTS / BIG_FIVE_FACETS）
 
 enum AssessmentKind: String, CaseIterable, Identifiable, Sendable {
-    case holland, bigfive, strength, love, family
+    case holland, bigfive, strength, love, family, social
     var id: String { rawValue }
 
     /// 结果写入的画像维度（bigfive → 人格底色单独处理）
@@ -13,6 +13,7 @@ enum AssessmentKind: String, CaseIterable, Identifiable, Sendable {
         case .strength: return .skill
         case .love: return .love
         case .family: return .family
+        case .social: return .social
         case .bigfive: return nil
         }
     }
@@ -62,6 +63,7 @@ enum AssessmentData {
         case .strength: return strength
         case .love: return love
         case .family: return family
+        case .social: return social
         }
     }
 
@@ -293,8 +295,270 @@ enum AssessmentData {
         ],
         likert: ["非常不符合", "比较不符合", "不确定", "比较符合", "非常符合"])
 
+    // MARK: 人际需要与边界（20 题，中文原创探索）
+
+    static let social = AssessmentConfig(
+        kind: .social,
+        title: "人际需要与边界探索", sub: "看见你希望怎样与人靠近", kicker: "人际需要 · 中文原创探索",
+        introTitle: "在人际交往中，\n你最希望被怎样对待？",
+        intro: "请想象朋友、同事或熟人关系中的真实相处，按照你的需要回答。题目参考人际需要、关系结构与沟通研究中的常见构念重新设计，不复刻商业题库。",
+        notices: ["20题，覆盖连接、互惠、深度、边界与修复", "结果描述你重视的相处条件，不给社交能力贴标签", "如果不同关系里的答案差异很大，以大多数真实关系为准"],
+        resultTitle: "人际关系画像", resultSub: "人际需要 · 原创探索版", saveLabel: "写入“我在人际交往中在意”",
+        dims: [
+            AssessmentDim(key: "inclusion", name: "连接", label: "被接纳参与", color: 0x6E9DE8, desc: "希望被主动想起、邀请，并在群体里拥有位置"),
+            AssessmentDim(key: "reciprocity", name: "互惠", label: "有来有往", color: 0x6BC9B0, desc: "重视投入、回应与支持不是长期单向的"),
+            AssessmentDim(key: "depth", name: "深度", label: "真诚深度", color: 0xC18DDF, desc: "希望关系能承载真实表达、理解与信任"),
+            AssessmentDim(key: "boundary", name: "边界", label: "尊重边界", color: 0xE2AC6B, desc: "亲近同时保留拒绝、隐私和独处空间"),
+            AssessmentDim(key: "repair", name: "修复", label: "冲突可修复", color: 0xE681A1, desc: "出现分歧后愿意说明、道歉并重新连接"),
+        ],
+        items: [
+            AssessmentItem(dim: "inclusion", text: "朋友或同事会主动想起并邀请我，这对我很重要"),
+            AssessmentItem(dim: "reciprocity", text: "关系里的联系和关心不应该长期只由一方发起"),
+            AssessmentItem(dim: "depth", text: "我希望重要关系里可以聊真实感受，而不只停留在寒暄"),
+            AssessmentItem(dim: "boundary", text: "即使关系很好，也应该允许彼此拒绝请求"),
+            AssessmentItem(dim: "repair", text: "发生误会后，对方愿意回来说明和修复很重要"),
+            AssessmentItem(dim: "inclusion", text: "进入一个新群体时，我希望有人自然地把我带进对话"),
+            AssessmentItem(dim: "reciprocity", text: "我愿意支持别人，也希望需要时能得到回应"),
+            AssessmentItem(dim: "depth", text: "我更珍惜少数能彼此理解的关系，而不是大量泛泛之交"),
+            AssessmentItem(dim: "boundary", text: "朋友之间也不应该追问我不想公开的私人信息"),
+            AssessmentItem(dim: "repair", text: "意见不同没有关系，但不应靠冷落或消失处理冲突"),
+            AssessmentItem(dim: "inclusion", text: "重要的信息或决定把我排除在外，会明显影响我的感受"),
+            AssessmentItem(dim: "reciprocity", text: "别人记得我说过的小事，会让我感到这段关系有来有往"),
+            AssessmentItem(dim: "depth", text: "我希望关系里能够直接表达欣赏、失望与需要"),
+            AssessmentItem(dim: "boundary", text: "临时改变计划或频繁打扰前，最好先询问我的意愿"),
+            AssessmentItem(dim: "repair", text: "伤害发生后，具体的改正行动比一句“算了吧”更重要"),
+            AssessmentItem(dim: "inclusion", text: "即使不常见面，我也希望知道自己在对方生活中仍有位置"),
+            AssessmentItem(dim: "reciprocity", text: "如果我总在倾听，我也希望有机会被认真听见"),
+            AssessmentItem(dim: "depth", text: "我重视能保守秘密、不随意消费彼此脆弱的关系"),
+            AssessmentItem(dim: "boundary", text: "亲密不意味着必须随时回复消息或解释行踪"),
+            AssessmentItem(dim: "repair", text: "冲突后能重新建立安全感，是关系能否继续的重要条件"),
+        ],
+        likert: ["完全不重要", "不太重要", "一般", "比较重要", "非常重要"])
+
     // MARK: MBTI
 
     static let mbtiTypes = ["ISTJ", "ISFJ", "INFJ", "INTJ", "ISTP", "ISFP", "INFP", "INTP",
                             "ESTP", "ESFP", "ENFP", "ENTP", "ESTJ", "ESFJ", "ENFJ", "ENTJ"]
+}
+
+// MARK: - 喜欢 × 擅长完整探索（中文原创题目）
+
+enum DiscoveryAxis: String, Codable, Sendable { case like, skill, value }
+
+struct DiscoveryOption: Identifiable, Sendable {
+    var id: String { label }
+    let label: String
+    let tag: String
+    let glyph: String
+}
+
+struct DiscoveryQuestion: Identifiable, Sendable {
+    let id: String
+    let axis: DiscoveryAxis
+    let eyebrow: String
+    let title: String
+    let hint: String
+    let options: [DiscoveryOption]
+}
+
+struct DiscoveryAnswer: Codable, Sendable {
+    var selected: [String] = []
+    var custom: [String] = []
+}
+
+struct RankedDiscoveryTag: Codable, Sendable {
+    let tag: String
+    let count: Int
+}
+
+struct DiscoveryInsight: Codable, Identifiable, Sendable {
+    var id: String { label }
+    let label: String
+    let evidence: String
+    let reason: String
+}
+
+struct DiscoveryDirection: Codable, Identifiable, Sendable {
+    var id: String { title }
+    let title: String
+    let why: String
+    let firstStep: String
+
+    enum CodingKeys: String, CodingKey {
+        case title, why
+        case firstStep = "first_step"
+    }
+}
+
+struct SelfDiscoveryAnalysis: Codable, Sendable {
+    let summary: String
+    let likes: [DiscoveryInsight]
+    let strengths: [DiscoveryInsight]
+    let directions: [DiscoveryDirection]
+    let confidenceNote: String
+
+    enum CodingKeys: String, CodingKey {
+        case summary, likes, strengths, directions
+        case confidenceNote = "confidence_note"
+    }
+}
+
+struct SelfDiscoveryRequest: Codable, Sendable {
+    struct Response: Codable, Sendable {
+        let id: String
+        let axis: DiscoveryAxis
+        let question: String
+        let selected: [String]
+        let custom: [String]
+    }
+    struct Evidence: Codable, Sendable {
+        let likes: [RankedDiscoveryTag]
+        let strengths: [RankedDiscoveryTag]
+        let values: [RankedDiscoveryTag]
+    }
+    let responses: [Response]
+    let evidence: Evidence
+}
+
+enum SelfDiscoveryData {
+    private static func q(
+        _ id: String, _ axis: DiscoveryAxis, _ eyebrow: String, _ title: String, _ hint: String,
+        _ rows: [(String, String, String)]
+    ) -> DiscoveryQuestion {
+        DiscoveryQuestion(id: id, axis: axis, eyebrow: eyebrow, title: title, hint: hint,
+                          options: rows.map { DiscoveryOption(label: $0.0, tag: $0.1, glyph: $0.2) })
+    }
+
+    static let questions: [DiscoveryQuestion] = [
+        q("like-pull", .like, "喜欢的事 · 自然靠近", "没有任务和评价时，你会主动靠近什么？", "选 1–3 项，也可以写下选项之外的真实答案。", [
+            ("内容、画面、音乐或故事", "创造与表达", "✦"), ("一个值得追到底的问题", "知识与探索", "◎"),
+            ("人的经历、感受与关系", "人类与连接", "♡"), ("工具、流程与系统如何运作", "系统与优化", "▦"),
+            ("社会变化与真实影响", "影响与推动", "↗"), ("自然、身体与动手体验", "实践与体验", "◇"),
+        ]),
+        q("like-flow", .like, "喜欢的事 · 心流证据", "哪些活动曾让你忘记时间？", "回想真实发生过的时刻，不选“理想中应该喜欢”的事。", [
+            ("把想法做成作品", "创造与表达", "✦"), ("阅读、研究或拆解原理", "知识与探索", "◎"),
+            ("深聊、陪伴或理解别人", "人类与连接", "♡"), ("整理、规划或持续改进", "系统与优化", "▦"),
+            ("组织大家完成一件事", "影响与推动", "↗"), ("制作、运动或走进自然", "实践与体验", "◇"),
+        ]),
+        q("like-invest", .like, "喜欢的事 · 投入意愿", "你愿意持续把时间或金钱花在哪里？", "真正的兴趣通常会留下持续投入的痕迹。", [
+            ("创作工具、审美与表达训练", "创造与表达", "✦"), ("课程、书籍与新知识", "知识与探索", "◎"),
+            ("社群、关系与助人体验", "人类与连接", "♡"), ("效率工具、方法与系统", "系统与优化", "▦"),
+            ("项目、公共议题与行动", "影响与推动", "↗"), ("手作、旅行、运动与体验", "实践与体验", "◇"),
+        ]),
+        q("like-admire", .like, "喜欢的事 · 羡慕线索", "你最容易羡慕哪种人的日常？", "羡慕不等于要成为对方，它可能提示你想靠近的内容世界。", [
+            ("持续输出独特作品的人", "创造与表达", "✦"), ("不断发现和解释新知的人", "知识与探索", "◎"),
+            ("真正理解并改善他人处境的人", "人类与连接", "♡"), ("把复杂事物变得清晰高效的人", "系统与优化", "▦"),
+            ("召集别人创造真实变化的人", "影响与推动", "↗"), ("以身体和双手探索世界的人", "实践与体验", "◇"),
+        ]),
+        q("like-learn", .like, "喜欢的事 · 好奇方向", "即使短期没有回报，你仍想学什么？", "先把职业名称放在一边，只看你想持续理解的对象。", [
+            ("叙事、视觉、音乐或设计", "创造与表达", "✦"), ("科学、技术、历史或思想", "知识与探索", "◎"),
+            ("心理、教育、沟通或关系", "人类与连接", "♡"), ("商业、产品、流程或组织", "系统与优化", "▦"),
+            ("领导力、社会创新或公共议题", "影响与推动", "↗"), ("自然、工艺、运动或生活实践", "实践与体验", "◇"),
+        ]),
+        q("skill-asked", .skill, "擅长的事 · 他人证据", "别人通常会来找你帮什么忙？", "擅长常是你觉得普通、别人却认为可靠的行为方式。", [
+            ("想点子或打开新角度", "创意生成", "✦"), ("快速摸清陌生领域", "快速学习", "◎"),
+            ("听懂没被说出口的需要", "共情连接", "♡"), ("把混乱信息理出主线", "结构化思考", "▦"),
+            ("找到下一步并推动完成", "推动落地", "↗"), ("直接动手排查和解决", "实践解决", "◇"),
+        ]),
+        q("skill-natural", .skill, "擅长的事 · 自然反应", "面对一个混乱问题，你会自然先做什么？", "不是问应该怎么做，而是你往往不假思索就会怎么做。", [
+            ("提出几种不同可能", "创意生成", "✦"), ("边做边学并找到规律", "快速学习", "◎"),
+            ("理解每个人真正担心什么", "共情连接", "♡"), ("拆目标、约束与优先级", "结构化思考", "▦"),
+            ("拉齐分工、时间和下一步", "推动落地", "↗"), ("先做一个能验证的版本", "实践解决", "◇"),
+        ]),
+        q("skill-success", .skill, "擅长的事 · 成功模式", "过去做成一件事时，你最常贡献什么？", "寻找多次成功背后重复出现的行为，而不只是职位和技能名。", [
+            ("给出别人没想到的方案", "创意生成", "✦"), ("从反馈中迅速学会", "快速学习", "◎"),
+            ("让不同的人愿意继续对话", "共情连接", "♡"), ("把复杂问题讲清楚", "结构化思考", "▦"),
+            ("让卡住的事情重新前进", "推动落地", "↗"), ("把问题真正修好或做出来", "实践解决", "◇"),
+        ]),
+        q("skill-effortless", .skill, "擅长的事 · 低耗能优势", "哪些事你做起来不太费力，却常得到好反馈？", "优势不是“永远轻松”，而是相较别人更自然、更容易复现。", [
+            ("迅速联想到新表达或新方案", "创意生成", "✦"), ("短时间抓住新事物重点", "快速学习", "◎"),
+            ("察觉气氛并让人安心", "共情连接", "♡"), ("归纳信息并清楚表达", "结构化思考", "▦"),
+            ("协调资源并按时交付", "推动落地", "↗"), ("试出来、修出来、做出来", "实践解决", "◇"),
+        ]),
+        q("skill-friction", .skill, "擅长的事 · 过度使用", "你最常因为哪种“做得太多”被提醒？", "优势用过头也会制造摩擦，这类反馈常藏着可用的能力。", [
+            ("想法太多、容易跳出原方案", "创意生成", "✦"), ("总想再查清楚、再学一点", "快速学习", "◎"),
+            ("太在意别人感受", "共情连接", "♡"), ("过度分析、追求逻辑完整", "结构化思考", "▦"),
+            ("推进太快、总想立即行动", "推动落地", "↗"), ("不爱空谈、习惯先动手", "实践解决", "◇"),
+        ]),
+        q("value-discomfort", .value, "价值观 · 不适线索", "看到什么状态时，你最容易感到不舒服？", "这部分帮助 AI 判断你为何喜欢某件事，不会代替“喜欢”和“擅长”的结果。", [
+            ("表达被限制、没有选择", "自由与创造", "✦"), ("停止成长、拒绝求真", "成长与求真", "◎"),
+            ("人被忽略、关系缺少理解", "关怀与连接", "♡"), ("混乱低效、规则不透明", "秩序与清晰", "▦"),
+            ("明知能改变却无人行动", "影响与担当", "↗"), ("脱离现实、只有概念没有体验", "真实与实践", "◇"),
+        ]),
+        q("value-contribution", .value, "价值观 · 贡献方向", "你希望自己的投入最终带来什么？", "这会作为组合“喜欢 × 擅长”时的判断标准。", [
+            ("让人拥有更多表达与选择", "自由与创造", "✦"), ("让知识和成长更容易发生", "成长与求真", "◎"),
+            ("让人被看见、理解和支持", "关怀与连接", "♡"), ("让复杂世界更清晰有序", "秩序与清晰", "▦"),
+            ("推动值得发生的真实变化", "影响与担当", "↗"), ("创造可触摸、可使用的成果", "真实与实践", "◇"),
+        ]),
+    ]
+
+    static func rankedTags(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
+        var counts: [String: Int] = [:]
+        var order: [String] = []
+        for question in questions where question.axis == axis {
+            for label in answers[question.id]?.selected ?? [] {
+                guard let tag = question.options.first(where: { $0.label == label })?.tag else { continue }
+                if counts[tag] == nil { order.append(tag) }
+                counts[tag, default: 0] += 1
+            }
+        }
+        return order.sorted { (counts[$0] ?? 0) > (counts[$1] ?? 0) }
+            .prefix(3).map { RankedDiscoveryTag(tag: $0, count: counts[$0] ?? 0) }
+    }
+
+    private static func rankedWithCustom(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
+        var ranked = rankedTags(axis, answers: answers)
+        var seen = Set(ranked.map(\.tag))
+        for question in questions where question.axis == axis {
+            for custom in answers[question.id]?.custom ?? [] {
+                let tag = String(custom.trimmingCharacters(in: .whitespacesAndNewlines).prefix(18))
+                guard !tag.isEmpty, !seen.contains(tag) else { continue }
+                ranked.append(RankedDiscoveryTag(tag: tag, count: 1)); seen.insert(tag)
+                if ranked.count == 3 { return ranked }
+            }
+        }
+        let defaults = axis == .like
+            ? ["继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容"]
+            : axis == .skill
+                ? ["继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功"]
+                : ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"]
+        for tag in defaults where !seen.contains(tag) {
+            ranked.append(RankedDiscoveryTag(tag: tag, count: 1)); seen.insert(tag)
+            if ranked.count == 3 { break }
+        }
+        return Array(ranked.prefix(3))
+    }
+
+    static func localAnalysis(_ answers: [String: DiscoveryAnswer]) -> SelfDiscoveryAnalysis {
+        let likes = rankedWithCustom(.like, answers: answers)
+        let strengths = rankedWithCustom(.skill, answers: answers)
+        let values = rankedWithCustom(.value, answers: answers)
+        let likeInsights = likes.map { item in
+            DiscoveryInsight(label: item.tag, evidence: "在 \(item.count) 个不同情境中重复出现", reason: "它多次出现在你的注意力、投入感与主动选择中，值得优先用真实行动验证。")
+        }
+        let strengthInsights = strengths.map { item in
+            DiscoveryInsight(label: item.tag, evidence: "在 \(item.count) 个不同情境中重复出现", reason: "它多次出现在你的自然反应、他人反馈与成功模式中，可能是可复用的优势。")
+        }
+        let value = values.first?.tag ?? "你重视的价值"
+        let directions = likes.enumerated().map { index, like in
+            let strength = strengths[index % max(strengths.count, 1)].tag
+            return DiscoveryDirection(title: "用\(strength)，去探索\(like.tag)", why: "这组组合同时回应了你的兴趣证据，并靠近“\(value)”。", firstStep: "在一周内完成一个与“\(like.tag)”有关、能使用“\(strength)”的小行动。")
+        }
+        return SelfDiscoveryAnalysis(
+            summary: "你更容易被\(likes.map(\.tag).joined(separator: "、"))吸引，并倾向用\(strengths.map(\.tag).joined(separator: "、"))来解决问题。",
+            likes: likeInsights, strengths: strengthInsights, directions: directions,
+            confidenceNote: "这是基于选择频次生成的初步假设；继续记录真实行动中的投入感和反馈，结论会更准确。")
+    }
+
+    static func request(_ answers: [String: DiscoveryAnswer]) -> SelfDiscoveryRequest {
+        SelfDiscoveryRequest(
+            responses: questions.map { question in
+                let answer = answers[question.id] ?? DiscoveryAnswer()
+                return .init(id: question.id, axis: question.axis, question: question.title, selected: answer.selected, custom: answer.custom)
+            },
+            evidence: .init(
+                likes: rankedTags(.like, answers: answers),
+                strengths: rankedTags(.skill, answers: answers),
+                values: rankedTags(.value, answers: answers)))
+    }
 }

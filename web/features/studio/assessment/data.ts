@@ -2,7 +2,7 @@
 
 import type { DimensionKey } from "@/lib/dimensions";
 
-export type AssessmentKind = "holland" | "bigfive" | "strength" | "love" | "family";
+export type AssessmentKind = "holland" | "bigfive" | "strength" | "love" | "family" | "social";
 
 export const ASSESSMENT_KINDS: AssessmentKind[] = [
   "holland",
@@ -10,6 +10,7 @@ export const ASSESSMENT_KINDS: AssessmentKind[] = [
   "strength",
   "love",
   "family",
+  "social",
 ];
 
 export function isAssessmentKind(v: string): v is AssessmentKind {
@@ -27,6 +28,8 @@ export function targetDimension(kind: AssessmentKind): DimensionKey | null {
       return "love";
     case "family":
       return "family";
+    case "social":
+      return "social";
     case "bigfive":
       return null;
   }
@@ -377,12 +380,63 @@ const FAMILY: AssessmentConfig = {
   likert: ["非常不符合", "比较不符合", "不确定", "比较符合", "非常符合"],
 };
 
+/* ============ 人际需要与边界（20 题，原创构念探索） ============ */
+
+const SOCIAL: AssessmentConfig = {
+  kind: "social",
+  title: "人际需要与边界探索",
+  sub: "看见你希望怎样与人靠近",
+  kicker: "人际需要 · 中文原创探索",
+  introTitle: "在人际交往中，\n你最希望被怎样对待？",
+  intro:
+    "请想象朋友、同事或熟人关系中的真实相处，按照你的需要回答。题目参考人际需要、关系结构与沟通研究中的常见构念重新设计，不复刻商业题库。",
+  notices: [
+    "20题，覆盖连接、互惠、深度、边界与修复",
+    "结果描述你重视的相处条件，不给社交能力贴标签",
+    "如果不同关系里的答案差异很大，以大多数真实关系为准",
+  ],
+  resultTitle: "人际关系画像",
+  resultSub: "人际需要 · 原创探索版",
+  saveLabel: "写入“我在人际交往中在意”",
+  dims: [
+    { key: "inclusion", name: "连接", label: "被接纳参与", color: "#6E9DE8", desc: "希望被主动想起、邀请，并在群体里拥有位置" },
+    { key: "reciprocity", name: "互惠", label: "有来有往", color: "#6BC9B0", desc: "重视投入、回应与支持不是长期单向的" },
+    { key: "depth", name: "深度", label: "真诚深度", color: "#C18DDF", desc: "希望关系能承载真实表达、理解与信任" },
+    { key: "boundary", name: "边界", label: "尊重边界", color: "#E2AC6B", desc: "亲近同时保留拒绝、隐私和独处空间" },
+    { key: "repair", name: "修复", label: "冲突可修复", color: "#E681A1", desc: "出现分歧后愿意说明、道歉并重新连接" },
+  ],
+  items: [
+    { dim: "inclusion", text: "朋友或同事会主动想起并邀请我，这对我很重要" },
+    { dim: "reciprocity", text: "关系里的联系和关心不应该长期只由一方发起" },
+    { dim: "depth", text: "我希望重要关系里可以聊真实感受，而不只停留在寒暄" },
+    { dim: "boundary", text: "即使关系很好，也应该允许彼此拒绝请求" },
+    { dim: "repair", text: "发生误会后，对方愿意回来说明和修复很重要" },
+    { dim: "inclusion", text: "进入一个新群体时，我希望有人自然地把我带进对话" },
+    { dim: "reciprocity", text: "我愿意支持别人，也希望需要时能得到回应" },
+    { dim: "depth", text: "我更珍惜少数能彼此理解的关系，而不是大量泛泛之交" },
+    { dim: "boundary", text: "朋友之间也不应该追问我不想公开的私人信息" },
+    { dim: "repair", text: "意见不同没有关系，但不应靠冷落或消失处理冲突" },
+    { dim: "inclusion", text: "重要的信息或决定把我排除在外，会明显影响我的感受" },
+    { dim: "reciprocity", text: "别人记得我说过的小事，会让我感到这段关系有来有往" },
+    { dim: "depth", text: "我希望关系里能够直接表达欣赏、失望与需要" },
+    { dim: "boundary", text: "临时改变计划或频繁打扰前，最好先询问我的意愿" },
+    { dim: "repair", text: "伤害发生后，具体的改正行动比一句“算了吧”更重要" },
+    { dim: "inclusion", text: "即使不常见面，我也希望知道自己在对方生活中仍有位置" },
+    { dim: "reciprocity", text: "如果我总在倾听，我也希望有机会被认真听见" },
+    { dim: "depth", text: "我重视能保守秘密、不随意消费彼此脆弱的关系" },
+    { dim: "boundary", text: "亲密不意味着必须随时回复消息或解释行踪" },
+    { dim: "repair", text: "冲突后能重新建立安全感，是关系能否继续的重要条件" },
+  ],
+  likert: ["完全不重要", "不太重要", "一般", "比较重要", "非常重要"],
+};
+
 const CONFIGS: Record<AssessmentKind, AssessmentConfig> = {
   holland: HOLLAND,
   bigfive: BIG_FIVE,
   strength: STRENGTH,
   love: LOVE,
   family: FAMILY,
+  social: SOCIAL,
 };
 
 export function assessmentConfig(kind: AssessmentKind): AssessmentConfig {

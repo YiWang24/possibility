@@ -2,15 +2,13 @@
 /* 首页「认识你自己」—— 移植 iOS HomeView。
    问候 · 语音日记 · AI 发问 · 人生卡牌入口 · 动态画像。移动端单列，md 起画像五维双栏。 */
 
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { PageShell } from "@/components/shell/PageShell";
-import { useData } from "@/stores/data";
 import { useHome } from "./store";
 import { DiaryCard } from "./DiaryCard";
 import { AskCard } from "./AskCard";
 import { LifeEntryButton } from "./LifeEntryButton";
 import { PortraitSection } from "./PortraitSection";
-import { PersonaHero } from "./PersonaHero";
 
 const USER_NAME = "老己";
 
@@ -40,24 +38,6 @@ export function HomeView() {
     void loadDiaryOverview();
   }, [loadPortrait, loadDiaryOverview]);
 
-  /* personaModel / completion 是 store 的派生方法，getState() 读不出订阅关系。
-     必须显式订阅它们依赖的两个源（填写的维度 + 远端画像），
-     否则填完一个维度后 hero 的形象与完成度不会跟着变。
-     卡牌来自 useData，由 lifeSignatureCards 内部读取，这里一并订阅。 */
-  const filledDims = useHome((s) => s.filledDims);
-  const remotePersona = useHome((s) => s.remotePersona);
-  const cardGames = useData((s) => s.profile?.card_games);
-
-  const model = useMemo(
-    () => useHome.getState().personaModel(),
-    [filledDims, remotePersona, cardGames],
-  );
-  const completion = useMemo(() => useHome.getState().completion(), [filledDims]);
-  const hasLifeCards = useMemo(
-    () => useHome.getState().lifeSignatureCards().length >= 3,
-    [cardGames],
-  );
-
   return (
     <PageShell
       header={
@@ -78,38 +58,20 @@ export function HomeView() {
         </header>
       }
     >
-      {/* 首屏区块。DOM 顺序 = 手机顺序 = iOS 顺序：语音日记 → 发问 → 卡牌 → 动态画像。
-          桌面把画像 hero 用显式行列定位提到第一行通栏，不动 DOM、也不用 order 兜底。
-
-          为什么不能让 hero 在 DOM 里排第一：那样手机上它会占掉约 610px，
-          语音日记被推到 y≈724 —— 视口才 844px，日常操作全落到第一屏之外。
-          「画像当主视觉」是桌面才成立的解法，手机一次只能看一屏，
-          第一屏必须留给每天要用的三件事。
-
+      {/* 首屏区块。DOM 顺序 = 手机顺序 = iOS 顺序：语音日记 → 发问 → 卡牌。
           三张卡的内容体量差得很远（发问约 330px / 日记约 130px / 卡牌约 87px），
           等宽三列配 items-stretch 会把三者拉平、卡内各空一大片；两栏 +
           items-start 才贴着内容走。grid-rows 的 auto 档同样关键：默认 auto 行会把
           发问卡跨行的富余高度均摊给两行，日记与卡牌之间会浮出约 70px。 */}
-      <div className="mt-5 grid grid-cols-1 items-start gap-[18px] lg:mt-7 lg:grid-cols-2 lg:grid-rows-[auto_auto_1fr] lg:gap-5 xl:gap-6">
-        <div className="lg:col-start-1 lg:row-start-2">
+      <div className="mt-5 grid grid-cols-1 items-start gap-[18px] lg:mt-7 lg:grid-cols-2 lg:grid-rows-[auto_auto] lg:gap-5 xl:gap-6">
+        <div className="lg:col-start-1 lg:row-start-1">
           <DiaryCard />
         </div>
-        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-2">
+        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <AskCard />
         </div>
-        <div className="lg:col-start-1 lg:row-start-3">
+        <div className="lg:col-start-1 lg:row-start-2">
           <LifeEntryButton />
-        </div>
-        {/* 手机上排在三件事之后（与 iOS 的「动态画像」压轴一致）；
-            桌面提到第一行通栏，成为首屏主视觉。 */}
-        <div className="lg:col-span-2 lg:col-start-1 lg:row-start-1">
-          <PersonaHero
-            model={model}
-            userName={USER_NAME}
-            summary={remotePersona?.summary}
-            hasLifeCards={hasLifeCards}
-            completion={completion}
-          />
         </div>
       </div>
 

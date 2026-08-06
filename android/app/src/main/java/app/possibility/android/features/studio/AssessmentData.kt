@@ -27,7 +27,8 @@ enum class AssessmentKind(val id: String) {
     BIGFIVE("bigfive"),
     STRENGTH("strength"),
     LOVE("love"),
-    FAMILY("family");
+    FAMILY("family"),
+    SOCIAL("social");
 
     /** 结果写入的画像维度键（bigfive → 人格底色单独处理，返回 null）。 */
     val targetDimension: String?
@@ -36,6 +37,7 @@ enum class AssessmentKind(val id: String) {
             STRENGTH -> "skill"
             LOVE -> "love"
             FAMILY -> "family"
+            SOCIAL -> "social"
             BIGFIVE -> null
         }
 
@@ -96,6 +98,7 @@ object AssessmentData {
         AssessmentKind.STRENGTH -> strength
         AssessmentKind.LOVE -> love
         AssessmentKind.FAMILY -> family
+        AssessmentKind.SOCIAL -> social
     }
 
     // MARK: 霍兰德（O*NET Mini-IP，30 题，RIASEC）
@@ -326,6 +329,47 @@ object AssessmentData {
             AssessmentItem(dim = "autonomy", text = "家庭和睦不意味着所有人必须想法一致"),
         ),
         likert = listOf("非常不符合", "比较不符合", "不确定", "比较符合", "非常符合"),
+    )
+
+    // MARK: 人际需要与边界（20 题，中文原创探索）
+
+    val social = AssessmentConfig(
+        kind = AssessmentKind.SOCIAL,
+        title = "人际需要与边界探索", sub = "看见你希望怎样与人靠近", kicker = "人际需要 · 中文原创探索",
+        introTitle = "在人际交往中，\n你最希望被怎样对待？",
+        intro = "请想象朋友、同事或熟人关系中的真实相处，按照你的需要回答。题目参考人际需要、关系结构与沟通研究中的常见构念重新设计，不复刻商业题库。",
+        notices = listOf("20题，覆盖连接、互惠、深度、边界与修复", "结果描述你重视的相处条件，不给社交能力贴标签", "如果不同关系里的答案差异很大，以大多数真实关系为准"),
+        resultTitle = "人际关系画像", resultSub = "人际需要 · 原创探索版", saveLabel = "写入“我在人际交往中在意”",
+        dims = listOf(
+            AssessmentDim("inclusion", "连接", "被接纳参与", 0x6E9DE8, "希望被主动想起、邀请，并在群体里拥有位置"),
+            AssessmentDim("reciprocity", "互惠", "有来有往", 0x6BC9B0, "重视投入、回应与支持不是长期单向的"),
+            AssessmentDim("depth", "深度", "真诚深度", 0xC18DDF, "希望关系能承载真实表达、理解与信任"),
+            AssessmentDim("boundary", "边界", "尊重边界", 0xE2AC6B, "亲近同时保留拒绝、隐私和独处空间"),
+            AssessmentDim("repair", "修复", "冲突可修复", 0xE681A1, "出现分歧后愿意说明、道歉并重新连接"),
+        ),
+        items = listOf(
+            AssessmentItem(dim = "inclusion", text = "朋友或同事会主动想起并邀请我，这对我很重要"),
+            AssessmentItem(dim = "reciprocity", text = "关系里的联系和关心不应该长期只由一方发起"),
+            AssessmentItem(dim = "depth", text = "我希望重要关系里可以聊真实感受，而不只停留在寒暄"),
+            AssessmentItem(dim = "boundary", text = "即使关系很好，也应该允许彼此拒绝请求"),
+            AssessmentItem(dim = "repair", text = "发生误会后，对方愿意回来说明和修复很重要"),
+            AssessmentItem(dim = "inclusion", text = "进入一个新群体时，我希望有人自然地把我带进对话"),
+            AssessmentItem(dim = "reciprocity", text = "我愿意支持别人，也希望需要时能得到回应"),
+            AssessmentItem(dim = "depth", text = "我更珍惜少数能彼此理解的关系，而不是大量泛泛之交"),
+            AssessmentItem(dim = "boundary", text = "朋友之间也不应该追问我不想公开的私人信息"),
+            AssessmentItem(dim = "repair", text = "意见不同没有关系，但不应靠冷落或消失处理冲突"),
+            AssessmentItem(dim = "inclusion", text = "重要的信息或决定把我排除在外，会明显影响我的感受"),
+            AssessmentItem(dim = "reciprocity", text = "别人记得我说过的小事，会让我感到这段关系有来有往"),
+            AssessmentItem(dim = "depth", text = "我希望关系里能够直接表达欣赏、失望与需要"),
+            AssessmentItem(dim = "boundary", text = "临时改变计划或频繁打扰前，最好先询问我的意愿"),
+            AssessmentItem(dim = "repair", text = "伤害发生后，具体的改正行动比一句“算了吧”更重要"),
+            AssessmentItem(dim = "inclusion", text = "即使不常见面，我也希望知道自己在对方生活中仍有位置"),
+            AssessmentItem(dim = "reciprocity", text = "如果我总在倾听，我也希望有机会被认真听见"),
+            AssessmentItem(dim = "depth", text = "我重视能保守秘密、不随意消费彼此脆弱的关系"),
+            AssessmentItem(dim = "boundary", text = "亲密不意味着必须随时回复消息或解释行踪"),
+            AssessmentItem(dim = "repair", text = "冲突后能重新建立安全感，是关系能否继续的重要条件"),
+        ),
+        likert = listOf("完全不重要", "不太重要", "一般", "比较重要", "非常重要"),
     )
 
     // MARK: MBTI

@@ -1,8 +1,6 @@
 "use client";
-/* 动态画像区 —— 分区标题（探索更多画像 → /studio）+ 尼采引文 + 底牌 + 六维行。
-   数字形象舞台与完成度已上移到首页 hero（PersonaHero）：一张卡不该同时
-   承担「展示形象 / 列底牌 / 报完成度 / 排六维」四件事，桌面上那正是
-   「信息层级分散」的来源 —— 用户看不出这块的主角是谁。 */
+/* 动态画像区 —— 分区标题（探索更多画像 → /studio）+ 尼采引文 +
+   动态数字形象 + 底牌 + 六维行。 */
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +10,9 @@ import { DIMENSIONS, DIMENSION_KEYS, type DimensionKey } from "@/lib/dimensions"
 import { useData } from "@/stores/data";
 import { useHome } from "./store";
 import { DimensionSheet } from "./DimensionSheet";
+import { PersonaStage } from "./PersonaStage";
+
+const USER_NAME = "老己";
 
 interface PortraitDim {
   id: string;
@@ -25,6 +26,7 @@ interface PortraitDim {
 export function PortraitSection() {
   const router = useRouter();
   const filledDims = useHome((s) => s.filledDims);
+  const remotePersona = useHome((s) => s.remotePersona);
   const cardGames = useData((s) => s.profile?.card_games);
   const selectedKeywords = useHome((s) => s.selectedKeywords);
   const saveDimension = useHome((s) => s.saveDimension);
@@ -33,6 +35,11 @@ export function PortraitSection() {
     () => useHome.getState().lifeSignatureCards(),
     [cardGames],
   );
+  const model = useMemo(
+    () => useHome.getState().personaModel(),
+    [filledDims, remotePersona, cardGames],
+  );
+  const hasLifeCards = signatureCards.length >= 3;
 
   const [activeDim, setActiveDim] = useState<DimensionKey | null>(null);
 
@@ -54,7 +61,7 @@ export function PortraitSection() {
   };
 
   return (
-    <section className="flex flex-col gap-3">
+    <section id="dynamic-portrait" className="flex scroll-mt-24 flex-col gap-3">
       <SectionHeader
         title="我的动态画像"
         trailing="探索更多画像 ›"
@@ -68,6 +75,17 @@ export function PortraitSection() {
           我们无可避免跟自己保持陌生，我们不明白自己，我们搞不清楚自己，我们的永恒判词是：“离每个人最远的，就是他自己。”——对于我们自己，我们不是“知者”……
         </p>
         <p className="mt-1 text-right text-caption text-faint">——尼采《道德的系谱》</p>
+      </div>
+
+      {/* 动态数字形象放在引文之后、画像维度之前，形成连续阅读路径。 */}
+      <div className="kaleido-card overflow-hidden">
+        <PersonaStage
+          model={model}
+          userName={USER_NAME}
+          summary={remotePersona?.summary}
+          hasLifeCards={hasLifeCards}
+          size="hero"
+        />
       </div>
 
       {/* 画像卡 */}

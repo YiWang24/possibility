@@ -12,6 +12,7 @@ class AssessmentDataTest {
         assertEquals(15, AssessmentData.config(AssessmentKind.STRENGTH).items.size)
         assertEquals(18, AssessmentData.config(AssessmentKind.LOVE).items.size)
         assertEquals(20, AssessmentData.config(AssessmentKind.FAMILY).items.size)
+        assertEquals(20, AssessmentData.config(AssessmentKind.SOCIAL).items.size)
     }
 
     @Test
@@ -21,5 +22,14 @@ class AssessmentDataTest {
             val dimensions = config.dims.map { it.key }.toSet()
             assertTrue(config.items.all { it.dim in dimensions })
         }
+    }
+
+    @Test
+    fun selfDiscoveryUsesTheCompleteChineseQuestionSet() {
+        assertEquals(12, SelfDiscoveryData.questions.size)
+        assertTrue(SelfDiscoveryData.questions.all { it.options.size == 6 })
+        assertEquals(5, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.LIKE })
+        assertEquals(5, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.SKILL })
+        assertEquals(2, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.VALUE })
     }
 }
