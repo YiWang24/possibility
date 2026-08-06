@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { MONTH_EMOTION } from './diaryHelpers';
 import { useDiaryStore } from './diaryStore';
 import { mergeWithSeed } from './diaryStorage';
-import { FALLBACK_MONTH, FALLBACK_YEAR, summarizeDiary, type MonthSummary, type YearSummary } from './diarySummarize';
+import { FALLBACK_MONTH, FALLBACK_YEAR, summarizeDiary, type DiarySummaryContent, type MonthSummary, type YearSummary } from './diarySummarize';
 
 interface DiarySummaryProps {
   period: 'month' | 'year';
@@ -25,7 +25,9 @@ export default function DiarySummary({ period, showToast }: DiarySummaryProps) {
     if (refreshing) return;
     setRefreshing(true);
     void (async () => {
-      let generated = null;
+      // Annotated rather than inferred: the platform's build runs a stricter check than
+      // the local one and rejects an evolving `let x = null`.
+      let generated: DiarySummaryContent | null = null;
       try {
         generated = await summarizeDiary(period, entries);
       } catch {

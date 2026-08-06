@@ -4,7 +4,7 @@
 
 import { create } from 'zustand';
 import type { DiaryEntry } from '@/data/diary';
-import { analyzeDiaryTranscript } from './diaryAnalyze';
+import { analyzeDiaryTranscript, type DiaryAnalysis } from './diaryAnalyze';
 import { abortAsrSession, isAsrAvailable, startAsrSession, stopAsrSession } from './diaryAsr';
 import { diaryLabel, formatDuration, loadRecordedEntries, localIsoDate, saveRecordedEntries, upsertEntry } from './diaryStorage';
 
@@ -168,7 +168,9 @@ export const useDiaryStore = create<DiaryState>((set, get) => ({
 async function persist(set: (partial: Partial<DiaryState>) => void, get: () => DiaryState, text: string, seconds: number): Promise<void> {
   const now = new Date();
   const date = localIsoDate(now);
-  let analysis = null;
+  // Annotated rather than inferred: the platform's build runs a stricter check than the
+  // local one and rejects an evolving `let x = null`.
+  let analysis: DiaryAnalysis | null = null;
   let failed = false;
   try {
     analysis = await analyzeDiaryTranscript(text);

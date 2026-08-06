@@ -5,7 +5,7 @@ import { CARRY_LIMIT, LAB_CHOICE_DECKS } from '@/data/lab';
 import type { CarryCardKey } from '@/data/lab';
 import { detectLabChoiceType, labLoadSteps, setLabRun, setLabScenarios } from '@/data/lab-sim';
 import type { CustomChoice, LabRun } from '@/data/lab-sim';
-import { applySimulation, simulateLabRun } from './lab/labSimulate';
+import { applySimulation, simulateLabRun, type SimulationContent } from './lab/labSimulate';
 import LabQuestionCard from './lab/LabQuestionCard';
 import TimeDial from './lab/TimeDial';
 import ChoiceDeck from './lab/ChoiceDeck';
@@ -121,7 +121,9 @@ export default function LabScreen({ active }: ScreenProps) {
 
     void (async () => {
       const started = Date.now();
-      let generated = null;
+      // Annotated rather than inferred: the platform's build runs a stricter check than
+      // the local one and rejects an evolving `let x = null`.
+      let generated: SimulationContent | null = null;
       try {
         generated = await simulateLabRun(run);
       } catch {
