@@ -7,7 +7,10 @@
   opacity: 0;
   visibility: hidden;
   transform: translateY(6px);
-  transition: opacity 0.28s ease, transform 0.28s ease, visibility 0.28s;
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    visibility 0.28s;
   background:
     radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1.35px) 0 0 / 18px 18px,
     radial-gradient(500px 340px at 108% -40px, rgba(74, 116, 255, 0.16), transparent 65%),
@@ -28,7 +31,7 @@
 .tab-bar {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
   padding-top: 10px;
-  background: rgba(9,11,17,0.86);
+  background: rgba(9, 11, 17, 0.86);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--line);
 }

@@ -10,26 +10,26 @@
   --flash-app-safe-area-inset-left: env(safe-area-inset-left, 0px);
   --flash-app-safe-top: var(--flash-app-safe-area-inset-top, 0px);
 
-  --stage: #05070D;
-  --paper: #0A0C12;
-  --card: #13161F;
-  --raised: #1B1F2B;
-  --ink: #F2F4F9;
-  --sub: #98A0B3;
-  --faint: #5A6172;
+  --stage: #05070d;
+  --paper: #0a0c12;
+  --card: #13161f;
+  --raised: #1b1f2b;
+  --ink: #f2f4f9;
+  --sub: #98a0b3;
+  --faint: #5a6172;
   --line: rgba(255, 255, 255, 0.08);
-  --blue: #5E96FF;
-  --blue-deep: #2F63E8;
-  --violet: #5E96FF;
-  --violet-soft: #8F7BFF;
-  --pink: #F06ACD;
-  --magenta: #E35CC1;
-  --orange: #FF7A4D;
-  --apricot: #FFB067;
-  --teal: #3ED9A4;
-  --lime: #D7F464;
-  --aurora: linear-gradient(135deg, #5E96FF 0%, #8F7BFF 40%, #E35CC1 75%, #FF7A4D 100%);
-  --btn-g: linear-gradient(135deg, #6FA5FF, #2F63E8);
+  --blue: #5e96ff;
+  --blue-deep: #2f63e8;
+  --violet: #5e96ff;
+  --violet-soft: #8f7bff;
+  --pink: #f06acd;
+  --magenta: #e35cc1;
+  --orange: #ff7a4d;
+  --apricot: #ffb067;
+  --teal: #3ed9a4;
+  --lime: #d7f464;
+  --aurora: linear-gradient(135deg, #5e96ff 0%, #8f7bff 40%, #e35cc1 75%, #ff7a4d 100%);
+  --btn-g: linear-gradient(135deg, #6fa5ff, #2f63e8);
   --shadow-card: 0 2px 16px -4px rgba(0, 0, 0, 0.55);
 }
 
@@ -41,13 +41,15 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  html, body, #root {
+  html,
+  body,
+  #root {
     height: 100%;
   }
 
   body {
     background: var(--stage);
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
     color: var(--ink);
     overflow: hidden;
   }
@@ -59,18 +61,37 @@
 }
 
 @keyframes orblava1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(12%, 18%) scale(1.1); }
-  66% { transform: translate(-8%, -12%) scale(0.95); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(12%, 18%) scale(1.1);
+  }
+  66% {
+    transform: translate(-8%, -12%) scale(0.95);
+  }
 }
 
 @keyframes orblava2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  40% { transform: translate(-15%, 10%) scale(1.08); }
-  70% { transform: translate(10%, -18%) scale(0.92); }
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(-15%, 10%) scale(1.08);
+  }
+  70% {
+    transform: translate(10%, -18%) scale(0.92);
+  }
 }
 
 @keyframes wv {
-  0%, 100% { height: 22%; }
-  50% { height: 95%; }
+  0%,
+  100% {
+    height: 22%;
+  }
+  50% {
+    height: 95%;
+  }
 }
