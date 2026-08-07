@@ -73,9 +73,7 @@ export default function DimensionSheet() {
       return;
     }
     patch(
-      draft.selected.includes(chip.word)
-        ? { selected: draft.selected.filter((word) => word !== chip.word) }
-        : { selected: [...draft.selected, chip.word] },
+      draft.selected.includes(chip.word) ? { selected: draft.selected.filter((word) => word !== chip.word) } : { selected: [...draft.selected, chip.word] },
     );
   };
 
@@ -112,12 +110,7 @@ export default function DimensionSheet() {
 
   return (
     <>
-      <div
-        className={`backdrop${open ? ' open' : ''}`}
-        data-testid="dimension-sheet-backdrop"
-        role="presentation"
-        onClick={closeSheet}
-      />
+      <div className={`backdrop${open ? ' open' : ''}`} data-testid="dimension-sheet-backdrop" role="presentation" onClick={closeSheet} />
       <section className={`sheet${open ? ' open' : ''}`} id="dimensionSheet" data-testid="dimension-sheet">
         <div className="grab" />
         {config !== null ? (
@@ -224,13 +217,7 @@ export default function DimensionSheet() {
               ))}
             </div>
 
-            <button
-              type="button"
-              className="result-save save-profile-btn"
-              disabled={!canSave}
-              data-testid="dimension-save"
-              onClick={save}
-            >
+            <button type="button" className="result-save save-profile-btn" disabled={!canSave} data-testid="dimension-save" onClick={save}>
               保存到我的画像
             </button>
           </>

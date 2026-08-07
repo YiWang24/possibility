@@ -7,9 +7,7 @@ import type { DeckKind } from './cardgames';
 export type DimensionKey = 'skill' | 'like' | 'love' | 'family' | 'social';
 
 /** 点开工具卡后走哪条路：进测评，还是开卡牌。 */
-export type DimensionToolAction =
-  | { open: 'assessment'; assessment: 'strength' | 'holland' | 'love' | 'family' }
-  | { open: 'cardGame'; deck: DeckKind };
+export type DimensionToolAction = { open: 'assessment'; assessment: 'strength' | 'holland' | 'love' | 'family' } | { open: 'cardGame'; deck: DeckKind };
 
 export interface DimensionTool {
   name: string;

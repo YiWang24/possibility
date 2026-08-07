@@ -6,15 +6,7 @@ import type { CSSProperties } from 'react';
 import { useMyProfileStore } from '@/screens/me/myProfileStore';
 import { useAppStore } from '@/store/appStore';
 import type { AssessmentSpec } from './assessmentConfig';
-import {
-  dimOf,
-  joinKeywords,
-  personalityText,
-  resultNarrative,
-  resultTags,
-  topFacets,
-  type AssessmentResult,
-} from './assessmentEngine';
+import { dimOf, joinKeywords, personalityText, resultNarrative, resultTags, topFacets, type AssessmentResult } from './assessmentEngine';
 import { usePortraitStore } from './portraitStore';
 
 interface AssessmentResultViewProps {
@@ -53,9 +45,7 @@ export default function AssessmentResultView({ spec, result, onSaved }: Assessme
     const desc = dimOf(spec, key)?.desc;
     return desc !== undefined && desc !== '' ? [desc] : [];
   });
-  const insightDesc = isHolland
-    ? descs.slice(0, 2).join('')
-    : `${descs.slice(0, 2).join('；')}。这些信号可以被后续经历、日记和你的主动修改继续校正。`;
+  const insightDesc = isHolland ? descs.slice(0, 2).join('') : `${descs.slice(0, 2).join('；')}。这些信号可以被后续经历、日记和你的主动修改继续校正。`;
 
   const save = (): void => {
     const text = spec.target === 'personality' ? personalityText(tags, mbti) : joinKeywords(tags);

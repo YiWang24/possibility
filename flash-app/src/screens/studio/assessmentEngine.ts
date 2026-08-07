@@ -114,11 +114,7 @@ export function resultTags(spec: AssessmentSpec, result: AssessmentResult): stri
     return spec.dims.map((dim) => (isHigh(result, dim.key) ? dim.label : (BIGFIVE_LOW.get(dim.key) ?? dim.label)));
   }
   if (spec.kind === 'love') {
-    return [
-      isHigh(result, 'anxiety') ? '及时回应' : '稳定信任',
-      isHigh(result, 'avoidance') ? '尊重边界' : '亲密联结',
-      '冲突后愿意修复',
-    ];
+    return [isHigh(result, 'anxiety') ? '及时回应' : '稳定信任', isHigh(result, 'avoidance') ? '尊重边界' : '亲密联结', '冲突后愿意修复'];
   }
   return result.ordered.slice(0, 3).map((key) => labelOf(spec, key));
 }

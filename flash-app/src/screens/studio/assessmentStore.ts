@@ -78,12 +78,9 @@ function normalizeProgress(raw: unknown, total: number): AssessmentProgress {
   // 题数对不上说明题库改过：旧答案错位映射到新题比重来更糟，整条作废。
   if (stored.length !== total) return empty;
 
-  const answers = stored.map((value) =>
-    typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_ANSWER ? value : null,
-  );
+  const answers = stored.map((value) => (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= MAX_ANSWER ? value : null));
   const rawIndex = src['index'];
-  const index =
-    typeof rawIndex === 'number' && Number.isInteger(rawIndex) ? Math.min(Math.max(rawIndex, 0), Math.max(total - 1, 0)) : 0;
+  const index = typeof rawIndex === 'number' && Number.isInteger(rawIndex) ? Math.min(Math.max(rawIndex, 0), Math.max(total - 1, 0)) : 0;
   const result = normalizeResult(src['result']);
   // phase 不持久化：重进时有结果就看结果，否则回到 intro，与 iOS 一致。
   return { phase: result !== null ? 'result' : 'intro', index, answers, result };
