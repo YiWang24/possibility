@@ -1,5 +1,48 @@
 import { describe, expect, it } from 'vitest';
-import { unwrapModelText } from './chatLlm';
+import { buildMessages, unwrapModelText } from './chatLlm';
+import { promptsFor } from './chatScript';
+
+describe('buildMessages', () => {
+  const seed = '我要不要辞掉现在的工作';
+
+  // The canned questions used to be pasted into the system prompt as "参考方向", and
+  // the model just rewrote them — so every conversation opened with the same line.
+  // They are the fallback copy now, and the model must not see them.
+  it('never hands the model the scripted questions', () => {
+    for (const topic of ['职业', '家庭', '升学', '情感', undefined]) {
+      const joined = buildMessages('clarify', topic, seed, [])
+        .map((m) => m.content)
+        .join('\n');
+      for (const scripted of promptsFor(topic)) {
+        expect(joined).not.toContain(scripted);
+      }
+    }
+  });
+
+  it('still tells the model which topic the user picked', () => {
+    const joined = buildMessages('clarify', '职业', seed, [])
+      .map((m) => m.content)
+      .join('\n');
+    expect(joined).toContain('职业');
+    expect(joined).toContain(seed);
+  });
+
+  it('leaves the topic out when the user did not pick one', () => {
+    const messages = buildMessages('clarify', undefined, seed, []);
+    expect(messages[1]?.content).toBe(`我想探索的问题：${seed}`);
+  });
+
+  it('replays the transcript so each turn builds on the last', () => {
+    const messages = buildMessages('review', '职业', seed, [
+      { role: 'user', text: '我怕留下会后悔' },
+      { role: 'assistant', text: '你担心的是错过' },
+    ]);
+    expect(messages.slice(-2)).toEqual([
+      { role: 'user', content: '我怕留下会后悔' },
+      { role: 'assistant', content: '你担心的是错过' },
+    ]);
+  });
+});
 
 const FENCE = '```';
 const LINE = '你最近在考虑的事情里，最想得到的是什么，又最担心失去的是什么？';

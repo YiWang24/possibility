@@ -7,7 +7,6 @@
 
 import { getChat } from '@/lib/lingguangAi';
 import type { ChatMessage } from '@/lib/lingguangAi';
-import { promptsFor } from './chatScript';
 
 export type ChatStage = 'clarify' | 'review' | 'correction' | 'ready';
 
@@ -37,6 +36,8 @@ const STAGE_PROMPT: Record<ChatStage, string> = {
     '现在你只做一件事：提出一个能让用户的困惑变得更具体的问题。',
     '不要给建议，不要安慰，不要总结，不要罗列选项。',
     '一次只问一个问题，两到三句话之内，最后落在那个问题上。',
+    '问题必须扣住他自己写下的那些具体字眼——换一个人、换一件事就问不出来的那种。',
+    '不要问放到谁身上都成立的通用问题，也不要把「你最想得到什么、最担心失去什么」这类万能句直接抛回去。',
   ].join('\n'),
   review: [
     '现在给出一个「暂时的理解」：说出你认为他真正卡住的地方，通常是「既想靠近某样东西，又不想失去另一样」。',
@@ -56,11 +57,20 @@ const STAGE_PROMPT: Record<ChatStage, string> = {
   ].join('\n'),
 };
 
-function buildMessages(stage: ChatStage, topic: string | undefined, seedQuestion: string, turns: Turn[]): ChatMessage[] {
-  const guidance = stage === 'clarify' ? `\n\n供参考的提问方向（可以改写得更贴合他刚才说的话，不必照抄）：\n- ${promptsFor(topic).join('\n- ')}` : '';
+/**
+ * Assemble what the model sees for one turn.
+ *
+ * The scripted questions in `chatScript` are deliberately NOT included. They used to be
+ * pasted in as "参考方向", and the model reliably answered with a light rewrite of them —
+ * so every conversation opened with the same line no matter what the user had written.
+ * They are the fallback copy for when the model is unreachable, nothing more; the model
+ * gets the user's own words and the topic, and has to do the work from there.
+ */
+export function buildMessages(stage: ChatStage, topic: string | undefined, seedQuestion: string, turns: Turn[]): ChatMessage[] {
+  const opening = topic === undefined ? `我想探索的问题：${seedQuestion}` : `我想探索的问题：${seedQuestion}\n（这件事大致属于「${topic}」方面）`;
   const messages: ChatMessage[] = [
-    { role: 'system', content: `${BASE_PROMPT}\n\n${STAGE_PROMPT[stage]}${guidance}` },
-    { role: 'user', content: `我想探索的问题：${seedQuestion}` },
+    { role: 'system', content: `${BASE_PROMPT}\n\n${STAGE_PROMPT[stage]}` },
+    { role: 'user', content: opening },
   ];
   for (const turn of turns) {
     messages.push({ role: turn.role === 'user' ? 'user' : 'assistant', content: turn.text });

@@ -9,8 +9,12 @@ import { CORRECTION_PROMPT_HTML, clarifyFollowupHTML, clarifyIntroHTML, confirmA
 
 export type ChatItem =
   | { kind: 'me'; text: string }
-  /** Scripted copy: trusted markup, rendered as HTML. */
-  | { kind: 'ai'; html: string }
+  /**
+   * Scripted copy: trusted markup, rendered as HTML. `fallback` marks the ones that
+   * stood in for a model turn that never arrived, so a conversation the model never
+   * reached is telling apart from one it did — on screen, not just in the code.
+   */
+  | { kind: 'ai'; html: string; fallback?: true }
   /** Model output: rendered as plain text — never as HTML. */
   | { kind: 'ai-text'; text: string }
   | { kind: 'think' }
@@ -26,6 +30,11 @@ export function stripTags(html: string): string {
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .trim();
+}
+
+/** The assistant's bubble for one turn: the model's own words, or the scripted stand-in. */
+export function replyItem(finalText: string | null, scriptHtml: string): ChatItem {
+  return finalText === null ? { kind: 'ai', html: scriptHtml, fallback: true } : { kind: 'ai-text', text: finalText };
 }
 
 function withFollowUp(list: ChatItem[], follow: FollowUp): ChatItem[] {
@@ -104,8 +113,7 @@ export function useChatConversation(open: boolean, seedQuestion: string, topic: 
     const finalText = text ?? (streamed.trim() === '' ? null : streamed);
     setItems((prev) => {
       const base = prev.filter((it) => it.kind !== 'think' && !(it.kind === 'ai-text' && it.text === streamed));
-      const reply: ChatItem = finalText === null ? { kind: 'ai', html: scriptHtml } : { kind: 'ai-text', text: finalText };
-      return withFollowUp([...base, reply], follow);
+      return withFollowUp([...base, replyItem(finalText, scriptHtml)], follow);
     });
     pushTurn('assistant', finalText ?? stripTags(scriptHtml));
     setBusy(false);

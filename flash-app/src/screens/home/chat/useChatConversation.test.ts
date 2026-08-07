@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { stripTags } from './useChatConversation';
+import { replyItem, stripTags } from './useChatConversation';
+
+describe('replyItem', () => {
+  it('renders the model turn as model text', () => {
+    expect(replyItem('模型自己说的话', '<b>脚本</b>')).toEqual({ kind: 'ai-text', text: '模型自己说的话' });
+  });
+
+  // Without the flag the scripted fallback is indistinguishable from a real answer,
+  // so a conversation that never reached the model looks exactly like one that did.
+  it('marks the scripted copy as a fallback when the model gave nothing', () => {
+    expect(replyItem(null, '<b>脚本</b>')).toEqual({ kind: 'ai', html: '<b>脚本</b>', fallback: true });
+  });
+});
 
 describe('stripTags', () => {
   it('turns <br> into a real newline so the model sees the paragraph break', () => {

@@ -33,3 +33,13 @@
 .toast {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 118px);
 }
+
+/* Marks a bubble whose copy stood in for a model turn that never arrived. Quiet on
+   purpose: it should read as a footnote, not as an error. */
+.bubble-note {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--faint);
+}

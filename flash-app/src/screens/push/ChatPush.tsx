@@ -56,9 +56,18 @@ export default function ChatPush() {
         );
       case 'ai':
         // Trusted template copy; any user-typed value was escaped in chatScript.
+        // A `fallback` bubble stood in for a model turn that never arrived — say so
+        // rather than pass preset copy off as a real answer.
         return (
           <div key={index} className="msg ai">
-            <div className="bubble" dangerouslySetInnerHTML={{ __html: item.html }} />
+            <div className="bubble">
+              <span dangerouslySetInnerHTML={{ __html: item.html }} />
+              {item.fallback === true && (
+                <span className="bubble-note" data-testid="chat-ai-fallback">
+                  AI 暂时没接上，这是预设的回应
+                </span>
+              )}
+            </div>
           </div>
         );
       case 'ai-text':
