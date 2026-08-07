@@ -29,6 +29,7 @@ const BASE_PROMPT = [
   '- 不要罗列条目、不要用 markdown、不要用星号或井号，就写成自然的话。',
   '- 只依据用户真正说过的内容，不要替他补充经历或情绪。',
   '- 全部使用中文，不要输出任何 HTML 标签。',
+  '- 直接输出你要说的那段话本身，不要包进 JSON、代码块或任何字段名里。',
 ].join('\n');
 
 const STAGE_PROMPT: Record<ChatStage, string> = {
@@ -67,6 +68,118 @@ function buildMessages(stage: ChatStage, topic: string | undefined, seedQuestion
   return messages;
 }
 
+// `responseFormat: { type: 'text' }` asks for prose, and the prompt asks for prose, but
+// a model still occasionally answers with its own chat envelope — a fenced
+// `{"role": "AI", "content": "…"}` — and the bubble renders whatever it is handed. So the
+// envelope is peeled off here, before anything downstream treats the text as the reply.
+
+/** Fields a model puts its line in when it wraps the reply in an object. */
+const TEXT_KEYS = ['content', 'text', 'message', 'reply'] as const;
+
+/** Drop a ```lang fence, including a half-arrived one that has no closing marker yet. */
+function stripFence(input: string): string {
+  const opened = /^```[a-zA-Z0-9_+-]*[ \t]*\r?\n?/.exec(input);
+  if (!opened) return input;
+  return input.slice(opened[0].length).replace(/\r?\n?```\s*$/, '');
+}
+
+/** Pull the line out of a parsed envelope; null when no field looks like prose. */
+function textFrom(value: unknown): string | null {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    const parts = value.map(textFrom).filter((p): p is string => p !== null && p !== '');
+    return parts.length === 0 ? null : parts.join('\n');
+  }
+  if (typeof value !== 'object' || value === null) return null;
+  const record = value as Record<string, unknown>;
+  for (const key of TEXT_KEYS) {
+    const found = textFrom(record[key]);
+    if (found !== null && found !== '') return found;
+  }
+  // An unfamiliar field name still beats losing the answer: the reply is the longest
+  // string in there by a wide margin — "AI" and "assistant" lose to a whole sentence.
+  return longestString(record);
+}
+
+/** Envelope bookkeeping — never the reply, so "AI" can't win the search below. */
+const META_KEYS = new Set(['role', 'type', 'name', 'id', 'model', 'status', 'finish_reason', 'finishReason']);
+
+function longestString(value: unknown): string | null {
+  if (typeof value === 'string') return value === '' ? null : value;
+  let children: unknown[] = [];
+  if (Array.isArray(value)) children = value;
+  else if (typeof value === 'object' && value !== null) {
+    children = Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !META_KEYS.has(key))
+      .map(([, child]) => child);
+  }
+  let best: string | null = null;
+  for (const child of children) {
+    const found = longestString(child);
+    if (found !== null && (best === null || found.length > best.length)) best = found;
+  }
+  return best;
+}
+
+/** Decode a JSON string body up to its closing quote, tolerating a truncated tail. */
+function decodeUntilQuote(input: string): string {
+  const ESCAPES: Record<string, string> = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f' };
+  let out = '';
+  for (let i = 0; i < input.length; i += 1) {
+    const ch = input[i];
+    if (ch === undefined || ch === '"') break;
+    if (ch !== '\\') {
+      out += ch;
+      continue;
+    }
+    const next = input[i + 1];
+    if (next === undefined) break;
+    i += 1;
+    if (next === 'u') {
+      const hex = input.slice(i + 1, i + 5);
+      if (!/^[0-9a-fA-F]{4}$/.test(hex)) break;
+      out += String.fromCharCode(Number.parseInt(hex, 16));
+      i += 4;
+    } else {
+      out += ESCAPES[next] ?? next;
+    }
+  }
+  return out;
+}
+
+/** Mid-stream the envelope is still open, so JSON.parse cannot help — scan for the field. */
+function textFromPartial(input: string): string | null {
+  for (const key of TEXT_KEYS) {
+    const opener = new RegExp(`"${key}"\\s*:\\s*"`).exec(input);
+    if (opener) return decodeUntilQuote(input.slice(opener.index + opener[0].length));
+  }
+  return null;
+}
+
+/**
+ * Reduce one model response to the prose it carries.
+ *
+ * Handles both the finished response and every partial prefix of it, so the same
+ * envelope never shows up in the bubble while the answer is still streaming. Text that
+ * is already prose is returned untouched. An envelope we cannot get prose out of
+ * becomes '', which the caller reads as "no usable answer" and replaces with the
+ * scripted copy for that stage — the funnel's existing way of degrading.
+ */
+export function unwrapModelText(raw: string): string {
+  const body = stripFence(raw.trim()).trim();
+  if (body === '') return '';
+  if (body[0] !== '{' && body[0] !== '[') return body;
+  try {
+    return textFrom(JSON.parse(body))?.trim() ?? '';
+  } catch {
+    const found = textFromPartial(body);
+    if (found !== null) return found;
+    // Still arriving, or malformed: blank it only once it is clearly an envelope and
+    // not a sentence that happens to open with a brace.
+    return /^[{[]\s*("|$)/.test(body) ? '' : body;
+  }
+}
+
 export interface AssistantRequest {
   stage: ChatStage;
   topic: string | undefined;
@@ -100,15 +213,19 @@ export async function requestAssistantTurn(req: AssistantRequest): Promise<strin
       responseFormat: { type: 'text' },
       timeout: 60000,
       onEvent: (event) => {
-        if (event.type === 'text_delta' && typeof event.text === 'string') req.onDelta(event.text);
+        if (event.type !== 'text_delta' || typeof event.text !== 'string') return;
+        // While only the envelope's opening has arrived there is nothing to show yet;
+        // staying silent keeps the thinking indicator up instead of flashing an empty bubble.
+        const partial = unwrapModelText(event.text);
+        if (partial !== '') req.onDelta(partial);
       },
     });
-    const text = typeof result.content === 'string' ? result.content.trim() : '';
+    const text = typeof result.content === 'string' ? unwrapModelText(result.content) : '';
     return text === '' ? null : text;
   }
 
   // Hosts without streamChat still get a real answer, just without the typing effect.
   const result = await chat({ messages, responseFormat: { type: 'text' }, timeout: 60000 });
-  const text = typeof result.content === 'string' ? result.content.trim() : '';
+  const text = typeof result.content === 'string' ? unwrapModelText(result.content) : '';
   return text === '' ? null : text;
 }
