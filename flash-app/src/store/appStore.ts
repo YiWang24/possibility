@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import type { DeckKind } from '@/data/cardgames';
+import type { DimensionKey } from '@/data/dimensions';
+import type { AssessmentKind } from '@/screens/studio/assessmentConfig';
 
 /** The four bottom-tab screens. Mirrors the prototype's `go(tab)`. */
 export type TabId = 'home' | 'lab' | 'comm' | 'me';
@@ -29,6 +32,12 @@ export interface PushPayload {
   /** chatPage: the seed question / topic. */
   question?: string;
   topic?: string;
+  /** assessmentPage: which of the six assessments to open. */
+  assessmentKind?: AssessmentKind;
+  /** cardGameHub: jump straight into one deck instead of the picker. */
+  deck?: DeckKind;
+  /** cardGameHub: write the kept cards back into this portrait dimension. */
+  writeBackDim?: DimensionKey;
 }
 
 interface OpenPush {
@@ -44,6 +53,8 @@ interface ToastState {
 interface AppState {
   tab: TabId;
   pushes: OpenPush[];
+  /** The dimension whose keyword sheet is open, or null. */
+  dimensionSheet: DimensionKey | null;
   toast: ToastState | null;
   toastSeq: number;
 
@@ -51,6 +62,8 @@ interface AppState {
   openPush: (id: PushId, payload?: PushPayload) => void;
   closePush: (id?: PushId) => void;
   closeAllPushes: () => void;
+  openDimensionSheet: (key: DimensionKey) => void;
+  closeDimensionSheet: () => void;
   showToast: (msg: string) => void;
   hideToast: (id: number) => void;
 }
@@ -58,12 +71,21 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   tab: 'home',
   pushes: [],
+  dimensionSheet: null,
   toast: null,
   toastSeq: 0,
 
   // Switching tabs dismisses any open push pages, like the prototype's go().
   setTab: (tab) => {
-    set({ tab, pushes: [] });
+    set({ tab, pushes: [], dimensionSheet: null });
+  },
+
+  openDimensionSheet: (key) => {
+    set({ dimensionSheet: key });
+  },
+
+  closeDimensionSheet: () => {
+    set({ dimensionSheet: null });
   },
 
   openPush: (id, payload = {}) => {

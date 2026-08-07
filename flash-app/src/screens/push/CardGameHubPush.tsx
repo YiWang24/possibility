@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { useAppStore, usePushOpen } from '@/store/appStore';
+import { useAppStore, usePushOpen, usePushPayload } from '@/store/appStore';
 import { getCardDeck, type DeckKind } from '@/data/cardgames';
 import DeckView from '@/screens/home/cards/DeckView';
+import { joinKeywords } from '@/screens/studio/assessmentEngine';
+import { usePortraitStore } from '@/screens/studio/portraitStore';
 
 const OTHER_DECKS: { kind: DeckKind; cls: string; mark: string; title: string; desc: string }[] = [
   { kind: 'marriage', cls: 'marriage', mark: '♡', title: '婚姻关系卡牌', desc: '看见婚姻中最想守住的承诺、边界与未来' },
@@ -11,23 +13,38 @@ const OTHER_DECKS: { kind: DeckKind; cls: string; mark: string; title: string; d
 
 export default function CardGameHubPush() {
   const open = usePushOpen('cardGameHub');
+  const payload = usePushPayload('cardGameHub');
   const closePush = useAppStore((s) => s.closePush);
   const showToast = useAppStore((s) => s.showToast);
+  const setDim = usePortraitStore((s) => s.setDim);
 
   const [selectedKind, setSelectedKind] = useState<DeckKind | null>(null);
   const [prevOpen, setPrevOpen] = useState(false);
 
-  // Opening the hub always lands on the deck-selection view.
+  // Opening the hub lands on the deck picker, unless a caller (维度浮层的卡牌
+  // 工具) asked for one specific deck.
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) setSelectedKind(null);
+    if (open) setSelectedKind(payload.deck ?? null);
   }
 
   const deck = selectedKind !== null ? getCardDeck(selectedKind) : null;
+  const writeBackDim = payload.writeBackDim;
+  // 从维度浮层进来时，只玩这一副牌：返回直接关页面，不落回选择器。
+  const lockedToOneDeck = payload.deck !== undefined;
   const back = () => {
-    if (selectedKind !== null) setSelectedKind(null);
+    if (selectedKind !== null && !lockedToOneDeck) setSelectedKind(null);
     else closePush('cardGameHub');
   };
+
+  const saveToProfile =
+    writeBackDim !== undefined
+      ? (cardNames: string[]): void => {
+          setDim(writeBackDim, joinKeywords(cardNames));
+          showToast('已写入画像 · 可以继续用关键词修正');
+          closePush('cardGameHub');
+        }
+      : undefined;
 
   return (
     <section className={`push card-game-hub${open ? ' open' : ''}`} id="cardGameHub" data-testid="push-cardGameHub">
@@ -116,8 +133,10 @@ export default function CardGameHubPush() {
             deck={getCardDeck(selectedKind)}
             showToast={showToast}
             onDone={() => {
-              setSelectedKind(null);
+              if (lockedToOneDeck) closePush('cardGameHub');
+              else setSelectedKind(null);
             }}
+            {...(saveToProfile !== undefined ? { onSaveToProfile: saveToProfile } : {})}
           />
         )}
       </div>

@@ -17,6 +17,8 @@ import BountyPush from '@/screens/push/BountyPush';
 import ProfileStudioPush from '@/screens/push/ProfileStudioPush';
 import ContextPush from '@/screens/push/ContextPush';
 import MyEditPush from '@/screens/push/MyEditPush';
+import AssessmentPush from '@/screens/studio/AssessmentPush';
+import DimensionSheet from '@/screens/studio/DimensionSheet';
 
 function App() {
   const tab = useAppStore((s) => s.tab);
@@ -38,6 +40,10 @@ function App() {
       <ProfileStudioPush />
       <ContextPush />
       <MyEditPush />
+      <AssessmentPush />
+
+      {/* 维度浮层挂在 push 之后：首页与画像工作室共用同一份。 */}
+      <DimensionSheet />
 
       <Toast />
       <TabBar />

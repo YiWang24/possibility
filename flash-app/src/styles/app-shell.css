@@ -33,3 +33,31 @@
 .toast {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 118px);
 }
+
+/* ------------------------------------------------------------
+   画像六入口的层级。原型里维度浮层只从首页唤起，所以 .sheet 的 60
+   够用；这里它也从画像工作室（.studio-page z-index 74）里唤起，
+   不抬高就会被工作室整页盖住。浮层里的小工具又会拉起测评页 / 卡牌页，
+   那两页要再高一层才能压住浮层。Toast(90) 仍然保持在最上面。
+   ------------------------------------------------------------ */
+.backdrop {
+  z-index: 78;
+}
+
+.sheet {
+  z-index: 80;
+  /* 保存按钮贴着屏幕底边，必须避开 home indicator。 */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+}
+
+.assessment-page,
+.card-game-hub {
+  z-index: 84;
+}
+
+/* 一个词都没选时浮层的保存按钮是 disabled 的，但 .result-save 没有 disabled 态，
+   看上去仍然可点。补一个，跟 .assessment-foot / .context-save 的处理保持一致。 */
+.sheet .result-save:disabled {
+  opacity: 0.32;
+  cursor: default;
+}

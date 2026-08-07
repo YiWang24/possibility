@@ -2,7 +2,7 @@
 // `completeHollandAssessment`, ~6431 `hollandNarrative`). Likert values 0–4 are
 // summed per code; ties are grouped like the prototype's display code.
 
-import { HOLLAND_ITEMS, HOLLAND_META, type HollandCode } from '@/data/holland';
+import { HOLLAND_ITEMS, type HollandCode } from '@/data/holland';
 
 export const HOLLAND_CODES: readonly HollandCode[] = ['R', 'I', 'A', 'S', 'E', 'C'];
 
@@ -40,7 +40,8 @@ export function computeHollandResult(answers: readonly (number | null)[]): Holla
   };
 }
 
-const NARRATIVE: Record<string, string> = {
+/** 双字母兴趣组合叙事。叙事文案由 `assessmentEngine` 消费，那里能同时拿到六型元数据。 */
+export const HOLLAND_PAIR_NARRATIVE: Record<string, string> = {
   RI: '你喜欢先弄清原理，再把想法变成可以工作的东西。',
   RA: '你在材料、技术和表达之间寻找创造的实感。',
   IA: '你容易在分析与想象之间建立新的解释。',
@@ -52,12 +53,3 @@ const NARRATIVE: Record<string, string> = {
   EC: '目标、资源和流程的组织容易激发你的投入感。',
   IC: '你擅长被复杂信息吸引，并愿意把它整理成可靠结构。',
 };
-
-export function hollandNarrative(result: HollandResult): string {
-  if (result.selected.length > 3) {
-    return '你的六类兴趣比较接近。这不表示没有特点，可能意味着你能从多种活动中获得动力，也需要更多真实体验来拉开偏好。';
-  }
-  const a = result.ordered[0] ?? 'R';
-  const b = result.ordered[1] ?? a;
-  return NARRATIVE[a + b] ?? `你的兴趣主要落在${HOLLAND_META[a].name}与${HOLLAND_META[b].name}之间。它们可以出现在很多行业、角色和生活项目里。`;
-}

@@ -195,6 +195,21 @@ export const DEMO_ASSESSMENTS: Record<DemoAssessmentKind, DemoAssessment> = {
   },
 };
 
+/**
+ * 大五低分端标签（source: prototype `demoResultTags` 的 low 表）。五个维度都是光谱，
+ * 低分不是缺陷，所以低端也给一个正向命名，而不是把高端标签取反。
+ */
+export const BIGFIVE_LOW_LABELS: Record<BigFiveDim, string> = {
+  O: '务实聚焦',
+  C: '灵活随性',
+  E: '安静蓄能',
+  A: '独立判断',
+  N: '情绪稳定',
+};
+
+/** 大五 / 恋爱等维度分的高分阈值（百分比），对齐 iOS resultTags。 */
+export const HIGH_SCORE_THRESHOLD = 58;
+
 export const MBTI_TYPES = [
   'ISTJ',
   'ISFJ',

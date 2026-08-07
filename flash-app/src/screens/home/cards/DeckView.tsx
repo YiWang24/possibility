@@ -13,9 +13,14 @@ interface DeckViewProps {
   deck: CardDeck;
   showToast: (msg: string) => void;
   onDone: () => void;
+  /**
+   * 从维度浮层进来时提供：把留下的三张底牌名写回对应画像维度。
+   * 不提供时保持原本「保存并返回卡牌选择」的行为。
+   */
+  onSaveToProfile?: (cardNames: string[]) => void;
 }
 
-export default function DeckView({ deck, showToast, onDone }: DeckViewProps) {
+export default function DeckView({ deck, showToast, onDone, onSaveToProfile }: DeckViewProps) {
   const [phase, setPhase] = useState<DeckPhase>('intro');
   const [picked, setPicked] = useState<string[]>([]);
 
@@ -180,11 +185,15 @@ export default function DeckView({ deck, showToast, onDone }: DeckViewProps) {
           className="btn-ink"
           data-testid="deck-save"
           onClick={() => {
+            if (onSaveToProfile !== undefined) {
+              onSaveToProfile(pickedCards.map((card) => card.name));
+              return;
+            }
             showToast(`已记录${deck.dimensionTitle}中最想留下的三点`);
             onDone();
           }}
         >
-          保存并返回卡牌选择
+          {onSaveToProfile !== undefined ? `写入「${deck.dimensionTitle}」` : '保存并返回卡牌选择'}
         </button>
       </div>
     </>

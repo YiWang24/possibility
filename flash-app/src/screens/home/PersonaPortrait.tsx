@@ -1,22 +1,22 @@
 import { useAppStore } from '@/store/appStore';
 import PersonaCanvas from '@/components/PersonaCanvas';
 import { LIFE_BASE_CARDS } from '@/data/life';
+import { portraitCompletion, usePortraitStore, type PortraitDimKey } from '@/screens/studio/portraitStore';
 
 interface Dim {
-  id: string;
+  key: PortraitDimKey;
   glyph: string;
   bg: string;
   label: string;
-  value: string;
 }
 
-const DIMS: Dim[] = [
-  { id: 'personality', glyph: '◎', bg: 'rgba(89,104,217,.16)', label: '人格底色', value: '尚未填写' },
-  { id: 'skill', glyph: '✦', bg: 'rgba(94,150,255,.15)', label: '我擅长', value: '尚未填写' },
-  { id: 'like', glyph: '♡', bg: 'rgba(227,92,193,.15)', label: '我喜欢', value: '尚未填写' },
-  { id: 'love', glyph: '✿', bg: 'rgba(255,122,77,.16)', label: '我在恋爱关系中在意', value: '尚未填写' },
-  { id: 'family', glyph: '⌂', bg: 'rgba(62,217,164,.14)', label: '我在家庭关系中在意', value: '尚未填写' },
-  { id: 'social', glyph: '◎', bg: 'rgba(94,150,255,.15)', label: '我在人际交往中在意', value: '尚未填写' },
+const DIMS: readonly Dim[] = [
+  { key: 'personality', glyph: '◎', bg: 'rgba(89,104,217,.16)', label: '人格底色' },
+  { key: 'skill', glyph: '✦', bg: 'rgba(94,150,255,.15)', label: '我擅长' },
+  { key: 'like', glyph: '♡', bg: 'rgba(227,92,193,.15)', label: '我喜欢' },
+  { key: 'love', glyph: '✿', bg: 'rgba(255,122,77,.16)', label: '我在恋爱关系中在意' },
+  { key: 'family', glyph: '⌂', bg: 'rgba(62,217,164,.14)', label: '我在家庭关系中在意' },
+  { key: 'social', glyph: '◎', bg: 'rgba(94,150,255,.15)', label: '我在人际交往中在意' },
 ];
 
 // Three "人生底牌" that (in the prototype) feed the dynamic persona. We seed a
@@ -25,8 +25,22 @@ const SIGNATURE = [LIFE_BASE_CARDS[0], LIFE_BASE_CARDS[5], LIFE_BASE_CARDS[16]].
 
 export default function PersonaPortrait() {
   const openPush = useAppStore((s) => s.openPush);
-  const openStudio = () => {
+  const openDimensionSheet = useAppStore((s) => s.openDimensionSheet);
+  const dims = usePortraitStore((s) => s.dims);
+  const { percent } = portraitCompletion(dims);
+
+  const openStudio = (): void => {
     openPush('profileStudio');
+  };
+
+  // 维度点击路由（对齐 iOS HomeView.handleDimTap）：软维度开关键词浮层，
+  // 人格底色没有关键词可选，直接进大五测评。
+  const enterDim = (key: PortraitDimKey): void => {
+    if (key === 'personality') {
+      openPush('assessmentPage', { assessmentKind: 'bigfive' });
+      return;
+    }
+    openDimensionSheet(key);
   };
 
   return (
@@ -64,24 +78,36 @@ export default function PersonaPortrait() {
 
         <div className="pbar">
           <div className="tr">
-            <i id="pfill" style={{ width: '0%' }} />
+            <i id="pfill" style={{ width: `${String(percent)}%` }} />
           </div>
-          <span id="ppct">0%</span>
+          <span id="ppct">{percent}%</span>
         </div>
 
         <div className="dims">
-          {DIMS.map((d) => (
-            <button key={d.id} type="button" className="dim todo" data-testid={`dim-${d.id}`} onClick={openStudio}>
-              <span className="ic" style={{ background: d.bg }}>
-                {d.glyph}
-              </span>
-              <span className="tx">
-                <b>{d.label}</b>
-                <p className="empty">{d.value}</p>
-              </span>
-              <span className="ar">›</span>
-            </button>
-          ))}
+          {DIMS.map((d) => {
+            const value = dims[d.key];
+            const filled = value !== undefined && value !== '';
+            return (
+              <button
+                key={d.key}
+                type="button"
+                className={`dim${filled ? '' : ' todo'}`}
+                data-testid={`dim-${d.key}`}
+                onClick={() => {
+                  enterDim(d.key);
+                }}
+              >
+                <span className="ic" style={{ background: d.bg }}>
+                  {d.glyph}
+                </span>
+                <span className="tx">
+                  <b>{d.label}</b>
+                  <p className={filled ? '' : 'empty'}>{filled ? value : '尚未填写'}</p>
+                </span>
+                <span className="ar">›</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </>

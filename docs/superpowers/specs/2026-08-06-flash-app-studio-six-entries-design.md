@@ -194,8 +194,9 @@ iOS 在 `AssessmentData.bigfiveLowLabels`，flash-app 的 `demoAssessments.ts` �
 | `assessmentStore.ts` | 答题状态 + 续答持久化 + snapshot | ~120 |
 | `portraitStore.ts` | 六维值 + 完成度 + 持久化 | ~90 |
 | `AssessmentPush.tsx` | 通用答题页 | ~190 |
-| `AssessmentResultPush.tsx` | 结果页 | ~150 |
+| `AssessmentResultView.tsx` | 结果页 | ~150 |
 | `DimensionSheet.tsx` | 维度浮层 | ~200 |
+| `studioCardState.ts` | 卡片三态文案（纯函数） | ~95 |
 
 修改：
 
@@ -232,3 +233,29 @@ iOS 在 `AssessmentData.bigfiveLowLabels`，flash-app 的 `demoAssessments.ts` �
 5. 恋爱 / 家庭 / 人际浮层的卡牌工具能打开对应牌组并把三张底牌写回维度
 6. 清空 localStorage 或写入畸形数据后，页面不崩，回落到未填状态
 7. `npm run check` 通过
+
+## 实现说明（与上文设计的差异）
+
+**结果页是组件不是 push。** 原计划做成独立的 `assessmentResultPage` push，实际把结果做成
+答题页的 `result` 阶段（`AssessmentResultView.tsx`），与被它取代的 `HollandQuiz` 一致 ——
+`.result-*` 样式本来就渲染在 `.assessment-body` 里，拆成两个 push 反而要复制一遍顶栏与
+进度条。拆成两个文件仍然让各自都在 300 行以内。`appStore` 里 `assessmentResultPage`
+这个 push id 从改动前就没有使用者，本次未动它。
+
+**`dimensions.ts` 的 `tests` 重构成了 `tools`。** 原来是 `[标题, 描述, 时长, 颜色]` 四元组，
+没有字段能区分「点进去是测评」还是「点进去是卡牌」。改成带显式 `action` 的对象。
+该类型改动前无任何消费方（只有声明），顺带删掉了同样无人使用的 `target` / `button` /
+`selected` —— 其中 `selected: []` 是挂在模块级常量上的可变数组，留着迟早被误改成共享状态。
+
+**层级与安全区。** 原型里维度浮层只从首页唤起，`.sheet` 的 z-index 60 够用；这次它也从
+画像工作室（z-index 74）唤起，不抬高会被整页盖住。在 `app-shell.css` 里把
+backdrop/sheet 抬到 78/80、测评页与卡牌页抬到 84，并给浮层补了底部安全区内边距。
+
+**验证中发现并修掉的三个问题**（详见提交）：
+
+1. 从维度浮层进测评、保存结果后浮层仍开着，其草稿还停留在打开那一刻；用户接着按浮层的
+   「保存到我的画像」会用旧草稿覆盖刚写入的测评结果。改为保存时一并关闭浮层（iOS 同此）。
+2. 关键词上限不一致：浮层手动保存截前 5 个，测评结果不截 —— 霍兰德六维并列时会写进
+   6 个词。上限收敛到 `MAX_DIMENSION_KEYWORDS`，两条路径共用。
+3. 浮层的保存按钮在未选词时是 `disabled`，但 `.result-save` 没有 disabled 样式，看上去
+   仍可点。补了 `opacity: .32`，与 `.assessment-foot` / `.context-save` 的处理一致。
