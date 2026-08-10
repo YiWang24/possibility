@@ -1,6 +1,6 @@
 "use client";
 /* 万花筒社区主视图 —— 移植 iOS CommunityView。
-   双 tab：①为你推荐（旅人卡片流 + 搜索，桌面多列 grid，点击 → /traveler/[id]）
+   双 tab：①为你推荐（放映 / 卡片两种浏览方式 + 搜索，点击 → /traveler/[id]）
           ②悬赏贴（列表，来自 loadBounties，点击 → /bounty/[id]）。
    右下角 FAB：推荐 tab 打开万花筒抽取浮层；悬赏 tab 登录门控后弹发布表单。 */
 
@@ -17,8 +17,13 @@ import { bountyDisplayAmount, bountyRewardGoal, type Bounty, type Traveler } fro
 import { mockAvatarById } from "@/lib/theme";
 import { KaleidoscopeDraw } from "./KaleidoscopeDraw";
 import { BountyCompose } from "./BountyCompose";
+import { WatchMode } from "./WatchMode";
 
 type Tab = 0 | 1;
+
+/* 浏览方式沿用 iOS 的 @AppStorage("possibility-watch")：同一把钥匙、同一个默认值
+   （放映），两端换过来看到的是自己上次选的那个模式。 */
+const WATCH_STORAGE_KEY = "possibility-watch";
 
 export function CommunityView() {
   const router = useRouter();
@@ -33,11 +38,24 @@ export function CommunityView() {
   const [search, setSearch] = useState("");
   const [showDraw, setShowDraw] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
+  /* 首帧固定用默认值渲染，读 localStorage 放到 effect 里 ——
+     服务端拿不到它，直接读会造成 hydration 不一致。 */
+  const [watchMode, setWatchMode] = useState(true);
 
   useEffect(() => {
     void loadTravelers();
     void loadBounties(50, 0);
   }, [loadTravelers, loadBounties]);
+
+  useEffect(() => {
+    setWatchMode(window.localStorage.getItem(WATCH_STORAGE_KEY) !== "0");
+  }, []);
+
+  const toggleWatchMode = () => {
+    const next = !watchMode;
+    setWatchMode(next);
+    window.localStorage.setItem(WATCH_STORAGE_KEY, next ? "1" : "0");
+  };
 
   const filteredTravelers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -77,17 +95,24 @@ export function CommunityView() {
           <TabButton label="为你推荐" on={tab === 0} onClick={() => setTab(0)} />
           <TabButton label="悬赏贴" on={tab === 1} onClick={() => setTab(1)} />
         </div>
-        <Button onClick={primaryAction} className="hidden tracking-[0.5px] md:flex">
-          {actionIcon}
-          {actionLabel}
-        </Button>
+        <div className="flex items-center gap-3">
+          {tab === 0 && <WatchToggle watch={watchMode} onToggle={toggleWatchMode} />}
+          <Button onClick={primaryAction} className="hidden tracking-[0.5px] md:flex">
+            {actionIcon}
+            {actionLabel}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-4 lg:mt-7">
         {tab === 0 ? (
           <div className="flex flex-col gap-3 lg:gap-5">
             <SearchBar value={search} onChange={setSearch} />
-            {filteredTravelers.length === 0 ? (
+            {/* 放映模式自带命中/落空反馈（气泡淡出 + 舞台内空态），
+                所以搜索词交给它原样处理，不走 filteredTravelers */}
+            {watchMode ? (
+              <WatchMode travelers={travelers} query={search} />
+            ) : filteredTravelers.length === 0 ? (
               <EmptyState text="没有匹配的旅人，换个关键词试试。" />
             ) : (
               <>
@@ -184,6 +209,52 @@ function TabButton({ label, on, onClick }: { label: string; on: boolean; onClick
       </span>
       <span className={`h-[3px] w-[18px] rounded-chip bg-aurora ${on ? "opacity-100" : "opacity-0"}`} />
     </button>
+  );
+}
+
+/* 卡片 / 放映 切换（iOS watchToggle）。文案给的是「点下去会变成什么」，
+   高亮给的是「现在在放映模式」—— 两者含义不同，靠 aria-label 说清楚。 */
+function WatchToggle({ watch, onToggle }: { watch: boolean; onToggle: () => void }) {
+  const label = watch ? "切换到卡片视图" : "切换到放映视图";
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      title={label}
+      aria-label={label}
+      aria-pressed={watch}
+      className={`flex shrink-0 items-center gap-1.5 rounded-chip border px-3 py-1.5 text-caption font-medium transition active:scale-95 ${
+        watch
+          ? "border-brand/45 bg-brand/15 text-brand-lite"
+          : "border-line bg-raised text-sub hover:text-ink"
+      }`}
+    >
+      {watch ? <GridIcon /> : <ClusterIcon />}
+      {watch ? "卡片" : "放映"}
+    </button>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <rect x="0.75" y="0.75" width="4" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.1" />
+      <rect x="7.25" y="0.75" width="4" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.1" />
+      <rect x="0.75" y="7.25" width="4" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.1" />
+      <rect x="7.25" y="7.25" width="4" height="4" rx="1.2" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
+  );
+}
+
+function ClusterIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+      <circle cx="6" cy="6" r="2.4" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="1.9" cy="2.6" r="1.4" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="10.1" cy="2.6" r="1.4" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="1.9" cy="9.4" r="1.4" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="10.1" cy="9.4" r="1.4" stroke="currentColor" strokeWidth="1.1" />
+    </svg>
   );
 }
 
