@@ -12,6 +12,7 @@ struct HomeView: View {
     @State private var diaryLaunch: DiaryLaunch?
     @State private var activeDimension: DimensionKey?
     @State private var assessmentKind: AssessmentKind?
+    @State private var showSelfDiscovery = false
     @State private var showStudio = false
     @State private var showCardHub = false
     @State private var launchGame: CardGameKind?
@@ -87,6 +88,14 @@ struct HomeView: View {
         .fullScreenCover(item: $assessmentKind) { kind in
             AssessmentFlowView(kind: kind, onSaveToProfile: saveAssessment)
                 .environment(toast)
+        }
+        .fullScreenCover(isPresented: $showSelfDiscovery) {
+            SelfDiscoveryView { likes, strengths in
+                model.saveDimension(.like, keywords: likes, using: supabase)
+                model.saveDimension(.skill, keywords: strengths, using: supabase)
+            }
+            .environment(toast)
+            .environment(supabase)
         }
         .fullScreenCover(isPresented: $showCardHub) {
             CardGameHubView(home: model)
@@ -164,9 +173,11 @@ struct HomeView: View {
         }
     }
 
-    /// 维度点击路由：软维度开浮层；人格底色直接进入大五人格测评
+    /// 首页首卡直接进入完整探索，其余维度仍打开各自的探索入口。
     private func handleDimTap(_ dim: HomeModel.PortraitDim) {
-        if let key = dim.dimensionKey {
+        if dim.selfDiscovery {
+            showSelfDiscovery = true
+        } else if let key = dim.dimensionKey {
             activeDimension = key
         } else {
             assessmentKind = .bigfive

@@ -12,6 +12,7 @@ import {
   analysisRequest,
   isSelfDiscoveryAnalysis,
   localAnalysis,
+  rankedWithCustom,
   type DiscoveryAnswer,
   type DiscoveryInsight,
   type SelfDiscoveryAnalysis,
@@ -33,6 +34,7 @@ export function WantToDoView() {
   const [analysis, setAnalysis] = useState<SelfDiscoveryAnalysis | null>(null);
   const [usedAi, setUsedAi] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [deepUnlocked, setDeepUnlocked] = useState(false);
 
   const question = DISCOVERY_QUESTIONS[index];
   const current = answers[question?.id] ?? EMPTY_ANSWER;
@@ -81,6 +83,7 @@ export function WantToDoView() {
   const runAnalysis = async (finalAnswers: Record<string, DiscoveryAnswer>) => {
     setPhase("analyzing");
     setSaved(false);
+    setDeepUnlocked(false);
     try {
       const result = await callFunction<SelfDiscoveryAnalysis>(
         "analyze-self-discovery",
@@ -145,11 +148,24 @@ export function WantToDoView() {
     showToast("已同时写入“我喜欢”和“我擅长”");
   };
 
+  const unlockDeepAnalysis = () => {
+    setDeepUnlocked(true);
+    showToast("已解锁深入分析（预览环境）");
+  };
+
   const progress = phase === "intro"
     ? 0
     : phase === "result" || phase === "analyzing"
       ? 1
       : (index + 1) / DISCOVERY_QUESTIONS.length;
+  const hasAxisEvidence = (axis: "energy" | "context") => DISCOVERY_QUESTIONS
+    .filter((item) => item.axis === axis)
+    .some((item) => {
+      const answer = answers[item.id];
+      return Boolean(answer && (answer.selected.length || answer.custom.length));
+    });
+  const energySignals = hasAxisEvidence("energy") ? rankedWithCustom("energy", answers).map((item) => item.tag) : [];
+  const contextSignals = hasAxisEvidence("context") ? rankedWithCustom("context", answers).map((item) => item.tag) : [];
 
   return (
     <FocusShell
@@ -170,21 +186,20 @@ export function WantToDoView() {
           </h1>
           <p className="mt-4 max-w-[62ch] text-body leading-[1.9] text-sub">
             沿用《如何找到想做的事》的“喜欢 × 擅长 × 价值观”方法结构，
-            通过 12 个原创情境寻找你的注意力、投入、他人反馈与成功模式，最后交给 AI 综合分析。
+            通过 {DISCOVERY_QUESTIONS.length} 个原创情境收集兴趣、优势、能量与环境证据，最后交给 AI 综合分析。
           </p>
 
-          <div className="mt-7 grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
+          <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <FormulaCard eyebrow="WHAT" title="喜欢的事" desc="反复吸引你的内容领域" tint="#E35CC1" />
-            <span className="hidden text-title text-faint md:block">×</span>
             <FormulaCard eyebrow="HOW" title="擅长的事" desc="自然反复使用的行为模式" tint="#5E96FF" />
-            <span className="hidden text-title text-faint md:block">→</span>
-            <FormulaCard eyebrow="AI SYNTHESIS" title="尝试方向" desc="结合价值观给出行动假设" tint="#3ED9A4" />
+            <FormulaCard eyebrow="ENERGY" title="能量来源" desc="什么让你越投入越有劲" tint="#F0A949" />
+            <FormulaCard eyebrow="CONTEXT" title="发挥环境" desc="哪里更容易稳定发挥" tint="#3ED9A4" />
           </div>
 
           <div className="mt-6 grid gap-2.5 rounded-tile border border-line bg-card p-4 text-footnote leading-[1.7] text-sub sm:grid-cols-3">
             <div><b className="text-ink">01 多选</b><br />每题可选 1–3 项</div>
             <div><b className="text-ink">02 自由回答</b><br />选项之外也能表达</div>
-            <div><b className="text-ink">03 AI 分析</b><br />区分兴趣与可复用优势</div>
+            <div><b className="text-ink">03 AI 分析</b><br />生成可验证的人生地图</div>
           </div>
 
           <p className="mt-4 text-micro leading-[1.7] text-faint">
@@ -305,30 +320,47 @@ export function WantToDoView() {
               {usedAi ? "AI 综合分析" : "本地证据归纳"}
             </span>
           </div>
-          <h1 className="mt-2 text-[28px] font-bold text-ink">你反复出现的两组线索</h1>
+          <h1 className="mt-2 text-[28px] font-bold text-ink">你喜欢与擅长的基本结论</h1>
           <p className="mt-2 max-w-[70ch] text-footnote leading-[1.8] text-sub">{analysis.summary}</p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <InsightCard title="我喜欢的事" eyebrow="WHAT" tint="#E35CC1" items={analysis.likes} />
-            <InsightCard title="我擅长的事" eyebrow="HOW" tint="#5E96FF" items={analysis.strengths} />
+            <BasicInsightCard title="我喜欢什么" eyebrow="WHAT" tint="#E35CC1" items={analysis.likes} />
+            <BasicInsightCard title="我擅长什么" eyebrow="HOW" tint="#5E96FF" items={analysis.strengths} />
           </div>
 
-          <div className="mt-4 rounded-card border border-violet-soft/25 bg-violet-soft/8 p-5">
-            <div className="text-micro font-semibold tracking-[2px] text-brand-lite">可以开始验证的方向</div>
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              {analysis.directions.map((direction, directionIndex) => (
-                <div key={`${direction.title}-${directionIndex}`} className="rounded-tile border border-line bg-card p-4">
-                  <div className="text-body font-semibold leading-[1.6] text-ink">{direction.title}</div>
-                  <p className="mt-2 text-caption leading-[1.7] text-sub">{direction.why}</p>
-                  <div className="mt-3 border-t border-line pt-3 text-caption leading-[1.7] text-brand-lite">
-                    第一步：{direction.first_step}
-                  </div>
+          <DiscoveryMap
+            likes={analysis.likes.map((item) => item.label)}
+            strengths={analysis.strengths.map((item) => item.label)}
+            energy={energySignals}
+            context={contextSignals}
+          />
+
+          {deepUnlocked ? (
+            <>
+              <div className="mt-5 text-subtitle font-bold text-ink">你的深入分析</div>
+              <div className="mt-3 grid gap-4 md:grid-cols-2">
+                <InsightCard title="为什么会喜欢" eyebrow="EVIDENCE" tint="#E35CC1" items={analysis.likes} />
+                <InsightCard title="优势如何发挥" eyebrow="EVIDENCE" tint="#5E96FF" items={analysis.strengths} />
+              </div>
+              <div className="mt-4 rounded-card border border-violet-soft/25 bg-violet-soft/8 p-5">
+                <div className="text-micro font-semibold tracking-[2px] text-brand-lite">职业 · 副业 · 兴趣的验证方向</div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {analysis.directions.map((direction, directionIndex) => (
+                    <div key={`${direction.title}-${directionIndex}`} className="rounded-tile border border-line bg-card p-4">
+                      <div className="flex items-center justify-between gap-2"><div className="text-body font-semibold leading-[1.6] text-ink">{direction.title}</div><span className="shrink-0 text-micro text-faint">{["职业探索", "副业试验", "兴趣滋养"][directionIndex]}</span></div>
+                      <p className="mt-2 text-caption leading-[1.7] text-sub">{direction.why}</p>
+                      <div className="mt-3 border-t border-line pt-3 text-caption leading-[1.7] text-brand-lite">
+                        第一步：{direction.first_step}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="mt-4 text-micro leading-[1.7] text-faint">{analysis.confidence_note}</p>
+              </div>
+              <p className="mt-4 text-micro leading-[1.7] text-faint">{analysis.confidence_note}</p>
+            </>
+          ) : (
+            <DeepAnalysisGate onUnlock={unlockDeepAnalysis} />
+          )}
 
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Button variant="ghost" size="lg" className="sm:flex-1" onClick={back}>
@@ -348,6 +380,88 @@ export function WantToDoView() {
       )}
     </FocusShell>
   );
+}
+
+function BasicInsightCard({
+  title,
+  eyebrow,
+  tint,
+  items,
+}: {
+  title: string;
+  eyebrow: string;
+  tint: string;
+  items: DiscoveryInsight[];
+}) {
+  return (
+    <div className="rounded-card border border-line bg-card p-5">
+      <div className="text-micro font-semibold tracking-[1.8px]" style={{ color: tint }}>{eyebrow}</div>
+      <h2 className="mt-1 text-subtitle font-bold text-ink">{title}</h2>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {items.map((item) => (
+          <span key={item.label} className="rounded-chip border px-3 py-2 text-caption font-semibold" style={{ color: tint, borderColor: `${tint}66`, background: `${tint}12` }}>
+            {item.label}
+          </span>
+        ))}
+      </div>
+      <p className="mt-4 text-caption leading-[1.7] text-sub">
+        这些结论来自你多次出现的选择与自由回答；深入分析会解释具体证据与适合你的行动路径。
+      </p>
+    </div>
+  );
+}
+
+function DeepAnalysisGate({ onUnlock }: { onUnlock: () => void }) {
+  return (
+    <div className="mt-5 overflow-hidden rounded-card border border-brand/35 bg-[linear-gradient(135deg,rgba(83,115,255,0.16),rgba(215,86,197,0.12))] p-5">
+      <div className="text-micro font-semibold tracking-[2px] text-brand-lite">DEEPER VIEW</div>
+      <h2 className="mt-2 text-subtitle font-bold text-ink">把“喜欢”和“擅长”变成清晰行动</h2>
+      <p className="mt-2 max-w-[66ch] text-footnote leading-[1.8] text-sub">
+        深入分析会逐条说明你的证据链、能量与环境条件，以及适合职业、副业和兴趣的 3 个现实验证方向。
+      </p>
+      <Button size="lg" className="mt-5 w-full sm:w-auto" onClick={onUnlock}>
+        解锁深入分析 ¥9.9
+      </Button>
+    </div>
+  );
+}
+
+function DiscoveryMap({
+  likes,
+  strengths,
+  energy,
+  context,
+}: {
+  likes: string[];
+  strengths: string[];
+  energy: string[];
+  context: string[];
+}) {
+  return (
+    <div className="mt-4 overflow-hidden rounded-card border border-line bg-card">
+      <div className="border-b border-line px-5 py-4">
+        <div className="text-micro font-semibold tracking-[1.8px] text-teal">LIFE MAP · 基础结论</div>
+        <h2 className="mt-1 text-subtitle font-bold text-ink">你的喜欢 × 擅长人生地图</h2>
+        <p className="mt-1 text-caption leading-[1.7] text-sub">先看你该优先投入哪里，而不是急着把自己归类成某个职业。</p>
+      </div>
+      <div className="grid gap-px bg-line sm:grid-cols-2">
+        <MapCell tone="green" title="天赋热爱区 · 优先探索" text={`把「${likes[0]}」和「${strengths[0]}」放进真实项目，最值得成为职业核心或长期副业。`} />
+        <MapCell tone="blue" title="兴趣潜力区 · 值得练习" text={`你对「${likes.slice(1).join("、")}」有持续兴趣；先用低成本作品或体验验证，而不是过早否定。`} />
+        <MapCell tone="yellow" title="熟练消耗区 · 需要边界" text={`即使你擅长「${strengths.slice(1).join("、")}」，也要结合能量感判断是否值得长期承担。`} />
+        <MapCell tone="slate" title="发挥条件 · 选择环境" text={energy.length && context.length ? `你更可能在「${energy.slice(0, 2).join("、")}」中被充电，并需要「${context.slice(0, 2).join("、")}」。` : "新版探索会补全你的能量来源和发挥环境，让结论更贴近可持续的选择。"} />
+      </div>
+    </div>
+  );
+}
+
+function MapCell({ title, text, tone }: { title: string; text: string; tone: "green" | "blue" | "yellow" | "slate" }) {
+  const colors = {
+    green: "bg-[#3ED9A4]/[0.08] text-[#78E7C1]",
+    blue: "bg-[#5E96FF]/[0.08] text-[#A9C5FF]",
+    yellow: "bg-[#F0A949]/[0.08] text-[#FFD18B]",
+    slate: "bg-raised text-sub",
+  };
+  return <div className={`min-h-[124px] p-4 ${colors[tone]}`}><div className="text-caption font-semibold">{title}</div><p className="mt-2 text-caption leading-[1.7] text-sub">{text}</p></div>;
 }
 
 function FormulaCard({

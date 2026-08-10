@@ -60,6 +60,8 @@ import kotlinx.serialization.json.jsonObject
 enum class DiscoveryAxis {
     @SerialName("like") LIKE,
     @SerialName("skill") SKILL,
+    @SerialName("energy") ENERGY,
+    @SerialName("context") CONTEXT,
     @SerialName("value") VALUE,
 }
 
@@ -155,6 +157,14 @@ object SelfDiscoveryData {
             Triple("表达被限制、没有选择", "自由与创造", "✦"), Triple("停止成长、拒绝求真", "成长与求真", "◎"), Triple("人被忽略、关系缺少理解", "关怀与连接", "♡"), Triple("混乱低效、规则不透明", "秩序与清晰", "▦"), Triple("明知能改变却无人行动", "影响与担当", "↗"), Triple("脱离现实、只有概念没有体验", "真实与实践", "◇")),
         q("value-contribution", DiscoveryAxis.VALUE, "价值观 · 贡献方向", "你希望自己的投入最终带来什么？", "这会作为组合“喜欢 × 擅长”时的判断标准。",
             Triple("让人拥有更多表达与选择", "自由与创造", "✦"), Triple("让知识和成长更容易发生", "成长与求真", "◎"), Triple("让人被看见、理解和支持", "关怀与连接", "♡"), Triple("让复杂世界更清晰有序", "秩序与清晰", "▦"), Triple("推动值得发生的真实变化", "影响与担当", "↗"), Triple("创造可触摸、可使用的成果", "真实与实践", "◇")),
+        q("energy-recharge", DiscoveryAxis.ENERGY, "能量证据 · 越做越有劲", "完成哪类事情后，你通常会感到被充电？", "这里没有标准答案，只记录什么会让你愿意再次投入。",
+            Triple("独自沉浸，把一个问题想透", "深度专注", "◎"), Triple("和人来回讨论，慢慢长出新想法", "共创激发", "♡"), Triple("看见成果被真正使用或认可", "成果反馈", "↗"), Triple("把棘手问题啃下来", "挑战驱动", "◇"), Triple("接触新的人、地方或观点", "新鲜变化", "✦"), Triple("陪伴或支持一个具体的人", "关系滋养", "♡")),
+        q("energy-sustain", DiscoveryAxis.ENERGY, "能量证据 · 持续投入", "什么会让你即使累，也仍愿意继续一会儿？", "它帮助区分一时兴奋和可持续的投入感。",
+            Triple("还差一点就能想清楚或做完整", "深度专注", "◎"), Triple("伙伴之间正在产生默契", "共创激发", "♡"), Triple("已经看见它能解决真实问题", "成果反馈", "↗"), Triple("困难本身让我想再试一次", "挑战驱动", "◇"), Triple("前面还有没见过的可能", "新鲜变化", "✦"), Triple("有人因为这件事变得更好", "关系滋养", "♡")),
+        q("context-best", DiscoveryAxis.CONTEXT, "适配环境 · 最好发挥", "在哪种工作或学习状态里，你最容易进入好状态？", "环境不决定能力，但会明显影响你能否稳定发挥。",
+            Triple("有自主空间，可以自己安排节奏", "自主空间", "✦"), Triple("和少数可靠的人紧密协作", "小团队共创", "♡"), Triple("目标、边界和标准都很清楚", "目标清晰", "▦"), Triple("能留出长时间不被打断地投入", "连续深度", "◎"), Triple("能快速看到真实用户或成果反馈", "现实反馈", "◇"), Triple("不断面对新任务和新可能", "多元变化", "↗")),
+        q("context-friction", DiscoveryAxis.CONTEXT, "适配环境 · 容易消耗", "什么情况最容易让你的好状态被打断？", "识别边界不是挑剔，而是为了选择更可持续的投入方式。",
+            Triple("被过度控制、没有做法上的选择", "自主空间", "✦"), Triple("长期独自硬扛、缺少可信的讨论", "小团队共创", "♡"), Triple("目标反复变化、规则模糊", "目标清晰", "▦"), Triple("不断被碎片消息和临时任务打断", "连续深度", "◎"), Triple("做很久却不知道是否有用", "现实反馈", "◇"), Triple("长期重复、几乎没有新刺激", "多元变化", "↗")),
     )
 
     fun rankedTags(axis: DiscoveryAxis, answers: Map<String, DiscoveryAnswer>): List<RankedDiscoveryTag> {
@@ -168,7 +178,7 @@ object SelfDiscoveryData {
         return counts.entries.sortedByDescending { it.value }.take(3).map { RankedDiscoveryTag(it.key, it.value) }
     }
 
-    private fun rankedWithCustom(axis: DiscoveryAxis, answers: Map<String, DiscoveryAnswer>): List<RankedDiscoveryTag> {
+    fun rankedWithCustom(axis: DiscoveryAxis, answers: Map<String, DiscoveryAnswer>): List<RankedDiscoveryTag> {
         val ranked = rankedTags(axis, answers).toMutableList()
         val seen = ranked.mapTo(mutableSetOf()) { it.tag }
         questions.filter { it.axis == axis }.forEach { question ->
@@ -181,6 +191,8 @@ object SelfDiscoveryData {
         val defaults = when (axis) {
             DiscoveryAxis.LIKE -> listOf("继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容")
             DiscoveryAxis.SKILL -> listOf("继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功")
+            DiscoveryAxis.ENERGY -> listOf("记录被充电的时刻", "观察持续投入感", "识别真实消耗来源")
+            DiscoveryAxis.CONTEXT -> listOf("观察发挥条件", "记录环境边界", "寻找适配节奏")
             DiscoveryAxis.VALUE -> listOf("继续澄清价值排序", "记录重要选择", "观察不愿妥协之处")
         }
         defaults.forEach { if (seen.add(it) && ranked.size < 3) ranked += RankedDiscoveryTag(it, 1) }
@@ -235,6 +247,7 @@ fun SelfDiscoveryScreen(
     var analysis by remember { mutableStateOf<SelfDiscoveryAnalysis?>(null) }
     var usedAi by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
+    var deepUnlocked by remember { mutableStateOf(false) }
     val question = SelfDiscoveryData.questions[index]
     val current = answers[question.id] ?: DiscoveryAnswer()
     val canAdvance = current.selected.isNotEmpty() || current.custom.isNotEmpty() || customDraft.trim().isNotEmpty()
@@ -258,6 +271,7 @@ fun SelfDiscoveryScreen(
         customDraft = ""
         if (index < SelfDiscoveryData.questions.lastIndex) { index++; return }
         phase = DiscoveryPhase.ANALYZING
+        deepUnlocked = false
         val snapshot = answers.toMap()
         scope.launch {
             analysis = runCatching {
@@ -339,19 +353,30 @@ fun SelfDiscoveryScreen(
             DiscoveryPhase.RESULT -> analysis?.let { result ->
                 Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp).padding(top = 24.dp, bottom = 36.dp)) {
                     Text(if (usedAi) "AI 综合分析" else "本地证据归纳", color = hexColor(0x3ED9A4), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.8.sp)
-                    Text("你反复出现的两组线索", color = Theme.ink, fontSize = 25.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+                    Text("你喜欢与擅长的基本结论", color = Theme.ink, fontSize = 25.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                     Text(result.summary, color = Theme.sub, fontSize = 13.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 9.dp))
-                    DiscoveryInsightBlock("我喜欢的事", result.likes, 0xE35CC1, Modifier.padding(top = 20.dp))
-                    DiscoveryInsightBlock("我擅长的事", result.strengths, 0x5E96FF, Modifier.padding(top = 12.dp))
-                    Text("可以开始验证的方向", color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 22.dp))
-                    result.directions.forEach { direction ->
-                        Column(Modifier.padding(top = 9.dp).fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(Theme.raised).padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            Text(direction.title, color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                            Text(direction.why, color = Theme.sub, fontSize = 11.5.sp, lineHeight = 17.sp)
-                            Text("第一步：${direction.firstStep}", color = hexColor(0xBFD2FF), fontSize = 11.5.sp, lineHeight = 17.sp)
+                    BasicDiscoveryInsightBlock("我喜欢什么", result.likes, 0xE35CC1, Modifier.padding(top = 20.dp))
+                    BasicDiscoveryInsightBlock("我擅长什么", result.strengths, 0x5E96FF, Modifier.padding(top = 12.dp))
+                    DiscoveryMap(result, answers, Modifier.padding(top = 12.dp))
+                    if (deepUnlocked) {
+                        Text("你的深入分析", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 22.dp))
+                        DiscoveryInsightBlock("为什么会喜欢", result.likes, 0xE35CC1, Modifier.padding(top = 12.dp))
+                        DiscoveryInsightBlock("优势如何发挥", result.strengths, 0x5E96FF, Modifier.padding(top = 12.dp))
+                        Text("职业 · 副业 · 兴趣的验证方向", color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 22.dp))
+                        result.directions.forEachIndexed { directionIndex, direction ->
+                            Column(Modifier.padding(top = 9.dp).fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(Theme.raised).padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(direction.title, color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text(listOf("职业探索", "副业试验", "兴趣滋养")[directionIndex], color = Theme.faint, fontSize = 10.sp) }
+                                Text(direction.why, color = Theme.sub, fontSize = 11.5.sp, lineHeight = 17.sp)
+                                Text("第一步：${direction.firstStep}", color = hexColor(0xBFD2FF), fontSize = 11.5.sp, lineHeight = 17.sp)
+                            }
+                        }
+                        Text(result.confidenceNote, color = Theme.faint, fontSize = 10.5.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 15.dp))
+                    } else {
+                        DeepAnalysisGate {
+                            deepUnlocked = true
+                            ToastCenter.show("已解锁深入分析（预览环境）")
                         }
                     }
-                    Text(result.confidenceNote, color = Theme.faint, fontSize = 10.5.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 15.dp))
                     Row(Modifier.padding(top = 22.dp), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
                         DiscoveryButton("返回修改", false, Modifier.weight(1f)) { phase = DiscoveryPhase.QUESTIONS; index = SelfDiscoveryData.questions.lastIndex }
                         DiscoveryButton(if (saved) "已保存到动态画像" else "保存到我的动态画像", true, Modifier.weight(1.45f), enabled = !saved) {
@@ -395,7 +420,7 @@ private fun DiscoveryIntro(onStart: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(top = 30.dp, bottom = 36.dp)) {
         Text("中文原创自我探索", color = Theme.blue, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.2.sp)
         Text("用完整证据链，找到\n你喜欢和擅长的事", color = Theme.ink, fontSize = 28.sp, fontWeight = FontWeight.Bold, lineHeight = 38.sp, modifier = Modifier.padding(top = 12.dp))
-        Text("沿用“喜欢 × 擅长 × 价值观”的方法结构，通过 12 个原创情境寻找你的注意力、投入、他人反馈与成功模式，最后交给 AI 综合分析。", color = Theme.sub, fontSize = 14.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 16.dp))
+        Text("沿用“喜欢 × 擅长 × 价值观”的方法结构，通过 ${SelfDiscoveryData.questions.size} 个原创情境收集兴趣、优势、能量与环境证据，最后交给 AI 综合分析。", color = Theme.sub, fontSize = 14.sp, lineHeight = 22.sp, modifier = Modifier.padding(top = 16.dp))
         Column(Modifier.padding(top = 22.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.raised).padding(16.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
             Text("01  每题可选 1–3 项", color = Theme.sub, fontSize = 12.5.sp)
             Text("02  支持补充自己的答案", color = Theme.sub, fontSize = 12.5.sp)
@@ -416,6 +441,60 @@ private fun DiscoveryInsightBlock(title: String, items: List<DiscoveryInsight>, 
                 Text("${item.evidence} · ${item.reason}", color = Theme.sub, fontSize = 11.sp, lineHeight = 16.sp)
             }
         }
+    }
+}
+
+@Composable
+private fun BasicDiscoveryInsightBlock(title: String, items: List<DiscoveryInsight>, tint: Long, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Theme.raised).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(title, color = Theme.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            items.forEach { item ->
+                Text(item.label, color = hexColor(tint), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.clip(CircleShape).background(hexColor(tint, 0.12f)).padding(horizontal = 11.dp, vertical = 7.dp))
+            }
+        }
+        Text("这些结论来自重复出现的选择与自由回答；深入分析会解释具体证据与适合你的行动路径。", color = Theme.sub, fontSize = 11.sp, lineHeight = 16.sp)
+    }
+}
+
+@Composable
+private fun DiscoveryMap(result: SelfDiscoveryAnalysis, answers: Map<String, DiscoveryAnswer>, modifier: Modifier = Modifier) {
+    val energy = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.ENERGY, answers).map { it.tag }
+    val context = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.CONTEXT, answers).map { it.tag }
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Theme.raised).padding(16.dp)) {
+        Text("LIFE MAP · 基础结论", color = hexColor(0x3ED9A4), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.6.sp)
+        Text("你的喜欢 × 擅长人生地图", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+        Text("先看你该优先投入哪里，而不是急着把自己归类成某个职业。", color = Theme.sub, fontSize = 11.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 4.dp))
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MapCell("天赋热爱区 · 优先探索", "把「${result.likes.firstOrNull()?.label ?: "喜欢的主题"}」和「${result.strengths.firstOrNull()?.label ?: "擅长的方式"}」放进真实项目，最值得成为职业核心或长期副业。", 0x3ED9A4, Modifier.weight(1f))
+            MapCell("兴趣潜力区 · 值得练习", "对「${result.likes.drop(1).joinToString("、") { it.label }}」先用低成本作品或体验验证。", 0x5E96FF, Modifier.weight(1f))
+        }
+        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MapCell("熟练消耗区 · 需要边界", "即使擅长「${result.strengths.drop(1).joinToString("、") { it.label }}」，也要结合能量感判断。", 0xF0A949, Modifier.weight(1f))
+            MapCell("发挥条件 · 选择环境", "你更可能在「${energy.take(2).joinToString("、")}」中被充电，并需要「${context.take(2).joinToString("、")}」。", 0x6E7B98, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun MapCell(title: String, text: String, tint: Long, modifier: Modifier = Modifier) {
+    Column(modifier.clip(RoundedCornerShape(12.dp)).background(hexColor(tint, 0.08f)).padding(11.dp).height(128.dp)) {
+        Text(title, color = hexColor(tint), fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, lineHeight = 14.sp)
+        Text(text, color = Theme.sub, fontSize = 10.5.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 7.dp))
+    }
+}
+
+@Composable
+private fun DeepAnalysisGate(onUnlock: () -> Unit) {
+    Column(
+        Modifier.padding(top = 18.dp).fillMaxWidth().clip(RoundedCornerShape(17.dp))
+            .background(hexColor(0x5373FF, 0.12f)).border(1.dp, hexColor(0x6FA5FF, 0.38f), RoundedCornerShape(17.dp)).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Text("DEEPER VIEW", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
+        Text("把“喜欢”和“擅长”变成清晰行动", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("解锁后可查看你的证据链、能量与环境条件，以及适合职业、副业和兴趣的 3 个现实验证方向。", color = Theme.sub, fontSize = 12.sp, lineHeight = 18.sp)
+        DiscoveryButton("解锁深入分析 ¥9.9", true, Modifier.padding(top = 4.dp).fillMaxWidth(), onClick = onUnlock)
     }
 }
 

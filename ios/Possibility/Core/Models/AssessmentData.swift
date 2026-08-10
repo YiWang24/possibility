@@ -343,7 +343,7 @@ enum AssessmentData {
 
 // MARK: - 喜欢 × 擅长完整探索（中文原创题目）
 
-enum DiscoveryAxis: String, Codable, Sendable { case like, skill, value }
+enum DiscoveryAxis: String, Codable, Sendable { case like, skill, energy, context, value }
 
 struct DiscoveryOption: Identifiable, Sendable {
     var id: String { label }
@@ -490,6 +490,26 @@ enum SelfDiscoveryData {
             ("让人被看见、理解和支持", "关怀与连接", "♡"), ("让复杂世界更清晰有序", "秩序与清晰", "▦"),
             ("推动值得发生的真实变化", "影响与担当", "↗"), ("创造可触摸、可使用的成果", "真实与实践", "◇"),
         ]),
+        q("energy-recharge", .energy, "能量证据 · 越做越有劲", "完成哪类事情后，你通常会感到被充电？", "这里没有标准答案，只记录什么会让你愿意再次投入。", [
+            ("独自沉浸，把一个问题想透", "深度专注", "◎"), ("和人来回讨论，慢慢长出新想法", "共创激发", "♡"),
+            ("看见成果被真正使用或认可", "成果反馈", "↗"), ("把棘手问题啃下来", "挑战驱动", "◇"),
+            ("接触新的人、地方或观点", "新鲜变化", "✦"), ("陪伴或支持一个具体的人", "关系滋养", "♡"),
+        ]),
+        q("energy-sustain", .energy, "能量证据 · 持续投入", "什么会让你即使累，也仍愿意继续一会儿？", "它帮助区分一时兴奋和可持续的投入感。", [
+            ("还差一点就能想清楚或做完整", "深度专注", "◎"), ("伙伴之间正在产生默契", "共创激发", "♡"),
+            ("已经看见它能解决真实问题", "成果反馈", "↗"), ("困难本身让我想再试一次", "挑战驱动", "◇"),
+            ("前面还有没见过的可能", "新鲜变化", "✦"), ("有人因为这件事变得更好", "关系滋养", "♡"),
+        ]),
+        q("context-best", .context, "适配环境 · 最好发挥", "在哪种工作或学习状态里，你最容易进入好状态？", "环境不决定能力，但会明显影响你能否稳定发挥。", [
+            ("有自主空间，可以自己安排节奏", "自主空间", "✦"), ("和少数可靠的人紧密协作", "小团队共创", "♡"),
+            ("目标、边界和标准都很清楚", "目标清晰", "▦"), ("能留出长时间不被打断地投入", "连续深度", "◎"),
+            ("能快速看到真实用户或成果反馈", "现实反馈", "◇"), ("不断面对新任务和新可能", "多元变化", "↗"),
+        ]),
+        q("context-friction", .context, "适配环境 · 容易消耗", "什么情况最容易让你的好状态被打断？", "识别边界不是挑剔，而是为了选择更可持续的投入方式。", [
+            ("被过度控制、没有做法上的选择", "自主空间", "✦"), ("长期独自硬扛、缺少可信的讨论", "小团队共创", "♡"),
+            ("目标反复变化、规则模糊", "目标清晰", "▦"), ("不断被碎片消息和临时任务打断", "连续深度", "◎"),
+            ("做很久却不知道是否有用", "现实反馈", "◇"), ("长期重复、几乎没有新刺激", "多元变化", "↗"),
+        ]),
     ]
 
     static func rankedTags(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
@@ -506,7 +526,7 @@ enum SelfDiscoveryData {
             .prefix(3).map { RankedDiscoveryTag(tag: $0, count: counts[$0] ?? 0) }
     }
 
-    private static func rankedWithCustom(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
+    static func rankedWithCustom(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
         var ranked = rankedTags(axis, answers: answers)
         var seen = Set(ranked.map(\.tag))
         for question in questions where question.axis == axis {
@@ -521,7 +541,11 @@ enum SelfDiscoveryData {
             ? ["继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容"]
             : axis == .skill
                 ? ["继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功"]
-                : ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"]
+                : axis == .energy
+                    ? ["记录被充电的时刻", "观察持续投入感", "识别真实消耗来源"]
+                    : axis == .context
+                        ? ["观察发挥条件", "记录环境边界", "寻找适配节奏"]
+                        : ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"]
         for tag in defaults where !seen.contains(tag) {
             ranked.append(RankedDiscoveryTag(tag: tag, count: 1)); seen.insert(tag)
             if ranked.count == 3 { break }

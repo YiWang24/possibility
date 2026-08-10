@@ -21,6 +21,7 @@ interface PortraitDim {
   label: string;
   value?: string;
   key: DimensionKey | null;
+  selfDiscovery?: boolean;
 }
 
 export function PortraitSection() {
@@ -43,8 +44,21 @@ export function PortraitSection() {
 
   const [activeDim, setActiveDim] = useState<DimensionKey | null>(null);
 
+  const discoverySummary = [
+    filledDims.like ? `喜欢：${filledDims.like.split(" · ")[0]}` : "",
+    filledDims.skill ? `擅长：${filledDims.skill.split(" · ")[0]}` : "",
+  ].filter(Boolean).join(" · ");
+
   const dims: PortraitDim[] = [
-    { id: "personality", icon: "◎", tint: "#5968D9", label: "人格底色", value: filledDims.personality, key: null },
+    {
+      id: "want-to-do",
+      icon: "✦",
+      tint: "#A77CFF",
+      label: "我喜欢 × 我擅长",
+      value: discoverySummary || undefined,
+      key: null,
+      selfDiscovery: true,
+    },
     ...DIMENSION_KEYS.map((k) => {
       const c = DIMENSIONS[k];
       return { id: k, icon: c.icon, tint: c.tint, label: c.title, value: filledDims[k], key: k };
@@ -52,10 +66,12 @@ export function PortraitSection() {
   ];
 
   const handleTap = (dim: PortraitDim) => {
-    if (dim.key) {
+    if (dim.selfDiscovery) {
+      router.push("/assessment/want-to-do");
+    } else if (dim.key) {
       setActiveDim(dim.key);
     } else {
-      // 人格底色 → 大五人格测评
+      // 保留兼容分支：旧数据入口仍可前往大五人格测评。
       router.push("/assessment/bigfive");
     }
   };

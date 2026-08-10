@@ -419,7 +419,7 @@ final class SupabaseService {
         return try await callFunction("match", body: Body(user_state: userState), as: MatchResponse.self)
     }
 
-    /// POST /analyze-self-discovery：综合 12 道中文原创探索题，区分喜欢与擅长。
+    /// POST /analyze-self-discovery：综合 16 道中文原创探索题，区分喜欢、擅长、能量与环境。
     func analyzeSelfDiscovery(_ request: SelfDiscoveryRequest) async throws -> SelfDiscoveryAnalysis {
         try await callFunction(
             "analyze-self-discovery",

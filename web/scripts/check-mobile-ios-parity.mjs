@@ -91,6 +91,16 @@ requireText(
   "每个探索问题必须支持用户自由输入",
 );
 requireText(
+  "features/home/PortraitSection.tsx",
+  'label: "我喜欢 × 我擅长"',
+  "动态画像首卡必须直达喜欢与擅长的完整探索",
+);
+requireText(
+  "features/studio/WantToDoView.tsx",
+  "解锁深入分析 ¥9.9",
+  "完整探索必须先展示免费基本结论，再提供 ¥9.9 深入分析",
+);
+requireText(
   "features/home/DimensionSheet.tsx",
   "中文专业测评 · 跳转官方",
   "动态画像工具必须区分站内探索与第三方官方测评",
@@ -123,8 +133,12 @@ for (const [path, socialKind, discoveryMarker] of [
   const discoveryPath = path.includes("android")
     ? "../android/app/src/main/java/app/possibility/android/features/studio/SelfDiscoveryScreen.kt"
     : path;
+  const deepAnalysisPath = path.includes("android")
+    ? "../android/app/src/main/java/app/possibility/android/features/studio/SelfDiscoveryScreen.kt"
+    : "../ios/Possibility/Features/Studio/AssessmentView.swift";
   requireText(discoveryPath, discoveryMarker, `${discoveryPath} 必须同步喜欢 × 擅长完整探索`);
-  requireText(discoveryPath, "value-contribution", `${discoveryPath} 必须保留全部 12 题的最后一题`);
+  requireText(discoveryPath, "context-friction", `${discoveryPath} 必须保留完整的 16 题探索结构`);
+  requireText(deepAnalysisPath, "解锁深入分析 ¥9.9", `${deepAnalysisPath} 必须同步深入分析 ¥9.9 入口`);
 }
 for (const path of [
   "../ios/Possibility/Core/Models/DimensionData.swift",
@@ -135,8 +149,8 @@ for (const path of [
 }
 requireText(
   "../supabase/functions/analyze-self-discovery/index.ts",
-  'value.responses.length !== 12',
-  "完整探索必须覆盖全部 12 个原创证据问题",
+  'value.responses.length !== 16',
+  "完整探索必须覆盖全部 16 个原创证据问题",
 );
 requireText(
   "features/community/CommunityView.tsx",

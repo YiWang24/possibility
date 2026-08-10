@@ -231,6 +231,7 @@ struct SelfDiscoveryView: View {
     @State private var analysis: SelfDiscoveryAnalysis?
     @State private var usedAI = false
     @State private var saved = false
+    @State private var deepUnlocked = false
 
     private var question: DiscoveryQuestion { SelfDiscoveryData.questions[index] }
     private var current: DiscoveryAnswer { answers[question.id] ?? DiscoveryAnswer() }
@@ -295,7 +296,7 @@ struct SelfDiscoveryView: View {
                     .font(.system(size: 10, weight: .semibold)).tracking(2.2).foregroundStyle(Theme.blue)
                 Text("用完整证据链，找到\n你喜欢和擅长的事")
                     .font(.system(size: 28, weight: .bold)).lineSpacing(7).foregroundStyle(Theme.ink).padding(.top, 12)
-                Text("沿用“喜欢 × 擅长 × 价值观”的方法结构，通过 12 个原创情境寻找你的注意力、投入、他人反馈与成功模式，最后交给 AI 综合分析。")
+                Text("沿用“喜欢 × 擅长 × 价值观”的方法结构，通过 \(SelfDiscoveryData.questions.count) 个原创情境收集兴趣、优势、能量与环境证据，最后交给 AI 综合分析。")
                     .font(.system(size: 14)).lineSpacing(7).foregroundStyle(Theme.sub).padding(.top, 16)
                 HStack(spacing: 8) {
                     formula("喜欢的事", "反复吸引你的内容领域", 0xE35CC1)
@@ -407,21 +408,29 @@ struct SelfDiscoveryView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(usedAI ? "AI 综合分析" : "本地证据归纳")
                         .font(.system(size: 10, weight: .semibold)).tracking(1.8).foregroundStyle(Color(hex: 0x3ED9A4))
-                    Text("你反复出现的两组线索").font(.system(size: 25, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 8)
+                    Text("你喜欢与擅长的基本结论").font(.system(size: 25, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 8)
                     Text(analysis.summary).font(.system(size: 13)).lineSpacing(6).foregroundStyle(Theme.sub).padding(.top, 9)
-                    insightBlock("我喜欢的事", analysis.likes, 0xE35CC1).padding(.top, 20)
-                    insightBlock("我擅长的事", analysis.strengths, 0x5E96FF).padding(.top, 12)
-                    Text("可以开始验证的方向").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 22)
-                    ForEach(analysis.directions) { direction in
-                        VStack(alignment: .leading, spacing: 7) {
-                            Text(direction.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
-                            Text(direction.why).font(.system(size: 11.5)).foregroundStyle(Theme.sub)
-                            Text("第一步：\(direction.firstStep)").font(.system(size: 11.5)).foregroundStyle(Color(hex: 0xBFD2FF))
+                    basicInsightBlock("我喜欢什么", analysis.likes, 0xE35CC1).padding(.top, 20)
+                    basicInsightBlock("我擅长什么", analysis.strengths, 0x5E96FF).padding(.top, 12)
+                    discoveryMap(analysis).padding(.top, 12)
+                    if deepUnlocked {
+                        Text("你的深入分析").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 22)
+                        insightBlock("为什么会喜欢", analysis.likes, 0xE35CC1).padding(.top, 12)
+                        insightBlock("优势如何发挥", analysis.strengths, 0x5E96FF).padding(.top, 12)
+                        Text("职业 · 副业 · 兴趣的验证方向").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 22)
+                        ForEach(Array(analysis.directions.enumerated()), id: \.element.id) { index, direction in
+                            VStack(alignment: .leading, spacing: 7) {
+                                HStack { Text(direction.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink); Spacer(); Text(["职业探索", "副业试验", "兴趣滋养"][index]).font(.system(size: 10)).foregroundStyle(Theme.faint) }
+                                Text(direction.why).font(.system(size: 11.5)).foregroundStyle(Theme.sub)
+                                Text("第一步：\(direction.firstStep)").font(.system(size: 11.5)).foregroundStyle(Color(hex: 0xBFD2FF))
+                            }
+                            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 15)).padding(.top, 9)
                         }
-                        .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 15)).padding(.top, 9)
+                        Text(analysis.confidenceNote).font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint).padding(.top, 15)
+                    } else {
+                        deepAnalysisGate
                     }
-                    Text(analysis.confidenceNote).font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint).padding(.top, 15)
                     HStack(spacing: 11) {
                         secondaryButton("返回修改") { phase = .questions; index = SelfDiscoveryData.questions.count - 1 }
                         primaryButton(saved ? "已保存到动态画像" : "保存到我的动态画像") { saveResult() }
@@ -446,6 +455,68 @@ struct SelfDiscoveryView: View {
         .padding(16).frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(hex: tint, alpha: 0.09), in: RoundedRectangle(cornerRadius: 17))
         .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(Color(hex: tint, alpha: 0.24)))
+    }
+
+    private func basicInsightBlock(_ title: String, _ items: [DiscoveryInsight], _ tint: UInt32) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title).font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
+            FlowLayout(spacing: 8) {
+                ForEach(items) { item in
+                    Text(item.label).font(.system(size: 12, weight: .semibold)).foregroundStyle(Color(hex: tint))
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(Color(hex: tint, alpha: 0.12), in: Capsule())
+                }
+            }
+            Text("这些结论来自重复出现的选择与自由回答；深入分析会解释具体证据与适合你的行动路径。")
+                .font(.system(size: 11)).lineSpacing(4).foregroundStyle(Theme.sub)
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+    }
+
+    private var deepAnalysisGate: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            Text("DEEPER VIEW").font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(Color(hex: 0xBFD2FF))
+            Text("把“喜欢”和“擅长”变成清晰行动").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
+            Text("解锁后可查看你的证据链、能量与环境条件，以及适合职业、副业和兴趣的 3 个现实验证方向。")
+                .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
+            primaryButton("解锁深入分析 ¥9.9") {
+                deepUnlocked = true
+                toast.show("已解锁深入分析（预览环境）")
+            }.padding(.top, 5)
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: 0x5373FF, alpha: 0.12), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.38)))
+        .padding(.top, 18)
+    }
+
+    private func discoveryMap(_ analysis: SelfDiscoveryAnalysis) -> some View {
+        let energy = SelfDiscoveryData.rankedWithCustom(.energy, answers: answers).map(\.tag)
+        let context = SelfDiscoveryData.rankedWithCustom(.context, answers: answers).map(\.tag)
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("LIFE MAP · 基础结论").font(.system(size: 10, weight: .semibold)).tracking(1.6).foregroundStyle(Color(hex: 0x3ED9A4))
+            Text("你的喜欢 × 擅长人生地图").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 4)
+            Text("先看你该优先投入哪里，而不是急着把自己归类成某个职业。")
+                .font(.system(size: 11)).foregroundStyle(Theme.sub).padding(.top, 4)
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 1), GridItem(.flexible(), spacing: 1)], spacing: 1) {
+                mapCell("天赋热爱区 · 优先探索", "把「\(analysis.likes.first?.label ?? "喜欢的主题")」和「\(analysis.strengths.first?.label ?? "擅长的方式")」放进真实项目，最值得成为职业核心或长期副业。", 0x3ED9A4)
+                mapCell("兴趣潜力区 · 值得练习", "对「\(analysis.likes.dropFirst().map(\.label).joined(separator: "、"))」先用低成本作品或体验验证。", 0x5E96FF)
+                mapCell("熟练消耗区 · 需要边界", "即使擅长「\(analysis.strengths.dropFirst().map(\.label).joined(separator: "、"))」，也要结合能量感判断。", 0xF0A949)
+                mapCell("发挥条件 · 选择环境", "你更可能在「\(energy.prefix(2).joined(separator: "、"))」中被充电，并需要「\(context.prefix(2).joined(separator: "、"))」。", 0x6E7B98)
+            }.padding(.top, 12)
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.raised, in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+    }
+
+    private func mapCell(_ title: String, _ detail: String, _ tint: UInt32) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(Color(hex: tint))
+            Text(detail).font(.system(size: 10.5)).lineSpacing(3).foregroundStyle(Theme.sub)
+        }
+        .padding(11).frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+        .background(Color(hex: tint, alpha: 0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func toggle(_ label: String) {
@@ -483,6 +554,7 @@ struct SelfDiscoveryView: View {
         customDraft = ""
         if index < SelfDiscoveryData.questions.count - 1 { index += 1; return }
         phase = .analyzing
+        deepUnlocked = false
         let snapshot = answers
         Task {
             do {
