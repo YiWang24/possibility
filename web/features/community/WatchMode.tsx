@@ -25,7 +25,7 @@ import {
 
 /** 判定成拖拽的位移阈值：小于它仍算点击，轻点不会误伤跳转 */
 const DRAG_THRESHOLD = 4;
-/** 惯性：初速 × 一帧时长，每帧衰减到 0.88，落到阈值以下转入吸附 */
+/** 惯性：初速 × 一帧时长，衰减到 0.88/帧，落到阈值以下转入吸附 */
 const FLICK_SCALE = 16;
 const INERTIA_DECAY = 0.88;
 const INERTIA_STOP = 0.55;
@@ -34,6 +34,12 @@ const SNAP_LERP = 0.18;
 const SNAP_STOP = 0.7;
 /** 抬手后压制一次 click，避免甩动结束时误入主页 */
 const CLICK_SUPPRESS_MS = 120;
+/** 衰减与插值的基准帧长。实际帧长按它归一，120Hz 屏才不会把整段动画跑快一倍 */
+const FRAME_MS = 1000 / 60;
+/** 单帧归一化上限：切后台再回来时 rAF 会攒出一个巨大的 delta，不能让它一次跳完 */
+const MAX_FRAMES_PER_TICK = 4;
+/** 松手前静止超过这个时长就不算甩动 —— 拖到位停一下再松手应当停在原地 */
+const FLICK_MAX_AGE_MS = 90;
 
 interface Pan {
   x: number;
@@ -71,6 +77,7 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
   const rafRef = useRef<number | null>(null);
   const suppressClickRef = useRef(false);
   const suppressTimerRef = useRef<number | null>(null);
+  const reduceMotionRef = useRef(false);
 
   const [cells, setCells] = useState<WatchCell[]>([]);
   const [noMatch, setNoMatch] = useState(false);
@@ -144,27 +151,35 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
     return best ? { x: -best.wx, y: -best.wy } : null;
   }, []);
 
+  /* 衰减和插值都按「多少个 60Hz 帧」算，而不是「多少帧」——
+     iOS 版把定时器步进压到 8ms 换算衰减，也是为了 ProMotion 上总位移不变。
+     这里照做：120Hz 屏每帧 frames≈0.5，衰减开方，滑行距离与时长都跟 60Hz 一致。 */
   const runLoop = useCallback(() => {
     if (rafRef.current !== null) return;
-    const step = () => {
+    let last = performance.now();
+    const step = (now: number) => {
       const motion = motionRef.current;
       if (!motion) {
         rafRef.current = null;
         return;
       }
+      const frames = Math.min(MAX_FRAMES_PER_TICK, Math.max(0.2, (now - last) / FRAME_MS));
+      last = now;
       const pan = panRef.current;
       if (motion.kind === "inertia") {
-        pan.x += motion.mx;
-        pan.y += motion.my;
-        motion.mx *= INERTIA_DECAY;
-        motion.my *= INERTIA_DECAY;
+        pan.x += motion.mx * frames;
+        pan.y += motion.my * frames;
+        const decay = INERTIA_DECAY ** frames;
+        motion.mx *= decay;
+        motion.my *= decay;
         if (Math.abs(motion.mx) + Math.abs(motion.my) <= INERTIA_STOP) {
           const target = nearestPanTo(pan.x, pan.y);
           motionRef.current = target ? { kind: "snap", tx: target.x, ty: target.y } : null;
         }
       } else {
-        pan.x += (motion.tx - pan.x) * SNAP_LERP;
-        pan.y += (motion.ty - pan.y) * SNAP_LERP;
+        const lerp = 1 - (1 - SNAP_LERP) ** frames;
+        pan.x += (motion.tx - pan.x) * lerp;
+        pan.y += (motion.ty - pan.y) * lerp;
         if (Math.abs(motion.tx - pan.x) + Math.abs(motion.ty - pan.y) <= SNAP_STOP) {
           pan.x = motion.tx;
           pan.y = motion.ty;
@@ -177,13 +192,21 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
     rafRef.current = requestAnimationFrame(step);
   }, [nearestPanTo, sync]);
 
+  /** 移到 (x,y)。降低动态效果时直接落位 —— 滑行是本页最大的一段运动，
+      光靠样式表里的 prefers-reduced-motion 只能停下背景那圈弧。 */
   const glideTo = useCallback(
     (x: number, y: number) => {
       stopMotion();
+      if (reduceMotionRef.current) {
+        panRef.current.x = x;
+        panRef.current.y = y;
+        sync();
+        return;
+      }
       motionRef.current = { kind: "snap", tx: x, ty: y };
       runLoop();
     },
-    [runLoop, stopMotion],
+    [runLoop, stopMotion, sync],
   );
 
   /* 拖拽：指针按下记基准，document 上跟移动 —— 手指滑出舞台也不断线。 */
@@ -228,18 +251,42 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
       if (event.cancelable) event.preventDefault();
     };
 
+    /** 落到最近的整格；已经在格上就什么都不做 */
+    const settle = () => {
+      const target = nearestPanTo(panRef.current.x, panRef.current.y);
+      if (!target) return;
+      if (target.x === panRef.current.x && target.y === panRef.current.y) return;
+      glideTo(target.x, target.y);
+    };
+
     const onUp = (event: PointerEvent) => {
       const drag = dragRef.current;
       if (!drag || event.pointerId !== drag.pointerId) return;
       dragRef.current = null;
       stageRef.current?.classList.remove("is-dragging");
-      if (!drag.moved) return;
+
+      // 轻点也要 settle：这一下可能是为了摁停一段滑行，停下的位置多半不在整格上。
+      // iOS 的 onEnded 无条件走 runInertia → snapToNearest，这里对齐。
+      if (!drag.moved) {
+        settle();
+        return;
+      }
+
       suppressClickRef.current = true;
       if (suppressTimerRef.current !== null) window.clearTimeout(suppressTimerRef.current);
       suppressTimerRef.current = window.setTimeout(() => {
         suppressClickRef.current = false;
         suppressTimerRef.current = null;
       }, CLICK_SUPPRESS_MS);
+
+      // drag.vx 只在 onMove 里写。拖到位后按住不动再松手，这个速度已经过期，
+      // 直接乘 FLICK_SCALE 会把舞台甩飞 —— 手停住了就该停在原地。
+      const stale = performance.now() - drag.lt > FLICK_MAX_AGE_MS;
+      if (stale || reduceMotionRef.current) {
+        settle();
+        return;
+      }
+
       motionRef.current = {
         kind: "inertia",
         mx: drag.vx * FLICK_SCALE,
@@ -256,7 +303,18 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
       document.removeEventListener("pointerup", onUp);
       document.removeEventListener("pointercancel", onUp);
     };
-  }, [runLoop, sync]);
+  }, [runLoop, sync, nearestPanTo, glideTo]);
+
+  /* 跟随系统的「减弱动态效果」，用户改设置后立即生效 */
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    reduceMotionRef.current = media.matches;
+    const onChange = (event: MediaQueryListEvent) => {
+      reduceMotionRef.current = event.matches;
+    };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(
     () => () => {

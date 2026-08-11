@@ -25,6 +25,24 @@ type Tab = 0 | 1;
    （放映），两端换过来看到的是自己上次选的那个模式。 */
 const WATCH_STORAGE_KEY = "possibility-watch";
 
+/* Safari 无痕、以及「阻止所有 Cookie」下访问 localStorage 会直接抛 SecurityError。
+   记不住浏览方式可以接受，为此整个社区页白屏不行 —— 读写都兜住。 */
+function readWatchMode(): boolean {
+  try {
+    return window.localStorage.getItem(WATCH_STORAGE_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+
+function writeWatchMode(on: boolean): void {
+  try {
+    window.localStorage.setItem(WATCH_STORAGE_KEY, on ? "1" : "0");
+  } catch {
+    /* 存不下就只在本次会话里生效 */
+  }
+}
+
 export function CommunityView() {
   const router = useRouter();
   const { require } = useAuthGate();
@@ -48,13 +66,13 @@ export function CommunityView() {
   }, [loadTravelers, loadBounties]);
 
   useEffect(() => {
-    setWatchMode(window.localStorage.getItem(WATCH_STORAGE_KEY) !== "0");
+    setWatchMode(readWatchMode());
   }, []);
 
   const toggleWatchMode = () => {
     const next = !watchMode;
     setWatchMode(next);
-    window.localStorage.setItem(WATCH_STORAGE_KEY, next ? "1" : "0");
+    writeWatchMode(next);
   };
 
   const filteredTravelers = useMemo(() => {

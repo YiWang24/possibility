@@ -555,8 +555,10 @@ html[data-auth="in"] [data-auth-branch="in"] {
       transparent 52%
     ),
     linear-gradient(145deg, rgb(29 38 64 / 0.58), rgb(8 11 24 / 0.38));
-  -webkit-backdrop-filter: blur(12px) saturate(1.28);
-  backdrop-filter: blur(12px) saturate(1.28);
+  /* 原型这里还有 backdrop-filter: blur(12px) saturate(1.28)，这里刻意不要：
+     气泡背后是近乎纯色的深底，A/B 截图逐像素看不出差别，但 35 个 backdrop 层
+     在 6× CPU 节流下把拖拽的 p95 帧从 67ms 抬到 100ms。
+     iOS 版同样没有 backdrop 模糊，玻璃感全部由上面几层渐变给出。 */
   box-shadow:
     0 16px 36px -18px rgb(0 0 0 / 0.84),
     0 0 26px color-mix(in srgb, var(--watch-glow, var(--color-brand)) 18%, transparent),
@@ -701,7 +703,8 @@ html[data-auth="in"] [data-auth-branch="in"] {
   z-index: 180;
   transform: translateX(-50%);
   font-size: 9.5px;
-  color: rgb(154 164 188 / 0.62);
+  /* 0.62 在舞台底色上只有约 3.6:1，9.5px 又够不上 large text；提到 0.9 才过 AA */
+  color: rgb(154 164 188 / 0.9);
   white-space: nowrap;
   pointer-events: none;
 }
