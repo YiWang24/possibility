@@ -97,8 +97,8 @@ requireText(
 );
 requireText(
   "features/studio/WantToDoView.tsx",
-  "解锁深入分析 ¥9.9",
-  "完整探索必须先展示免费基本结论，再提供 ¥9.9 深入分析",
+  "查看完整行动报告 ¥9.9",
+  "完整探索必须先展示免费基本结论，再提供 ¥9.9 完整行动报告",
 );
 requireText(
   "features/home/DimensionSheet.tsx",
@@ -138,7 +138,7 @@ for (const [path, socialKind, discoveryMarker] of [
     : "../ios/Possibility/Features/Studio/AssessmentView.swift";
   requireText(discoveryPath, discoveryMarker, `${discoveryPath} 必须同步喜欢 × 擅长完整探索`);
   requireText(discoveryPath, "context-friction", `${discoveryPath} 必须保留完整的 16 题探索结构`);
-  requireText(deepAnalysisPath, "解锁深入分析 ¥9.9", `${deepAnalysisPath} 必须同步深入分析 ¥9.9 入口`);
+  requireText(deepAnalysisPath, "查看完整行动报告 ¥9.9", `${deepAnalysisPath} 必须同步完整行动报告 ¥9.9 入口`);
 }
 for (const path of [
   "../ios/Possibility/Core/Models/DimensionData.swift",

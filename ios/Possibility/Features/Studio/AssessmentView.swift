@@ -410,23 +410,15 @@ struct SelfDiscoveryView: View {
                         .font(.system(size: 10, weight: .semibold)).tracking(1.8).foregroundStyle(Color(hex: 0x3ED9A4))
                     Text("你喜欢与擅长的基本结论").font(.system(size: 25, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 8)
                     Text(analysis.summary).font(.system(size: 13)).lineSpacing(6).foregroundStyle(Theme.sub).padding(.top, 9)
+                    freeProfile(analysis).padding(.top, 18)
                     basicInsightBlock("我喜欢什么", analysis.likes, 0xE35CC1).padding(.top, 20)
                     basicInsightBlock("我擅长什么", analysis.strengths, 0x5E96FF).padding(.top, 12)
                     discoveryMap(analysis).padding(.top, 12)
                     if deepUnlocked {
-                        Text("你的深入分析").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 22)
+                        Text("你的完整行动报告").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 22)
                         insightBlock("为什么会喜欢", analysis.likes, 0xE35CC1).padding(.top, 12)
                         insightBlock("优势如何发挥", analysis.strengths, 0x5E96FF).padding(.top, 12)
-                        Text("职业 · 副业 · 兴趣的验证方向").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 22)
-                        ForEach(Array(analysis.directions.enumerated()), id: \.element.id) { index, direction in
-                            VStack(alignment: .leading, spacing: 7) {
-                                HStack { Text(direction.title).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink); Spacer(); Text(["职业探索", "副业试验", "兴趣滋养"][index]).font(.system(size: 10)).foregroundStyle(Theme.faint) }
-                                Text(direction.why).font(.system(size: 11.5)).foregroundStyle(Theme.sub)
-                                Text("第一步：\(direction.firstStep)").font(.system(size: 11.5)).foregroundStyle(Color(hex: 0xBFD2FF))
-                            }
-                            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Theme.raised, in: RoundedRectangle(cornerRadius: 15)).padding(.top, 9)
-                        }
+                        fullCommercialReport(analysis).padding(.top, 14)
                         Text(analysis.confidenceNote).font(.system(size: 10.5)).lineSpacing(4).foregroundStyle(Theme.faint).padding(.top, 15)
                     } else {
                         deepAnalysisGate
@@ -439,6 +431,82 @@ struct SelfDiscoveryView: View {
                 }
                 .padding(.horizontal, 22).padding(.top, 24).padding(.bottom, 36)
             }
+        }
+    }
+
+    private func freeProfile(_ analysis: SelfDiscoveryAnalysis) -> some View {
+        let like = analysis.likes.first?.label ?? "持续好奇"
+        let strength = analysis.strengths.first?.label ?? "解决问题"
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("FREE PROFILE · 免费基础报告").font(.system(size: 10, weight: .semibold)).tracking(1.6).foregroundStyle(Color(hex: 0xBFD2FF))
+            Text("你的画像：\(strength)型探索者").font(.system(size: 18, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 6)
+            Text("你会被「\(like)」持续吸引，并自然用「\(strength)」把模糊的问题向前推进。先找同时需要这两件事的真实任务，比急着决定职业名称更重要。")
+                .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub).padding(.top, 8)
+            HStack(spacing: 7) {
+                freeSignal("最佳组合", "\(like) × \(strength)")
+                freeSignal("先探索", "职业 / 副业 / 兴趣")
+                freeSignal("下一步", "一个真实小任务")
+            }.padding(.top, 13)
+            Text("免费结论已回答：你被什么吸引、怎样解决问题、现在最值得从哪里开始。")
+                .font(.system(size: 10.5)).foregroundStyle(Color(hex: 0xBFD2FF)).padding(.top, 12)
+        }
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: 0x5373FF, alpha: 0.12), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 17).strokeBorder(Color(hex: 0x6FA5FF, alpha: 0.3)))
+    }
+
+    private func freeSignal(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.system(size: 9.5)).foregroundStyle(Theme.faint)
+            Text(value).font(.system(size: 10.5, weight: .semibold)).lineLimit(2).foregroundStyle(Theme.ink)
+        }.padding(9).frame(maxWidth: .infinity, minHeight: 58, alignment: .topLeading)
+            .background(Color.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func fullCommercialReport(_ analysis: SelfDiscoveryAnalysis) -> some View {
+        let likes = analysis.likes.map(\.label)
+        let strengths = analysis.strengths.map(\.label)
+        let energy = SelfDiscoveryData.rankedWithCustom(.energy, answers: answers).map(\.tag).prefix(2).joined(separator: "、")
+        let context = SelfDiscoveryData.rankedWithCustom(.context, answers: answers).map(\.tag).prefix(2).joined(separator: "、")
+        return VStack(alignment: .leading, spacing: 12) {
+            commercialBlock("01 · 优势组合链", "你的天然解决问题路径", "\(strengths.joined(separator: " → "))\n这不是单一技能，而是更容易形成差异化的解决问题路径。")
+            commercialBlock("02 · 能量与边界", "怎样才会持续发挥", "你更可能在「\(energy)」中被充电，并需要「\(context)」这样的环境。擅长不等于适合长期承担。")
+            commercialBlock("03 · 消耗模式", "能做，不等于该长期做", "「\(strengths.dropFirst().joined(separator: "、"))」是可靠能力；如果长期没有能量回流，更适合作为辅助能力，而不是职业唯一核心。")
+            commercialBlock("04 · 职业探索", "领域 × 角色 × 工作方式", careerSummary(for: likes.first))
+            commercialBlock("05 · 副业探索", "最低成本的商业化实验", "围绕「\(likes.first ?? "兴趣主题") × \(strengths.first ?? "优势动作")」，连续 4 周输出 4 次可被别人使用的成果，观察想继续做、有人认可、能产生价值是否同时出现。")
+            commercialBlock("06 · 兴趣保留", "不必每一种喜欢都赚钱", "「\(likes.dropFirst().joined(separator: "、"))」可以先作为纯粹兴趣或低压力练习保留；先验证能量与持续性，再决定是否副业化。")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("07 · 未来 30 天人生实验").font(.system(size: 10, weight: .semibold)).tracking(1.4).foregroundStyle(Color(hex: 0xBFD2FF))
+                Text("把结论变成新的证据").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
+                ForEach(Array(analysis.directions.enumerated()), id: \.element.id) { index, direction in
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(["职业实验", "副业实验", "兴趣实验"][index]).font(.system(size: 10, weight: .semibold)).foregroundStyle(Color(hex: 0xBFD2FF))
+                        Text(direction.title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.ink)
+                        Text(direction.why).font(.system(size: 11)).foregroundStyle(Theme.sub)
+                        Text("本周第一步：\(direction.firstStep)").font(.system(size: 11)).foregroundStyle(Color(hex: 0xBFD2FF))
+                    }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Theme.raised, in: RoundedRectangle(cornerRadius: 13))
+                }
+                Text("一个月后回来看喜欢度、能量、能力与外部反馈的变化，再回写到动态画像和人生实验室。")
+                    .font(.system(size: 10.5)).foregroundStyle(Theme.sub).padding(.top, 2)
+            }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Theme.card, in: RoundedRectangle(cornerRadius: 17))
+        }
+    }
+
+    private func commercialBlock(_ eyebrow: String, _ title: String, _ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(eyebrow).font(.system(size: 10, weight: .semibold)).tracking(1.4).foregroundStyle(Color(hex: 0xBFD2FF))
+            Text(title).font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
+            Text(text).font(.system(size: 11.5)).lineSpacing(4).foregroundStyle(Theme.sub)
+        }.padding(16).frame(maxWidth: .infinity, alignment: .leading).background(Theme.card, in: RoundedRectangle(cornerRadius: 17))
+    }
+
+    private func careerSummary(for like: String?) -> String {
+        switch like {
+        case "创造与表达": return "优先体验：体验／内容设计、品牌与创意策略、内容策划。重点验证表达是否能产生真实价值。"
+        case "知识与探索": return "优先体验：用户／行业研究、产品策略、知识内容。重点验证研究与判断是否愿意长期投入。"
+        case "人类与连接": return "优先体验：用户研究、教育／咨询服务、社群体验运营。重点验证理解人是否让你持续有能量。"
+        case "系统与优化": return "优先体验：产品经理、运营策略、服务设计。重点验证复杂系统能否让你越做越清晰。"
+        default: return "优先从真实问题、内容与研究、服务与体验三类任务中选择小项目，验证主题、优势与环境是否同时匹配。"
         }
     }
 
@@ -477,10 +545,10 @@ struct SelfDiscoveryView: View {
     private var deepAnalysisGate: some View {
         VStack(alignment: .leading, spacing: 9) {
             Text("DEEPER VIEW").font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(Color(hex: 0xBFD2FF))
-            Text("把“喜欢”和“擅长”变成清晰行动").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
-            Text("解锁后可查看你的证据链、能量与环境条件，以及适合职业、副业和兴趣的 3 个现实验证方向。")
+            Text("从“我大概是谁”到“我该怎么选”").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
+            Text("解锁完整兴趣与优势地图、天然解决问题路径、消耗模式、适配环境、职业／副业／兴趣建议，以及未来 30 天人生实验。")
                 .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
-            primaryButton("解锁深入分析 ¥9.9") {
+            primaryButton("查看完整行动报告 ¥9.9") {
                 deepUnlocked = true
                 toast.show("已解锁深入分析（预览环境）")
             }.padding(.top, 5)

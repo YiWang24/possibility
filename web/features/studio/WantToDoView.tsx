@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { FocusShell } from "@/components/shell/FocusShell";
 import { Button } from "@/components/ui/button";
@@ -323,6 +323,8 @@ export function WantToDoView() {
           <h1 className="mt-2 text-[28px] font-bold text-ink">你喜欢与擅长的基本结论</h1>
           <p className="mt-2 max-w-[70ch] text-footnote leading-[1.8] text-sub">{analysis.summary}</p>
 
+          <FreeProfileSummary likes={analysis.likes} strengths={analysis.strengths} />
+
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <BasicInsightCard title="我喜欢什么" eyebrow="WHAT" tint="#E35CC1" items={analysis.likes} />
             <BasicInsightCard title="我擅长什么" eyebrow="HOW" tint="#5E96FF" items={analysis.strengths} />
@@ -337,25 +339,12 @@ export function WantToDoView() {
 
           {deepUnlocked ? (
             <>
-              <div className="mt-5 text-subtitle font-bold text-ink">你的深入分析</div>
+              <div className="mt-6 text-subtitle font-bold text-ink">你的完整行动报告</div>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <InsightCard title="为什么会喜欢" eyebrow="EVIDENCE" tint="#E35CC1" items={analysis.likes} />
                 <InsightCard title="优势如何发挥" eyebrow="EVIDENCE" tint="#5E96FF" items={analysis.strengths} />
               </div>
-              <div className="mt-4 rounded-card border border-violet-soft/25 bg-violet-soft/8 p-5">
-                <div className="text-micro font-semibold tracking-[2px] text-brand-lite">职业 · 副业 · 兴趣的验证方向</div>
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  {analysis.directions.map((direction, directionIndex) => (
-                    <div key={`${direction.title}-${directionIndex}`} className="rounded-tile border border-line bg-card p-4">
-                      <div className="flex items-center justify-between gap-2"><div className="text-body font-semibold leading-[1.6] text-ink">{direction.title}</div><span className="shrink-0 text-micro text-faint">{["职业探索", "副业试验", "兴趣滋养"][directionIndex]}</span></div>
-                      <p className="mt-2 text-caption leading-[1.7] text-sub">{direction.why}</p>
-                      <div className="mt-3 border-t border-line pt-3 text-caption leading-[1.7] text-brand-lite">
-                        第一步：{direction.first_step}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <FullActionReport analysis={analysis} energy={energySignals} context={contextSignals} />
               <p className="mt-4 text-micro leading-[1.7] text-faint">{analysis.confidence_note}</p>
             </>
           ) : (
@@ -411,16 +400,124 @@ function BasicInsightCard({
   );
 }
 
+function FreeProfileSummary({ likes, strengths }: { likes: DiscoveryInsight[]; strengths: DiscoveryInsight[] }) {
+  const like = likes[0]?.label ?? "持续好奇";
+  const strength = strengths[0]?.label ?? "解决问题";
+  return (
+    <div className="mt-5 rounded-card border border-brand/30 bg-[linear-gradient(135deg,rgba(94,150,255,0.14),rgba(227,92,193,0.1))] p-5">
+      <div className="text-micro font-semibold tracking-[2px] text-brand-lite">FREE PROFILE · 免费基础报告</div>
+      <h2 className="mt-2 text-title font-bold text-ink">你的画像：{strength}型探索者</h2>
+      <p className="mt-2 text-footnote leading-[1.8] text-sub">
+        你会被「{like}」持续吸引，并自然用「{strength}」把模糊的问题向前推进。先找同时需要这两件事的真实任务，比急着决定职业名称更重要。
+      </p>
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+        <FreeSignal label="最佳组合" value={`${like} × ${strength}`} />
+        <FreeSignal label="先探索" value="职业 / 副业 / 兴趣" />
+        <FreeSignal label="下一步" value="完成一个小型真实任务" />
+      </div>
+      <p className="mt-4 text-caption leading-[1.7] text-brand-lite">免费结论已回答：你被什么吸引、怎样解决问题、现在最值得从哪里开始。</p>
+    </div>
+  );
+}
+
+function FreeSignal({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-field border border-white/10 bg-black/10 p-3"><div className="text-micro text-faint">{label}</div><div className="mt-1 text-caption font-semibold leading-[1.6] text-ink">{value}</div></div>;
+}
+
+function FullActionReport({
+  analysis,
+  energy,
+  context,
+}: {
+  analysis: SelfDiscoveryAnalysis;
+  energy: string[];
+  context: string[];
+}) {
+  const likes = analysis.likes.map((item) => item.label);
+  const strengths = analysis.strengths.map((item) => item.label);
+  const profile = roleFamilies(likes[0]);
+  const chain = strengths.join(" → ");
+  const energyText = energy.length ? energy.slice(0, 2).join("、") : "完成新版能量题后生成";
+  const contextText = context.length ? context.slice(0, 2).join("、") : "完成新版环境题后生成";
+  return (
+    <div className="mt-4 flex flex-col gap-4">
+      <ReportBlock eyebrow="01 · 优势组合链" title="你的天然解决问题路径">
+        <div className="rounded-field border border-violet-soft/25 bg-violet-soft/10 px-4 py-3 text-body font-semibold text-violet-soft">{chain}</div>
+        <p className="mt-3 text-caption leading-[1.8] text-sub">这不是单一技能，而是你更容易形成差异化的解决问题路径。把它放进「{likes[0]}」相关场景，最容易产生长期竞争力。</p>
+      </ReportBlock>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <ReportBlock eyebrow="02 · 能量与边界" title="怎样才会持续发挥">
+          <p className="text-caption leading-[1.8] text-sub">你更可能在「{energyText}」中被充电，并需要「{contextText}」这样的环境。擅长不等于适合长期承担；当任务持续违背这些条件，就要降低占比、借助 AI 或寻找搭档补位。</p>
+        </ReportBlock>
+        <ReportBlock eyebrow="03 · 消耗模式" title="能做，不等于该长期做">
+          <p className="text-caption leading-[1.8] text-sub">「{strengths.slice(1).join("、")}」是可靠能力，但若完成后长期没有能量回流，就更适合作为辅助能力，而不是职业的唯一核心。</p>
+        </ReportBlock>
+      </div>
+
+      <ReportBlock eyebrow="04 · 职业探索" title="领域 × 角色 × 工作方式">
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {profile.map((role) => <ReportRole key={role.title} {...role} />)}
+        </div>
+        <p className="mt-3 text-caption leading-[1.7] text-sub">这些不是职业判决，而是优先去体验的工作组合：关注匹配的主题、使用的优势动作，以及是否具备适配环境。</p>
+      </ReportBlock>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <ReportBlock eyebrow="05 · 副业探索" title="最低成本的商业化实验">
+          <p className="text-caption leading-[1.8] text-sub">从「{likes[0]} × {strengths[0]}」开始，连续 4 周输出 4 次可被别人使用的成果：一篇拆解、一场分享、一次服务或一个小作品。观察“想继续做 + 有人认可 + 能产生价值”是否同时出现。</p>
+        </ReportBlock>
+        <ReportBlock eyebrow="06 · 兴趣保留" title="不必每一种喜欢都赚钱">
+          <p className="text-caption leading-[1.8] text-sub">「{likes.slice(1).join("、")}」可以先作为纯粹兴趣或低压力练习保留。先验证能量与持续性，再决定是否副业化，避免让商业化过早破坏喜欢。</p>
+        </ReportBlock>
+      </div>
+
+      <ReportBlock eyebrow="07 · 未来 30 天人生实验" title="把结论变成新的证据">
+        <div className="grid gap-3 md:grid-cols-3">
+          {analysis.directions.map((direction, index) => (
+            <div key={direction.title} className="rounded-tile border border-line bg-card p-4">
+              <div className="text-micro font-semibold text-brand-lite">{["职业实验", "副业实验", "兴趣实验"][index]}</div>
+              <div className="mt-2 text-body font-semibold text-ink">{direction.title}</div>
+              <p className="mt-2 text-caption leading-[1.7] text-sub">{direction.why}</p>
+              <p className="mt-3 border-t border-line pt-3 text-caption leading-[1.7] text-brand-lite">本周第一步：{direction.first_step}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-caption leading-[1.7] text-sub">一个月后回来看：喜欢度、能量、能力与外部反馈有没有上升，再把结果回写到动态画像和人生实验室。</p>
+      </ReportBlock>
+    </div>
+  );
+}
+
+function ReportBlock({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
+  return <section className="rounded-card border border-line bg-card p-5"><div className="text-micro font-semibold tracking-[1.6px] text-brand-lite">{eyebrow}</div><h3 className="mt-1 text-lead font-bold text-ink">{title}</h3><div className="mt-4">{children}</div></section>;
+}
+
+function ReportRole({ title, detail }: { title: string; detail: string }) {
+  return <div className="rounded-field border border-line bg-raised p-3"><div className="text-caption font-semibold text-ink">{title}</div><div className="mt-1 text-micro leading-[1.6] text-sub">{detail}</div></div>;
+}
+
+function roleFamilies(primaryLike?: string) {
+  const byLike: Record<string, Array<{ title: string; detail: string }>> = {
+    "创造与表达": [{ title: "体验 / 内容设计", detail: "把感受做成可见作品" }, { title: "品牌与创意策略", detail: "用表达建立差异" }, { title: "内容策划", detail: "持续输出独特观点" }],
+    "知识与探索": [{ title: "用户 / 行业研究", detail: "研究问题并形成判断" }, { title: "产品策略", detail: "把洞察变成决策" }, { title: "知识内容", detail: "学习、结构、表达" }],
+    "人类与连接": [{ title: "用户研究", detail: "理解真实需要" }, { title: "教育 / 咨询服务", detail: "帮助他人成长" }, { title: "社群与体验运营", detail: "建立可信连接" }],
+    "系统与优化": [{ title: "产品经理", detail: "理清系统与优先级" }, { title: "运营策略", detail: "持续优化真实流程" }, { title: "服务设计", detail: "改善复杂体验" }],
+    "影响与推动": [{ title: "增长 / 商业策略", detail: "把价值推向更多人" }, { title: "项目策划", detail: "汇聚资源促成变化" }, { title: "社会创新", detail: "解决值得推动的问题" }],
+    "实践与体验": [{ title: "体验活动策划", detail: "把想法做成现场体验" }, { title: "生活方式服务", detail: "创造可感知的成果" }, { title: "健康与运动内容", detail: "用实践影响日常" }],
+  };
+  return byLike[primaryLike ?? ""] ?? [{ title: "探索型项目", detail: "从真实问题开始" }, { title: "内容与研究", detail: "沉淀自己的判断" }, { title: "服务与体验", detail: "用小行动验证" }];
+}
+
 function DeepAnalysisGate({ onUnlock }: { onUnlock: () => void }) {
   return (
     <div className="mt-5 overflow-hidden rounded-card border border-brand/35 bg-[linear-gradient(135deg,rgba(83,115,255,0.16),rgba(215,86,197,0.12))] p-5">
       <div className="text-micro font-semibold tracking-[2px] text-brand-lite">DEEPER VIEW</div>
-      <h2 className="mt-2 text-subtitle font-bold text-ink">把“喜欢”和“擅长”变成清晰行动</h2>
+      <h2 className="mt-2 text-subtitle font-bold text-ink">从“我大概是谁”到“我该怎么选”</h2>
       <p className="mt-2 max-w-[66ch] text-footnote leading-[1.8] text-sub">
-        深入分析会逐条说明你的证据链、能量与环境条件，以及适合职业、副业和兴趣的 3 个现实验证方向。
+        解锁完整兴趣与优势地图、天然解决问题路径、消耗模式、适配环境、职业／副业／兴趣建议，以及未来 30 天人生实验。
       </p>
       <Button size="lg" className="mt-5 w-full sm:w-auto" onClick={onUnlock}>
-        解锁深入分析 ¥9.9
+        查看完整行动报告 ¥9.9
       </Button>
     </div>
   );

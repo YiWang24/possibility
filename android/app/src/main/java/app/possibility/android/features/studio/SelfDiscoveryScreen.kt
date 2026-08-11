@@ -355,21 +355,15 @@ fun SelfDiscoveryScreen(
                     Text(if (usedAi) "AI 综合分析" else "本地证据归纳", color = hexColor(0x3ED9A4), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.8.sp)
                     Text("你喜欢与擅长的基本结论", color = Theme.ink, fontSize = 25.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                     Text(result.summary, color = Theme.sub, fontSize = 13.sp, lineHeight = 20.sp, modifier = Modifier.padding(top = 9.dp))
+                    FreeDiscoveryProfile(result, Modifier.padding(top = 18.dp))
                     BasicDiscoveryInsightBlock("我喜欢什么", result.likes, 0xE35CC1, Modifier.padding(top = 20.dp))
                     BasicDiscoveryInsightBlock("我擅长什么", result.strengths, 0x5E96FF, Modifier.padding(top = 12.dp))
                     DiscoveryMap(result, answers, Modifier.padding(top = 12.dp))
                     if (deepUnlocked) {
-                        Text("你的深入分析", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 22.dp))
+                        Text("你的完整行动报告", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 22.dp))
                         DiscoveryInsightBlock("为什么会喜欢", result.likes, 0xE35CC1, Modifier.padding(top = 12.dp))
                         DiscoveryInsightBlock("优势如何发挥", result.strengths, 0x5E96FF, Modifier.padding(top = 12.dp))
-                        Text("职业 · 副业 · 兴趣的验证方向", color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 22.dp))
-                        result.directions.forEachIndexed { directionIndex, direction ->
-                            Column(Modifier.padding(top = 9.dp).fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(Theme.raised).padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(direction.title, color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f)); Text(listOf("职业探索", "副业试验", "兴趣滋养")[directionIndex], color = Theme.faint, fontSize = 10.sp) }
-                                Text(direction.why, color = Theme.sub, fontSize = 11.5.sp, lineHeight = 17.sp)
-                                Text("第一步：${direction.firstStep}", color = hexColor(0xBFD2FF), fontSize = 11.5.sp, lineHeight = 17.sp)
-                            }
-                        }
+                        FullCommercialDiscoveryReport(result, answers, Modifier.padding(top = 14.dp))
                         Text(result.confidenceNote, color = Theme.faint, fontSize = 10.5.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 15.dp))
                     } else {
                         DeepAnalysisGate {
@@ -458,6 +452,77 @@ private fun BasicDiscoveryInsightBlock(title: String, items: List<DiscoveryInsig
 }
 
 @Composable
+private fun FreeDiscoveryProfile(result: SelfDiscoveryAnalysis, modifier: Modifier = Modifier) {
+    val like = result.likes.firstOrNull()?.label ?: "持续好奇"
+    val strength = result.strengths.firstOrNull()?.label ?: "解决问题"
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(hexColor(0x5373FF, 0.12f)).border(1.dp, hexColor(0x6FA5FF, 0.3f), RoundedCornerShape(17.dp)).padding(16.dp)) {
+        Text("FREE PROFILE · 免费基础报告", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.6.sp)
+        Text("你的画像：${strength}型探索者", color = Theme.ink, fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
+        Text("你会被「$like」持续吸引，并自然用「$strength」把模糊的问题向前推进。先找同时需要这两件事的真实任务，比急着决定职业名称更重要。", color = Theme.sub, fontSize = 12.sp, lineHeight = 18.sp, modifier = Modifier.padding(top = 8.dp))
+        Row(Modifier.fillMaxWidth().padding(top = 13.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            FreeSignal("最佳组合", "$like × $strength", Modifier.weight(1f))
+            FreeSignal("先探索", "职业 / 副业 / 兴趣", Modifier.weight(1f))
+            FreeSignal("下一步", "一个真实小任务", Modifier.weight(1f))
+        }
+        Text("免费结论已回答：你被什么吸引、怎样解决问题、现在最值得从哪里开始。", color = hexColor(0xBFD2FF), fontSize = 10.5.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 12.dp))
+    }
+}
+
+@Composable
+private fun FreeSignal(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier.clip(RoundedCornerShape(10.dp)).background(Color.Black.copy(alpha = 0.12f)).padding(9.dp).height(58.dp)) {
+        Text(label, color = Theme.faint, fontSize = 9.5.sp)
+        Text(value, color = Theme.ink, fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold, lineHeight = 14.sp, modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+@Composable
+private fun FullCommercialDiscoveryReport(result: SelfDiscoveryAnalysis, answers: Map<String, DiscoveryAnswer>, modifier: Modifier = Modifier) {
+    val likes = result.likes.map { it.label }
+    val strengths = result.strengths.map { it.label }
+    val energy = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.ENERGY, answers).map { it.tag }.take(2).joinToString("、")
+    val context = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.CONTEXT, answers).map { it.tag }.take(2).joinToString("、")
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CommercialBlock("01 · 优势组合链", "你的天然解决问题路径", "${strengths.joinToString(" → ")}\n这不是单一技能，而是更容易形成差异化的解决问题路径。")
+        CommercialBlock("02 · 能量与边界", "怎样才会持续发挥", "你更可能在「$energy」中被充电，并需要「$context」这样的环境。擅长不等于适合长期承担。")
+        CommercialBlock("03 · 消耗模式", "能做，不等于该长期做", "「${strengths.drop(1).joinToString("、")}」是可靠能力；如果长期没有能量回流，更适合作为辅助能力，而不是职业唯一核心。")
+        CommercialBlock("04 · 职业探索", "领域 × 角色 × 工作方式", careerSummary(likes.firstOrNull()))
+        CommercialBlock("05 · 副业探索", "最低成本的商业化实验", "围绕「${likes.firstOrNull() ?: "兴趣主题"} × ${strengths.firstOrNull() ?: "优势动作"}」，连续 4 周输出 4 次可被别人使用的成果，观察想继续做、有人认可、能产生价值是否同时出现。")
+        CommercialBlock("06 · 兴趣保留", "不必每一种喜欢都赚钱", "「${likes.drop(1).joinToString("、")}」可以先作为纯粹兴趣或低压力练习保留；先验证能量与持续性，再决定是否副业化。")
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Theme.card).padding(16.dp)) {
+            Text("07 · 未来 30 天人生实验", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.4.sp)
+            Text("把结论变成新的证据", color = Theme.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+            result.directions.forEachIndexed { index, direction ->
+                Column(Modifier.fillMaxWidth().padding(top = 9.dp).clip(RoundedCornerShape(13.dp)).background(Theme.raised).padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Text(listOf("职业实验", "副业实验", "兴趣实验")[index], color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                    Text(direction.title, color = Theme.ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(direction.why, color = Theme.sub, fontSize = 11.sp, lineHeight = 16.sp)
+                    Text("本周第一步：${direction.firstStep}", color = hexColor(0xBFD2FF), fontSize = 11.sp, lineHeight = 16.sp)
+                }
+            }
+            Text("一个月后回来看喜欢度、能量、能力与外部反馈的变化，再回写到动态画像和人生实验室。", color = Theme.sub, fontSize = 10.5.sp, lineHeight = 15.sp, modifier = Modifier.padding(top = 10.dp))
+        }
+    }
+}
+
+@Composable
+private fun CommercialBlock(eyebrow: String, title: String, text: String) {
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Theme.card).padding(16.dp)) {
+        Text(eyebrow, color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.4.sp)
+        Text(title, color = Theme.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
+        Text(text, color = Theme.sub, fontSize = 11.5.sp, lineHeight = 16.sp, modifier = Modifier.padding(top = 7.dp))
+    }
+}
+
+private fun careerSummary(like: String?): String = when (like) {
+    "创造与表达" -> "优先体验：体验／内容设计、品牌与创意策略、内容策划。重点验证表达是否能产生真实价值。"
+    "知识与探索" -> "优先体验：用户／行业研究、产品策略、知识内容。重点验证研究与判断是否愿意长期投入。"
+    "人类与连接" -> "优先体验：用户研究、教育／咨询服务、社群体验运营。重点验证理解人是否让你持续有能量。"
+    "系统与优化" -> "优先体验：产品经理、运营策略、服务设计。重点验证复杂系统能否让你越做越清晰。"
+    else -> "优先从真实问题、内容与研究、服务与体验三类任务中选择小项目，验证主题、优势与环境是否同时匹配。"
+}
+
+@Composable
 private fun DiscoveryMap(result: SelfDiscoveryAnalysis, answers: Map<String, DiscoveryAnswer>, modifier: Modifier = Modifier) {
     val energy = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.ENERGY, answers).map { it.tag }
     val context = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.CONTEXT, answers).map { it.tag }
@@ -492,9 +557,9 @@ private fun DeepAnalysisGate(onUnlock: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(9.dp),
     ) {
         Text("DEEPER VIEW", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
-        Text("把“喜欢”和“擅长”变成清晰行动", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        Text("解锁后可查看你的证据链、能量与环境条件，以及适合职业、副业和兴趣的 3 个现实验证方向。", color = Theme.sub, fontSize = 12.sp, lineHeight = 18.sp)
-        DiscoveryButton("解锁深入分析 ¥9.9", true, Modifier.padding(top = 4.dp).fillMaxWidth(), onClick = onUnlock)
+        Text("从“我大概是谁”到“我该怎么选”", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("解锁完整兴趣与优势地图、天然解决问题路径、消耗模式、适配环境、职业／副业／兴趣建议，以及未来 30 天人生实验。", color = Theme.sub, fontSize = 12.sp, lineHeight = 18.sp)
+        DiscoveryButton("查看完整行动报告 ¥9.9", true, Modifier.padding(top = 4.dp).fillMaxWidth(), onClick = onUnlock)
     }
 }
 
