@@ -78,6 +78,10 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
   const suppressClickRef = useRef(false);
   const suppressTimerRef = useRef<number | null>(null);
   const reduceMotionRef = useRef(false);
+  /** 键盘操作中：只有这时才让真实 DOM 焦点跟着高亮气泡走，免得拖拽时抢焦点 */
+  const keyboardRef = useRef(false);
+  /** 上一次真正生效过的搜索词，用来区分「搜索变了」和「旅人列表到货了」 */
+  const lastQueryRef = useRef<string | null>(null);
 
   const [cells, setCells] = useState<WatchCell[]>([]);
   const [noMatch, setNoMatch] = useState(false);
@@ -98,6 +102,10 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
       node.style.opacity = String(place.opacity);
       node.style.zIndex = String(100 - Math.round(place.dist / 10));
       node.classList.toggle("is-search-hidden", hidden);
+      // 淡出的气泡还留在 DOM 里，不摘出无障碍树的话读屏会念出 35 位旅人，
+      // 其中多数既看不见也点不了
+      if (hidden) node.setAttribute("aria-hidden", "true");
+      else node.removeAttribute("aria-hidden");
       if (!hidden && place.dist < focusDist) {
         focusDist = place.dist;
         focusKey = cell.key;
@@ -106,7 +114,13 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
     for (const [key, node] of nodesRef.current) {
       const on = key === focusKey;
       node.classList.toggle("is-focus", on);
-      node.tabIndex = on ? 0 : -1;
+      node.tabIndex = on && !node.classList.contains("is-search-hidden") ? 0 : -1;
+      /* 只改 tabIndex 不移动 DOM 焦点的话：焦点环留在原来那颗气泡上，回车打开的
+         是按方向键之前的那位旅人；等原节点被 7×5 窗口卸载，焦点直接掉回 body，
+         方向键就变成滚页面了。所以键盘操作期间让真实焦点跟着高亮走。 */
+      if (on && keyboardRef.current && document.activeElement !== node) {
+        node.focus({ preventScroll: true });
+      }
     }
   }, []);
 
@@ -140,16 +154,38 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
     const q = queryRef.current;
     let best: WatchCell | null = null;
     let bestDist = Infinity;
+    let bestDy = Infinity;
     for (const cell of visibleCells(travelersRef.current, x, y)) {
       if (!watchMatches(cell.traveler, q)) continue;
       const dist = Math.hypot(cell.wx + x, cell.wy + y);
-      if (dist < bestDist) {
+      const dy = Math.abs(cell.wy + y);
+      /* 横移一格会落在两颗气泡的正中间（相邻列错开半行，距离严格相等）。
+         纯按 dist 比大小时平局由遍历顺序决定，于是「只按左右方向键」也会
+         每次顺带把镜头抬高半行。平局时改取纵向偏移更小的那颗，横移就只横移。 */
+      const closer = dist < bestDist - 0.001;
+      const tie = Math.abs(dist - bestDist) <= 0.001 && dy < bestDy;
+      if (closer || tie) {
         bestDist = dist;
+        bestDy = dy;
         best = cell;
       }
     }
     return best ? { x: -best.wx, y: -best.wy } : null;
   }, []);
+
+  /** 停下时的落点：优先就近整格；搜索命中全在窗口外时把镜头拉回最近的命中项
+      （原型 snapWatchCommunity 的 !nearest 分支，移植时漏了 —— 少了它，
+      拖到没有命中的区域后气泡全淡出且再也吸不回来）。 */
+  const settleTargetFrom = useCallback((x: number, y: number): Pan | null => {
+    const near = nearestPanTo(x, y);
+    if (near) return near;
+    const q = queryRef.current;
+    if (q === "") return null;
+    const hit = findSearchTarget(travelersRef.current, x, y, q);
+    if (!hit) return null;
+    const { wx, wy } = watchWorldPoint(hit.q, hit.r);
+    return { x: -wx, y: -wy };
+  }, [nearestPanTo]);
 
   /* 衰减和插值都按「多少个 60Hz 帧」算，而不是「多少帧」——
      iOS 版把定时器步进压到 8ms 换算衰减，也是为了 ProMotion 上总位移不变。
@@ -173,7 +209,7 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
         motion.mx *= decay;
         motion.my *= decay;
         if (Math.abs(motion.mx) + Math.abs(motion.my) <= INERTIA_STOP) {
-          const target = nearestPanTo(pan.x, pan.y);
+          const target = settleTargetFrom(pan.x, pan.y);
           motionRef.current = target ? { kind: "snap", tx: target.x, ty: target.y } : null;
         }
       } else {
@@ -190,7 +226,7 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
       rafRef.current = motionRef.current === null ? null : requestAnimationFrame(step);
     };
     rafRef.current = requestAnimationFrame(step);
-  }, [nearestPanTo, sync]);
+  }, [settleTargetFrom, sync]);
 
   /** 移到 (x,y)。降低动态效果时直接落位 —— 滑行是本页最大的一段运动，
       光靠样式表里的 prefers-reduced-motion 只能停下背景那圈弧。 */
@@ -212,6 +248,11 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
   /* 拖拽：指针按下记基准，document 上跟移动 —— 手指滑出舞台也不断线。 */
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    /* 第二根手指（手掌、另一只拇指、捏合的起手）不能顶掉进行中的拖拽 ——
+       否则 A 指的移动会被 pointerId 判定挡掉，B 指一抬还会在 A 指仍按着屏幕时
+       启动一段吸附动画，舞台就在手底下自己动起来了。 */
+    if (dragRef.current) return;
+    keyboardRef.current = false;
     stopMotion();
     dragRef.current = {
       pointerId: event.pointerId,
@@ -253,7 +294,7 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
 
     /** 落到最近的整格；已经在格上就什么都不做 */
     const settle = () => {
-      const target = nearestPanTo(panRef.current.x, panRef.current.y);
+      const target = settleTargetFrom(panRef.current.x, panRef.current.y);
       if (!target) return;
       if (target.x === panRef.current.x && target.y === panRef.current.y) return;
       glideTo(target.x, target.y);
@@ -303,7 +344,7 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
       document.removeEventListener("pointerup", onUp);
       document.removeEventListener("pointercancel", onUp);
     };
-  }, [runLoop, sync, nearestPanTo, glideTo]);
+  }, [runLoop, sync, settleTargetFrom, glideTo]);
 
   /* 跟随系统的「减弱动态效果」，用户改设置后立即生效 */
   useEffect(() => {
@@ -324,14 +365,19 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
     [],
   );
 
-  /* 数据到位或搜索词变化：重排格子，并把镜头推到最近的命中旅人 */
+  /* 数据到位或搜索词变化：重排格子；只有搜索词真的变了才推镜头。
+     iOS 只挂在 .onChange(of: searchQuery) 上 —— 这里若跟着 travelers 一起重定位，
+     慢网下列表到货的那一刻会和正在进行的拖拽同时写 panRef，舞台会跟手指打架。 */
   useEffect(() => {
     travelersRef.current = travelers;
     const q = query.trim().toLowerCase();
+    const queryChanged = lastQueryRef.current !== q;
     queryRef.current = q;
+    lastQueryRef.current = q;
     setNoMatch(q !== "" && travelers.length > 0 && !hasWatchMatch(travelers, q));
-    const target = findSearchTarget(travelers, panRef.current.x, panRef.current.y, q);
     sync(true);
+    if (!queryChanged || dragRef.current) return;
+    const target = findSearchTarget(travelers, panRef.current.x, panRef.current.y, q);
     if (target) {
       const { wx, wy } = watchWorldPoint(target.q, target.r);
       glideTo(-wx, -wy);
@@ -343,17 +389,21 @@ export function WatchMode({ travelers, query }: { travelers: Traveler[]; query: 
     paint();
   }, [cells, paint]);
 
-  /* 方向键按格平移 —— 拖拽是鼠标/触摸语义，键盘用户需要等价入口 */
+  /* 方向键按格平移 —— 拖拽是鼠标/触摸语义，键盘用户需要等价入口。
+     左右一次跨两列：错位网格里相邻列整体错开半行，同高度的格子根本不存在，
+     只挪一列必然上下偏 92px，而两个候选严格等距、连平局判据都分不开 ——
+     左右各按一次也回不到原点，镜头会一路往下漂。隔一列才是真正的横向邻居。 */
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const step: Record<string, Pan> = {
-      ArrowLeft: { x: -WATCH_DX, y: 0 },
-      ArrowRight: { x: WATCH_DX, y: 0 },
+      ArrowLeft: { x: -WATCH_DX * 2, y: 0 },
+      ArrowRight: { x: WATCH_DX * 2, y: 0 },
       ArrowUp: { x: 0, y: -WATCH_DY },
       ArrowDown: { x: 0, y: WATCH_DY },
     };
     const delta = step[event.key];
     if (!delta) return;
     event.preventDefault();
+    keyboardRef.current = true;
     // 连按时从「上一次的落点」起跳，而不是从半途的插值位置
     const motion = motionRef.current;
     const baseX = motion?.kind === "snap" ? motion.tx : panRef.current.x;

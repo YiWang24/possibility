@@ -7,8 +7,9 @@ import type { Traveler } from "@/lib/models";
 /** 错位网格步距（iOS WatchModeView.dx / .dy） */
 export const WATCH_DX = 160;
 export const WATCH_DY = 184;
-/** 可见窗口 7×5 —— 完整覆盖渐隐圆及其边缘渐隐带，再多也被 mask 吃掉 */
-export const WATCH_COLS = 7;
+/** 可见窗口 9×5。列数比 iOS 的 7 多一对：桌面舞台宽 1120px（半宽 560），
+    7 列只铺到 ±480+57，两侧会各留一条永远没有气泡的暗带。 */
+export const WATCH_COLS = 9;
 export const WATCH_ROWS = 5;
 
 /** 焦点衰减半径：离舞台中心越远越小越淡，460px 外落到最小档 */
@@ -123,11 +124,15 @@ export function findSearchTarget(
 ): { q: number; r: number } | null {
   if (query === "" || !hasWatchMatch(travelers, query)) return null;
   const centerQ = Math.round(-x / WATCH_DX);
-  const centerR = Math.round(-y / WATCH_DY);
   for (let radius = 0; radius <= SEARCH_MAX_RADIUS; radius++) {
     let best: { q: number; r: number } | null = null;
     let bestDist = Infinity;
     for (let q = centerQ - radius; q <= centerQ + radius; q++) {
+      /* 行基准必须按列各算各的。奇数列整体下移半格，用同一个 centerR 的话
+         ——而镜头有一半时间正停在奇数列的气泡上——Math.round(r + 0.5) 会多进一位，
+         第 0 环扫的是中心气泡下面那一行，搜索重定位于是白跳一格。 */
+      const qOffset = (Math.abs(q) % 2) * (WATCH_DY / 2);
+      const centerR = Math.round((-y - qOffset) / WATCH_DY);
       for (let r = centerR - radius; r <= centerR + radius; r++) {
         // 只看这一环的边框，内部格子上一轮已经扫过
         if (radius !== 0 && Math.abs(q - centerQ) !== radius && Math.abs(r - centerR) !== radius) {

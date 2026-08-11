@@ -399,18 +399,19 @@ html[data-auth="in"] [data-auth-branch="in"] {
     radial-gradient(260px 230px at 14% 18%, rgb(227 92 193 / 0.06), transparent 74%),
     radial-gradient(240px 220px at 90% 80%, rgb(62 217 164 / 0.04), transparent 76%);
   /* 椭圆渐隐：气泡滑出可视圆时自然消失，而不是被硬边切断。
-     纵向半径取 52%（原型是 88%）—— 88% 时渐变在上下边界仍是全不透明，
-     跨边界的那一排气泡会被 overflow 直接切出一条直边。 */
+     两个半径都取 ~52%（原型是 82% / 88%）—— 半径大于半宽时，边界落在渐变
+     0.6 那一段上，alpha 还有 0.99，等于渐隐从不生效，跨边界的气泡被
+     overflow 切出一条直边。52% 让上下左右四条边都真正淡到透明。 */
   -webkit-mask-image: radial-gradient(
-    ellipse 82% 52% at 50% 48%,
+    ellipse 53% 52% at 50% 48%,
     rgb(0 0 0) 0 60%,
-    rgb(0 0 0 / 0.76) 78%,
+    rgb(0 0 0 / 0.76) 80%,
     transparent 100%
   );
   mask-image: radial-gradient(
-    ellipse 82% 52% at 50% 48%,
+    ellipse 53% 52% at 50% 48%,
     rgb(0 0 0) 0 60%,
-    rgb(0 0 0 / 0.76) 78%,
+    rgb(0 0 0 / 0.76) 80%,
     transparent 100%
   );
 }
@@ -614,8 +615,10 @@ html[data-auth="in"] [data-auth-branch="in"] {
   z-index: 1;
 }
 
+/* 不命中的气泡留一点余晖而不是全灭（对齐 iOS 的 0.06）：
+   全灭时拖到没有命中的区域，整个舞台会变成一片纯黑，看不出还挂着筛选。 */
 .watch-user.is-search-hidden {
-  opacity: 0 !important;
+  opacity: 0.06 !important;
   pointer-events: none;
 }
 

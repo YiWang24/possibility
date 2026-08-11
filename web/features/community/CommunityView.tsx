@@ -230,16 +230,18 @@ function TabButton({ label, on, onClick }: { label: string; on: boolean; onClick
   );
 }
 
-/* 卡片 / 放映 切换（iOS watchToggle）。文案给的是「点下去会变成什么」，
-   高亮给的是「现在在放映模式」—— 两者含义不同，靠 aria-label 说清楚。 */
+/* 卡片 / 放映 切换（iOS watchToggle）。可见文案给的是「点下去会变成什么」，
+   高亮给的是「现在在放映模式」。
+   无障碍名称必须跟着 aria-pressed 一起讲同一件事：早先把可见文案直接当 aria-label，
+   放映模式下会读成「切换到卡片视图，已按下」—— 正好说反。这里名称固定成模式本身。 */
 function WatchToggle({ watch, onToggle }: { watch: boolean; onToggle: () => void }) {
-  const label = watch ? "切换到卡片视图" : "切换到放映视图";
+  const hint = watch ? "切换到卡片视图" : "切换到放映视图";
   return (
     <button
       type="button"
       onClick={onToggle}
-      title={label}
-      aria-label={label}
+      title={hint}
+      aria-label="放映模式"
       aria-pressed={watch}
       className={`flex shrink-0 items-center gap-1.5 rounded-chip border px-3 py-1.5 text-caption font-medium transition active:scale-95 ${
         watch
