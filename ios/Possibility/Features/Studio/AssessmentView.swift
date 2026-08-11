@@ -347,7 +347,7 @@ struct SelfDiscoveryView: View {
                 questionInput.padding(.top, 18)
 
                 HStack(spacing: 11) {
-                    secondaryButton("返回") { back() }
+                    secondaryButton("上一个") { back() }
                     primaryButton(index == SelfDiscoveryData.questions.count - 1 ? "交给 AI 综合分析" : "继续") { advance() }
                         .disabled(!canAdvance).opacity(canAdvance ? 1 : 0.42)
                 }
@@ -569,9 +569,15 @@ struct SelfDiscoveryView: View {
         VStack(alignment: .leading, spacing: 9) {
             Text("DEEPER VIEW").font(.system(size: 10, weight: .semibold)).tracking(2).foregroundStyle(Color(hex: 0xBFD2FF))
             Text("从“我大概是谁”到“我该怎么选”").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink)
-            Text("解锁完整兴趣与优势地图、天然解决问题路径、消耗模式、适配环境、职业／副业／兴趣建议，以及未来 30 天人生实验。")
+            Text("完整报告将展示以下目录；个人分数、组合判断和推荐内容会在解锁后显示。")
                 .font(.system(size: 12)).lineSpacing(5).foregroundStyle(Theme.sub)
-            primaryButton("查看完整行动报告 ¥9.9") {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("01  9 项兴趣地图与核心／延展兴趣")
+                Text("02  13 项优势双评分与四象限位置")
+                Text("03  解题路径、能量边界与消耗提醒")
+                Text("04  职业／副业／兴趣建议与 30 天实验")
+            }.font(.system(size: 10.5)).foregroundStyle(Color(hex: 0xBFD2FF)).padding(11).frame(maxWidth: .infinity, alignment: .leading).background(Theme.raised, in: RoundedRectangle(cornerRadius: 12))
+            primaryButton("解锁完整深入报告 ¥9.9") {
                 deepUnlocked = true
                 toast.show("已解锁深入分析（预览环境）")
             }.padding(.top, 5)

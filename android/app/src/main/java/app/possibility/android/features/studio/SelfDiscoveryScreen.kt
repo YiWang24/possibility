@@ -355,7 +355,7 @@ fun SelfDiscoveryScreen(
                 Text(question.hint, color = Theme.sub, fontSize = 12.5.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
                 DiscoveryQuestionInput(question, current, Modifier.padding(top = 18.dp)) { answers[question.id] = it }
                 Row(Modifier.padding(top = 22.dp), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
-                    DiscoveryButton("返回", false, Modifier.weight(1f), ::back)
+                    DiscoveryButton("上一个", false, Modifier.weight(1f), ::back)
                     DiscoveryButton(if (index == SelfDiscoveryData.questions.lastIndex) "交给 AI 综合分析" else "继续", true, Modifier.weight(1.45f), enabled = canAdvance, onClick = ::advance)
                 }
             }
@@ -626,8 +626,14 @@ private fun DeepAnalysisGate(onUnlock: () -> Unit) {
     ) {
         Text("DEEPER VIEW", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 2.sp)
         Text("从“我大概是谁”到“我该怎么选”", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-        Text("解锁完整兴趣与优势地图、天然解决问题路径、消耗模式、适配环境、职业／副业／兴趣建议，以及未来 30 天人生实验。", color = Theme.sub, fontSize = 12.sp, lineHeight = 18.sp)
-        DiscoveryButton("查看完整行动报告 ¥9.9", true, Modifier.padding(top = 4.dp).fillMaxWidth(), onClick = onUnlock)
+        Text("完整报告将展示以下目录；个人分数、组合判断和推荐内容会在解锁后显示。", color = Theme.sub, fontSize = 12.sp, lineHeight = 18.sp)
+        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Theme.raised).padding(11.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("01  9 项兴趣地图与核心／延展兴趣", color = hexColor(0xBFD2FF), fontSize = 10.5.sp)
+            Text("02  13 项优势双评分与四象限位置", color = hexColor(0xBFD2FF), fontSize = 10.5.sp)
+            Text("03  解题路径、能量边界与消耗提醒", color = hexColor(0xBFD2FF), fontSize = 10.5.sp)
+            Text("04  职业／副业／兴趣建议与 30 天实验", color = hexColor(0xBFD2FF), fontSize = 10.5.sp)
+        }
+        DiscoveryButton("解锁完整深入报告 ¥9.9", true, Modifier.padding(top = 4.dp).fillMaxWidth(), onClick = onUnlock)
     }
 }
 

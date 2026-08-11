@@ -8,7 +8,7 @@
 export type DiscoveryAxis = "like" | "skill" | "evidence" | "environment" | "choice" | "value" | "open";
 export type DiscoveryKind = "interest" | "strength" | "select" | "environment" | "choice" | "open";
 
-export interface DiscoveryOption { label: string; tag: string; glyph: string; }
+export interface DiscoveryOption { label: string; tag: string; glyph: string; detail?: string; }
 export interface DiscoveryQuestion {
   id: string;
   axis: DiscoveryAxis;
@@ -78,10 +78,25 @@ const strengthActions = [
   ["优化精进", ["一个东西已经能用时，我还是会发现它可以改进的地方。", "重复做同一件事时，我会自然寻找更快、更准或更好的方法。"]],
 ] as const;
 
-const strengthOptions: DiscoveryOption[] = strengthActions.map(([label], index) => ({ label, tag: label, glyph: icon(index) }));
+const strengthOptionDetails: Record<string, string> = {
+  "探索求知": "例如：主动查资料、追问原因、把陌生问题研究透。",
+  "分析洞察": "例如：从零散信息中找到规律、关键矛盾或隐藏原因。",
+  "创意构想": "例如：快速想到多种方案，或把两个想法连接成新做法。",
+  "结构设计": "例如：把混乱内容整理成框架、步骤和优先级。",
+  "表达呈现": "例如：把复杂内容说清楚、写明白，或做成易理解的呈现。",
+  "共情理解": "例如：察觉他人没有说出口的担心，并理解不同立场。",
+  "教导赋能": "例如：把自己的做法拆开，让别人也能学会。",
+  "连接协作": "例如：想到合适的人一起做，并自然建立协作关系。",
+  "影响推动": "例如：争取支持、说服他人，推动值得做的事开始发生。",
+  "组织统筹": "例如：安排人、时间和资源，让多人事情不失控。",
+  "执行推进": "例如：把讨论变成下一步行动，并持续推进到完成。",
+  "实践制作": "例如：先做一个可验证版本，通过真实操作找到答案。",
+  "优化精进": "例如：发现可改进处，并让流程或成果更快、更好。",
+};
+const strengthOptions: DiscoveryOption[] = strengthActions.map(([label], index) => ({ label, tag: label, glyph: icon(index), detail: strengthOptionDetails[label] }));
 const valueOptions: DiscoveryOption[] = [
-  ["自由与创造", "✦"], ["成长与求真", "◎"], ["关怀与连接", "♡"], ["秩序与清晰", "▦"], ["影响与担当", "↗"], ["真实与实践", "◇"],
-].map(([label, glyph]) => ({ label, tag: label, glyph }));
+  ["自由与创造", "✦", "希望有表达空间，并能按自己的方式创造与选择。"], ["成长与求真", "◎", "希望持续理解、学习，并接近更真实的答案。"], ["关怀与连接", "♡", "希望人被看见、理解、支持，关系有温度。"], ["秩序与清晰", "▦", "希望复杂事情有逻辑、边界与清楚的规则。"], ["影响与担当", "↗", "希望行动能带来真实改变，并愿意承担推动责任。"], ["真实与实践", "◇", "希望产出能落到现实、被使用或直接体验到。"],
+].map(([label, glyph, detail]) => ({ label, tag: label, glyph, detail }));
 
 const evidencePrompts = [
   "哪类事情即使没人教，你也比较容易知道怎么做？",

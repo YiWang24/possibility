@@ -200,7 +200,7 @@ export function WantToDoView() {
 
           <div className="mt-6 flex items-center gap-3">
             <Button variant="ghost" size="lg" className="flex-1" onClick={back}>
-              返回
+              上一个
             </Button>
             <Button size="lg" className="flex-[1.5]" disabled={!canAdvance} onClick={next}>
               {index === DISCOVERY_QUESTIONS.length - 1 ? "交给 AI 综合分析" : "继续"}
@@ -306,7 +306,7 @@ function QuestionInput({
   }
   return <div className="mt-6 grid gap-2.5 sm:grid-cols-2">{question.options?.map((option) => {
     const selected = answer.selected.includes(option.label);
-    return <button key={option.label} aria-pressed={selected} onClick={() => onToggle(option.label, question.kind === "choice")} className="flex min-h-[70px] items-center gap-3 rounded-tile border px-4 py-3 text-left transition active:scale-[0.98]" style={{ background: selected ? "rgba(83,115,255,0.18)" : "var(--color-card)", borderColor: selected ? "rgba(111,165,255,0.72)" : "var(--color-line)" }}><span className="grid size-9 shrink-0 place-items-center rounded-field bg-raised text-callout text-brand-lite">{selected ? "✓" : option.glyph}</span><span className="text-body font-medium leading-[1.55] text-ink">{option.label}</span></button>;
+    return <button key={option.label} aria-pressed={selected} onClick={() => onToggle(option.label, question.kind === "choice")} className="flex min-h-[70px] items-center gap-3 rounded-tile border px-4 py-3 text-left transition active:scale-[0.98]" style={{ background: selected ? "rgba(83,115,255,0.18)" : "var(--color-card)", borderColor: selected ? "rgba(111,165,255,0.72)" : "var(--color-line)" }}><span className="grid size-9 shrink-0 place-items-center rounded-field bg-raised text-callout text-brand-lite">{selected ? "✓" : option.glyph}</span><span><span className="block text-body font-medium leading-[1.55] text-ink">{option.label}</span>{option.detail && <span className="mt-1 block text-micro leading-[1.55] text-sub">{option.detail}</span>}</span></button>;
   })}</div>;
 }
 
@@ -517,11 +517,28 @@ function DeepAnalysisGate({ onUnlock }: { onUnlock: () => void }) {
       <div className="text-micro font-semibold tracking-[2px] text-brand-lite">DEEPER VIEW</div>
       <h2 className="mt-2 text-subtitle font-bold text-ink">从“我大概是谁”到“我该怎么选”</h2>
       <p className="mt-2 max-w-[66ch] text-footnote leading-[1.8] text-sub">
-        解锁完整兴趣与优势地图、天然解决问题路径、消耗模式、适配环境、职业／副业／兴趣建议，以及未来 30 天人生实验。
+        先看看完整报告的目录。具体的个人分数、组合判断与推荐内容会在解锁后生成并展示。
       </p>
+      <LockedReportPreview />
       <Button size="lg" className="mt-5 w-full sm:w-auto" onClick={onUnlock}>
-        查看完整行动报告 ¥9.9
+        解锁完整深入报告 ¥9.9
       </Button>
+    </div>
+  );
+}
+
+function LockedReportPreview() {
+  const sections = [
+    ["01", "完整喜欢地图", "9 个兴趣主题的投入强度、核心／延展兴趣与伪兴趣风险"],
+    ["02", "完整擅长地图", "13 个优势动作的喜欢度、自然优势与四象限位置"],
+    ["03", "你的解题路径", "2–3 条天然解决问题的动作链，以及优势使用过度的提醒"],
+    ["04", "职业与副业匹配", "领域 × 角色 × 工作方式、探索门槛与第一份可交付成果"],
+    ["05", "兴趣与 30 天实验", "哪些适合职业化、保留为兴趣，以及接下来如何验证"],
+  ];
+  return (
+    <div className="mt-5 overflow-hidden rounded-field border border-white/10 bg-black/10">
+      {sections.map(([index, title, desc], sectionIndex) => <div key={title} className="relative flex items-start gap-3 border-b border-white/10 px-3.5 py-3.5 last:border-0"><span className="pt-0.5 text-micro font-bold text-brand-lite">{index}</span><div><div className="text-caption font-semibold text-ink">{title}</div><div className="mt-1 text-micro leading-[1.6] text-sub">{desc}</div></div>{sectionIndex > 1 && <span className="absolute right-3 top-3.5 rounded-chip border border-white/10 bg-black/15 px-2 py-1 text-[10px] text-faint">解锁查看</span>}</div>)}
+      <div className="pointer-events-none absolute" />
     </div>
   );
 }
