@@ -51,7 +51,7 @@ features/
   me/         我的：Hero+4 Tab、编辑、隐私中心（facts/提案/回执/可见性/清空）
   profile/    旅人主页 4 Tab + 付费墙（mock 解锁 insert unlocks）
   cardgame/   人生卡牌：大厅 + 引擎状态机 + 四玩法 + card-game-session 同步
-  studio/     画像工坊 + 5 类测评（holland/bigfive/strength/love/family）
+  studio/     画像工坊 + 6 类测评（holland/bigfive/strength/love/family/social）+ 喜欢×擅长完整探索
 ```
 
 ## 与 iOS 的平台差异

@@ -31,6 +31,12 @@ struct DimensionConfig: Identifiable, Sendable {
         var assessment: AssessmentKind? = nil
         /// 点击启动的卡牌游戏（Phase C 接入）
         var cardGame: String? = nil
+        /// 点击启动“喜欢 × 擅长”完整探索
+        var selfDiscovery = false
+        /// 支持中文作答的第三方官方入口
+        var externalURL: String? = nil
+        var provider: String? = nil
+        var access: String? = nil
     }
 }
 
@@ -48,7 +54,9 @@ enum DimensionData {
                 ["倾听", "审美判断", "组织信息", "推动事情落地", "照顾他人感受"],
             ],
             tools: [
+                .init(name: "喜欢 × 擅长完整探索", desc: "多选与自由回答结合，由 AI 同时生成“我喜欢”和“我擅长”", duration: "约 10 分钟", tint: 0x343266, selfDiscovery: true),
                 .init(name: "优势证据探索", desc: "无需先选关键词，用 15 个情境反推优势信号", duration: "约 3 分钟", tint: 0x273A67, assessment: .strength),
+                .init(name: "VIA 性格优势测评", desc: "识别 24 项性格优势与代表优势，适合补充“我怎样处于最佳状态”", duration: "约 12 分钟", tint: 0x28454A, externalURL: "https://www.viacharacter.org/pro/xuan/account/register", provider: "VIA Institute", access: "官方 · 中文可选 · 免费基础结果"),
             ]),
         .like: DimensionConfig(
             key: .like, title: "我喜欢", icon: "♡", tint: 0xE35CC1,
@@ -59,6 +67,7 @@ enum DimensionData {
                 ["照顾小动物", "记录生活", "逛展看电影", "解决一道难题", "慢慢做一顿饭"],
             ],
             tools: [
+                .init(name: "喜欢 × 擅长完整探索", desc: "多选与自由回答结合，由 AI 同时生成“我喜欢”和“我擅长”", duration: "约 10 分钟", tint: 0x4B2D62, selfDiscovery: true),
                 .init(name: "霍兰德兴趣测评", desc: "完整 30 题 · 生成 RIASEC 六维兴趣画像", duration: "约 5 分钟", tint: 0x2E3D66, assessment: .holland),
             ]),
         .love: DimensionConfig(
@@ -94,6 +103,7 @@ enum DimensionData {
                 ["价值观相近", "不被比较", "冲突后愿意修复", "共同兴趣", "保留独处空间"],
             ],
             tools: [
+                .init(name: "人际需要与边界探索", desc: "20 个原创情境，看见你在连接、互惠、深度、边界与修复中的需要", duration: "约 5 分钟", tint: 0x273F62, assessment: .social),
                 .init(name: "人际卡牌：最后会守住什么？", desc: "从 9 张人际底牌出发，在多轮取舍中留下最关心的 3 点", duration: "约 3 分钟", tint: 0x29466A, cardGame: "social"),
             ]),
     ]

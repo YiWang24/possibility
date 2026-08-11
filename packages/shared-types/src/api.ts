@@ -3,6 +3,7 @@ export const EDGE_FUNCTIONS = [
   'match',
   'simulate',
   'analyze-diary',
+  'analyze-self-discovery',
   'create-diary-entry',
   'finalize-diary-entry',
   'diary-audio-url',

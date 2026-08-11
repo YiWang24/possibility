@@ -419,6 +419,15 @@ final class SupabaseService {
         return try await callFunction("match", body: Body(user_state: userState), as: MatchResponse.self)
     }
 
+    /// POST /analyze-self-discovery：综合 12 道中文原创探索题，区分喜欢与擅长。
+    func analyzeSelfDiscovery(_ request: SelfDiscoveryRequest) async throws -> SelfDiscoveryAnalysis {
+        try await callFunction(
+            "analyze-self-discovery",
+            body: request,
+            as: SelfDiscoveryAnalysis.self
+        )
+    }
+
     /// POST /simulate 完整出参：{scenarios, bottom_line_analysis, recommended_traveler_ids}
     /// - Parameter carryCards: 底线卡（最多 6 张，validate.ts validateSimulateInputV2）
     func simulateFull(

@@ -9,8 +9,10 @@ struct DimensionSheet: View {
     var initialSelected: [String] = []
     var onSave: ([String]) -> Void
     var onSaveAssessment: ((AssessmentKind, [String], [Int], [String: Int]) -> Void)? = nil
+    var onSaveSelfDiscovery: (([String], [String]) -> Void)? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @Environment(ToastCenter.self) private var toast
 
     @State private var batch = 0
@@ -19,6 +21,7 @@ struct DimensionSheet: View {
     @State private var showCustomInput = false
     @State private var customText = ""
     @State private var activeAssessment: AssessmentKind?
+    @State private var showSelfDiscovery = false
     /// 卡牌游戏启动回调（Phase C 接入；nil → toast 占位）
     var onLaunchCardGame: ((String) -> Void)? = nil
 
@@ -68,6 +71,14 @@ struct DimensionSheet: View {
             AssessmentFlowView(kind: kind) { assessmentKind, tags, answers, scores in
                 onSaveAssessment?(assessmentKind, tags, answers, scores)
                 toast.show("结果已写入画像 · 原始答案默认私密")
+                dismiss()
+            }
+            .environment(toast)
+        }
+        .fullScreenCover(isPresented: $showSelfDiscovery) {
+            SelfDiscoveryView { likes, strengths in
+                onSaveSelfDiscovery?(likes, strengths)
+                toast.show("已同时写入“我喜欢”和“我擅长”")
                 dismiss()
             }
             .environment(toast)
@@ -172,7 +183,11 @@ struct DimensionSheet: View {
         VStack(spacing: 11) {
             ForEach(cfg.tools) { tool in
                 Button {
-                    if let kind = tool.assessment {
+                    if tool.selfDiscovery {
+                        showSelfDiscovery = true
+                    } else if let urlString = tool.externalURL, let url = URL(string: urlString) {
+                        openURL(url)
+                    } else if let kind = tool.assessment {
                         activeAssessment = kind
                     } else if let game = tool.cardGame, let onLaunchCardGame {
                         onLaunchCardGame(game)
@@ -182,9 +197,22 @@ struct DimensionSheet: View {
                 } label: {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(tool.name).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                            HStack(spacing: 7) {
+                                Text(tool.name).font(.system(size: 13.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                                if tool.externalURL != nil {
+                                    Text("官方 ↗")
+                                        .font(.system(size: 9, weight: .semibold))
+                                        .foregroundStyle(Color(hex: 0x9DBCFF))
+                                        .padding(.horizontal, 6).padding(.vertical, 2)
+                                        .background(Color.white.opacity(0.06), in: Capsule())
+                                }
+                            }
                             Text(tool.desc).font(.system(size: 11)).foregroundStyle(Theme.sub).lineSpacing(2)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                            if let provider = tool.provider, let access = tool.access {
+                                Text("\(provider) · \(access)")
+                                    .font(.system(size: 9.5)).foregroundStyle(Theme.faint)
+                            }
                         }
                         Text(tool.duration).font(.system(size: 10.5)).foregroundStyle(Color(hex: 0x9DBCFF))
                             .padding(.horizontal, 9).padding(.vertical, 3)

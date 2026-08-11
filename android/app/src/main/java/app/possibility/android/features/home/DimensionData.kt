@@ -31,6 +31,12 @@ data class DimensionTool(
     val assessment: AssessmentKind? = null,
     /** 点击启动的卡牌游戏 kind（life / marriage / family / social）。 */
     val cardGame: String? = null,
+    /** 点击启动“喜欢 × 擅长”完整探索。 */
+    val selfDiscovery: Boolean = false,
+    /** 支持中文作答的第三方官方入口。 */
+    val externalUrl: String? = null,
+    val provider: String? = null,
+    val access: String? = null,
 )
 
 /** 单个软维度配置。 */
@@ -61,7 +67,9 @@ object DimensionData {
                 listOf("倾听", "审美判断", "组织信息", "推动事情落地", "照顾他人感受"),
             ),
             tools = listOf(
+                DimensionTool("喜欢 × 擅长完整探索", "多选与自由回答结合，由 AI 同时生成“我喜欢”和“我擅长”", "约 10 分钟", 0x343266, selfDiscovery = true),
                 DimensionTool("优势证据探索", "无需先选关键词，用 15 个情境反推优势信号", "约 3 分钟", 0x273A67, assessment = AssessmentKind.STRENGTH),
+                DimensionTool("VIA 性格优势测评", "识别 24 项性格优势与代表优势，适合补充“我怎样处于最佳状态”", "约 12 分钟", 0x28454A, externalUrl = "https://www.viacharacter.org/pro/xuan/account/register", provider = "VIA Institute", access = "官方 · 中文可选 · 免费基础结果"),
             ),
         ),
         DimensionKey.LIKE to DimensionConfig(
@@ -73,6 +81,7 @@ object DimensionData {
                 listOf("照顾小动物", "记录生活", "逛展看电影", "解决一道难题", "慢慢做一顿饭"),
             ),
             tools = listOf(
+                DimensionTool("喜欢 × 擅长完整探索", "多选与自由回答结合，由 AI 同时生成“我喜欢”和“我擅长”", "约 10 分钟", 0x4B2D62, selfDiscovery = true),
                 DimensionTool("霍兰德兴趣测评", "完整 30 题 · 生成 RIASEC 六维兴趣画像", "约 5 分钟", 0x2E3D66, assessment = AssessmentKind.HOLLAND),
             ),
         ),
@@ -111,6 +120,7 @@ object DimensionData {
                 listOf("价值观相近", "不被比较", "冲突后愿意修复", "共同兴趣", "保留独处空间"),
             ),
             tools = listOf(
+                DimensionTool("人际需要与边界探索", "20 个原创情境，看见你在连接、互惠、深度、边界与修复中的需要", "约 5 分钟", 0x273F62, assessment = AssessmentKind.SOCIAL),
                 DimensionTool("人际卡牌：最后会守住什么？", "从 9 张人际底牌出发，在多轮取舍中留下最关心的 3 点", "约 3 分钟", 0x29466A, cardGame = "social"),
             ),
         ),

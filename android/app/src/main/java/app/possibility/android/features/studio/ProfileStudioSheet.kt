@@ -72,7 +72,7 @@ private val gridSpecs = listOf(
     GridSpec("like", "♡", 0xF4BDE0, 0xE35CC1, "我喜欢", "可用关键词或霍兰德兴趣测评继续探索", AssessmentKind.HOLLAND),
     GridSpec("love", "✿", 0xFFB69E, 0xFF7A4D, "我在恋爱关系中在意", "关键词、关系测评与婚姻卡牌", AssessmentKind.LOVE),
     GridSpec("family", "⌂", 0x8EE7C8, 0x3ED9A4, "我在家庭关系中在意", "关键词、家庭关系测评与家庭卡牌", AssessmentKind.FAMILY),
-    GridSpec("social", "◎", 0xBFD2FF, 0x5E96FF, "我在人际交往中在意", "关键词与人际交往卡牌", null),
+    GridSpec("social", "◎", 0xBFD2FF, 0x5E96FF, "我在人际交往中在意", "关键词、人际需要测评与人际交往卡牌", AssessmentKind.SOCIAL),
 )
 
 @OptIn(ExperimentalLayoutApi::class)

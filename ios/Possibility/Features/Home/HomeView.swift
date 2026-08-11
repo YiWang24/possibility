@@ -67,6 +67,9 @@ struct HomeView: View {
                     assessmentAnswers: answers,
                     assessmentScores: scores
                 )
+            }, onSaveSelfDiscovery: { likes, strengths in
+                model.saveDimension(.like, keywords: likes, using: supabase)
+                model.saveDimension(.skill, keywords: strengths, using: supabase)
             }, onLaunchCardGame: { game in
                 guard let game = CardGameKind(rawValue: game) else { return }
                 pendingCardGame = game

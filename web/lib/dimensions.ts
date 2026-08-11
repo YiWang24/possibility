@@ -7,7 +7,7 @@ export type DimensionKey = "skill" | "like" | "love" | "family" | "social";
 export const DIMENSION_KEYS: DimensionKey[] = ["skill", "like", "love", "family", "social"];
 
 /** 可启动的测评（对齐 iOS AssessmentKind） */
-export type AssessmentKind = "strength" | "holland" | "love" | "family";
+export type AssessmentKind = "strength" | "holland" | "love" | "family" | "social";
 
 export interface DimensionTool {
   name: string;
@@ -19,6 +19,13 @@ export interface DimensionTool {
   assessment?: AssessmentKind;
   /** 点击启动的卡牌游戏 kind（marriage / family / social） */
   cardGame?: string;
+  /** 点击进入独立的引导式探索流程 */
+  href?: string;
+  /** 第三方官方测评或量表说明页；只做跳转，不复制其受许可保护的题库 */
+  externalHref?: string;
+  /** 外部工具来源与访问说明 */
+  provider?: string;
+  access?: string;
 }
 
 export interface DimensionConfig {
@@ -47,11 +54,27 @@ export const DIMENSIONS: Record<DimensionKey, DimensionConfig> = {
     ],
     tools: [
       {
+        name: "喜欢 × 擅长完整探索",
+        desc: "多选与自由回答结合，由 AI 同时生成“我喜欢”和“我擅长”",
+        duration: "约 10 分钟",
+        tint: "#343266",
+        href: "/assessment/want-to-do",
+      },
+      {
         name: "优势证据探索",
         desc: "无需先选关键词，用 15 个情境反推优势信号",
         duration: "约 3 分钟",
         tint: "#273A67",
         assessment: "strength",
+      },
+      {
+        name: "VIA 性格优势测评",
+        desc: "识别 24 项性格优势与代表优势，适合补充“我怎样处于最佳状态”",
+        duration: "约 12 分钟",
+        tint: "#28454A",
+        externalHref: "https://www.viacharacter.org/pro/xuan/account/register",
+        provider: "VIA Institute",
+        access: "官方 · 中文可选 · 免费基础结果",
       },
     ],
   },
@@ -67,6 +90,13 @@ export const DIMENSIONS: Record<DimensionKey, DimensionConfig> = {
       ["照顾小动物", "记录生活", "逛展看电影", "解决一道难题", "慢慢做一顿饭"],
     ],
     tools: [
+      {
+        name: "喜欢 × 擅长完整探索",
+        desc: "多选与自由回答结合，由 AI 同时生成“我喜欢”和“我擅长”",
+        duration: "约 10 分钟",
+        tint: "#4B2D62",
+        href: "/assessment/want-to-do",
+      },
       {
         name: "霍兰德兴趣测评",
         desc: "完整 30 题 · 生成 RIASEC 六维兴趣画像",
@@ -144,6 +174,13 @@ export const DIMENSIONS: Record<DimensionKey, DimensionConfig> = {
       ["价值观相近", "不被比较", "冲突后愿意修复", "共同兴趣", "保留独处空间"],
     ],
     tools: [
+      {
+        name: "人际需要与边界探索",
+        desc: "20 个原创情境，看见你在连接、互惠、深度、边界与修复中的需要",
+        duration: "约 5 分钟",
+        tint: "#273F62",
+        assessment: "social",
+      },
       {
         name: "人际卡牌：最后会守住什么？",
         desc: "从 9 张人际底牌出发，在多轮取舍中留下最关心的 3 点",

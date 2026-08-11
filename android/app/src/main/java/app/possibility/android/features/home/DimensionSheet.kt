@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -64,9 +65,11 @@ fun DimensionSheet(
     initialSelected: List<String> = emptyList(),
     onSave: (List<String>) -> Unit,
     onStartAssessment: (AssessmentKind) -> Unit,
+    onStartSelfDiscovery: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val cfg = remember(dimension) { DimensionData.config(dimension) }
+    val uriHandler = LocalUriHandler.current
 
     var batch by remember { mutableStateOf(0) }
     val selected = remember { mutableStateListOf<String>().apply { addAll(initialSelected) } }
@@ -264,6 +267,8 @@ fun DimensionSheet(
                                 .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(18.dp))
                                 .clickable {
                                     when {
+                                        tool.selfDiscovery -> onStartSelfDiscovery()
+                                        tool.externalUrl != null -> uriHandler.openUri(tool.externalUrl)
                                         tool.assessment != null -> onStartAssessment(tool.assessment)
                                         tool.cardGame != null -> ToastCenter.show("「${tool.name}」请在人生卡牌入口开始")
                                         else -> ToastCenter.show("「${tool.name}」即将上线")
@@ -273,8 +278,16 @@ fun DimensionSheet(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(tool.name, color = Theme.ink, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                                Row(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(tool.name, color = Theme.ink, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                                    if (tool.externalUrl != null) {
+                                        Text("官方 ↗", color = dc(0x9DBCFF), fontSize = 9.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
                                 Text(tool.desc, color = Theme.sub, fontSize = 11.sp, lineHeight = 15.sp)
+                                if (tool.provider != null && tool.access != null) {
+                                    Text("${tool.provider} · ${tool.access}", color = Theme.faint, fontSize = 9.5.sp)
+                                }
                             }
                             Spacer(Modifier.width(10.dp))
                             Box(
