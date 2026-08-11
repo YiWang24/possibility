@@ -447,7 +447,7 @@ private fun DiscoveryQuestionInput(question: DiscoveryQuestion, answer: Discover
             RatingControl("你有多喜欢这样做？", "很消耗", "做完有能量", answer.like) { onChange(answer.copy(like = it)) }
             RatingControl("你有多自然地能做好？", "明显吃力", "常被认为是优势", answer.skill) { onChange(answer.copy(skill = it)) }
         }
-        DiscoveryKind.ENVIRONMENT -> RatingControl("更接近哪一端？", question.left ?: "左侧", question.right ?: "右侧", answer.scale, modifier) { onChange(answer.copy(scale = it)) }
+        DiscoveryKind.ENVIRONMENT -> RatingControl(null, question.left ?: "左侧", question.right ?: "右侧", answer.scale, modifier) { onChange(answer.copy(scale = it)) }
         DiscoveryKind.OPEN -> Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.raised).padding(14.dp)) {
             Text("真实经历比“正确答案”更重要", color = Theme.ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
             Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(156.dp).clip(RoundedCornerShape(12.dp)).background(Theme.paper).border(1.dp, Theme.line, RoundedCornerShape(12.dp)).padding(12.dp)) {
@@ -477,13 +477,13 @@ private fun DiscoveryQuestionInput(question: DiscoveryQuestion, answer: Discover
 }
 
 @Composable
-private fun RatingControl(label: String, low: String, high: String, value: Int?, modifier: Modifier = Modifier, onSelect: (Int) -> Unit) {
+private fun RatingControl(label: String?, low: String, high: String, value: Int?, modifier: Modifier = Modifier, onSelect: (Int) -> Unit) {
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.raised).padding(14.dp)) {
-        Text(label, color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { (1..5).forEach { score ->
+        if (label != null) Text(label, color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Row(Modifier.fillMaxWidth().padding(top = if (label != null) 12.dp else 0.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { (1..5).forEach { score ->
             Box(Modifier.weight(1f).clip(RoundedCornerShape(11.dp)).background(if (value == score) hexColor(0x5373FF, 0.24f) else Theme.paper).border(1.dp, if (value == score) hexColor(0x6FA5FF, 0.78f) else Theme.line, RoundedCornerShape(11.dp)).clickable { onSelect(score) }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) { Text("$score", color = if (value == score) hexColor(0xBFD2FF) else Theme.sub, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
         }}
-        Row(Modifier.fillMaxWidth().padding(top = 7.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text(low, color = Theme.faint, fontSize = 10.sp); Text(high, color = Theme.faint, fontSize = 10.sp, textAlign = TextAlign.End) }
+        Row(Modifier.fillMaxWidth().padding(top = 9.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text(low, color = Theme.sub, fontSize = 13.sp, fontWeight = FontWeight.Medium); Text(high, color = Theme.sub, fontSize = 13.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.End) }
     }
 }
 

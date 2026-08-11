@@ -299,7 +299,7 @@ function QuestionInput({
     return <div className="mt-6 grid gap-4"><RatingScale label="你有多喜欢这样做？" low="很消耗" high="做完有能量" value={answer.like} onChange={(like) => onChange({ ...answer, like })} /><RatingScale label="你有多自然地能做好？" low="明显吃力" high="常被认为是优势" value={answer.skill} onChange={(skill) => onChange({ ...answer, skill })} /></div>;
   }
   if (question.kind === "environment") {
-    return <div className="mt-6"><RatingScale label="更接近哪一端？" low={question.left ?? "左侧"} high={question.right ?? "右侧"} value={answer.scale} onChange={(scale) => onChange({ ...answer, scale })} /></div>;
+    return <div className="mt-6"><RatingScale low={question.left ?? "左侧"} high={question.right ?? "右侧"} value={answer.scale} onChange={(scale) => onChange({ ...answer, scale })} /></div>;
   }
   if (question.kind === "open") {
     return <div className="mt-6 rounded-card border border-line bg-card p-4"><label htmlFor={question.id} className="text-caption font-semibold text-ink">真实经历比“正确答案”更重要</label><textarea id={question.id} value={answer.text ?? ""} maxLength={400} placeholder="写下 1–3 句真实经历…" onChange={(event) => onChange({ ...answer, text: event.target.value })} className="mt-3 min-h-[150px] w-full resize-y rounded-field border border-line bg-canvas p-3.5 text-body leading-[1.7] text-ink outline-none placeholder:text-faint focus:border-brand" /><div className="mt-2 text-right text-micro text-faint">{answer.text?.length ?? 0}/400</div></div>;
@@ -310,8 +310,8 @@ function QuestionInput({
   })}</div>;
 }
 
-function RatingScale({ label, low, high, value, onChange }: { label: string; low: string; high: string; value?: number; onChange: (value: number) => void }) {
-  return <div className="rounded-card border border-line bg-card p-4"><div className="text-body font-semibold text-ink">{label}</div><div className="mt-4 grid grid-cols-5 gap-2">{[1, 2, 3, 4, 5].map((score) => <button key={score} aria-label={`${label}：${score} 分`} aria-pressed={value === score} onClick={() => onChange(score)} className="min-h-12 rounded-field border text-body font-bold transition active:scale-[0.97]" style={{ background: value === score ? "rgba(83,115,255,0.23)" : "var(--color-raised)", borderColor: value === score ? "rgba(111,165,255,0.82)" : "var(--color-line)", color: value === score ? "var(--color-brand-lite)" : "var(--color-sub)" }}>{score}</button>)}</div><div className="mt-2 flex justify-between gap-4 text-micro text-faint"><span>{low}</span><span className="text-right">{high}</span></div></div>;
+function RatingScale({ label, low, high, value, onChange }: { label?: string; low: string; high: string; value?: number; onChange: (value: number) => void }) {
+  return <div className="rounded-card border border-line bg-card p-4">{label && <div className="text-body font-semibold text-ink">{label}</div>}<div className={`${label ? "mt-4" : ""} grid grid-cols-5 gap-2`}>{[1, 2, 3, 4, 5].map((score) => <button key={score} aria-label={`${label ?? "偏好程度"}：${score} 分`} aria-pressed={value === score} onClick={() => onChange(score)} className="min-h-12 rounded-field border text-body font-bold transition active:scale-[0.97]" style={{ background: value === score ? "rgba(83,115,255,0.23)" : "var(--color-raised)", borderColor: value === score ? "rgba(111,165,255,0.82)" : "var(--color-line)", color: value === score ? "var(--color-brand-lite)" : "var(--color-sub)" }}>{score}</button>)}</div><div className="mt-3 flex justify-between gap-4 text-caption font-medium text-sub"><span>{low}</span><span className="text-right">{high}</span></div></div>;
 }
 
 function BasicInsightCard({

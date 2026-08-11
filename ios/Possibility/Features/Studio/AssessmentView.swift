@@ -373,7 +373,7 @@ struct SelfDiscoveryView: View {
                 }
             }
         case .environment:
-            scoreControl("更接近哪一端？", low: question.left ?? "左侧", high: question.right ?? "右侧", value: current.scale) { value in
+            scoreControl(nil, low: question.left ?? "左侧", high: question.right ?? "右侧", value: current.scale) { value in
                 var answer = current; answer.scale = value; answers[question.id] = answer
             }
         case .open:
@@ -399,13 +399,13 @@ struct SelfDiscoveryView: View {
         }
     }
 
-    private func scoreControl(_ label: String, low: String, high: String, value: Int?, onChoose: @escaping (Int) -> Void) -> some View {
+    private func scoreControl(_ label: String?, low: String, high: String, value: Int?, onChoose: @escaping (Int) -> Void) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(label).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
+            if let label { Text(label).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink) }
             HStack(spacing: 8) { ForEach(1...5, id: \.self) { score in
                 Button("\(score)") { onChoose(score) }.font(.system(size: 14, weight: .bold)).foregroundStyle(value == score ? Color(hex: 0xBFD2FF) : Theme.sub).frame(maxWidth: .infinity).padding(.vertical, 12).background(value == score ? Color(hex: 0x5373FF, alpha: 0.24) : Theme.paper, in: RoundedRectangle(cornerRadius: 11)).overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(value == score ? Color(hex: 0x6FA5FF, alpha: 0.78) : Theme.line)).buttonStyle(PressScaleStyle())
             }}
-            HStack { Text(low); Spacer(); Text(high).multilineTextAlignment(.trailing) }.font(.system(size: 10.5)).foregroundStyle(Theme.faint)
+            HStack { Text(low); Spacer(); Text(high).multilineTextAlignment(.trailing) }.font(.system(size: 13, weight: .medium)).foregroundStyle(Theme.sub)
         }.padding(14).background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
