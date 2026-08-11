@@ -60,10 +60,15 @@ import kotlinx.serialization.json.jsonObject
 enum class DiscoveryAxis {
     @SerialName("like") LIKE,
     @SerialName("skill") SKILL,
-    @SerialName("energy") ENERGY,
-    @SerialName("context") CONTEXT,
+    @SerialName("evidence") EVIDENCE,
+    @SerialName("environment") ENVIRONMENT,
+    @SerialName("choice") CHOICE,
     @SerialName("value") VALUE,
+    @SerialName("open") OPEN,
 }
+
+@Serializable
+enum class DiscoveryKind { @SerialName("interest") INTEREST, @SerialName("strength") STRENGTH, @SerialName("select") SELECT, @SerialName("environment") ENVIRONMENT, @SerialName("choice") CHOICE, @SerialName("open") OPEN }
 
 data class DiscoveryOption(val label: String, val tag: String, val glyph: String)
 data class DiscoveryQuestion(
@@ -73,10 +78,14 @@ data class DiscoveryQuestion(
     val title: String,
     val hint: String,
     val options: List<DiscoveryOption>,
+    val kind: DiscoveryKind = DiscoveryKind.SELECT,
+    val tag: String? = null,
+    val left: String? = null,
+    val right: String? = null,
 )
 
 @Serializable
-data class DiscoveryAnswer(val selected: List<String> = emptyList(), val custom: List<String> = emptyList())
+data class DiscoveryAnswer(val selected: List<String> = emptyList(), val custom: List<String> = emptyList(), val like: Int? = null, val skill: Int? = null, val scale: Int? = null, val text: String? = null)
 
 @Serializable
 data class RankedDiscoveryTag(val tag: String, val count: Int)
@@ -109,9 +118,12 @@ data class SelfDiscoveryRequest(
     data class Response(
         val id: String,
         val axis: DiscoveryAxis,
+        val kind: DiscoveryKind,
         val question: String,
-        val selected: List<String>,
-        val custom: List<String>,
+        val tag: String? = null,
+        val left: String? = null,
+        val right: String? = null,
+        val response: DiscoveryAnswer,
     )
 
     @Serializable
@@ -119,6 +131,8 @@ data class SelfDiscoveryRequest(
         val likes: List<RankedDiscoveryTag>,
         val strengths: List<RankedDiscoveryTag>,
         val values: List<RankedDiscoveryTag>,
+        val energy: List<String> = emptyList(),
+        val environment: List<String> = emptyList(),
     )
 }
 
@@ -132,7 +146,7 @@ object SelfDiscoveryData {
         vararg rows: Triple<String, String, String>,
     ) = DiscoveryQuestion(id, axis, eyebrow, title, hint, rows.map { DiscoveryOption(it.first, it.second, it.third) })
 
-    val questions = listOf(
+    private val legacyQuestions = listOf(
         q("like-pull", DiscoveryAxis.LIKE, "喜欢的事 · 自然靠近", "没有任务和评价时，你会主动靠近什么？", "选 1–3 项，也可以写下选项之外的真实答案。",
             Triple("内容、画面、音乐或故事", "创造与表达", "✦"), Triple("一个值得追到底的问题", "知识与探索", "◎"), Triple("人的经历、感受与关系", "人类与连接", "♡"), Triple("工具、流程与系统如何运作", "系统与优化", "▦"), Triple("社会变化与真实影响", "影响与推动", "↗"), Triple("自然、身体与动手体验", "实践与体验", "◇")),
         q("like-flow", DiscoveryAxis.LIKE, "喜欢的事 · 心流证据", "哪些活动曾让你忘记时间？", "回想真实发生过的时刻，不选“理想中应该喜欢”的事。",
@@ -157,25 +171,60 @@ object SelfDiscoveryData {
             Triple("表达被限制、没有选择", "自由与创造", "✦"), Triple("停止成长、拒绝求真", "成长与求真", "◎"), Triple("人被忽略、关系缺少理解", "关怀与连接", "♡"), Triple("混乱低效、规则不透明", "秩序与清晰", "▦"), Triple("明知能改变却无人行动", "影响与担当", "↗"), Triple("脱离现实、只有概念没有体验", "真实与实践", "◇")),
         q("value-contribution", DiscoveryAxis.VALUE, "价值观 · 贡献方向", "你希望自己的投入最终带来什么？", "这会作为组合“喜欢 × 擅长”时的判断标准。",
             Triple("让人拥有更多表达与选择", "自由与创造", "✦"), Triple("让知识和成长更容易发生", "成长与求真", "◎"), Triple("让人被看见、理解和支持", "关怀与连接", "♡"), Triple("让复杂世界更清晰有序", "秩序与清晰", "▦"), Triple("推动值得发生的真实变化", "影响与担当", "↗"), Triple("创造可触摸、可使用的成果", "真实与实践", "◇")),
-        q("energy-recharge", DiscoveryAxis.ENERGY, "能量证据 · 越做越有劲", "完成哪类事情后，你通常会感到被充电？", "这里没有标准答案，只记录什么会让你愿意再次投入。",
+        q("energy-recharge", DiscoveryAxis.EVIDENCE, "能量证据 · 越做越有劲", "完成哪类事情后，你通常会感到被充电？", "这里没有标准答案，只记录什么会让你愿意再次投入。",
             Triple("独自沉浸，把一个问题想透", "深度专注", "◎"), Triple("和人来回讨论，慢慢长出新想法", "共创激发", "♡"), Triple("看见成果被真正使用或认可", "成果反馈", "↗"), Triple("把棘手问题啃下来", "挑战驱动", "◇"), Triple("接触新的人、地方或观点", "新鲜变化", "✦"), Triple("陪伴或支持一个具体的人", "关系滋养", "♡")),
-        q("energy-sustain", DiscoveryAxis.ENERGY, "能量证据 · 持续投入", "什么会让你即使累，也仍愿意继续一会儿？", "它帮助区分一时兴奋和可持续的投入感。",
+        q("energy-sustain", DiscoveryAxis.EVIDENCE, "能量证据 · 持续投入", "什么会让你即使累，也仍愿意继续一会儿？", "它帮助区分一时兴奋和可持续的投入感。",
             Triple("还差一点就能想清楚或做完整", "深度专注", "◎"), Triple("伙伴之间正在产生默契", "共创激发", "♡"), Triple("已经看见它能解决真实问题", "成果反馈", "↗"), Triple("困难本身让我想再试一次", "挑战驱动", "◇"), Triple("前面还有没见过的可能", "新鲜变化", "✦"), Triple("有人因为这件事变得更好", "关系滋养", "♡")),
-        q("context-best", DiscoveryAxis.CONTEXT, "适配环境 · 最好发挥", "在哪种工作或学习状态里，你最容易进入好状态？", "环境不决定能力，但会明显影响你能否稳定发挥。",
+        q("context-best", DiscoveryAxis.ENVIRONMENT, "适配环境 · 最好发挥", "在哪种工作或学习状态里，你最容易进入好状态？", "环境不决定能力，但会明显影响你能否稳定发挥。",
             Triple("有自主空间，可以自己安排节奏", "自主空间", "✦"), Triple("和少数可靠的人紧密协作", "小团队共创", "♡"), Triple("目标、边界和标准都很清楚", "目标清晰", "▦"), Triple("能留出长时间不被打断地投入", "连续深度", "◎"), Triple("能快速看到真实用户或成果反馈", "现实反馈", "◇"), Triple("不断面对新任务和新可能", "多元变化", "↗")),
-        q("context-friction", DiscoveryAxis.CONTEXT, "适配环境 · 容易消耗", "什么情况最容易让你的好状态被打断？", "识别边界不是挑剔，而是为了选择更可持续的投入方式。",
+        q("context-friction", DiscoveryAxis.ENVIRONMENT, "适配环境 · 容易消耗", "什么情况最容易让你的好状态被打断？", "识别边界不是挑剔，而是为了选择更可持续的投入方式。",
             Triple("被过度控制、没有做法上的选择", "自主空间", "✦"), Triple("长期独自硬扛、缺少可信的讨论", "小团队共创", "♡"), Triple("目标反复变化、规则模糊", "目标清晰", "▦"), Triple("不断被碎片消息和临时任务打断", "连续深度", "◎"), Triple("做很久却不知道是否有用", "现实反馈", "◇"), Triple("长期重复、几乎没有新刺激", "多元变化", "↗")),
     )
 
-    fun rankedTags(axis: DiscoveryAxis, answers: Map<String, DiscoveryAnswer>): List<RankedDiscoveryTag> {
+    val questions: List<DiscoveryQuestion> = completeQuestions()
+
+    private fun completeQuestions(): List<DiscoveryQuestion> {
+        val interests = listOf(
+            "人与心理" to listOf("我会自然想知道：一个人为什么会这样想、这样感受、这样选择？", "心理、人格、自我成长或人际关系的内容，常让我持续看下去。"),
+            "社会与文化" to listOf("热点事件出现后，我会想理解背后的群体、时代或社会机制。", "我喜欢比较不同群体、文化和生活方式的差异。"),
+            "商业与市场" to listOf("看到流行产品时，我会好奇：它为什么能被人选择或付费？", "新的商业模式、消费趋势或创业故事容易吸引我。"),
+            "科技与未来" to listOf("新技术出现时，我会主动想了解它能改变什么。", "我常会想象：技术继续发展后，人会怎样生活。"),
+            "生命与自然" to listOf("我会对人体、健康、生命机制或自然规律产生持续好奇。", "动植物、环境与生命科学的内容容易让我投入。"),
+            "艺术与审美" to listOf("我会不自觉观察画面、空间、产品或文字的美感。", "看到优秀作品时，我会想：如果由我来做，怎样会更好？"),
+            "知识与思想" to listOf("遇到感兴趣的问题时，我会一路查下去，而不只满足于结论。", "哲学、历史、理论或科学解释，容易让我长时间沉浸。"),
+            "系统与效率" to listOf("遇到混乱流程时，我会想把它重新整理得更清楚。", "理解复杂系统如何运转、怎样更有效率，会让我感到有趣。"),
+            "生活与体验" to listOf("我会主动研究怎样让日常生活变得更有趣、更舒服。", "美食、旅行、运动、空间或新的生活体验中，总有让我投入的领域。"),
+        )
+        val actions = listOf(
+            "探索求知" to listOf("面对陌生问题时，我会主动找资料、追根究底。", "别人得到答案后，我常还会继续追问为什么。"), "分析洞察" to listOf("面对零散信息时，我比较容易发现规律或问题本质。", "别人讨论表面问题时，我常能想到隐藏的原因。"), "创意构想" to listOf("同一个问题，我通常能很快想到不止一种可能。", "听到一个想法后，我常会自然联想到新的做法。"), "结构设计" to listOf("别人说了很多零散信息后，我能较快整理出框架。", "面对复杂任务时，我会自然拆出目标、限制与步骤。"), "表达呈现" to listOf("我比较容易把复杂内容解释到别人能理解。", "我会自然思考怎样讲、写或呈现才能让人接受。"), "共情理解" to listOf("别人没有明说时，我有时也能察觉他真正介意什么。", "发生冲突时，我通常能理解不同的人各自在担心什么。"), "教导赋能" to listOf("看到别人不会一件事时，我会自然想到怎样教他。", "别人因为我的解释突然理解一个问题，会让我有满足感。"), "连接协作" to listOf("我比较容易想到：这件事可以找谁一起做。", "在陌生群体中，我能够比较自然地建立连接。"), "影响推动" to listOf("当我相信一件事值得做时，我会想办法争取支持。", "我不排斥说服、谈判或让别人对一件事产生兴趣。"), "组织统筹" to listOf("很多事情同时出现时，我通常知道应先处理什么。", "多人协作时，我会自然关注时间、人员与资源安排。"), "执行推进" to listOf("讨论足够以后，我会很快转向下一步具体做什么。", "长期任务中，我比较容易持续推进直到完成。"), "实践制作" to listOf("比起一直讨论，我更容易通过先做一个版本找到答案。", "面对工具、实物、空间或真实操作时，我往往更有感觉。"), "优化精进" to listOf("一个东西已经能用时，我还是会发现它可以改进的地方。", "重复做同一件事时，我会自然寻找更快、更准或更好的方法。"),
+        )
+        val glyphs = listOf("◎", "◌", "↗", "✦", "◇", "♡", "▦", "◈", "☼")
+        val actionOptions = actions.mapIndexed { i, item -> DiscoveryOption(item.first, item.first, glyphs[i % glyphs.size]) }
+        val values = listOf("自由与创造" to "✦", "成长与求真" to "◎", "关怀与连接" to "♡", "秩序与清晰" to "▦", "影响与担当" to "↗", "真实与实践" to "◇").map { DiscoveryOption(it.first, it.first, it.second) }
+        return buildList {
+            interests.forEachIndexed { i, item -> item.second.forEachIndexed { j, title -> add(DiscoveryQuestion("interest-${i + 1}-${j + 1}", DiscoveryAxis.LIKE, "兴趣主题 · ${"%02d".format(i + 1)} / 09", title, "按真实投入感评分：1 完全没兴趣，5 即使没人要求也愿意持续投入时间。", emptyList(), DiscoveryKind.INTEREST, item.first)) } }
+            actions.forEachIndexed { i, item -> item.second.forEachIndexed { j, title -> add(DiscoveryQuestion("strength-${i + 1}-${j + 1}", DiscoveryAxis.SKILL, "优势动作 · ${"%02d".format(i + 1)} / 13", title, "同一件事分别评价：你是否享受，以及它是否是自然、可复用的优势。", emptyList(), DiscoveryKind.STRENGTH, item.first)) } }
+            listOf("哪类事情即使没人教，你也比较容易知道怎么做？", "哪类事情你通常练习几次，就能明显进步？", "别人最经常因为什么事情来找你帮忙？", "在学习、工作和生活中，哪些行为反复成为你的优势？").forEachIndexed { i, title -> add(DiscoveryQuestion("evidence-${i + 1}", DiscoveryAxis.EVIDENCE, "外部证据 · E${i + 1}", title, "最多选 3 项。它用来交叉验证，而不是只听你对自己的判断。", actionOptions)) }
+            listOf("独立完成" to "高频协作", "深度投入" to "多任务切换", "稳定明确" to "变化探索", "幕后分析创造" to "台前表达影响", "自主定义方法" to "清晰标准要求", "长期积累" to "即时反馈", "专业深度" to "综合统筹", "低频社交" to "高频社交", "确定性" to "不确定探索", "个人成果" to "帮助他人").forEachIndexed { i, pair -> add(DiscoveryQuestion("environment-${i + 1}", DiscoveryAxis.ENVIRONMENT, "发挥环境 · ${"%02d".format(i + 1)} / 10", "哪一端更接近让你稳定发挥的状态？", "不是选择更好的一端，而是选择你更可持续的工作与学习方式。", emptyList(), DiscoveryKind.ENVIRONMENT, left = pair.first, right = pair.second)) }
+            listOf("深入研究一个复杂问题" to "快速把一个想法做出来", "帮一个人真正解决问题" to "影响很多人接受一个观点", "从 0 到 1 想新方案" to "把已有方案做到非常好", "自己深入思考" to "和很多人讨论碰撞", "找规律和原因" to "创造新的表达", "规划全局" to "亲自推进执行").forEachIndexed { i, pair -> add(DiscoveryQuestion("choice-${i + 1}", DiscoveryAxis.CHOICE, "取舍判断 · ${"%02d".format(i + 1)} / 06", "如果只能选一种，你更愿意？", "必须选择一项。它帮助结果在接近时形成更清晰的优先级。", listOf(DiscoveryOption(pair.first, pair.first, "A"), DiscoveryOption(pair.second, pair.second, "B")), DiscoveryKind.CHOICE)) }
+            add(DiscoveryQuestion("value-contribution", DiscoveryAxis.VALUE, "价值判断 · 想带来的影响", "你希望自己的投入最终为谁带来什么？", "最多选 3 项。它帮助判断方向是否值得。", values))
+            add(DiscoveryQuestion("value-boundary", DiscoveryAxis.VALUE, "价值判断 · 不愿妥协", "看到什么状态时，你最容易感到不舒服？", "最多选 3 项。它会提示你长期选择中的边界。", values))
+            listOf("小时候没有人要求你时，你最容易沉迷什么？", "过去几年，有哪三件事让你觉得“虽然累，但做完特别满足”？", "别人最经常因为什么事情找你帮忙？请举一个真实例子。", "你最容易对别人产生哪种“这有什么难的？”的感觉？", "如果未来一年不考虑赚钱和别人怎么看，你最想系统探索哪三件事？").forEachIndexed { i, title -> add(DiscoveryQuestion("open-${i + 1}", DiscoveryAxis.OPEN, "真实叙事 · ${"%02d".format(i + 1)} / 05", title, "写下 1–3 句真实经历。AI 会提取主题、动作、能量与外界证据，而不是只做文本摘要。", emptyList(), DiscoveryKind.OPEN)) }
+        }
+    }
+
+    fun rankedTags(axis: DiscoveryAxis, answers: Map<String, DiscoveryAnswer>, limit: Int = 3): List<RankedDiscoveryTag> {
         val counts = linkedMapOf<String, Int>()
         questions.filter { it.axis == axis }.forEach { question ->
-            answers[question.id]?.selected.orEmpty().forEach { label ->
-                val tag = question.options.firstOrNull { it.label == label }?.tag ?: return@forEach
-                counts[tag] = (counts[tag] ?: 0) + 1
+            val answer = answers[question.id] ?: return@forEach
+            if (axis == DiscoveryAxis.LIKE && question.tag != null) counts[question.tag] = (counts[question.tag] ?: 0) + (answer.like ?: 0)
+            if (axis == DiscoveryAxis.SKILL && question.tag != null) counts[question.tag] = (counts[question.tag] ?: 0) + (answer.skill ?: 0)
+            if (axis == DiscoveryAxis.EVIDENCE || axis == DiscoveryAxis.VALUE || axis == DiscoveryAxis.CHOICE) answer.selected.forEach { label ->
+                val tag = question.options.firstOrNull { it.label == label }?.tag ?: label
+                counts[tag] = (counts[tag] ?: 0) + if (axis == DiscoveryAxis.EVIDENCE) 2 else 1
             }
         }
-        return counts.entries.sortedByDescending { it.value }.take(3).map { RankedDiscoveryTag(it.key, it.value) }
+        return counts.entries.sortedByDescending { it.value }.take(limit).map { RankedDiscoveryTag(it.key, it.value) }
     }
 
     fun rankedWithCustom(axis: DiscoveryAxis, answers: Map<String, DiscoveryAnswer>): List<RankedDiscoveryTag> {
@@ -191,9 +240,11 @@ object SelfDiscoveryData {
         val defaults = when (axis) {
             DiscoveryAxis.LIKE -> listOf("继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容")
             DiscoveryAxis.SKILL -> listOf("继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功")
-            DiscoveryAxis.ENERGY -> listOf("记录被充电的时刻", "观察持续投入感", "识别真实消耗来源")
-            DiscoveryAxis.CONTEXT -> listOf("观察发挥条件", "记录环境边界", "寻找适配节奏")
+            DiscoveryAxis.EVIDENCE -> listOf("记录他人反馈", "复盘重复行为", "观察跨场景优势")
+            DiscoveryAxis.ENVIRONMENT -> listOf("观察发挥条件", "记录环境边界", "寻找适配节奏")
+            DiscoveryAxis.CHOICE -> listOf("继续做取舍", "用真实行动验证", "避免平均用力")
             DiscoveryAxis.VALUE -> listOf("继续澄清价值排序", "记录重要选择", "观察不愿妥协之处")
+            DiscoveryAxis.OPEN -> listOf("补充真实经历", "记录能量变化", "回看外部反馈")
         }
         defaults.forEach { if (seen.add(it) && ranked.size < 3) ranked += RankedDiscoveryTag(it, 1) }
         return ranked.take(3)
@@ -214,19 +265,24 @@ object SelfDiscoveryData {
             likeInsights,
             strengthInsights,
             directions,
-            "这是基于选择频次生成的初步假设；继续记录真实行动中的投入感和反馈，结论会更准确。",
+            "这是一份基于兴趣强度、优势双评分、外部证据、环境偏好和真实叙事生成的行动假设；完成 30 天实验后回看，结论会更可靠。",
         )
     }
+
+    fun energySignals(answers: Map<String, DiscoveryAnswer>) = questions.filter { it.axis == DiscoveryAxis.SKILL && (answers[it.id]?.like ?: 0) >= 4 }.mapNotNull { it.tag }.distinct().take(3)
+    fun environmentSignals(answers: Map<String, DiscoveryAnswer>) = questions.filter { it.axis == DiscoveryAxis.ENVIRONMENT }.mapNotNull { q -> answers[q.id]?.scale?.let { score -> if (score < 3) q.left else if (score > 3) q.right else "${q.left} / ${q.right}" } }.take(3)
 
     fun request(answers: Map<String, DiscoveryAnswer>) = SelfDiscoveryRequest(
         responses = questions.map { question ->
             val answer = answers[question.id] ?: DiscoveryAnswer()
-            SelfDiscoveryRequest.Response(question.id, question.axis, question.title, answer.selected, answer.custom)
+            SelfDiscoveryRequest.Response(question.id, question.axis, question.kind, question.title, question.tag, question.left, question.right, answer)
         },
         evidence = SelfDiscoveryRequest.Evidence(
-            rankedTags(DiscoveryAxis.LIKE, answers),
-            rankedTags(DiscoveryAxis.SKILL, answers),
-            rankedTags(DiscoveryAxis.VALUE, answers),
+            rankedTags(DiscoveryAxis.LIKE, answers, 9),
+            rankedTags(DiscoveryAxis.SKILL, answers, 13),
+            rankedTags(DiscoveryAxis.VALUE, answers, 6),
+            questions.filter { it.axis == DiscoveryAxis.SKILL && (answers[it.id]?.like ?: 0) >= 4 }.mapNotNull { it.tag }.distinct().take(3),
+            questions.filter { it.axis == DiscoveryAxis.ENVIRONMENT }.mapNotNull { q -> answers[q.id]?.scale?.let { score -> if (score < 3) q.left else if (score > 3) q.right else "${q.left} / ${q.right}" } }.take(3),
         ),
     )
 }
@@ -243,17 +299,21 @@ fun SelfDiscoveryScreen(
     val answers = remember { mutableStateMapOf<String, DiscoveryAnswer>() }
     var phase by remember { mutableStateOf(DiscoveryPhase.INTRO) }
     var index by remember { mutableIntStateOf(0) }
-    var customDraft by remember { mutableStateOf("") }
     var analysis by remember { mutableStateOf<SelfDiscoveryAnalysis?>(null) }
     var usedAi by remember { mutableStateOf(false) }
     var saved by remember { mutableStateOf(false) }
     var deepUnlocked by remember { mutableStateOf(false) }
     val question = SelfDiscoveryData.questions[index]
     val current = answers[question.id] ?: DiscoveryAnswer()
-    val canAdvance = current.selected.isNotEmpty() || current.custom.isNotEmpty() || customDraft.trim().isNotEmpty()
+    val canAdvance = when (question.kind) {
+        DiscoveryKind.INTEREST -> current.like != null
+        DiscoveryKind.STRENGTH -> current.like != null && current.skill != null
+        DiscoveryKind.ENVIRONMENT -> current.scale != null
+        DiscoveryKind.OPEN -> !current.text.orEmpty().isBlank()
+        DiscoveryKind.SELECT, DiscoveryKind.CHOICE -> current.selected.isNotEmpty()
+    }
 
     fun back() {
-        customDraft = ""
         when (phase) {
             DiscoveryPhase.INTRO -> onDismiss()
             DiscoveryPhase.QUESTIONS -> if (index > 0) index-- else phase = DiscoveryPhase.INTRO
@@ -264,11 +324,6 @@ fun SelfDiscoveryScreen(
 
     fun advance() {
         if (!canAdvance) return
-        val pending = customDraft.trim()
-        if (pending.isNotEmpty() && current.custom.size < 2) {
-            answers[question.id] = current.copy(custom = (current.custom + pending).distinct())
-        }
-        customDraft = ""
         if (index < SelfDiscoveryData.questions.lastIndex) { index++; return }
         phase = DiscoveryPhase.ANALYZING
         deepUnlocked = false
@@ -298,48 +353,7 @@ fun SelfDiscoveryScreen(
                 Text(question.eyebrow, color = Theme.blue, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.8.sp)
                 Text(question.title, color = Theme.ink, fontSize = 23.sp, fontWeight = FontWeight.Bold, lineHeight = 32.sp, modifier = Modifier.padding(top = 9.dp))
                 Text(question.hint, color = Theme.sub, fontSize = 12.5.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
-                Column(Modifier.padding(top = 18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    question.options.forEach { option ->
-                        val isSelected = option.label in current.selected
-                        Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp))
-                                .background(if (isSelected) hexColor(0x5373FF, 0.18f) else Theme.raised)
-                                .border(1.dp, if (isSelected) hexColor(0x6FA5FF, 0.72f) else Theme.line, RoundedCornerShape(15.dp))
-                                .clickable {
-                                    val next = current.selected.toMutableList()
-                                    if (isSelected) next.remove(option.label)
-                                    else if (next.size < 3) next += option.label
-                                    else ToastCenter.show("每题最多选择 3 项，也可以补充自己的答案")
-                                    answers[question.id] = current.copy(selected = next)
-                                }.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(Modifier.size(32.dp).clip(RoundedCornerShape(9.dp)).background(Theme.paper), contentAlignment = Alignment.Center) {
-                                Text(if (isSelected) "✓" else option.glyph, color = hexColor(0xBFD2FF), fontSize = 15.sp)
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Text(option.label, color = Theme.ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                        }
-                    }
-                }
-                Column(
-                    Modifier.padding(top = 14.dp).fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.raised).padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    Text("选项里没有我的答案", color = Theme.ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
-                    Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Theme.paper).border(1.dp, Theme.line, RoundedCornerShape(12.dp)).padding(horizontal = 13.dp, vertical = 12.dp)) {
-                        if (customDraft.isEmpty()) Text("写下真实答案", color = Theme.faint, fontSize = 13.sp)
-                        BasicTextField(customDraft, { customDraft = it }, singleLine = true, textStyle = TextStyle(color = Theme.ink, fontSize = 13.sp), cursorBrush = SolidColor(Theme.blue))
-                    }
-                    if (current.custom.isNotEmpty()) {
-                        current.custom.forEach { value ->
-                            Text("$value  ×", color = hexColor(0xBFD2FF), fontSize = 11.5.sp, modifier = Modifier.clickable {
-                                answers[question.id] = current.copy(custom = current.custom - value)
-                            })
-                        }
-                    }
-                    if (customDraft.isNotBlank()) Text("按继续即可添加", color = Theme.faint, fontSize = 10.sp)
-                }
+                DiscoveryQuestionInput(question, current, Modifier.padding(top = 18.dp)) { answers[question.id] = it }
                 Row(Modifier.padding(top = 22.dp), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
                     DiscoveryButton("返回", false, Modifier.weight(1f), ::back)
                     DiscoveryButton(if (index == SelfDiscoveryData.questions.lastIndex) "交给 AI 综合分析" else "继续", true, Modifier.weight(1.45f), enabled = canAdvance, onClick = ::advance)
@@ -426,6 +440,54 @@ private fun DiscoveryIntro(onStart: () -> Unit) {
 }
 
 @Composable
+private fun DiscoveryQuestionInput(question: DiscoveryQuestion, answer: DiscoveryAnswer, modifier: Modifier = Modifier, onChange: (DiscoveryAnswer) -> Unit) {
+    when (question.kind) {
+        DiscoveryKind.INTEREST -> RatingControl("你有多喜欢这样？", "完全没兴趣", "愿意持续投入", answer.like, modifier) { onChange(answer.copy(like = it)) }
+        DiscoveryKind.STRENGTH -> Column(modifier, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            RatingControl("你有多喜欢这样做？", "很消耗", "做完有能量", answer.like) { onChange(answer.copy(like = it)) }
+            RatingControl("你有多自然地能做好？", "明显吃力", "常被认为是优势", answer.skill) { onChange(answer.copy(skill = it)) }
+        }
+        DiscoveryKind.ENVIRONMENT -> RatingControl("更接近哪一端？", question.left ?: "左侧", question.right ?: "右侧", answer.scale, modifier) { onChange(answer.copy(scale = it)) }
+        DiscoveryKind.OPEN -> Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.raised).padding(14.dp)) {
+            Text("真实经历比“正确答案”更重要", color = Theme.ink, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
+            Box(Modifier.padding(top = 10.dp).fillMaxWidth().height(156.dp).clip(RoundedCornerShape(12.dp)).background(Theme.paper).border(1.dp, Theme.line, RoundedCornerShape(12.dp)).padding(12.dp)) {
+                if (answer.text.isNullOrEmpty()) Text("写下 1–3 句真实经历…", color = Theme.faint, fontSize = 13.sp)
+                BasicTextField(answer.text.orEmpty(), { onChange(answer.copy(text = it.take(400))) }, textStyle = TextStyle(color = Theme.ink, fontSize = 13.sp), cursorBrush = SolidColor(Theme.blue), modifier = Modifier.fillMaxSize())
+            }
+            Text("${answer.text?.length ?: 0}/400", color = Theme.faint, fontSize = 10.sp, modifier = Modifier.padding(top = 5.dp).align(Alignment.End))
+        }
+        DiscoveryKind.SELECT, DiscoveryKind.CHOICE -> Column(modifier, verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            question.options.forEach { option ->
+                val selected = option.label in answer.selected
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp)).background(if (selected) hexColor(0x5373FF, 0.18f) else Theme.raised).border(1.dp, if (selected) hexColor(0x6FA5FF, 0.72f) else Theme.line, RoundedCornerShape(15.dp)).clickable {
+                    val next = when {
+                        selected -> answer.selected - option.label
+                        question.kind == DiscoveryKind.CHOICE -> listOf(option.label)
+                        answer.selected.size < 3 -> answer.selected + option.label
+                        else -> { ToastCenter.show("每题最多选择 3 项"); answer.selected }
+                    }
+                    onChange(answer.copy(selected = next))
+                }.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(32.dp).clip(RoundedCornerShape(9.dp)).background(Theme.paper), contentAlignment = Alignment.Center) { Text(if (selected) "✓" else option.glyph, color = hexColor(0xBFD2FF), fontSize = 15.sp) }
+                    Spacer(Modifier.width(10.dp)); Text(option.label, color = Theme.ink, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RatingControl(label: String, low: String, high: String, value: Int?, modifier: Modifier = Modifier, onSelect: (Int) -> Unit) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Theme.raised).padding(14.dp)) {
+        Text(label, color = Theme.ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) { (1..5).forEach { score ->
+            Box(Modifier.weight(1f).clip(RoundedCornerShape(11.dp)).background(if (value == score) hexColor(0x5373FF, 0.24f) else Theme.paper).border(1.dp, if (value == score) hexColor(0x6FA5FF, 0.78f) else Theme.line, RoundedCornerShape(11.dp)).clickable { onSelect(score) }.padding(vertical = 12.dp), contentAlignment = Alignment.Center) { Text("$score", color = if (value == score) hexColor(0xBFD2FF) else Theme.sub, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+        }}
+        Row(Modifier.fillMaxWidth().padding(top = 7.dp), horizontalArrangement = Arrangement.SpaceBetween) { Text(low, color = Theme.faint, fontSize = 10.sp); Text(high, color = Theme.faint, fontSize = 10.sp, textAlign = TextAlign.End) }
+    }
+}
+
+@Composable
 private fun DiscoveryInsightBlock(title: String, items: List<DiscoveryInsight>, tint: Long, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(hexColor(tint, 0.09f)).border(1.dp, hexColor(tint, 0.24f), RoundedCornerShape(17.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(title, color = Theme.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -480,17 +542,21 @@ private fun FreeSignal(label: String, value: String, modifier: Modifier = Modifi
 private fun FullCommercialDiscoveryReport(result: SelfDiscoveryAnalysis, answers: Map<String, DiscoveryAnswer>, modifier: Modifier = Modifier) {
     val likes = result.likes.map { it.label }
     val strengths = result.strengths.map { it.label }
-    val energy = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.ENERGY, answers).map { it.tag }.take(2).joinToString("、")
-    val context = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.CONTEXT, answers).map { it.tag }.take(2).joinToString("、")
+    val allLikes = SelfDiscoveryData.rankedTags(DiscoveryAxis.LIKE, answers, 9).joinToString(" · ") { "${it.tag} ${it.count}" }
+    val allStrengths = SelfDiscoveryData.rankedTags(DiscoveryAxis.SKILL, answers, 13).joinToString(" · ") { "${it.tag} ${it.count}" }
+        val energy = SelfDiscoveryData.energySignals(answers).take(2).joinToString("、")
+    val context = SelfDiscoveryData.environmentSignals(answers).take(2).joinToString("、")
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CommercialBlock("01 · 优势组合链", "你的天然解决问题路径", "${strengths.joinToString(" → ")}\n这不是单一技能，而是更容易形成差异化的解决问题路径。")
-        CommercialBlock("02 · 能量与边界", "怎样才会持续发挥", "你更可能在「$energy」中被充电，并需要「$context」这样的环境。擅长不等于适合长期承担。")
-        CommercialBlock("03 · 消耗模式", "能做，不等于该长期做", "「${strengths.drop(1).joinToString("、")}」是可靠能力；如果长期没有能量回流，更适合作为辅助能力，而不是职业唯一核心。")
-        CommercialBlock("04 · 职业探索", "领域 × 角色 × 工作方式", careerSummary(likes.firstOrNull()))
-        CommercialBlock("05 · 副业探索", "最低成本的商业化实验", "围绕「${likes.firstOrNull() ?: "兴趣主题"} × ${strengths.firstOrNull() ?: "优势动作"}」，连续 4 周输出 4 次可被别人使用的成果，观察想继续做、有人认可、能产生价值是否同时出现。")
-        CommercialBlock("06 · 兴趣保留", "不必每一种喜欢都赚钱", "「${likes.drop(1).joinToString("、")}」可以先作为纯粹兴趣或低压力练习保留；先验证能量与持续性，再决定是否副业化。")
+        CommercialBlock("01 · 完整喜欢地图", "9 个兴趣主题的投入强度", allLikes)
+        CommercialBlock("02 · 完整擅长地图", "13 个优势动作的自然优势", "$allStrengths\n深入报告将它们与喜欢度交叉，区分天赋热爱、兴趣潜力、熟练消耗和非优先区。")
+        CommercialBlock("03 · 优势组合链", "你的天然解决问题路径", "${strengths.joinToString(" → ")}\n这不是单一技能，而是更容易形成差异化的解决问题路径。")
+        CommercialBlock("04 · 能量与边界", "怎样才会持续发挥", "你更可能在「$energy」中被充电，并需要「$context」这样的环境。擅长不等于适合长期承担。")
+        CommercialBlock("05 · 消耗模式", "能做，不等于该长期做", "「${strengths.drop(1).joinToString("、")}」是可靠能力；如果长期没有能量回流，更适合作为辅助能力，而不是职业唯一核心。")
+        CommercialBlock("06 · 职业探索", "领域 × 角色 × 工作方式", careerSummary(likes.firstOrNull()))
+        CommercialBlock("07 · 副业探索", "最低成本的商业化实验", "围绕「${likes.firstOrNull() ?: "兴趣主题"} × ${strengths.firstOrNull() ?: "优势动作"}」，连续 4 周输出 4 次可被别人使用的成果，观察想继续做、有人认可、能产生价值是否同时出现。")
+        CommercialBlock("08 · 兴趣保留", "不必每一种喜欢都赚钱", "「${likes.drop(1).joinToString("、")}」可以先作为纯粹兴趣或低压力练习保留；先验证能量与持续性，再决定是否副业化。")
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Theme.card).padding(16.dp)) {
-            Text("07 · 未来 30 天人生实验", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.4.sp)
+            Text("09 · 未来 30 天人生实验", color = hexColor(0xBFD2FF), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.4.sp)
             Text("把结论变成新的证据", color = Theme.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
             result.directions.forEachIndexed { index, direction ->
                 Column(Modifier.fillMaxWidth().padding(top = 9.dp).clip(RoundedCornerShape(13.dp)).background(Theme.raised).padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -515,17 +581,19 @@ private fun CommercialBlock(eyebrow: String, title: String, text: String) {
 }
 
 private fun careerSummary(like: String?): String = when (like) {
-    "创造与表达" -> "优先体验：体验／内容设计、品牌与创意策略、内容策划。重点验证表达是否能产生真实价值。"
-    "知识与探索" -> "优先体验：用户／行业研究、产品策略、知识内容。重点验证研究与判断是否愿意长期投入。"
-    "人类与连接" -> "优先体验：用户研究、教育／咨询服务、社群体验运营。重点验证理解人是否让你持续有能量。"
+    "艺术与审美" -> "优先体验：体验／内容设计、品牌与创意策略、内容策划。重点验证表达是否能产生真实价值。"
+    "知识与思想" -> "优先体验：用户／行业研究、产品策略、知识内容。重点验证研究与判断是否愿意长期投入。"
+    "人与心理" -> "优先体验：用户研究、教育／咨询服务、社群体验运营。重点验证理解人是否让你持续有能量。"
+    "商业与市场" -> "优先体验：商业策略、增长／用户运营、创业探索。重点验证价值判断是否愿意长期投入。"
+    "科技与未来" -> "优先体验：AI 产品探索、科技内容、创新研究。重点验证新技术是否让你好奇又愿意行动。"
     "系统与优化" -> "优先体验：产品经理、运营策略、服务设计。重点验证复杂系统能否让你越做越清晰。"
     else -> "优先从真实问题、内容与研究、服务与体验三类任务中选择小项目，验证主题、优势与环境是否同时匹配。"
 }
 
 @Composable
 private fun DiscoveryMap(result: SelfDiscoveryAnalysis, answers: Map<String, DiscoveryAnswer>, modifier: Modifier = Modifier) {
-    val energy = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.ENERGY, answers).map { it.tag }
-    val context = SelfDiscoveryData.rankedWithCustom(DiscoveryAxis.CONTEXT, answers).map { it.tag }
+    val energy = SelfDiscoveryData.energySignals(answers)
+    val context = SelfDiscoveryData.environmentSignals(answers)
     Column(modifier.fillMaxWidth().clip(RoundedCornerShape(17.dp)).background(Theme.raised).padding(16.dp)) {
         Text("LIFE MAP · 基础结论", color = hexColor(0x3ED9A4), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 1.6.sp)
         Text("你的喜欢 × 擅长人生地图", color = Theme.ink, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))

@@ -227,7 +227,6 @@ struct SelfDiscoveryView: View {
     @State private var phase: Phase = .intro
     @State private var index = 0
     @State private var answers: [String: DiscoveryAnswer] = [:]
-    @State private var customDraft = ""
     @State private var analysis: SelfDiscoveryAnalysis?
     @State private var usedAI = false
     @State private var saved = false
@@ -236,7 +235,13 @@ struct SelfDiscoveryView: View {
     private var question: DiscoveryQuestion { SelfDiscoveryData.questions[index] }
     private var current: DiscoveryAnswer { answers[question.id] ?? DiscoveryAnswer() }
     private var canAdvance: Bool {
-        !current.selected.isEmpty || !current.custom.isEmpty || !customDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        switch question.kind {
+        case .interest: current.like != nil
+        case .strength: current.like != nil && current.skill != nil
+        case .environment: current.scale != nil
+        case .open: !(current.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .select, .choice: !current.selected.isEmpty
+        }
     }
     private var progress: Double {
         switch phase {
@@ -296,18 +301,18 @@ struct SelfDiscoveryView: View {
                     .font(.system(size: 10, weight: .semibold)).tracking(2.2).foregroundStyle(Theme.blue)
                 Text("用完整证据链，找到\n你喜欢和擅长的事")
                     .font(.system(size: 28, weight: .bold)).lineSpacing(7).foregroundStyle(Theme.ink).padding(.top, 12)
-                Text("沿用“喜欢 × 擅长 × 价值观”的方法结构，通过 \(SelfDiscoveryData.questions.count) 个原创情境收集兴趣、优势、能量与环境证据，最后交给 AI 综合分析。")
+                Text("通过 \(SelfDiscoveryData.questions.count) 个原创题收集兴趣主题、优势动作双评分、外部证据、价值、环境与真实叙事，再由 AI 形成可验证的探索结论。")
                     .font(.system(size: 14)).lineSpacing(7).foregroundStyle(Theme.sub).padding(.top, 16)
                 HStack(spacing: 8) {
                     formula("喜欢的事", "反复吸引你的内容领域", 0xE35CC1)
                     formula("擅长的事", "自然复用的行为模式", 0x5E96FF)
-                    formula("尝试方向", "结合价值观验证", 0x3ED9A4)
+                    formula("能量与环境", "判断能否持续发挥", 0x3ED9A4)
                 }
                 .padding(.top, 24)
                 VStack(alignment: .leading, spacing: 9) {
-                    Text("01  每题可选 1–3 项")
-                    Text("02  支持补充自己的答案")
-                    Text("03  AI 区分兴趣与可复用优势")
+                    Text("01  同一优势动作分别评价喜欢与自然擅长")
+                    Text("02  外部证据、环境取舍与价值观交叉验证")
+                    Text("03  5 个真实叙事问题让 AI 读懂具体经历")
                 }
                 .font(.system(size: 12.5)).foregroundStyle(Theme.sub)
                 .padding(16).frame(maxWidth: .infinity, alignment: .leading)
@@ -315,7 +320,7 @@ struct SelfDiscoveryView: View {
                 .padding(.top, 18)
                 Text("题目为方法结构上的产品化原创表达，不复制任何书籍原句。")
                     .font(.system(size: 10.5)).foregroundStyle(Theme.faint).padding(.top, 14)
-                primaryButton("开始完整探索 · 约 10 分钟") { phase = .questions }
+                primaryButton("开始完整探索 · 约 15 分钟") { phase = .questions }
                     .padding(.top, 24)
             }
             .padding(.horizontal, 24).padding(.top, 30).padding(.bottom, 36)
@@ -339,47 +344,7 @@ struct SelfDiscoveryView: View {
                 Text(question.title).font(.system(size: 23, weight: .bold)).lineSpacing(6).foregroundStyle(Theme.ink).padding(.top, 9)
                 Text(question.hint).font(.system(size: 12.5)).lineSpacing(5).foregroundStyle(Theme.sub).padding(.top, 8)
 
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 9), GridItem(.flexible())], spacing: 9) {
-                    ForEach(question.options) { option in
-                        let selected = current.selected.contains(option.label)
-                        Button { toggle(option.label) } label: {
-                            HStack(spacing: 9) {
-                                Text(selected ? "✓" : option.glyph)
-                                    .font(.system(size: 15)).foregroundStyle(Color(hex: 0xBFD2FF))
-                                    .frame(width: 30, height: 30).background(Theme.raised, in: RoundedRectangle(cornerRadius: 9))
-                                Text(option.label).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.ink)
-                                    .frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
-                            }
-                            .padding(11).frame(maxWidth: .infinity, minHeight: 70)
-                            .background(selected ? Color(hex: 0x5373FF, alpha: 0.18) : Theme.raised,
-                                        in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                .strokeBorder(selected ? Color(hex: 0x6FA5FF, alpha: 0.72) : Theme.line))
-                        }
-                        .buttonStyle(PressScaleStyle())
-                    }
-                }
-                .padding(.top, 18)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("选项里没有我的答案").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
-                    TextField("写下真实答案，按回车添加", text: $customDraft)
-                        .font(.system(size: 13)).foregroundStyle(Theme.ink).tint(Theme.blue)
-                        .padding(.horizontal, 13).padding(.vertical, 12).background(Theme.paper, in: RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.line)).submitLabel(.done).onSubmit(addCustom)
-                    if !current.custom.isEmpty {
-                        FlowLayout(spacing: 7) {
-                            ForEach(current.custom, id: \.self) { value in
-                                Button { removeCustom(value) } label: {
-                                    Text("\(value)  ×").font(.system(size: 11.5)).foregroundStyle(Color(hex: 0xBFD2FF))
-                                        .padding(.horizontal, 11).padding(.vertical, 7)
-                                        .background(Color(hex: 0x5E96FF, alpha: 0.12), in: Capsule())
-                                }.buttonStyle(.plain)
-                            }
-                        }
-                    }
-                }
-                .padding(14).background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous)).padding(.top, 14)
+                questionInput.padding(.top, 18)
 
                 HStack(spacing: 11) {
                     secondaryButton("返回") { back() }
@@ -390,6 +355,58 @@ struct SelfDiscoveryView: View {
             }
             .padding(.horizontal, 22).padding(.top, 24).padding(.bottom, 34)
         }
+    }
+
+    @ViewBuilder private var questionInput: some View {
+        switch question.kind {
+        case .interest:
+            scoreControl("你有多喜欢这样？", low: "完全没兴趣", high: "愿意持续投入", value: current.like) { value in
+                var answer = current; answer.like = value; answers[question.id] = answer
+            }
+        case .strength:
+            VStack(spacing: 14) {
+                scoreControl("你有多喜欢这样做？", low: "很消耗", high: "做完有能量", value: current.like) { value in
+                    var answer = current; answer.like = value; answers[question.id] = answer
+                }
+                scoreControl("你有多自然地能做好？", low: "明显吃力", high: "常被认为是优势", value: current.skill) { value in
+                    var answer = current; answer.skill = value; answers[question.id] = answer
+                }
+            }
+        case .environment:
+            scoreControl("更接近哪一端？", low: question.left ?? "左侧", high: question.right ?? "右侧", value: current.scale) { value in
+                var answer = current; answer.scale = value; answers[question.id] = answer
+            }
+        case .open:
+            VStack(alignment: .leading, spacing: 10) {
+                Text("真实经历比“正确答案”更重要").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(Theme.ink)
+                TextEditor(text: Binding(get: { current.text ?? "" }, set: { text in var answer = current; answer.text = String(text.prefix(400)); answers[question.id] = answer }))
+                    .font(.system(size: 14)).foregroundStyle(Theme.ink).frame(minHeight: 150)
+                    .padding(8).background(Theme.paper, in: RoundedRectangle(cornerRadius: 12))
+                Text("\((current.text ?? "").count)/400").font(.system(size: 10)).foregroundStyle(Theme.faint).frame(maxWidth: .infinity, alignment: .trailing)
+            }.padding(14).background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        case .select, .choice:
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 9), GridItem(.flexible())], spacing: 9) {
+                ForEach(question.options) { option in
+                    let selected = current.selected.contains(option.label)
+                    Button { toggle(option.label, single: question.kind == .choice) } label: {
+                        HStack(spacing: 9) {
+                            Text(selected ? "✓" : option.glyph).font(.system(size: 15)).foregroundStyle(Color(hex: 0xBFD2FF)).frame(width: 30, height: 30).background(Theme.paper, in: RoundedRectangle(cornerRadius: 9))
+                            Text(option.label).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Theme.ink).frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
+                        }.padding(11).frame(maxWidth: .infinity, minHeight: 70).background(selected ? Color(hex: 0x5373FF, alpha: 0.18) : Theme.raised, in: RoundedRectangle(cornerRadius: 15, style: .continuous)).overlay(RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(selected ? Color(hex: 0x6FA5FF, alpha: 0.72) : Theme.line))
+                    }.buttonStyle(PressScaleStyle())
+                }
+            }
+        }
+    }
+
+    private func scoreControl(_ label: String, low: String, high: String, value: Int?, onChoose: @escaping (Int) -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(label).font(.system(size: 14, weight: .semibold)).foregroundStyle(Theme.ink)
+            HStack(spacing: 8) { ForEach(1...5, id: \.self) { score in
+                Button("\(score)") { onChoose(score) }.font(.system(size: 14, weight: .bold)).foregroundStyle(value == score ? Color(hex: 0xBFD2FF) : Theme.sub).frame(maxWidth: .infinity).padding(.vertical, 12).background(value == score ? Color(hex: 0x5373FF, alpha: 0.24) : Theme.paper, in: RoundedRectangle(cornerRadius: 11)).overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(value == score ? Color(hex: 0x6FA5FF, alpha: 0.78) : Theme.line)).buttonStyle(PressScaleStyle())
+            }}
+            HStack { Text(low); Spacer(); Text(high).multilineTextAlignment(.trailing) }.font(.system(size: 10.5)).foregroundStyle(Theme.faint)
+        }.padding(14).background(Theme.raised, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var analyzing: some View {
@@ -466,17 +483,21 @@ struct SelfDiscoveryView: View {
     private func fullCommercialReport(_ analysis: SelfDiscoveryAnalysis) -> some View {
         let likes = analysis.likes.map(\.label)
         let strengths = analysis.strengths.map(\.label)
-        let energy = SelfDiscoveryData.rankedWithCustom(.energy, answers: answers).map(\.tag).prefix(2).joined(separator: "、")
-        let context = SelfDiscoveryData.rankedWithCustom(.context, answers: answers).map(\.tag).prefix(2).joined(separator: "、")
+        let allLikes = SelfDiscoveryData.rankedTags(.like, answers: answers, limit: 9).map { "\($0.tag) \($0.count)" }.joined(separator: " · ")
+        let allStrengths = SelfDiscoveryData.rankedTags(.skill, answers: answers, limit: 13).map { "\($0.tag) \($0.count)" }.joined(separator: " · ")
+        let energy = SelfDiscoveryData.energySignals(answers).prefix(2).joined(separator: "、")
+        let context = SelfDiscoveryData.environmentSignals(answers).prefix(2).joined(separator: "、")
         return VStack(alignment: .leading, spacing: 12) {
-            commercialBlock("01 · 优势组合链", "你的天然解决问题路径", "\(strengths.joined(separator: " → "))\n这不是单一技能，而是更容易形成差异化的解决问题路径。")
-            commercialBlock("02 · 能量与边界", "怎样才会持续发挥", "你更可能在「\(energy)」中被充电，并需要「\(context)」这样的环境。擅长不等于适合长期承担。")
-            commercialBlock("03 · 消耗模式", "能做，不等于该长期做", "「\(strengths.dropFirst().joined(separator: "、"))」是可靠能力；如果长期没有能量回流，更适合作为辅助能力，而不是职业唯一核心。")
-            commercialBlock("04 · 职业探索", "领域 × 角色 × 工作方式", careerSummary(for: likes.first))
-            commercialBlock("05 · 副业探索", "最低成本的商业化实验", "围绕「\(likes.first ?? "兴趣主题") × \(strengths.first ?? "优势动作")」，连续 4 周输出 4 次可被别人使用的成果，观察想继续做、有人认可、能产生价值是否同时出现。")
-            commercialBlock("06 · 兴趣保留", "不必每一种喜欢都赚钱", "「\(likes.dropFirst().joined(separator: "、"))」可以先作为纯粹兴趣或低压力练习保留；先验证能量与持续性，再决定是否副业化。")
+            commercialBlock("01 · 完整喜欢地图", "9 个兴趣主题的投入强度", allLikes)
+            commercialBlock("02 · 完整擅长地图", "13 个优势动作的自然优势", "\(allStrengths)\n深入报告将它们与喜欢度交叉，区分天赋热爱、兴趣潜力、熟练消耗和非优先区。")
+            commercialBlock("03 · 优势组合链", "你的天然解决问题路径", "\(strengths.joined(separator: " → "))\n这不是单一技能，而是更容易形成差异化的解决问题路径。")
+            commercialBlock("04 · 能量与边界", "怎样才会持续发挥", "你更可能在「\(energy)」中被充电，并需要「\(context)」这样的环境。擅长不等于适合长期承担。")
+            commercialBlock("05 · 消耗模式", "能做，不等于该长期做", "「\(strengths.dropFirst().joined(separator: "、"))」是可靠能力；如果长期没有能量回流，更适合作为辅助能力，而不是职业唯一核心。")
+            commercialBlock("06 · 职业探索", "领域 × 角色 × 工作方式", careerSummary(for: likes.first))
+            commercialBlock("07 · 副业探索", "最低成本的商业化实验", "围绕「\(likes.first ?? "兴趣主题") × \(strengths.first ?? "优势动作")」，连续 4 周输出 4 次可被别人使用的成果，观察想继续做、有人认可、能产生价值是否同时出现。")
+            commercialBlock("08 · 兴趣保留", "不必每一种喜欢都赚钱", "「\(likes.dropFirst().joined(separator: "、"))」可以先作为纯粹兴趣或低压力练习保留；先验证能量与持续性，再决定是否副业化。")
             VStack(alignment: .leading, spacing: 8) {
-                Text("07 · 未来 30 天人生实验").font(.system(size: 10, weight: .semibold)).tracking(1.4).foregroundStyle(Color(hex: 0xBFD2FF))
+                Text("09 · 未来 30 天人生实验").font(.system(size: 10, weight: .semibold)).tracking(1.4).foregroundStyle(Color(hex: 0xBFD2FF))
                 Text("把结论变成新的证据").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.ink)
                 ForEach(Array(analysis.directions.enumerated()), id: \.element.id) { index, direction in
                     VStack(alignment: .leading, spacing: 5) {
@@ -502,9 +523,11 @@ struct SelfDiscoveryView: View {
 
     private func careerSummary(for like: String?) -> String {
         switch like {
-        case "创造与表达": return "优先体验：体验／内容设计、品牌与创意策略、内容策划。重点验证表达是否能产生真实价值。"
-        case "知识与探索": return "优先体验：用户／行业研究、产品策略、知识内容。重点验证研究与判断是否愿意长期投入。"
-        case "人类与连接": return "优先体验：用户研究、教育／咨询服务、社群体验运营。重点验证理解人是否让你持续有能量。"
+        case "艺术与审美": return "优先体验：体验／内容设计、品牌与创意策略、内容策划。重点验证表达是否能产生真实价值。"
+        case "知识与思想": return "优先体验：用户／行业研究、产品策略、知识内容。重点验证研究与判断是否愿意长期投入。"
+        case "人与心理": return "优先体验：用户研究、教育／咨询服务、社群体验运营。重点验证理解人是否让你持续有能量。"
+        case "商业与市场": return "优先体验：商业策略、增长／用户运营、创业探索。重点验证价值判断是否愿意长期投入。"
+        case "科技与未来": return "优先体验：AI 产品探索、科技内容、创新研究。重点验证新技术是否让你好奇又愿意行动。"
         case "系统与优化": return "优先体验：产品经理、运营策略、服务设计。重点验证复杂系统能否让你越做越清晰。"
         default: return "优先从真实问题、内容与研究、服务与体验三类任务中选择小项目，验证主题、优势与环境是否同时匹配。"
         }
@@ -560,8 +583,8 @@ struct SelfDiscoveryView: View {
     }
 
     private func discoveryMap(_ analysis: SelfDiscoveryAnalysis) -> some View {
-        let energy = SelfDiscoveryData.rankedWithCustom(.energy, answers: answers).map(\.tag)
-        let context = SelfDiscoveryData.rankedWithCustom(.context, answers: answers).map(\.tag)
+        let energy = SelfDiscoveryData.energySignals(answers)
+        let context = SelfDiscoveryData.environmentSignals(answers)
         return VStack(alignment: .leading, spacing: 0) {
             Text("LIFE MAP · 基础结论").font(.system(size: 10, weight: .semibold)).tracking(1.6).foregroundStyle(Color(hex: 0x3ED9A4))
             Text("你的喜欢 × 擅长人生地图").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.ink).padding(.top, 4)
@@ -587,39 +610,22 @@ struct SelfDiscoveryView: View {
         .background(Color(hex: tint, alpha: 0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    private func toggle(_ label: String) {
+    private func toggle(_ label: String, single: Bool = false) {
         var answer = current
         if let existing = answer.selected.firstIndex(of: label) {
             answer.selected.remove(at: existing)
+        } else if single {
+            answer.selected = [label]
         } else if answer.selected.count < 3 {
             answer.selected.append(label)
         } else {
-            toast.show("每题最多选择 3 项，也可以补充自己的答案")
+            toast.show("每题最多选择 3 项")
         }
         answers[question.id] = answer
     }
 
-    private func addCustom() {
-        let value = customDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else { return }
-        var answer = current
-        guard answer.custom.count < 2 else { toast.show("每题最多补充 2 条自己的答案"); return }
-        if !answer.custom.contains(value) { answer.custom.append(value) }
-        answers[question.id] = answer
-        customDraft = ""
-    }
-
-    private func removeCustom(_ value: String) {
-        var answer = current
-        answer.custom.removeAll { $0 == value }
-        answers[question.id] = answer
-    }
-
     private func advance() {
-        let pending = customDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !pending.isEmpty { addCustom() }
-        guard canAdvance || !pending.isEmpty else { return }
-        customDraft = ""
+        guard canAdvance else { return }
         if index < SelfDiscoveryData.questions.count - 1 { index += 1; return }
         phase = .analyzing
         deepUnlocked = false
@@ -638,7 +644,6 @@ struct SelfDiscoveryView: View {
     }
 
     private func back() {
-        customDraft = ""
         switch phase {
         case .intro: dismiss()
         case .questions where index > 0: index -= 1
