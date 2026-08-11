@@ -15,6 +15,7 @@ import {
 import { DIARY_LIST_BODY } from "@/lib/boot-prefetch";
 import {
   dayString,
+  diaryFailure,
   entryEmoji,
   groupEntriesByDay,
   statusText,
@@ -370,7 +371,9 @@ export function DiaryCard() {
             <span className="text-caption text-faint">
               {latestToday.status === "ready"
                 ? "这次记录里，我听见了"
-                : statusText(latestToday.status)}
+                : /* 失败时说清是哪一种失败——「处理失败」四个字既不告诉用户
+                     发生了什么，也不告诉他们下一步能做什么。 */
+                  (diaryFailure(latestToday)?.text ?? statusText(latestToday.status))}
             </span>
             {(latestToday.emotions.length > 0 || latestToday.keywords.length > 0) && (
               <div className="flex flex-wrap gap-1.5">
