@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -194,7 +195,7 @@ object SelfDiscoveryData {
         val likeInsights = likes.map { DiscoveryInsight(it.tag, "在 ${it.count} 个不同情境中重复出现", "它多次出现在你的注意力、投入感与主动选择中，值得优先用真实行动验证。") }
         val strengthInsights = strengths.map { DiscoveryInsight(it.tag, "在 ${it.count} 个不同情境中重复出现", "它多次出现在你的自然反应、他人反馈与成功模式中，可能是可复用的优势。") }
         val directions = likes.mapIndexed { index, like ->
-            val strength = strengths[index % strengths.size].tag
+            val strength = strengths.getOrNull(index % strengths.size.coerceAtLeast(1))?.tag ?: "你的优势"
             DiscoveryDirection("用$strength，去探索${like.tag}", "这组组合同时回应了你的兴趣证据，并靠近“$value”。", "在一周内完成一个与“${like.tag}”有关、能使用“$strength”的小行动。")
         }
         return SelfDiscoveryAnalysis(
@@ -327,7 +328,7 @@ fun SelfDiscoveryScreen(
                     if (customDraft.isNotBlank()) Text("按继续即可添加", color = Theme.faint, fontSize = 10.sp)
                 }
                 Row(Modifier.padding(top = 22.dp), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
-                    DiscoveryButton("返回", false, Modifier.weight(1f), ::back)
+                    DiscoveryButton("返回", false, Modifier.weight(1f), onClick = ::back)
                     DiscoveryButton(if (index == SelfDiscoveryData.questions.lastIndex) "交给 AI 综合分析" else "继续", true, Modifier.weight(1.45f), enabled = canAdvance, onClick = ::advance)
                 }
             }
@@ -428,7 +429,8 @@ private fun DiscoveryButton(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier.clip(CircleShape).background(if (primary) Theme.buttonGradient else SolidColor(Theme.raised))
+        modifier.clip(CircleShape).alpha(if (enabled) 1f else 0.42f)
+            .background(if (primary) Theme.buttonGradient else SolidColor(Theme.raised))
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {

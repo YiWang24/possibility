@@ -165,7 +165,7 @@ export function WantToDoView() {
           <div className="text-micro font-semibold tracking-[2.4px] text-brand">
             SELF-UNDERSTANDING METHOD
           </div>
-          <h1 className="mt-3 text-[28px] font-bold leading-[1.35] text-ink md:text-[36px]">
+          <h1 className="mt-3 text-display font-bold leading-[1.35] text-ink">
             用完整证据链，找到<br />你喜欢和擅长的事
           </h1>
           <p className="mt-4 max-w-[62ch] text-body leading-[1.9] text-sub">
@@ -174,11 +174,11 @@ export function WantToDoView() {
           </p>
 
           <div className="mt-7 grid gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
-            <FormulaCard eyebrow="WHAT" title="喜欢的事" desc="反复吸引你的内容领域" tint="#E35CC1" />
+            <FormulaCard eyebrow="WHAT" title="喜欢的事" desc="反复吸引你的内容领域" tint="var(--color-magenta)" />
             <span className="hidden text-title text-faint md:block">×</span>
-            <FormulaCard eyebrow="HOW" title="擅长的事" desc="自然反复使用的行为模式" tint="#5E96FF" />
+            <FormulaCard eyebrow="HOW" title="擅长的事" desc="自然反复使用的行为模式" tint="var(--color-brand)" />
             <span className="hidden text-title text-faint md:block">→</span>
-            <FormulaCard eyebrow="AI SYNTHESIS" title="尝试方向" desc="结合价值观给出行动假设" tint="#3ED9A4" />
+            <FormulaCard eyebrow="AI SYNTHESIS" title="尝试方向" desc="结合价值观给出行动假设" tint="var(--color-teal)" />
           </div>
 
           <div className="mt-6 grid gap-2.5 rounded-tile border border-line bg-card p-4 text-footnote leading-[1.7] text-sub sm:grid-cols-3">
@@ -200,7 +200,7 @@ export function WantToDoView() {
       {phase === "questions" && question && (
         <div className="mx-auto flex w-full max-w-[780px] flex-1 flex-col px-5 pb-7 pt-6 md:px-8 md:pt-10">
           <span className="text-micro font-semibold tracking-[2px] text-brand">{question.eyebrow}</span>
-          <h1 className="mt-2 text-[24px] font-bold leading-[1.5] text-ink md:text-[30px]">
+          <h1 className="mt-2 text-heading font-bold leading-[1.5] text-ink">
             {question.title}
           </h1>
           <p className="mt-2 text-footnote leading-[1.8] text-sub">{question.hint}</p>
@@ -288,7 +288,7 @@ export function WantToDoView() {
         <div className="mx-auto flex w-full max-w-[620px] flex-1 flex-col items-center justify-center px-6 py-16 text-center">
           <div className="relative grid size-24 place-items-center rounded-full border border-brand/30 bg-brand/10">
             <div className="absolute inset-2 animate-spin rounded-full border border-transparent border-t-brand" />
-            <span className="text-[28px] text-brand-lite">✦</span>
+            <span className="text-display text-brand-lite">✦</span>
           </div>
           <h1 className="mt-6 text-title font-bold text-ink">AI 正在整理你的证据</h1>
           <p className="mt-3 text-body leading-[1.8] text-sub">
@@ -305,12 +305,12 @@ export function WantToDoView() {
               {usedAi ? "AI 综合分析" : "本地证据归纳"}
             </span>
           </div>
-          <h1 className="mt-2 text-[28px] font-bold text-ink">你反复出现的两组线索</h1>
+          <h1 className="mt-2 text-display font-bold text-ink">你反复出现的两组线索</h1>
           <p className="mt-2 max-w-[70ch] text-footnote leading-[1.8] text-sub">{analysis.summary}</p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <InsightCard title="我喜欢的事" eyebrow="WHAT" tint="#E35CC1" items={analysis.likes} />
-            <InsightCard title="我擅长的事" eyebrow="HOW" tint="#5E96FF" items={analysis.strengths} />
+            <InsightCard title="我喜欢的事" eyebrow="WHAT" tint="var(--color-magenta)" items={analysis.likes} />
+            <InsightCard title="我擅长的事" eyebrow="HOW" tint="var(--color-brand)" items={analysis.strengths} />
           </div>
 
           <div className="mt-4 rounded-card border border-violet-soft/25 bg-violet-soft/8 p-5">

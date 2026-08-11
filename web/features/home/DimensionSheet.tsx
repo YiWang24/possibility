@@ -48,8 +48,12 @@ export function DimensionSheet({
   if (!dimKey) return null;
   const cfg = DIMENSIONS[dimKey];
   const toolGroups = [
-    { label: "站内探索", tools: cfg.tools.filter((tool) => !tool.externalHref) },
-    { label: "中文专业测评 · 跳转官方", tools: cfg.tools.filter((tool) => tool.externalHref) },
+    { label: "站内探索", note: undefined, tools: cfg.tools.filter((tool) => !tool.externalHref) },
+    {
+      label: "中文专业测评 · 跳转官方",
+      note: "仅保留中文作答工具",
+      tools: cfg.tools.filter((tool) => tool.externalHref),
+    },
   ].filter((group) => group.tools.length > 0);
 
   // 展示序：已选(不在当前批) + 当前批 + 自定义，去重
@@ -230,7 +234,7 @@ export function DimensionSheet({
                   <div key={group.label} className="flex flex-col gap-[11px]">
                     <div className="flex items-center justify-between px-0.5 text-micro tracking-[1.2px] text-faint">
                       <span>{group.label}</span>
-                      {group.label.includes("官方") && <span>仅保留中文作答工具</span>}
+                      {group.note && <span>{group.note}</span>}
                     </div>
                     {group.tools.map((tool) => (
                       <button

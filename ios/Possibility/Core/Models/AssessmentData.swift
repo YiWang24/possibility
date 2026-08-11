@@ -502,8 +502,14 @@ enum SelfDiscoveryData {
                 counts[tag, default: 0] += 1
             }
         }
-        return order.sorted { (counts[$0] ?? 0) > (counts[$1] ?? 0) }
-            .prefix(3).map { RankedDiscoveryTag(tag: $0, count: counts[$0] ?? 0) }
+        // Swift 的 sorted(by:) 不保证稳定，计数相同时必须显式按首次出现顺序兜底，
+        // 否则同一份答案在 iOS 与 Web / Android 上可能给出不同的前三名。
+        return order.enumerated()
+            .sorted {
+                let left = counts[$0.element] ?? 0, right = counts[$1.element] ?? 0
+                return left == right ? $0.offset < $1.offset : left > right
+            }
+            .prefix(3).map { RankedDiscoveryTag(tag: $0.element, count: counts[$0.element] ?? 0) }
     }
 
     private static func rankedWithCustom(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
@@ -541,7 +547,10 @@ enum SelfDiscoveryData {
         }
         let value = values.first?.tag ?? "你重视的价值"
         let directions = likes.enumerated().map { index, like in
-            let strength = strengths[index % max(strengths.count, 1)].tag
+            // max(count, 1) 只挡住除零，空数组仍会越界；这里与 Web 一致地回退到占位文案。
+            let strength = strengths.isEmpty
+                ? "你的优势"
+                : strengths[index % strengths.count].tag
             return DiscoveryDirection(title: "用\(strength)，去探索\(like.tag)", why: "这组组合同时回应了你的兴趣证据，并靠近“\(value)”。", firstStep: "在一周内完成一个与“\(like.tag)”有关、能使用“\(strength)”的小行动。")
         }
         return SelfDiscoveryAnalysis(

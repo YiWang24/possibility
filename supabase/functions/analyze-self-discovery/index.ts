@@ -71,16 +71,19 @@ const outputSchema = {
     summary: { type: "string", minLength: 20, maxLength: 240 },
     likes: {
       type: "array",
+      minItems: 3,
       maxItems: 3,
       items: insightSchema,
     },
     strengths: {
       type: "array",
+      minItems: 3,
       maxItems: 3,
       items: insightSchema,
     },
     directions: {
       type: "array",
+      minItems: 3,
       maxItems: 3,
       items: {
         type: "object",
@@ -97,7 +100,8 @@ const outputSchema = {
   },
 } as const;
 
-const systemPrompt = `你是一名严谨、温和的自我理解分析助手。你的工作是根据用户对原创探索题的回答，区分“喜欢的事”和“擅长的事”，并提出可验证的行动假设。
+const systemPrompt =
+  `你是一名严谨、温和的自我理解分析助手。你的工作是根据用户对原创探索题的回答，区分“喜欢的事”和“擅长的事”，并提出可验证的行动假设。
 
 分析原则：
 1. 喜欢的事是用户反复被吸引、愿意投入和主动了解的“内容领域”，不要把行为能力误写成兴趣。
@@ -125,7 +129,11 @@ function cleanString(value: unknown, max: number): string {
   return cleaned;
 }
 
-function cleanStrings(value: unknown, maxItems: number, maxLength: number): string[] {
+function cleanStrings(
+  value: unknown,
+  maxItems: number,
+  maxLength: number,
+): string[] {
   if (!Array.isArray(value) || value.length > maxItems) {
     throw new HttpError(400, "INVALID_INPUT", "回答选项数量不正确。");
   }
@@ -149,7 +157,10 @@ function cleanEvidence(value: unknown): Array<{ tag: string; count: number }> {
 }
 
 function validateInput(value: unknown): DiscoveryInput {
-  if (!isRecord(value) || !Array.isArray(value.responses) || !isRecord(value.evidence)) {
+  if (
+    !isRecord(value) || !Array.isArray(value.responses) ||
+    !isRecord(value.evidence)
+  ) {
     throw new HttpError(400, "INVALID_INPUT", "缺少完整的探索回答。");
   }
   if (value.responses.length !== 12) {
@@ -205,7 +216,10 @@ Deno.serve(async (req) => {
       model: runtimeConfig.structuredModel,
       maxTokens: 2_048,
       system: systemPrompt,
-      prompt: `以下是用户完成的自我探索回答与客户端证据计数。只能依据这些内容分析：\n${JSON.stringify(input)}`,
+      prompt:
+        `以下是用户完成的自我探索回答与客户端证据计数。只能依据这些内容分析：\n${
+          JSON.stringify(input)
+        }`,
       schema: outputSchema,
       track: { userId: user.id, feature: "analyze_self_discovery" },
       trace: { name: "analyze-self-discovery", userId: user.id },
@@ -215,7 +229,9 @@ Deno.serve(async (req) => {
       result.strengths.length !== 3 ||
       result.directions.length !== 3 ||
       new Set(result.likes.map((item) => item.label)).size !== 3 ||
-      new Set(result.strengths.map((item) => item.label)).size !== 3
+      new Set(result.strengths.map((item) => item.label)).size !== 3 ||
+      // 客户端按 title 做列表标识（iOS DiscoveryDirection.id），重复标题会导致渲染错乱。
+      new Set(result.directions.map((item) => item.title)).size !== 3
     ) {
       throw new HttpError(
         502,
