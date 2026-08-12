@@ -1,0 +1,6 @@
+<view class="page safe-top">
+  <view class="placeholder kaleido-card">
+    <text class="placeholder__title">{{title}}</text>
+    <text class="placeholder__hint">波次 1 · B · 待复刻</text>
+  </view>
+</view>

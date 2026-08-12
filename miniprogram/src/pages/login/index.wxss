@@ -1,0 +1,76 @@
+@import '../../core/design/tokens.wxss';
+
+.page {
+  min-height: 100vh;
+  padding: 0 48rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24rpx;
+}
+
+/* 光球占位 —— 波次 0 · W0-2 用 OrbView 组件替换 */
+.hero__orb {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 50%;
+  background: var(--orb-conic);
+  box-shadow: 0 0 60rpx 12rpx rgba(94, 150, 255, 0.35);
+}
+
+.hero__title {
+  font-size: 52rpx;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 4rpx;
+}
+
+.hero__sub {
+  font-size: 26rpx;
+  color: var(--sub);
+  text-align: center;
+  line-height: 1.7;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20rpx;
+  padding-bottom: 80rpx;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 92rpx;
+  line-height: 92rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  color: var(--ink);
+  font-size: 30rpx;
+  font-weight: 500;
+  border: none;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.actions__error {
+  font-size: 24rpx;
+  color: var(--orange);
+}
+
+.actions__terms {
+  font-size: 22rpx;
+  color: var(--faint);
+}

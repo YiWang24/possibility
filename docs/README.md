@@ -28,6 +28,7 @@
 | [技术设计文档.md](engineering/技术设计文档.md) | 总体技术设计：数据模型、RLS、Edge Function 契约、导航策略 | v0.1（黑客松）· 待评审 |
 | [后端开发架构.md](engineering/后端开发架构.md) | 后端 17 个模块的拆解与开发依赖图（哪些并行/串行） | — |
 | [并行开发方案.md](engineering/并行开发方案.md) | 前后端接线的三波次并行开发派发方案 | 2026-07-25 |
+| [小程序端开发方案.md](engineering/小程序端开发方案.md) | 微信小程序端：选型与 Skyline 决策、流式对话、`wechat-auth`、合规上线、四波次派发 | 2026-08-12 |
 | [埋点方案.md](engineering/埋点方案.md) | 三层埋点架构与事件清单。**唯一事实来源**，Swift / TS 两侧镜像必须跟随本文件改动 | 生效中 |
 | [diary-worker-cron.sql.example](engineering/diary-worker-cron.sql.example) | diary-worker 定时任务的 Vault + pg_cron 部署片段 | 模板 |
 
@@ -47,7 +48,7 @@
 | [screens/](design/screens/) | 各界面设计稿 |
 | [app-icon-iterations/](design/app-icon-iterations/) | App 图标迭代 |
 | [appstore/](design/appstore/) | App Store 上架截图 |
-| [assets/](design/assets/) | 共享图片母版（社区头像 · 数字人），由 `scripts/sync-assets.sh` 分发到 iOS / web |
+| [assets/](design/assets/) | 共享图片母版（社区头像 · 数字人），由 `scripts/sync-assets.sh` 分发到 iOS / web（小程序分支待补，见小程序方案 §3.1）|
 
 ## marketing/ · 宣传物料
 

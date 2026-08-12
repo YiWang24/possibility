@@ -1,0 +1,38 @@
+@import '../core/design/tokens.wxss';
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  background: var(--paper);
+  border-top: 1rpx solid var(--line);
+}
+
+.tabbar__item {
+  flex: 1;
+  padding: 18rpx 0 12rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.tabbar__text {
+  font-size: 22rpx;
+  color: var(--faint);
+}
+
+.tabbar__item--on .tabbar__text {
+  color: var(--ink);
+}
+
+/* 选中态用极光渐变的短横，而不是给文字上色 —— 与 iOS 的选中处理一致 */
+.tabbar__bar {
+  width: 40rpx;
+  height: 4rpx;
+  border-radius: var(--r-chip);
+  background: var(--aurora);
+}

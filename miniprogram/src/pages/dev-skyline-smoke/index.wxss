@@ -1,0 +1,172 @@
+@import '../../core/design/tokens.wxss';
+
+.page {
+  height: 100vh;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  padding: 24rpx 8rpx 32rpx;
+}
+
+.head__title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.head__meta {
+  font-size: 24rpx;
+  color: var(--blue);
+}
+
+.head__hint {
+  font-size: 22rpx;
+  color: var(--faint);
+}
+
+.probe {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.probe__label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.probe__used {
+  font-size: 22rpx;
+  color: var(--sub);
+}
+
+.probe__note {
+  font-size: 22rpx;
+  color: var(--apricot);
+}
+
+.swatch {
+  height: 120rpx;
+  border-radius: 16rpx;
+}
+
+.swatch--aurora {
+  background: var(--aurora);
+}
+
+.swatch--conic {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: var(--orb-conic);
+}
+
+.swatch--glow {
+  background: var(--blue-deep);
+  box-shadow: 0 0 40rpx 8rpx rgba(94, 150, 255, 0.6);
+}
+
+/* 毛玻璃：底层放渐变，上层面板做 backdrop-filter */
+.glass-stage {
+  position: relative;
+  height: 160rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+}
+
+.glass-stage__bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--aurora-deep);
+}
+
+.glass-stage__panel {
+  position: absolute;
+  left: 40rpx;
+  right: 40rpx;
+  top: 40rpx;
+  bottom: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--line);
+  background: rgba(19, 22, 31, 0.45);
+  backdrop-filter: blur(20rpx);
+}
+
+.glass-stage__text {
+  font-size: 24rpx;
+  color: var(--ink);
+}
+
+/* 混色：两圆重叠处应被提亮 */
+.blend-stage {
+  position: relative;
+  height: 160rpx;
+}
+
+.blend-stage__a,
+.blend-stage__b {
+  position: absolute;
+  top: 20rpx;
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+}
+
+.blend-stage__a {
+  left: 40rpx;
+  background: var(--blue);
+}
+
+.blend-stage__b {
+  left: 120rpx;
+  background: var(--magenta);
+  mix-blend-mode: screen;
+}
+
+.smoke-canvas {
+  width: 200rpx;
+  height: 200rpx;
+}
+
+.spinner {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 20rpx;
+  background: var(--btn-g);
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.foot {
+  padding: 24rpx 8rpx 48rpx;
+}
+
+.foot__text {
+  font-size: 22rpx;
+  color: var(--faint);
+}

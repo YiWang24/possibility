@@ -1,0 +1,21 @@
+/**
+ * 全局样式入口。设计 token 是唯一色源，页面 wxss 一律引用变量，不写死色值。
+ */
+@import './core/design/tokens.wxss';
+
+page {
+  background: var(--stage);
+  color: var(--ink);
+  font-size: 28rpx;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 与 iOS 一致的安全区处理：导航栏用 custom，页面自己让开状态栏 */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://developers.weixin.qq.com/miniprogram/dev/devtools/projectconfig.html",
+  "miniprogramRoot": "src/",
+  "projectname": "possibility-miniprogram",
+  "description": "万花筒 · 微信小程序端（以 iOS 为设计基准复刻）",
+  "appid": "touristappid",
+  "compileType": "miniprogram",
+  "libVersion": "3.7.1",
+  "setting": {
+    "useCompilerPlugins": ["typescript"],
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "lazyCodeLoading": "requiredComponents",
+    "ignoreDevUnusedFiles": false,
+    "packNpmManually": false,
+    "packNpmRelationList": []
+  },
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "Skyline 冒烟验证（W0-0）",
+          "pathName": "pages/dev-skyline-smoke/index",
+          "query": "",
+          "scene": null
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+<view class="tabbar safe-bottom">
+  <view
+    wx:for="{{tabs}}"
+    wx:key="key"
+    class="tabbar__item {{selected === index ? 'tabbar__item--on' : ''}}"
+    data-index="{{index}}"
+    bindtap="onTap"
+  >
+    <text class="tabbar__text">{{item.text}}</text>
+    <view wx:if="{{selected === index}}" class="tabbar__bar" />
+  </view>
+</view>

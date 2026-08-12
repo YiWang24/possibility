@@ -1,0 +1,38 @@
+name: MiniProgram
+
+on:
+  pull_request:
+    paths:
+      - 'miniprogram/**'
+      - '.github/workflows/miniprogram.yml'
+  workflow_dispatch:
+
+# 纯检查工作流：GITHUB_TOKEN 只需要读仓库，不给默认的可写权限
+permissions:
+  contents: read
+
+jobs:
+  miniprogram-check:
+    name: 类型 / 包体护栏
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: miniprogram
+    steps:
+      # action 一律锁定到 commit SHA：tag 是可变引用，SonarCloud 视为供应链风险
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      # 小程序不在 pnpm workspace 内（同 flash-app 惯例），自带 npm 依赖
+      - name: 安装依赖
+        run: npm install --no-audit --no-fund
+
+      - name: typecheck
+        run: npm run typecheck
+
+      # 主包 2MB / 总包 20MB 是微信硬限制，超限只有提审时才暴露 —— 在 CI 就卡住
+      - name: 包体护栏
+        run: npm run size

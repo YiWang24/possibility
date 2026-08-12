@@ -1,0 +1,93 @@
+{
+  "entryPagePath": "pages/home/index",
+  "pages": [
+    "pages/home/index",
+    "pages/lab/index",
+    "pages/community/index",
+    "pages/me/index",
+    "pages/login/index",
+    "pages/dev-skyline-smoke/index"
+  ],
+  "subPackages": [
+    {
+      "root": "subpkg/chat",
+      "name": "chat",
+      "pages": ["index/index", "summary/index"]
+    },
+    {
+      "root": "subpkg/profile",
+      "name": "profile",
+      "pages": ["index/index", "paywall/index"]
+    },
+    {
+      "root": "subpkg/diary",
+      "name": "diary",
+      "pages": ["day/index", "detail/index", "summary/index"]
+    },
+    {
+      "root": "subpkg/card-game",
+      "name": "cardGame",
+      "pages": ["hub/index", "play/index"]
+    },
+    {
+      "root": "subpkg/studio",
+      "name": "studio",
+      "pages": ["index/index", "assessment/index", "result/index"]
+    },
+    {
+      "root": "subpkg/community-ext",
+      "name": "communityExt",
+      "pages": ["bounty/index", "watch/index", "draw/index"]
+    }
+  ],
+  "preloadRule": {
+    "pages/home/index": {
+      "network": "all",
+      "packages": ["chat", "diary"]
+    },
+    "pages/community/index": {
+      "network": "wifi",
+      "packages": ["profile", "communityExt"]
+    }
+  },
+  "window": {
+    "backgroundColor": "#05070D",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#05070D",
+    "navigationBarTitleText": "万花筒",
+    "navigationBarTextStyle": "white",
+    "navigationStyle": "custom"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#5A6172",
+    "selectedColor": "#F2F4F9",
+    "backgroundColor": "#0A0C12",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "认识自己" },
+      { "pagePath": "pages/lab/index", "text": "实验室" },
+      { "pagePath": "pages/community/index", "text": "万花筒" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "permission": {
+    "scope.record": {
+      "desc": "用于记录语音日记，转写后生成情绪分析与画像提案"
+    }
+  },
+  "requiredPrivateInfos": [],
+  "lazyCodeLoading": "requiredComponents",
+  "componentFramework": "glass-easel",
+  "renderer": "webview",
+  "rendererOptions": {
+    "skyline": {
+      "defaultDisplayBlock": true,
+      "defaultContentBox": true,
+      "disableABTest": true,
+      "sdkVersionBegin": "3.0.0",
+      "sdkVersionEnd": "15.255.255"
+    }
+  },
+  "sitemapLocation": "sitemap.json"
+}

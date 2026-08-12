@@ -1,0 +1,115 @@
+/**
+ * 设计系统 · 色板与渐变
+ *
+ * 唯一事实来源是 iOS 的 `ios/Possibility/Core/DesignSystem/Theme.swift`，
+ * 它本身又与原型 CSS 的 `:root` 变量一一对应 —— 所以这里是「回到 CSS」，
+ * 变量名与原型保持一致，改色只改这一个文件。
+ *
+ * ⚠️ 禁止在页面 wxss 里写死十六进制色值。CI 的 `lint:tokens` 会拦
+ * （对应 web 的 `web/scripts/check-design-tokens.mjs`）。
+ */
+
+page,
+.kaleido-root {
+  /* ── 基础色（Theme.stage / paper / card / raised / ink / sub / faint / line）── */
+  --stage: #05070d;
+  --paper: #0a0c12;
+  --card: #13161f;
+  --raised: #1b1f2b;
+  --ink: #f2f4f9;
+  --sub: #98a0b3;
+  --faint: #5a6172;
+  --line: rgba(255, 255, 255, 0.08);
+
+  /* ── 品牌色 ── */
+  --blue: #5e96ff;
+  --blue-deep: #2f63e8;
+  --violet-soft: #8f7bff;
+  --pink: #f06acd;
+  --magenta: #e35cc1;
+  --orange: #ff7a4d;
+  --apricot: #ffb067;
+  --teal: #3ed9a4;
+  --lime: #d7f464;
+
+  /* ── 渐变 ── */
+  /* 极光渐变（Theme.aurora） */
+  --aurora: linear-gradient(
+    135deg,
+    #5e96ff 0%,
+    #8f7bff 40%,
+    #e35cc1 75%,
+    #ff7a4d 100%
+  );
+  /* 极光渐变 · 深（Theme.auroraDeep） */
+  --aurora-deep: linear-gradient(
+    135deg,
+    #2f63e8 0%,
+    #b03390 60%,
+    #e8542f 100%
+  );
+  /* 主按钮渐变（Theme.buttonGradient） */
+  --btn-g: linear-gradient(135deg, #6fa5ff, #2f63e8);
+
+  /* 光球 / 万花筒的 conic 色环（Theme.orbConicColors）。
+     ⚠️ Skyline 对 conic-gradient 的支持需由 W0-0 冒烟验证确认；
+     不支持时 OrbView 退回 canvas 2d 绘制，本变量仍作为色标来源。 */
+  --orb-conic: conic-gradient(
+    from 0deg,
+    #5e96ff 0%,
+    #8f7bff 25%,
+    #e35cc1 50%,
+    #ff7a4d 75%,
+    #5e96ff 100%
+  );
+
+  /* ── 旅人头像配色（Theme.hues，原型 HUES 0..4）── */
+  --hue0-g: linear-gradient(135deg, #0f1f52 0%, #2e5edb 55%, #6fa5ff 100%);
+  --hue0-accent: #3d6ef0;
+  --hue1-g: linear-gradient(135deg, #3a1035 0%, #b03390 55%, #f06acd 100%);
+  --hue1-accent: #c445a4;
+  --hue2-g: linear-gradient(135deg, #0e2a22 0%, #1f8a66 60%, #8fd84b 100%);
+  --hue2-accent: #2fa98c;
+  --hue3-g: linear-gradient(135deg, #3a140c 0%, #d14a24 60%, #ff8a54 100%);
+  --hue3-accent: #e85a34;
+  --hue4-g: linear-gradient(135deg, #171243 0%, #4a3bd1 60%, #8f7bff 100%);
+  --hue4-accent: #6e58e8;
+
+  /* ── 卡面点缀色（Theme.cardAccents）──
+     LLM 返回的颜色只当色相提示，一律吸附到这五档，否则一屏卡片会出现
+     互不相干的随机彩虹色 —— 那正是「模型生成感」的来源之一。 */
+  --accent-0: #5e96ff;
+  --accent-1: #8f7bff;
+  --accent-2: #e35cc1;
+  --accent-3: #ffb067;
+  --accent-4: #3ed9a4;
+
+  /* ── 圆角（Theme.Radius）── */
+  --r-card: 22rpx;
+  --r-sheet: 30rpx;
+  --r-chip: 999rpx;
+
+  /* ── 阴影（CardBackground）── */
+  --shadow-card: 0 2rpx 8rpx rgba(0, 0, 0, 0.55);
+}
+
+/* ── 通用卡片样式（对应 iOS 的 .kaleidoCard() modifier）── */
+.kaleido-card {
+  background: var(--card);
+  border-radius: var(--r-card);
+  border: 1rpx solid var(--line);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* ── 标签胶囊（对应 iOS TagPill）── */
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  color: var(--sub);
+  font-size: 20rpx;
+}

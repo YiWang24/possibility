@@ -1,0 +1,68 @@
+<scroll-view class="page safe-top" scroll-y type="list">
+  <view class="head">
+    <text class="head__title">Skyline 冒烟验证 · W0-0</text>
+    <text class="head__meta">renderer: {{renderer}} · 基础库 {{libVersion}}</text>
+    <text class="head__hint">逐项目视对照，结论写回 docs/engineering/小程序端开发方案.md §2</text>
+  </view>
+
+  <!-- 1. linear-gradient 极光渐变 -->
+  <view class="probe">
+    <text class="probe__label">1 · linear-gradient 极光渐变</text>
+    <view class="swatch swatch--aurora" />
+    <text class="probe__used">用于：按钮 / 卡片色带 / tabBar 选中条</text>
+  </view>
+
+  <!-- 2. conic-gradient 色环 -->
+  <view class="probe">
+    <text class="probe__label">2 · conic-gradient 色环</text>
+    <view class="swatch swatch--conic" />
+    <text class="probe__used">用于：OrbView 光球 · KaleidoscopeView 万花筒</text>
+    <text class="probe__note">不是完整色环 = 不支持，OrbView 改走下面第 6 项的 canvas 画法</text>
+  </view>
+
+  <!-- 3. backdrop-filter 毛玻璃 -->
+  <view class="probe">
+    <text class="probe__label">3 · backdrop-filter 毛玻璃</text>
+    <view class="glass-stage">
+      <view class="glass-stage__bg" />
+      <view class="glass-stage__panel"><text class="glass-stage__text">毛玻璃面板</text></view>
+    </view>
+    <text class="probe__used">用于：Sheet 蒙层 · 付费墙遮罩</text>
+  </view>
+
+  <!-- 4. box-shadow 发光 -->
+  <view class="probe">
+    <text class="probe__label">4 · box-shadow 发光</text>
+    <view class="swatch swatch--glow" />
+    <text class="probe__used">用于：kaleidoCard · 光球辉光</text>
+  </view>
+
+  <!-- 5. mix-blend-mode（已知不支持，留作复核） -->
+  <view class="probe">
+    <text class="probe__label">5 · mix-blend-mode（预期不支持）</text>
+    <view class="blend-stage">
+      <view class="blend-stage__a" />
+      <view class="blend-stage__b" />
+    </view>
+    <text class="probe__used">用于：万花筒六瓣折光叠加</text>
+    <text class="probe__note">两圆重叠处若无提亮 = 不支持，折光改用 canvas globalCompositeOperation</text>
+  </view>
+
+  <!-- 6. canvas 2d -->
+  <view class="probe">
+    <text class="probe__label">6 · canvas 2d（扇形逼近色环）</text>
+    <canvas id="smoke-canvas" type="2d" class="smoke-canvas" />
+    <text class="probe__used">这是万花筒 / 波形 / 转盘的兜底实现路径，必须可用</text>
+  </view>
+
+  <!-- 7. transform 动画 -->
+  <view class="probe">
+    <text class="probe__label">7 · transform 旋转动画</text>
+    <view class="spinner" />
+    <text class="probe__used">用于：转盘 DialView · 卡牌翻转</text>
+  </view>
+
+  <view class="foot safe-bottom">
+    <text class="foot__text">⚠️ 本页不进生产：sitemap 已 disallow，提审前从 app.json 的 pages 移除</text>
+  </view>
+</scroll-view>

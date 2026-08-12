@@ -9,7 +9,7 @@
 
 [![CI](https://github.com/YiWang24/possibility/actions/workflows/ci.yml/badge.svg)](https://github.com/YiWang24/possibility/actions/workflows/ci.yml)
 [![Deploy](https://github.com/YiWang24/possibility/actions/workflows/deploy.yml/badge.svg)](https://github.com/YiWang24/possibility/actions/workflows/deploy.yml)
-[![Platform](https://img.shields.io/badge/platform-iOS%20%C2%B7%20Android%20%C2%B7%20Web-blue.svg)](#三端与后端)
+[![Platform](https://img.shields.io/badge/platform-iOS%20%C2%B7%20Android%20%C2%B7%20Web%20%C2%B7%20MiniProgram-blue.svg)](#四端与后端)
 [![Backend](https://img.shields.io/badge/backend-Supabase%20Edge%20Functions-3ECF8E.svg)](https://supabase.com)
 [![LLM](https://img.shields.io/badge/LLM-DeepSeek%20via%20Vercel%20AI%20SDK-4D6BFE.svg)](https://deepseek.com)
 
@@ -54,19 +54,19 @@ ChatGPT 能承接迷茫却给不出真人经验；小红书/知乎有真人经�
 
 ## 🏗 系统架构
 
-### 三端与后端
+### 四端与后端
 
-三个客户端**功能对等**，共用同一套 Supabase 后端与数据契约。iOS 是设计基准，Android / Web 以其为标准复刻——同一个功能不会出现三种交互逻辑。
+四个客户端**功能对等**，共用同一套 Supabase 后端与数据契约。iOS 是设计基准，Android / Web / 小程序以其为标准复刻——同一个功能不会出现四种交互逻辑。
 
 ```
-┌── iOS (SwiftUI) ──┐  ┌── Android (Compose) ──┐  ┌── Web (Next.js 15) ──┐
-│  iOS 17+          │  │  minSdk 26            │  │  React 19 · TW 4      │
-│  @Observable      │  │  supabase-kt          │  │  App Router · zustand │
-└─────────┬─────────┘  └───────────┬───────────┘  └───────────┬───────────┘
-          │                        │                          │
-          │  Home · Chat · Lab · Community · CardGame · Studio · Diary · Me
-          │  Auth（匿名 + Apple）· Profile（旅人主页 · 付费墙）
-          └────────────────────────┼──────────────────────────┘
+┌── iOS (SwiftUI) ──┐  ┌── Android (Compose) ──┐  ┌── Web (Next.js 15) ──┐  ┌─ 小程序 (原生 TS) ─┐
+│  iOS 17+          │  │  minSdk 26            │  │  React 19 · TW 4      │  │  Skyline · 分包     │
+│  @Observable      │  │  supabase-kt          │  │  App Router · zustand │  │  微信一键登录       │
+└─────────┬─────────┘  └───────────┬───────────┘  └───────────┬───────────┘  └─────────┬──────────┘
+          │                        │                          │                        │
+          │  Home · Chat · Lab · Community · CardGame · Studio · Diary · Me             │
+          │  Auth（匿名 + Apple）· Profile（旅人主页 · 付费墙）                          │
+          └────────────────────────┼──────────────────────────┴────────────────────────┘
                                    │ JWT（Auth）· SSE（流式对话）
                                    ▼
 ┌──────────────────────────── Supabase ───────────────────────────────────┐
@@ -127,6 +127,7 @@ POST /match → 结构化输出 → 3 位结局不同的旅人 + 匹配理由
 | **iOS** | Swift + SwiftUI（iOS 17+，`@Observable`） | 设计基准端；原生签名动画（光球/万花筒/转盘/波形）|
 | **Android** | Kotlin + Jetpack Compose + supabase-kt | compileSdk 35 / minSdk 26，以 iOS 为标准全量复刻 |
 | **Web** | Next.js 15 + React 19 + Tailwind 4 | App Router、cva 组件基元、zustand、framer-motion |
+| **小程序** | 原生小程序 + TypeScript | 微信一键登录、`enableChunked` 流式对话、主包 2MB 分包约束 |
 | **流式聊天** | SSE（iOS 走 `URLSession.bytes`） | 绕过 `functions.invoke` 的缓冲，实现打字机效果 |
 | **后端 BaaS** | Supabase（Postgres + Auth + Storage + Edge Functions） | 一站式后端，匿名登录起步 |
 | **Edge Functions** | TypeScript / Deno 2 | 29 个函数，26 个强制 `verify_jwt` |
@@ -145,6 +146,7 @@ POST /match → 结构化输出 → 3 位结局不同的旅人 + 匹配理由
 ## ✨ 功能模块
 
 以下模块**三端均已实现**（`ios/…/Features/`、`android/…/features/`、`web/features/` 一一对应）。
+小程序端（`miniprogram/src/pages/` + `subpkg/`）正在复刻，进度见 [`docs/engineering/小程序端开发方案.md`](docs/engineering/小程序端开发方案.md)。
 
 | 模块 | 做什么 |
 |---|---|
@@ -221,6 +223,18 @@ pnpm --filter @possibility/web typecheck  # 类型检查
 pnpm --filter @possibility/web lint:tokens # 设计 token 护栏
 ```
 
+### 微信小程序
+
+```bash
+cd miniprogram && npm install
+npm run typecheck    # 类型检查
+npm run size         # 主包 2MB / 总包 20MB 护栏
+```
+
+用微信开发者工具打开 `miniprogram/` 目录（`miniprogramRoot` 已指向 `src/`）。首次打开需勾选
+「不校验合法域名」——后端 `*.supabase.co` 未 ICP 备案，提审前要切到备案域名的反代网关。
+详见 [`miniprogram/README.md`](miniprogram/README.md) 与 [`docs/engineering/小程序端开发方案.md`](docs/engineering/小程序端开发方案.md)。
+
 > ⚠️ **密钥红线**：`DEEPSEEK_API_KEY`、`AZURE_SPEECH_KEY` 等**绝不进 App / 前端 / 仓库**，
 > 只存 Supabase Function Secrets（源头在 Doppler）。客户端只持 anon key，受 RLS 约束。
 
@@ -228,7 +242,7 @@ pnpm --filter @possibility/web lint:tokens # 设计 token 护栏
 
 ## 📁 项目结构
 
-顶层按「交付物」切分：`ios/` `android/` `web/` `flash-app/` 四个可独立构建的前端，`supabase/` 一个后端，
+顶层按「交付物」切分：`ios/` `android/` `web/` `miniprogram/` `flash-app/` 五个可独立构建的前端，`supabase/` 一个后端，
 `packages/` TS 共享层，`scripts/` 工具脚本。
 **所有不进产物的资料（文档 / 设计稿 / 原型 / 宣传物料 / demo 视频工程）统一收在 `docs/` 一个目录下。**
 
@@ -262,6 +276,15 @@ possibility/
 │   ├── components/ui/           # cva 组件基元（button/card/sheet/…）+ OrbView
 │   ├── lib/                     # supabase · chat-stream · theme · demo-data
 │   └── scripts/                 # check-design-tokens.mjs（设计 token 护栏）
+│
+├── miniprogram/                 # 微信小程序端（原生 + TypeScript，以 iOS 为基准复刻）
+│   ├── project.config.json      # miniprogramRoot: src/ · TS 编译插件 · 开发期 urlCheck: false
+│   ├── scripts/                 # check-package-size.mjs（主包 2MB / 总包 20MB 护栏）
+│   └── src/
+│       ├── core/                # config · net（request/auth/chat-stream/utf8）· design/tokens.wxss
+│       ├── custom-tab-bar/      # 自定义 tabBar（对应 iOS AppTab）
+│       ├── pages/               # 主包：home lab community me login
+│       └── subpkg/              # 分包：chat profile diary card-game studio community-ext
 │
 ├── supabase/                    # 后端
 │   ├── migrations/              # 33 个 SQL migration
@@ -312,6 +335,8 @@ possibility/
 | [`docs/README.md`](docs/README.md) | 全部非产物资料的索引（先看这个） |
 | [`ios/README.md`](ios/README.md) | iOS 目录结构、xcodegen 约定、构建与签名 |
 | [`android/README.md`](android/README.md) | Android 环境要求与构建 |
+| [`miniprogram/README.md`](miniprogram/README.md) | 小程序目录结构、开发者工具设置、Skyline 约定 |
+| [`docs/engineering/小程序端开发方案.md`](docs/engineering/小程序端开发方案.md) | 小程序完整方案：选型 · 流式对话 · 合规上线 · 任务波次 |
 | [`supabase/README.md`](supabase/README.md) | 后端函数职责说明 |
 | [`flash-app/README.md`](flash-app/README.md) | 灵光赛道独立工程 |
 | [`docs/demo-video/README.md`](docs/demo-video/README.md) | Demo 视频的 Remotion 工程与剪辑约定 |
@@ -418,7 +443,7 @@ Swift / Kotlin / TS 三端镜像必须跟随该文件改动：
 
 ### 前端架构特点
 
-- **三端对齐**：iOS 是设计与交互基准，Android / Web 复刻；同一功能不允许三种逻辑
+- **四端对齐**：iOS 是设计与交互基准，Android / Web / 小程序复刻；同一功能不允许四种逻辑
 - **状态分治**：服务端状态经各端 Service 层缓存；UI 状态留在各 Feature Model / store
 - **真实优先 + 静默回退**：接口失败时静默回退到 `DemoData`，不白屏
 - **SSE 直连**：聊天不走 `functions.invoke`（会缓冲），直连函数 URL 读流
@@ -469,6 +494,7 @@ PR 按路径触发，互不干扰：
 | `ci.yml` | `supabase/**` `scripts/**` `package.json` | Deno fmt / lint / 28 入口类型检查 / 单测；启本地库跑迁移 + RLS 测试 |
 | `web.yml` | `web/**` `packages/**` | 类型检查 + 设计 token 护栏 |
 | `android.yml` | `android/**` | `assembleDebug` |
+| `miniprogram.yml` | `miniprogram/**` | 类型检查 + 包体护栏（主包 2MB / 总包 20MB）|
 | `packages.yml` | `packages/**` | 共享包类型检查 |
 | `deploy.yml` | push 到 `main` | 生产部署（见上）|
 
@@ -484,7 +510,7 @@ PR 按路径触发，互不干扰：
 | **结局多样** | 推荐成功/失败/延迟/返回等多种结局，避免确认偏误 |
 | **行动导向** | 产品最终目标是推动现实行动，不是继续消费内容 |
 | **推演不是预言，是一面镜子** | 帮你注意到自己的反应，不替你做决定 |
-| **三端对齐优先于单端最优** | 交互差异要有理由（平台惯例），不能是实现方便 |
+| **多端对齐优先于单端最优** | 交互差异要有理由（平台惯例），不能是实现方便。小程序的微信一键登录是符合这条的例外 |
 
 ---
 

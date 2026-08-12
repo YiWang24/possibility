@@ -1,0 +1,8 @@
+{
+  "navigationBarTitleText": "Skyline 冒烟验证",
+  "renderer": "skyline",
+  "componentFramework": "glass-easel",
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "usingComponents": {}
+}
