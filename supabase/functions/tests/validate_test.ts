@@ -15,6 +15,7 @@ import {
   validateSaveDimensionInput,
   validateSimulateInput,
   validateSimulateInputV2,
+  validateWechatAuthInput,
 } from "../_shared/validate.ts";
 
 function assert(
@@ -614,6 +615,31 @@ Deno.test("personaInput generate accepts prompt_override and rejects oversize", 
   assert(input.promptOverride === "更温柔一些");
   assertHttpError(
     () => validatePersonaInput({ prompt_override: "x".repeat(501) }),
+    "INPUT_TOO_LONG",
+  );
+});
+
+Deno.test("wechatAuthInput accepts wx.login code shape", () => {
+  const input = validateWechatAuthInput({
+    code: "0a1B2c3D4e5F6g7H8i9J-k_LmNoPqRsT",
+  });
+  assert(input.code === "0a1B2c3D4e5F6g7H8i9J-k_LmNoPqRsT");
+});
+
+Deno.test("wechatAuthInput rejects missing / malformed / oversize code", () => {
+  assertHttpError(() => validateWechatAuthInput({}), "INVALID_INPUT");
+  assertHttpError(() => validateWechatAuthInput({ code: "" }), "INVALID_INPUT");
+  // 非法字符：挡在打微信接口之前，别拿脏输入去消耗 code2session 配额
+  assertHttpError(
+    () => validateWechatAuthInput({ code: "abc def" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateWechatAuthInput({ code: "abc/../../etc" }),
+    "INVALID_INPUT",
+  );
+  assertHttpError(
+    () => validateWechatAuthInput({ code: "a".repeat(129) }),
     "INPUT_TOO_LONG",
   );
 });

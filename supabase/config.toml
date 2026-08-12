@@ -147,6 +147,11 @@ verify_jwt = true
 [functions.card-game-catalog]
 verify_jwt = false
 
+# 登录之前客户端没有任何用户 JWT，与 card-game-catalog 同类。
+# 替代鉴权是微信侧的 code：5 分钟有效、只能消费一次、必须持 AppSecret 才能兑换。
+[functions.wechat-auth]
+verify_jwt = false
+
 [functions.card-game-session]
 verify_jwt = true
 

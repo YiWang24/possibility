@@ -536,3 +536,23 @@ export function validatePersonaInput(value: unknown): PersonaInput {
     promptOverride: string(body.prompt_override, "prompt_override", 500, false),
   };
 }
+
+export type WechatAuthInput = {
+  code: string;
+};
+
+/**
+ * 微信一键登录入参（wechat-auth）。
+ *
+ * `code` 是 wx.login 下发的临时登录凭证：5 分钟有效、只能消费一次，且必须由
+ * code2session 用 AppID + AppSecret 才能兑换。所以这里不做业务鉴权 ——
+ * 真正的门槛在微信侧，本函数只负责挡掉明显畸形的输入，不拿脏数据去打微信接口。
+ */
+export function validateWechatAuthInput(value: unknown): WechatAuthInput {
+  const body = object(value);
+  const code = string(body.code, "code", 128)!;
+  if (!/^[A-Za-z0-9_-]+$/.test(code)) {
+    throw new HttpError(400, "INVALID_INPUT", "code 格式非法。");
+  }
+  return { code };
+}

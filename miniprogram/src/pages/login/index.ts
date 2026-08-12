@@ -9,6 +9,7 @@
  */
 
 import { signInWithWeixin } from '../../core/net/auth'
+import { identify, track } from '../../core/analytics'
 
 Page({
   data: {
@@ -16,14 +17,23 @@ Page({
     error: '',
   },
 
+  onLoad() {
+    track('auth_prompted', { trigger: 'cold_start' })
+  },
+
   async onTapLogin() {
     if (this.data.loading) return
     this.setData({ loading: true, error: '' })
+    track('auth_wechat_started')
 
     try {
-      await signInWithWeixin()
+      const session = await signInWithWeixin()
       const app = getApp<{ globalData: { signedIn: boolean } }>()
       app.globalData.signedIn = true
+
+      identify(session.user_id)
+      track('auth_completed', { method: 'wechat', was_anonymous: false })
+
       wx.reLaunch({ url: '/pages/home/index' })
     } catch (err) {
       // 不静默失败：登录失败必须给出可读原因，否则用户只会看到一个没反应的按钮
@@ -32,6 +42,13 @@ Page({
       wx.showToast({ title: message, icon: 'none' })
     } finally {
       this.setData({ loading: false })
+    }
+  },
+
+  onUnload() {
+    // 没登录就离开登录页 = 放弃。这条是认证漏斗的分母侧，不能漏报。
+    if (!this.data.loading && !getApp<{ globalData: { signedIn: boolean } }>().globalData.signedIn) {
+      track('auth_abandoned', { trigger: 'cold_start' })
     }
   },
 })

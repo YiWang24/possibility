@@ -75,6 +75,15 @@ export const runtimeConfig = {
   get diaryDailyEntryLimit(): number {
     return positiveInteger("DIARY_DAILY_ENTRY_LIMIT", 30);
   },
+  // 微信小程序一键登录（wechat-auth）。AppSecret 与 DEEPSEEK_API_KEY 同级红线：
+  // 只存 Function Secrets（源头 Doppler），绝不进小程序包 —— 泄露即可冒充本小程序
+  // 换取任意用户的 openid。未配置时 wechat-auth 会在首次调用抛错，其余函数不受影响。
+  get wechatAppId(): string {
+    return env("WECHAT_APPID");
+  },
+  get wechatAppSecret(): string {
+    return env("WECHAT_APPSECRET");
+  },
   // Sentry（docs/engineering/埋点方案.md Layer 3 服务端）。留空即整条上报链路静默关闭，
   // 因此本地开发和未配置密钥的环境不受影响——错误监控绝不能成为启动的硬依赖。
   get sentryDsn(): string {
