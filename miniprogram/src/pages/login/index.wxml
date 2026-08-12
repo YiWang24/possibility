@@ -1,19 +1,14 @@
 <view class="page safe-top">
   <view class="hero">
-    <view class="hero__orb" />
+    <orb size="{{200}}" halo="{{true}}" />
     <text class="hero__title">万花筒</text>
     <text class="hero__sub">不替你做决定，帮你把「要不要做」这个前置问题想清楚</text>
   </view>
 
   <view class="actions safe-bottom">
-    <button
-      class="btn-primary"
-      loading="{{loading}}"
-      disabled="{{loading}}"
-      bindtap="onTapLogin"
-    >
+    <btn variant="primary" block="{{true}}" loading="{{loading}}" bindtap="onTapLogin">
       微信一键登录
-    </button>
+    </btn>
     <text wx:if="{{error}}" class="actions__error">{{error}}</text>
     <text class="actions__terms">登录即表示同意《用户协议》与《隐私政策》</text>
   </view>

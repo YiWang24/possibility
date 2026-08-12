@@ -1,0 +1,57 @@
+@import '../../tokens.wxss';
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  height: 92rpx;
+  padding: 0 40rpx;
+  border-radius: var(--r-chip);
+  font-size: 30rpx;
+  font-weight: 500;
+  color: var(--ink);
+  /* 按压缩放对应 iOS 的 PressScaleStyle */
+  transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--primary {
+  background: var(--btn-g);
+}
+
+.btn--ghost {
+  background: transparent;
+  border: 1rpx solid var(--line);
+}
+
+.btn--plain {
+  background: transparent;
+  color: var(--sub);
+}
+
+.btn--pressed {
+  transform: scale(0.97);
+}
+
+.btn--off {
+  opacity: 0.5;
+}
+
+.btn__spinner {
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--ink);
+  animation: btn-spin 700ms linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

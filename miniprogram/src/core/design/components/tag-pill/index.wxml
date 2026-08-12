@@ -1,0 +1,3 @@
+<view class="pill pill--a{{accent}}">
+  <text class="pill__text">{{text}}</text>
+</view>

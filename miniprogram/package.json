@@ -6,7 +6,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
-    "size": "node scripts/check-package-size.mjs"
+    "size": "node scripts/check-package-size.mjs",
+    "structure": "node scripts/check-structure.mjs",
+    "check": "npm run typecheck && npm run structure && npm run size"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

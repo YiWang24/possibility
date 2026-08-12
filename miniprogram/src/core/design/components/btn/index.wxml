@@ -1,0 +1,10 @@
+<view
+  class="btn btn--{{variant}} {{block ? 'btn--block' : ''}} {{pressed ? 'btn--pressed' : ''}} {{disabled || loading ? 'btn--off' : ''}}"
+  bindtap="onTap"
+  bindtouchstart="onTouchStart"
+  bindtouchend="onTouchEnd"
+  bindtouchcancel="onTouchEnd"
+>
+  <view wx:if="{{loading}}" class="btn__spinner" />
+  <slot />
+</view>

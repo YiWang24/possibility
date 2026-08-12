@@ -1,0 +1,27 @@
+@import '../../tokens.wxss';
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+}
+
+.pill__text {
+  font-size: 20rpx;
+  color: var(--sub);
+}
+
+.pill--a0 { border-color: var(--accent-0); }
+.pill--a1 { border-color: var(--accent-1); }
+.pill--a2 { border-color: var(--accent-2); }
+.pill--a3 { border-color: var(--accent-3); }
+.pill--a4 { border-color: var(--accent-4); }
+
+.pill--a0 .pill__text { color: var(--accent-0); }
+.pill--a1 .pill__text { color: var(--accent-1); }
+.pill--a2 .pill__text { color: var(--accent-2); }
+.pill--a3 .pill__text { color: var(--accent-3); }
+.pill--a4 .pill__text { color: var(--accent-4); }

@@ -1,0 +1,94 @@
+@import '../../tokens.wxss';
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 200;
+  /* 关闭时彻底不可交互：visibility 而不是只降 opacity，
+     否则透明的遮罩仍会吃掉底层页面的点击 */
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sheet--on {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.sheet__mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(5, 7, 13, 0.72);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.sheet--on .sheet__mask {
+  opacity: 1;
+}
+
+.sheet__panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-top-left-radius: var(--r-sheet);
+  border-top-right-radius: var(--r-sheet);
+  border-top: 1rpx solid var(--line);
+  transform: translateY(100%);
+  transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.sheet--on .sheet__panel {
+  transform: translateY(0);
+}
+
+.sheet__grip {
+  width: 68rpx;
+  height: 8rpx;
+  margin: 16rpx auto 4rpx;
+  border-radius: var(--r-chip);
+  background: var(--faint);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 32rpx 8rpx;
+}
+
+.sheet__title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.sheet__close {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet__close-icon {
+  font-size: 28rpx;
+  color: var(--sub);
+}
+
+.sheet__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16rpx 32rpx 40rpx;
+}

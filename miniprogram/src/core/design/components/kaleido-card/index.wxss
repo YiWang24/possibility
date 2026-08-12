@@ -1,0 +1,13 @@
+@import '../../tokens.wxss';
+
+.kcard {
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  box-shadow: var(--shadow-card);
+  /* 内容一并裁进圆角：顶部渐变色带的四角要和卡片一致 */
+  overflow: hidden;
+}
+
+.kcard--flat {
+  box-shadow: none;
+}

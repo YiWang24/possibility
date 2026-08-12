@@ -18,15 +18,6 @@
   gap: 24rpx;
 }
 
-/* 光球占位 —— 波次 0 · W0-2 用 OrbView 组件替换 */
-.hero__orb {
-  width: 200rpx;
-  height: 200rpx;
-  border-radius: 50%;
-  background: var(--orb-conic);
-  box-shadow: 0 0 60rpx 12rpx rgba(94, 150, 255, 0.35);
-}
-
 .hero__title {
   font-size: 52rpx;
   font-weight: 600;
@@ -47,22 +38,6 @@
   align-items: center;
   gap: 20rpx;
   padding-bottom: 80rpx;
-}
-
-.btn-primary {
-  width: 100%;
-  height: 92rpx;
-  line-height: 92rpx;
-  border-radius: var(--r-chip);
-  background: var(--btn-g);
-  color: var(--ink);
-  font-size: 30rpx;
-  font-weight: 500;
-  border: none;
-}
-
-.btn-primary::after {
-  border: none;
 }
 
 .actions__error {

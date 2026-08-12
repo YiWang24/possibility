@@ -1,0 +1,6 @@
+<canvas
+  id="{{canvasId}}"
+  type="2d"
+  class="orb"
+  style="width: {{size}}rpx; height: {{size}}rpx;"
+/>

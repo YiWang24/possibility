@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "登录",
-  "usingComponents": {}
+  "usingComponents": {
+    "orb": "/core/design/components/orb/index",
+    "btn": "/core/design/components/btn/index"
+  }
 }

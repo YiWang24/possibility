@@ -1,0 +1,15 @@
+<view class="sheet {{show ? 'sheet--on' : ''}}" catchtouchmove="onPanelTap">
+  <view class="sheet__mask" bindtap="onMaskTap" />
+  <view class="sheet__panel safe-bottom" catchtap="onPanelTap">
+    <view class="sheet__grip" />
+    <view wx:if="{{title}}" class="sheet__head">
+      <text class="sheet__title">{{title}}</text>
+      <view class="sheet__close" bindtap="onCloseTap">
+        <text class="sheet__close-icon">✕</text>
+      </view>
+    </view>
+    <view class="sheet__body">
+      <slot />
+    </view>
+  </view>
+</view>

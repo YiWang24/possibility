@@ -1,0 +1,6 @@
+<view
+  class="kcard {{flat ? 'kcard--flat' : ''}}"
+  style="border-radius: {{radius}}rpx;"
+>
+  <slot />
+</view>

@@ -33,6 +33,11 @@ jobs:
       - name: typecheck
         run: npm run typecheck
 
+      # 页面四件套 / usingComponents / preloadRule 引用。这些错误 tsc 抓不到
+      # （它们在 json/wxml 里），只有开发者工具编译时才炸，而 CI 里没有开发者工具
+      - name: 工程结构护栏
+        run: npm run structure
+
       # 主包 2MB / 总包 20MB 是微信硬限制，超限只有提审时才暴露 —— 在 CI 就卡住
       - name: 包体护栏
         run: npm run size
