@@ -26,5 +26,15 @@ export function authURL(path: string): string {
   return `${API_BASE}/auth/v1/${path}`
 }
 
+/**
+ * PostgREST 端点。内容侧的公开只读表（travelers / traveler_details /
+ * traveler_services / bounties）直读走这里 —— iOS 用 supabase-swift 读的就是它，
+ * 小程序没有 SDK 但 PostgREST 本身就是 REST，wx.request 直接打即可。
+ * 用户侧表不走这条路：那些有 RLS 且大多需要函数层的业务逻辑。
+ */
+export function restURL(table: string): string {
+  return `${API_BASE}/rest/v1/${table}`
+}
+
 /** 流式对话需要的最低基础库版本（wx.request 的 enableChunked） */
 export const MIN_CHUNKED_LIB_VERSION = '2.20.2'

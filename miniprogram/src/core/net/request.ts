@@ -7,7 +7,7 @@
  * `supabase/functions/_shared/schemas.ts`，手写一层薄 REST 客户端反而更可控。
  */
 
-import { SUPABASE_ANON_KEY, functionURL } from '../config'
+import { SUPABASE_ANON_KEY, functionURL, restURL } from '../config'
 import { accessToken } from './auth'
 
 /** 后端错误响应（`_shared/errors.ts` 的统一形状） */
@@ -78,6 +78,61 @@ export function invokeFunction<T>(
                 raw.error?.message ?? `请求失败（${status}）`,
                 status,
                 raw.request_id ?? requestId,
+              ),
+            )
+          },
+          fail(err) {
+            reject(new ApiError('NETWORK_ERROR', err.errMsg || '网络异常', 0, requestId))
+          },
+        })
+      })
+      .catch(reject)
+  })
+}
+
+/**
+ * PostgREST 直读（仅内容侧公开只读表）。
+ *
+ * iOS 用 supabase-swift 读 `traveler_details` / `traveler_services`
+ * （`SupabaseService.loadTravelerDetail` / `loadServices`），小程序没有 SDK，
+ * 但 PostgREST 就是普通 REST 接口 —— supabase-js 底下发的也是同样的请求。
+ *
+ * 只用于 `travelers` / `traveler_details` / `traveler_services` / `bounties`
+ * 这四张公开只读表。用户侧的表不要走这里：它们受 RLS 约束且大多需要函数层的业务逻辑，
+ * 绕过 Edge Function 直写会跳过输入校验与埋点。
+ *
+ * @param query PostgREST 查询串，如 `traveler_id=eq.1&select=*`
+ */
+export function restSelect<T>(table: string, query: string): Promise<T[]> {
+  return new Promise<T[]>((resolve, reject) => {
+    const requestId = newRequestId()
+
+    // 内容侧是公开可读的，没登录也应该能看（与 card-game-catalog 同思路）。
+    // 有会话就带上，没有就只用 anon key。
+    accessToken()
+      .catch(() => SUPABASE_ANON_KEY)
+      .then((token) => {
+        wx.request({
+          url: `${restURL(table)}?${query}`,
+          method: 'GET',
+          header: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token}`,
+            'X-Request-ID': requestId,
+          },
+          timeout: 30_000,
+          success(res) {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve((res.data ?? []) as T[])
+              return
+            }
+            const raw = (res.data ?? {}) as { message?: string; code?: string }
+            reject(
+              new ApiError(
+                raw.code ?? `HTTP_${res.statusCode}`,
+                raw.message ?? `读取 ${table} 失败（${res.statusCode}）`,
+                res.statusCode,
+                requestId,
               ),
             )
           },
