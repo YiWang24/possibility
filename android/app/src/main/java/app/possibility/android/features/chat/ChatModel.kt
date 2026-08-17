@@ -1,5 +1,6 @@
 package app.possibility.android.features.chat
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,7 +18,6 @@ import app.possibility.android.core.network.ChatStreamClient
 import app.possibility.android.core.network.ChatStreamEvent
 import app.possibility.android.core.network.SupabaseService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // 探索对话视图模型（付费漏斗主线，对应 ios/Possibility/Features/Chat/ChatModel.swift）。
@@ -44,14 +44,16 @@ class ChatModel(
     val question: String,
     private val service: SupabaseService,
     private val scope: CoroutineScope,
+    context: Context,
 ) {
 
     /** 单条消息；text 为可观察状态，流式 token 逐字追加时驱动重组。 */
-    class Message(val role: Role, text: String) {
+    class Message(val role: Role, text: String, val source: Source? = null) {
         val id: Long = nextId++
         var text: String by mutableStateOf(text)
 
         enum class Role { USER, AI }
+        enum class Source { TAROT }
 
         companion object {
             private var nextId = 0L
@@ -95,7 +97,7 @@ class ChatModel(
 
     // MARK: API 失败重试
 
-    private enum class RequestContext { CLARIFY, CORRECTION_FOLLOW_UP, CONFIRM, REJECTION }
+    private enum class RequestContext { DIRECT, CLARIFY, CORRECTION_FOLLOW_UP, CONFIRM, REJECTION }
 
     private data class RetryRequest(val userText: String, val context: RequestContext)
 
@@ -123,6 +125,20 @@ class ChatModel(
     private var restoredTopic: String? = null
     private var restoredQuestion: String? = null
 
+    // MARK: 塔罗（象征性反思工具）
+
+    var tarotPhase: TarotPhase by mutableStateOf(TarotPhase.NONE)
+    var tarotCandidates: List<DrawnTarotCard> by mutableStateOf(emptyList())
+    var tarotSelection: List<DrawnTarotCard> by mutableStateOf(emptyList())
+    var tarotReading: TarotReading? by mutableStateOf(null)
+    var showTarotShare: Boolean by mutableStateOf(false)
+    var isTarotSubmitting: Boolean by mutableStateOf(false)
+    var tarotRequired: Boolean by mutableStateOf(false)
+    private var tarotQuestion: String = question
+    private var clarificationRequired: Boolean = TarotEngine.isUnclearQuestion(question)
+    private val tarotQuotaStore = TarotQuotaStore(context.applicationContext)
+    var tarotQuota: TarotQuota by mutableStateOf(tarotQuotaStore.load())
+
     val confirmLabel: String get() = if (hadCorrection) "这次准确了" else "嗯，比较接近"
     val correctLabel: String get() = if (hadCorrection) "我再补充一点" else "还不太对"
 
@@ -132,6 +148,10 @@ class ChatModel(
     val displayTopic: String? get() = restoredTopic ?: launchTopicLabel
     /** 总结页 / 分享文案的问题（历史恢复后取该会话首条用户消息） */
     val displayQuestion: String get() = restoredQuestion ?: question
+    val resolvedQuestion: String
+        get() = if (answers.isEmpty()) displayQuestion else "$displayQuestion；补充：${answers.joinToString("；")}"
+    val tarotDisplayQuestion: String get() = tarotQuestion.ifBlank { displayQuestion }
+    val tarotRemainingLabel: String get() = tarotQuota.remainingLabel
 
     /** 历史入口条目（排除当前会话自身） */
     val historyEntries: List<RemoteConversation>
@@ -142,7 +162,9 @@ class ChatModel(
     fun start() {
         if (messages.isNotEmpty()) return
         messages.add(Message(Message.Role.USER, question))
-        scope.launch { performAssistant(question, RequestContext.CLARIFY) }
+        scope.launch {
+            performAssistant(question, if (clarificationRequired) RequestContext.CLARIFY else RequestContext.DIRECT)
+        }
     }
 
     // MARK: 继续追问
@@ -163,14 +185,110 @@ class ChatModel(
         resetMatch()
         messages.add(Message(Message.Role.USER, clean))
         answers.add(clean)
+        tarotPhase = TarotPhase.NONE
+        tarotCandidates = emptyList()
+        tarotSelection = emptyList()
+        tarotReading = null
+        showTarotShare = false
 
         scope.launch {
             if (previousStage == ChatStage.CORRECTION) {
                 performAssistant(clean, RequestContext.CORRECTION_FOLLOW_UP)
             } else {
-                performAssistant(clean, RequestContext.CLARIFY)
+                if (TarotEngine.isUnclearQuestion(clean)) clarificationRequired = true
+                performAssistant(clean, if (clarificationRequired) RequestContext.CLARIFY else RequestContext.DIRECT)
             }
         }
+    }
+
+    // MARK: 三张牌流程
+
+    fun offerOptionalTarot() {
+        if (isStreaming) return
+        openTarot(resolvedQuestion, required = false)
+    }
+
+    private fun openTarot(question: String, required: Boolean, replaceLastReply: Boolean = false) {
+        tarotQuestion = question
+        tarotRequired = required
+        tarotCandidates = emptyList()
+        tarotSelection = emptyList()
+        tarotReading = null
+        showTarotShare = false
+        showNextPanel = false
+        val reply: String
+        if (tarotQuota.remaining <= 0) {
+            tarotPhase = TarotPhase.LOCKED
+            reply = "现在问题已经清楚，但它需要通过塔罗牌进行象征性分析。今天 3 次基础机会已用完，可通过分享 App 宣传海报、连续包月或购买次数包解锁。"
+        } else {
+            tarotPhase = TarotPhase.OFFER
+            reply = "现在问题已经清楚。这个问题需要抽取塔罗牌：请从 12 张候选牌中亲手选出 3 张，确认后我会结合三个牌位给出答案。牌意会作为反思线索，而不是命运保证。"
+        }
+        if (!required) return
+        val lastAi = messages.indexOfLast { it.role == Message.Role.AI }
+        if (replaceLastReply && lastAi >= 0) messages[lastAi].text = reply
+        else messages.add(Message(Message.Role.AI, reply))
+    }
+
+    fun beginTarotDraw() {
+        if (tarotQuota.remaining <= 0) {
+            tarotPhase = TarotPhase.LOCKED
+            return
+        }
+        tarotCandidates = TarotEngine.candidates()
+        tarotSelection = emptyList()
+        tarotReading = null
+        showTarotShare = false
+        tarotPhase = TarotPhase.DRAWING
+    }
+
+    fun prepareTarotConfirmation(cardIds: List<String>) {
+        if (tarotPhase != TarotPhase.DRAWING || tarotQuota.remaining <= 0) return
+        val chosen = cardIds.mapNotNull { id -> tarotCandidates.firstOrNull { it.id == id } }
+        if (chosen.size != 3 || chosen.map { it.id }.distinct().size != 3) return
+        tarotSelection = chosen
+        tarotPhase = TarotPhase.CONFIRM
+    }
+
+    fun confirmTarotDraw() {
+        if (tarotPhase != TarotPhase.CONFIRM || tarotSelection.size != 3 || isTarotSubmitting) return
+        isTarotSubmitting = true
+        val (allowed, updated) = tarotQuotaStore.consume(tarotQuota)
+        tarotQuota = updated
+        if (!allowed) {
+            isTarotSubmitting = false
+            tarotPhase = TarotPhase.LOCKED
+            return
+        }
+        val reading = TarotEngine.reading(tarotQuestion, tarotSelection)
+        tarotReading = reading
+        messages.add(Message(Message.Role.AI, reading.answer, Message.Source.TAROT))
+        tarotPhase = TarotPhase.RESULT
+        stage = ChatStage.READY
+        showActionChips = false
+        showNextPanel = true
+        recommendedNextStep = ChatRecommendedNextStep.LAB
+        isTarotSubmitting = false
+        requestMatch()
+    }
+
+    fun answerWithoutTarot() {
+        if (isStreaming) return
+        tarotPhase = TarotPhase.NONE
+        showTarotShare = false
+        val request = "不使用塔罗。请基于我刚才的问题直接给出能够落到现实证据和行动上的建议。"
+        messages.add(Message(Message.Role.USER, request))
+        scope.launch { performAssistant(request, RequestContext.DIRECT) }
+    }
+
+    fun claimTarotShareReward() {
+        tarotQuota = tarotQuotaStore.rewardShare(tarotQuota)
+        if (tarotPhase == TarotPhase.LOCKED) tarotPhase = TarotPhase.OFFER
+    }
+
+    fun purchaseTarotAccess(product: TarotPurchaseProduct) {
+        tarotQuota = tarotQuotaStore.purchase(tarotQuota, product)
+        if (tarotPhase == TarotPhase.LOCKED) tarotPhase = TarotPhase.OFFER
     }
 
     // MARK: 验证反馈（chips）—— 每一步都续接真实 API
@@ -292,11 +410,17 @@ class ChatModel(
             matchReasons = emptyMap()
             matchAttempted = false
             retryRequest = null
+            tarotPhase = TarotPhase.NONE
+            tarotCandidates = emptyList()
+            tarotSelection = emptyList()
+            tarotReading = null
+            showTarotShare = false
+            clarificationRequired = convo.crossroads?.ready != true && TarotEngine.isUnclearQuestion(restoredQuestion.orEmpty())
 
-            if (shouldOfferVerification(convo.crossroads?.ready == true)) {
-                // 历史会话也必须同时满足“结构已成形 + 最后一轮明确邀请确认”。
-                stage = ChatStage.REVIEW
-                showActionChips = true
+            if (convo.crossroads?.ready == true) {
+                stage = ChatStage.READY
+                showActionChips = false
+                showNextPanel = true
                 requestMatch()
             } else {
                 stage = ChatStage.CLARIFY
@@ -336,22 +460,23 @@ class ChatModel(
         }
         retryRequest = null
 
-        if (result.conclusion?.ready == true && context != RequestContext.REJECTION) {
-            stage = ChatStage.READY
-            showActionChips = false
-            showNextPanel = true
-            recommendedNextStep = result.conclusion.nextStep
-            if (recommendedNextStep == ChatRecommendedNextStep.MATCH) requestMatch()
-            return
-        }
-
         when (context) {
+            RequestContext.DIRECT -> {
+                clarificationRequired = false
+                stage = ChatStage.READY
+                showActionChips = false
+                showNextPanel = true
+                recommendedNextStep = result.conclusion?.nextStep ?: ChatRecommendedNextStep.LAB
+                requestMatch()
+            }
             RequestContext.CLARIFY -> {
-                // 只有“结构已清晰 + 本轮明确邀请确认”才进入验证态。
-                if (shouldOfferVerification(result.ready)) {
-                    delay(850)
-                    stage = ChatStage.REVIEW
-                    showActionChips = true
+                // 含糊问题被澄清后直接进入三张牌回答，不再增加“确认我的理解”。
+                if (result.ready || result.conclusion?.ready == true) {
+                    clarificationRequired = false
+                    stage = ChatStage.READY
+                    showActionChips = false
+                    showNextPanel = false
+                    openTarot(resolvedQuestion, required = true, replaceLastReply = true)
                 } else {
                     stage = ChatStage.CLARIFY
                     showActionChips = false

@@ -21,6 +21,7 @@ import { DEMO_TRAVELERS, DEMO_TRAVELER_DETAILS, demoServices } from "@/lib/demo-
 import type { TravelerDetail, TravelerServiceItem } from "@/lib/models";
 import { StoryPanel, TimelinePanel, AdvicePanel, ServicePanel } from "./ProfilePanels";
 import { PaywallView } from "./PaywallView";
+import { ConsultChatSheet } from "./ConsultChatSheet";
 
 type TabKey = "story" | "timeline" | "advice" | "service";
 
@@ -44,11 +45,17 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabKey>("story");
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showConsultChat, setShowConsultChat] = useState(false);
 
   const traveler =
     travelers.find((t) => t.id === travelerId) ??
     DEMO_TRAVELERS.find((t) => t.id === travelerId) ??
     null;
+  const displayServices = traveler
+    ? services.map((service) => service.kind === "consult" && service.title.includes("与TA")
+      ? { ...service, title: service.title.replace("与TA", `与${traveler.name}`) }
+      : service)
+    : services;
 
   useEffect(() => {
     let alive = true;
@@ -72,8 +79,6 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
       alive = false;
     };
   }, [travelerId]);
-
-  const consultPrice = services.find((s) => s.kind === "consult")?.price ?? 29;
 
   if (!traveler) {
     return (
@@ -233,16 +238,15 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
               />
             )}
             {tab === "service" && (
-              <ServicePanel services={services} onCheckout={() => setShowPaywall(true)} />
+              <ServicePanel services={displayServices} onCheckout={() => setShowPaywall(true)} />
             )}
           </div>
 
-          {/* 底部咨询付费栏 */}
+          {/* 免费聊天入口：服务付费后移到 1v1 会话内 */}
           <div className="shell-fixed-x fixed bottom-0 z-20 border-t border-line bg-paper/90 backdrop-blur">
             <div className="shell-gutter mx-auto w-full max-w-shell pb-[max(12px,env(safe-area-inset-bottom))] pt-3">
-              <Button size="lg" className="w-full" onClick={() => setShowPaywall(true)}>
-                向 TA 咨询
-                <span className="text-lead font-bold">¥{consultPrice}</span>
+              <Button size="lg" className="w-full" onClick={() => setShowConsultChat(true)}>
+                免费发起 1v1 聊天
               </Button>
             </div>
           </div>
@@ -251,11 +255,18 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
       </PageShell>
 
       <AnimatePresence>
+        {showConsultChat && traveler ? (
+          <ConsultChatSheet
+            traveler={traveler}
+            services={displayServices}
+            onClose={() => setShowConsultChat(false)}
+          />
+        ) : null}
         {showPaywall && (
           <PaywallView
             travelerId={travelerId}
             travelerName={traveler.name}
-            services={services}
+            services={displayServices}
             onClose={() => setShowPaywall(false)}
             onUnlocked={() => void useData.getState().loadUnlocks()}
           />

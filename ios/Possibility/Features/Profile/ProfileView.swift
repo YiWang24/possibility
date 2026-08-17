@@ -9,6 +9,7 @@ struct ProfileView: View {
     @Environment(ToastCenter.self) private var toast
     @Environment(\.dismiss) private var dismiss
     @State private var model: ProfileModel
+    @State private var showConsultChat = false
 
     init(travelerId: Int) {
         self.travelerId = travelerId
@@ -22,7 +23,7 @@ struct ProfileView: View {
                 loadingState
             } else {
                 content
-                PayBar(model: model, toast: toast)
+                PayBar { showConsultChat = true }
             }
         }
         .background(Color(hex: 0x090B12).ignoresSafeArea())
@@ -32,6 +33,11 @@ struct ProfileView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(hex: 0x11141D))
+        }
+        .fullScreenCover(isPresented: $showConsultChat) {
+            if let traveler = model.traveler {
+                ConsultChatView(model: model, traveler: traveler)
+            }
         }
     }
 

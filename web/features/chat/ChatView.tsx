@@ -22,6 +22,7 @@ import { InputBar } from "./InputBar";
 import { ChatSummaryView } from "./SummaryPanel";
 import { ChatHistorySheet } from "./HistorySheet";
 import { HistoryButton } from "./ChatChrome";
+import { TarotPanel } from "./TarotPanel";
 
 /** 订阅 ChatModel（Observable 语义 → useSyncExternalStore） */
 function useChatModel(model: ChatModel): number {
@@ -79,10 +80,10 @@ export function ChatView({
 
   // MARK: 下一步路径
   const goLab = () => {
-    router.push(`/lab?question=${encodeURIComponent(model.displayQuestion)}`);
     model.setShowSummary(false);
     useToast.getState().show("问题已带入人生实验室");
   };
+  const labHref = `/lab?question=${encodeURIComponent(model.resolvedQuestion)}`;
   const goSimilar = () => {
     router.push("/community");
     model.setShowSummary(false);
@@ -96,6 +97,12 @@ export function ChatView({
 
   const lastMessage = model.messages[model.messages.length - 1];
   const showThinking = model.isStreaming && lastMessage?.text === "";
+  const tarotReply = model.tarotPhase === "result"
+    ? [...model.messages].reverse().find((message) => message.source === "tarot")
+    : undefined;
+  const conversationMessages = tarotReply
+    ? model.messages.filter((message) => message.id !== tarotReply.id)
+    : model.messages;
 
   return (
     <div className="screen-bg">
@@ -150,7 +157,7 @@ export function ChatView({
             让主栏底沿正好压在首屏折线上，sticky 才有东西可粘。 */}
         <div className="flex min-h-[calc(100dvh-16rem)] flex-col">
           <div className="flex-1">
-            {model.messages.map((msg) => (msg.text ? <MessageBubble key={msg.id} message={msg} /> : null))}
+            {conversationMessages.map((msg) => (msg.text ? <MessageBubble key={msg.id} message={msg} /> : null))}
 
             {showThinking ? <ThinkingBubble /> : null}
 
@@ -177,17 +184,21 @@ export function ChatView({
               />
             ) : null}
 
+            <TarotPanel model={model} />
+
+            {tarotReply?.text ? <MessageBubble message={tarotReply} /> : null}
+
             {model.showNextPanel ? (
               <div className="pt-3.5">
                 <ChatNextPanel
-                  showSummaryLink
                   preferredPath={model.recommendedNextStep}
                   matchedTravelers={model.matchedTravelers}
                   matchReasons={model.matchReasons}
                   onGoLab={goLab}
                   onGoSimilar={goSimilar}
-                  shareText={model.shareText}
-                  onOpenSummary={() => model.setShowSummary(true)}
+                  onTarot={() => model.offerOptionalTarot()}
+                  showTarot={!tarotReply}
+                  labHref={labHref}
                 />
               </div>
             ) : null}
@@ -210,6 +221,7 @@ export function ChatView({
         <ChatSummaryView
           model={model}
           onGoLab={goLab}
+          labHref={labHref}
           onGoSimilar={goSimilar}
           onFinish={finish}
           onClose={() => model.setShowSummary(false)}

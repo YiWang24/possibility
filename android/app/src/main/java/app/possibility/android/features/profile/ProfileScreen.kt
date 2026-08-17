@@ -74,6 +74,7 @@ fun TravelerProfileSheet(traveler: Traveler, onDismiss: () -> Unit) {
     ) {
         val model = remember(traveler.id) { ProfileModel(traveler) }
         var showPaywall by remember { mutableStateOf(false) }
+        var showConsultChat by remember { mutableStateOf(false) }
 
         LaunchedEffect(traveler.id) { model.load() }
 
@@ -97,7 +98,7 @@ fun TravelerProfileSheet(traveler: Traveler, onDismiss: () -> Unit) {
                             Panel(model) { showPaywall = true }
                         }
                     }
-                    PayBar(model) { showPaywall = true }
+                    PayBar { showConsultChat = true }
                 }
             }
         }
@@ -108,6 +109,9 @@ fun TravelerProfileSheet(traveler: Traveler, onDismiss: () -> Unit) {
                 onDismiss = { showPaywall = false },
                 onUnlocked = { model.markUnlocked() },
             )
+        }
+        if (showConsultChat) {
+            ConsultChatDialog(model = model, traveler = traveler, onDismiss = { showConsultChat = false })
         }
     }
 }
@@ -687,7 +691,7 @@ private fun LockedBlock(title: String, hint: String, onClick: () -> Unit) {
 // MARK: 底部付费栏（原型 prof-paybar）
 
 @Composable
-private fun PayBar(model: ProfileModel, onConsult: () -> Unit) {
+private fun PayBar(onConsult: () -> Unit) {
     Column {
         Box(Modifier.fillMaxWidth().height(1.dp).background(Theme.line))
         Row(
@@ -708,8 +712,7 @@ private fun PayBar(model: ProfileModel, onConsult: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("向 TA 咨询", color = Color.White, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
-                    Text("¥${formatPrice(model.consultPrice)}", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text("免费发起 1v1 聊天", color = Color.White, fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }

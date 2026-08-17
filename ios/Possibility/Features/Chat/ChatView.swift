@@ -37,6 +37,11 @@ struct ChatView: View {
         .sheet(isPresented: $model.showHistory) {
             ChatHistorySheet(model: model)
         }
+        .sheet(isPresented: $model.showTarotShare) {
+            TarotSharePosterSheet(model: model)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $model.showSummary) {
             ChatSummaryView(model: model, onGoLab: goLab, onGoSimilar: goSimilar) {
                 // 完成本次探索：关总结 + 关对话
@@ -104,7 +109,7 @@ struct ChatView: View {
                 // 键盘 inset 变化 + 逐帧滚动时会陷入无限重排（主线程卡死 30s+，
                 // 见 XCUITest test03 采样栈 LazySubviewPlacements）。
                 VStack(alignment: .leading, spacing: 0) {
-                    ForEach(model.messages) { msg in
+                    ForEach(model.messages.filter { model.tarotPhase == .result ? $0.source != .tarot : true }) { msg in
                         // 流开始时模型会先插入一条空 AI 消息作为 token 容器。
                         // 在首个 token 到达前只显示「正在想」，不要渲染空气泡。
                         if !msg.text.isEmpty {
@@ -116,14 +121,19 @@ struct ChatView: View {
                     }
                     if model.canRetry { retryButton }
                     if model.showActionChips { actionChips }
+                    TarotPanel(model: model)
+                    if model.tarotPhase == .result,
+                       let tarotReply = model.messages.last(where: { $0.source == .tarot }),
+                       !tarotReply.text.isEmpty {
+                        bubble(tarotReply).id(tarotReply.id)
+                    }
                     if model.showNextPanel {
-                        ChatNextPanel(showSummaryLink: true,
-                                      preferredPath: model.recommendedNextStep,
+                        ChatNextPanel(preferredPath: model.recommendedNextStep,
                                       matchedTravelers: model.matchedTravelers,
                                       matchReasons: model.matchReasons,
                                       onGoLab: goLab, onGoSimilar: goSimilar,
-                                      shareText: model.shareText,
-                                      onOpenSummary: { model.showSummary = true })
+                                      onTarot: model.offerOptionalTarot,
+                                      showTarot: model.tarotPhase != .result)
                             .padding(.top, 14)
                     }
                     Color.clear.frame(height: 8).id(bottomID)
