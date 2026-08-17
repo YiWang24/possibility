@@ -1,0 +1,85 @@
+<view class="next">
+  <text class="next__eyebrow">{{eyebrow}}</text>
+  <text class="next__title">{{title}}</text>
+
+  <!-- 去人生实验室：AI 明确只推荐 match 时不展示，避免给出互相竞争的两个「下一步」 -->
+  <view
+    wx:if="{{preferredPath !== 'match'}}"
+    class="path path--primary"
+    hover-class="path--hover"
+    hover-stay-time="60"
+    bindtap="onGoLab"
+  >
+    <text class="path__icon">◉</text>
+    <text class="path__title">去人生实验室</text>
+    <text class="path__note">带着当前问题，推演几种可能</text>
+  </view>
+
+  <!-- 只推荐 lab：不铺社区入口，直接给分享 -->
+  <block wx:if="{{preferredPath === 'lab'}}">
+    <button class="path path--share" open-type="share" hover-class="path--hover">
+      <text class="path__icon">↗</text>
+      <text class="path__title">分享这次探索</text>
+      <text class="path__note">发给一个你信任的人</text>
+    </button>
+  </block>
+
+  <!-- 推荐 match 但 /match 还没回来：明确告诉用户在找人，不要留空白 -->
+  <block wx:elif="{{cards.length === 0 && preferredPath === 'match'}}">
+    <view class="matching">
+      <view class="matching__dot" />
+      <text class="matching__text">正在为你找走过相似处境的人…</text>
+    </view>
+  </block>
+
+  <!-- 没有旅人卡：社区入口 + 分享并排 -->
+  <block wx:elif="{{cards.length === 0}}">
+    <view class="row">
+      <view class="path path--ghost" hover-class="path--hover" hover-stay-time="60" bindtap="onGoSimilar">
+        <text class="path__icon">⌁</text>
+        <text class="path__title">看相似经历</text>
+        <text class="path__note">去社区找走过这段路的人</text>
+      </view>
+      <button class="path path--share" open-type="share" hover-class="path--hover">
+        <text class="path__icon">↗</text>
+        <text class="path__title">分享这次探索</text>
+        <text class="path__note">发给一个你信任的人</text>
+      </button>
+    </view>
+  </block>
+
+  <!-- /match 命中：固定两张方形旅人卡，点击进主页 -->
+  <block wx:else>
+    <text class="next__eyebrow next__eyebrow--spaced">看看走过这条路的人</text>
+    <view class="cards">
+      <view
+        wx:for="{{cards}}"
+        wx:key="id"
+        class="tcard hue-{{item.hue}}"
+        hover-class="tcard--hover"
+        hover-stay-time="60"
+        data-id="{{item.id}}"
+        bindtap="onTravelerTap"
+      >
+        <view class="tcard__glow" />
+        <view class="tcard__head">
+          <view class="tcard__avatar">
+            <text class="tcard__initial">{{item.initial}}</text>
+          </view>
+          <text class="tcard__name">{{item.name}}</text>
+        </view>
+        <text class="tcard__reason">{{item.reason}}</text>
+        <text wx:if="{{item.tag}}" class="tcard__tag">{{item.tag}}</text>
+      </view>
+    </view>
+    <button class="path path--share" open-type="share" hover-class="path--hover">
+      <text class="path__icon">↗</text>
+      <text class="path__title">分享这次探索</text>
+      <text class="path__note">发给一个你信任的人</text>
+    </button>
+  </block>
+
+  <view wx:if="{{showSummaryLink}}" class="next__summary" bindtap="onOpenSummary">
+    <text class="next__summary-text">先查看完整总结 →</text>
+  </view>
+</view>

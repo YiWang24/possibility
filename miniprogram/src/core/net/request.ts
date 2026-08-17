@@ -97,9 +97,12 @@ export function invokeFunction<T>(
  * （`SupabaseService.loadTravelerDetail` / `loadServices`），小程序没有 SDK，
  * 但 PostgREST 就是普通 REST 接口 —— supabase-js 底下发的也是同样的请求。
  *
- * 只用于 `travelers` / `traveler_details` / `traveler_services` / `bounties`
- * 这四张公开只读表。用户侧的表不要走这里：它们受 RLS 约束且大多需要函数层的业务逻辑，
- * 绕过 Edge Function 直写会跳过输入校验与埋点。
+ * 只用于**读**。公开只读表（`travelers` / `traveler_details` / `traveler_services` /
+ * `bounties`）不带会话也能读；用户自己的表（`messages` 等）带上 JWT 由 RLS 兜住归属，
+ * iOS 的 `loadMessages` 走的就是这条路。
+ *
+ * **写一律不要走这里**：写路径的输入校验、业务规则与埋点都在 Edge Function 里，
+ * 绕过去等于跳过它们。
  *
  * @param query PostgREST 查询串，如 `traveler_id=eq.1&select=*`
  */

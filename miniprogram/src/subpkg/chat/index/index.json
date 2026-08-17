@@ -1,4 +1,9 @@
 {
-  "navigationBarTitleText": "探索对话",
-  "usingComponents": {}
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "orb": "/core/design/components/orb/index",
+    "sheet": "/core/design/components/sheet/index",
+    "tag-pill": "/core/design/components/tag-pill/index",
+    "next-panel": "../components/next-panel/index"
+  }
 }

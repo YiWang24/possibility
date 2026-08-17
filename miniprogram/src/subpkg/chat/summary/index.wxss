@@ -1,23 +1,167 @@
-.page {
-  min-height: 100vh;
-  padding: 32rpx;
-  box-sizing: border-box;
-}
+/* 本次探索总结 —— 对应 iOS ChatSummaryView。色值一律取 tokens.wxss 变量。 */
 
-.placeholder {
-  padding: 48rpx 32rpx;
+.summary {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--paper);
 }
 
-.placeholder__title {
+/* ── 顶栏 ── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 26rpx;
+  /* padding-top 归 .safe-top 管，这里不能写 padding 简写（见 app.wxss）*/
+  padding-left: 44rpx;
+  padding-right: 44rpx;
+  padding-bottom: 24rpx;
+  flex-shrink: 0;
+}
+
+.topbar__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+}
+
+.topbar__back--hover {
+  opacity: 0.7;
+}
+
+.topbar__icon {
   font-size: 34rpx;
-  font-weight: 600;
+  line-height: 1;
   color: var(--ink);
 }
 
-.placeholder__hint {
+.topbar__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar__title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 1.6rpx;
+  color: var(--ink);
+}
+
+.topbar__sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 22rpx;
+  color: var(--faint);
+}
+
+/* ── 正文 ── */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.scroll__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  padding: 16rpx 40rpx 40rpx;
+}
+
+/* ── hero ── */
+
+.hero {
+  padding: 44rpx;
+  border-radius: 48rpx;
+  background: var(--tint-hero);
+  border: 1rpx solid var(--line-accent-blue);
+}
+
+.hero__eyebrow {
+  display: block;
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  color: var(--blue-100);
+}
+
+.hero__question {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 44rpx;
+  font-weight: 700;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.hero__note {
+  display: block;
+  margin-top: 18rpx;
   font-size: 24rpx;
+  line-height: 1.7;
   color: var(--sub);
+}
+
+/* ── 四张卡 ── */
+
+.card {
+  padding: 36rpx;
+  border-radius: 40rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+}
+
+.card--violet {
+  border-color: var(--line-accent-violet);
+}
+
+.card--teal {
+  border-color: var(--line-accent-teal);
+}
+
+.card__eyebrow {
+  display: block;
+  font-size: 20rpx;
+  letter-spacing: 3.6rpx;
+  color: var(--blue-100);
+}
+
+.card__title {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.card__body {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 26rpx;
+  line-height: 1.85;
+  color: var(--body-dim);
+}
+
+.next-panel {
+  display: block;
+  margin-top: 4rpx;
+}
+
+/* ── 底部主按钮 ── */
+
+.footer {
+  flex-shrink: 0;
+  /* padding-bottom 归 .safe-bottom 管（见 app.wxss）*/
+  padding-top: 20rpx;
+  padding-left: 40rpx;
+  padding-right: 40rpx;
 }

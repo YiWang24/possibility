@@ -1,6 +1,135 @@
-<view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 1 · B · 待复刻</text>
+<view class="chat">
+  <!-- ── 顶栏 ── -->
+  <view class="topbar safe-top">
+    <view class="topbar__back" hover-class="topbar__btn--hover" bindtap="onBack">
+      <text class="topbar__icon">‹</text>
+    </view>
+    <view class="topbar__text">
+      <text class="topbar__title">{{topBarTitle}}</text>
+      <text class="topbar__sub">{{subtitle}}</text>
+    </view>
+    <view
+      wx:if="{{historyEntries.length > 0}}"
+      class="topbar__history"
+      hover-class="topbar__btn--hover"
+      bindtap="onOpenHistory"
+    >
+      <text class="topbar__icon">↺</text>
+    </view>
+  </view>
+
+  <!-- ── 消息流 ── -->
+  <scroll-view
+    class="stream"
+    scroll-y
+    scroll-with-animation
+    scroll-into-view="{{scrollAnchor}}"
+    enhanced
+    show-scrollbar="{{false}}"
+  >
+    <view class="stream__inner">
+      <block wx:for="{{messages}}" wx:key="id">
+        <!-- 流开始时模型会先插一条空 AI 消息作为 token 容器；首个 token 到达前
+             只显示「正在想」，不要渲染空气泡 -->
+        <view
+          wx:if="{{item.segs.length > 0}}"
+          class="row {{item.isUser ? 'row--user' : 'row--ai'}}"
+        >
+          <view
+            class="bubble {{item.isUser ? 'bubble--user' : 'bubble--ai'}}"
+            data-text="{{item.text}}"
+            bindlongpress="onCopyMessage"
+          >
+            <text
+              wx:for="{{item.segs}}"
+              wx:for-item="seg"
+              wx:key="index"
+              class="{{seg.bold ? 'seg--bold' : ''}}"
+            >{{seg.text}}</text>
+          </view>
+        </view>
+      </block>
+
+      <view wx:if="{{thinking}}" class="thinking">
+        <orb size="36" halo="{{false}}" />
+        <text class="thinking__text">正在想…</text>
+      </view>
+
+      <view wx:if="{{canRetry}}" class="retry" hover-class="retry--hover" bindtap="onRetry">
+        <text class="retry__text">↻ 重新发送</text>
+      </view>
+
+      <!-- 验证反馈 chips（原型 .chat-actions） -->
+      <view wx:if="{{showActionChips}}" class="chips">
+        <view class="chip chip--primary" hover-class="chip--hover" bindtap="onConfirm">
+          <text class="chip__text chip__text--primary">{{confirmLabel}}</text>
+        </view>
+        <view class="chip chip--ghost" hover-class="chip--hover" bindtap="onCorrect">
+          <text class="chip__text">{{correctLabel}}</text>
+        </view>
+      </view>
+
+      <next-panel
+        wx:if="{{showNextPanel}}"
+        class="next-panel"
+        show-summary-link="{{true}}"
+        preferred-path="{{recommendedNextStep}}"
+        matched-travelers="{{matchedTravelers}}"
+        match-reasons="{{matchReasons}}"
+        share-text="{{shareText}}"
+        bind:golab="onGoLab"
+        bind:gosimilar="onGoSimilar"
+        bind:travelertap="onTravelerTap"
+        bind:opensummary="onOpenSummary"
+      />
+
+      <!-- 双锚点：scroll-into-view 只认「值变了」，交替使用才能在同一条消息
+           不断变长时持续滚到底（见 index.ts 的 ANCHORS） -->
+      <view id="anchor-a" class="anchor" />
+      <view id="anchor-b" class="anchor" />
+    </view>
+  </scroll-view>
+
+  <!-- ── 输入栏 ── -->
+  <view class="inputbar safe-bottom">
+    <input
+      class="inputbar__field"
+      value="{{input}}"
+      placeholder="想到什么，直接问…"
+      placeholder-class="inputbar__ph"
+      confirm-type="send"
+      confirm-hold="{{false}}"
+      cursor-spacing="24"
+      bindinput="onInput"
+      bindconfirm="onSend"
+    />
+    <view
+      class="inputbar__send {{isStreaming ? 'inputbar__send--off' : ''}}"
+      hover-class="chip--hover"
+      bindtap="onSend"
+    >
+      <text class="inputbar__send-text">发送</text>
+    </view>
   </view>
 </view>
+
+<!-- ── 历史探索 ── -->
+<sheet show="{{showHistory}}" title="历史探索" bind:close="onCloseHistory">
+  <view class="history">
+    <view
+      wx:for="{{historyEntries}}"
+      wx:key="id"
+      class="hrow"
+      hover-class="hrow--hover"
+      data-id="{{item.id}}"
+      bindtap="onRestore"
+    >
+      <view class="hrow__head">
+        <tag-pill text="{{item.topic}}" />
+        <text wx:if="{{item.ready}}" class="hrow__ready">岔路口已成形</text>
+        <text class="hrow__time">{{restoringId === item.id ? '恢复中…' : item.time}}</text>
+      </view>
+      <text class="hrow__summary">{{item.summary}}</text>
+    </view>
+  </view>
+</sheet>

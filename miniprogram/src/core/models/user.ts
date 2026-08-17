@@ -62,6 +62,14 @@ export interface RemoteConversation {
   created_at?: string | null
 }
 
+/** 一条落库的对话消息 —— 对应表 `messages`（iOS `ChatMessage`）。
+ *  注意 role 用的是后端的 `assistant`，不是端上渲染用的 `ai`。 */
+export interface RemoteChatMessage {
+  id: number
+  role: 'user' | 'assistant'
+  content: string
+}
+
 /** 解锁记录 —— 对应表 `unlocks`（demo mock 支付） */
 export interface Unlock {
   user_id: string

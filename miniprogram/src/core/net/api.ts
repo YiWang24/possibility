@@ -20,6 +20,7 @@ import type {
   MatchQuery,
   MatchResponse,
   PersonaJob,
+  RemoteChatMessage,
   RemoteConversation,
   RemoteDiaryEntry,
   RemoteProfile,
@@ -69,6 +70,19 @@ export function listConversations(
   offset = 0,
 ): Promise<{ conversations: RemoteConversation[]; total: number }> {
   return invokeFunction('list-conversations', { limit, offset })
+}
+
+/**
+ * 读取一段历史会话的全部消息 —— 对应 iOS `SupabaseService.loadMessages`。
+ *
+ * 没有对应的 Edge Function：iOS 也是 supabase-swift 直读 `messages` 表，归属由 RLS
+ * 兜住。按 `id` 升序取，保证恢复出来的对话顺序与当时一致。
+ */
+export function loadMessages(conversationId: string): Promise<RemoteChatMessage[]> {
+  return restSelect<RemoteChatMessage>(
+    'messages',
+    `conversation_id=eq.${encodeURIComponent(conversationId)}&select=id,role,content&order=id.asc`,
+  )
 }
 
 /* ============ 画像与主页 ============ */

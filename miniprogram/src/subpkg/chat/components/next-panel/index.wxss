@@ -1,0 +1,300 @@
+/* 下一步面板 —— 对应 iOS ChatNextPanel。色值一律取 tokens.wxss 变量。 */
+
+.next {
+  padding: 28rpx;
+  border-radius: 40rpx;
+  background: var(--tint-panel);
+  border: 1rpx solid var(--blue-line-soft);
+}
+
+.next__eyebrow {
+  display: block;
+  font-size: 18rpx;
+  letter-spacing: 3.2rpx;
+  color: var(--blue-100);
+}
+
+.next__eyebrow--spaced {
+  margin-top: 26rpx;
+}
+
+.next__title {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 27rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── 路径卡（去实验室 / 看相似经历 / 分享）── */
+
+.row {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+
+.row .path {
+  flex: 1;
+  min-width: 0;
+}
+
+.path {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 22rpx;
+  border-radius: 28rpx;
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* 原生 button 自带边框/背景/字号，必须逐条抹掉才能和 view 版路径卡长得一样 */
+.path--share {
+  border: 1rpx solid var(--line);
+  background: var(--surface-ghost);
+  font-size: inherit;
+  color: inherit;
+  margin-top: 16rpx;
+}
+
+.path--share::after {
+  border: none;
+}
+
+.row .path--share {
+  margin-top: 0;
+}
+
+.path--primary {
+  margin-top: 22rpx;
+  background: var(--tint-primary);
+  border: 1rpx solid var(--blue-line);
+}
+
+.path--ghost {
+  background: var(--surface-ghost);
+  border: 1rpx solid var(--line);
+}
+
+.path--hover {
+  opacity: 0.72;
+}
+
+.path__icon {
+  display: block;
+  font-size: 30rpx;
+  color: var(--ink);
+}
+
+.path__title {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 23rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.path__note {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 18rpx;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+/* ── /match 在途 ── */
+
+.matching {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 22rpx;
+  padding: 26rpx;
+  border-radius: 28rpx;
+  background: var(--surface-ghost);
+  border: 1rpx solid var(--line);
+}
+
+.matching__dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: var(--blue-100);
+  animation: matching-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes matching-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.matching__text {
+  font-size: 22rpx;
+  color: var(--sub);
+}
+
+/* ── 旅人卡（固定方形，一行两张）── */
+
+.cards {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 18rpx;
+}
+
+.tcard {
+  position: relative;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 272rpx;
+  padding: 24rpx;
+  border-radius: 34rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  overflow: hidden;
+}
+
+.tcard--hover {
+  opacity: 0.72;
+}
+
+/* 右上角的色相辉光：iOS 用 blur(22)，这里用 radial-gradient 逼近 ——
+   Skyline 对 filter: blur 的支持未验证，径向渐变两个渲染器都稳。 */
+.tcard__glow {
+  position: absolute;
+  top: -60rpx;
+  right: -56rpx;
+  width: 176rpx;
+  height: 176rpx;
+  border-radius: 50%;
+  opacity: 0.22;
+}
+
+.tcard__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.tcard__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tcard__initial {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tcard__name {
+  font-size: 25rpx;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tcard__reason {
+  position: relative;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  margin-top: 20rpx;
+  font-size: 20rpx;
+  line-height: 1.55;
+  color: var(--sub);
+}
+
+.tcard__tag {
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: 22rpx;
+  font-size: 19rpx;
+  color: var(--blue-400);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 五档色相（tokens.wxss 的 --hue0..4）。WXML 用 hue-{{item.hue}} 选中一档， */
+/* 因为 wxss 里没法从变量名动态拼 var(--hue{{n}}-accent)。 */
+.hue-0 {
+  border-color: var(--hue0-accent);
+}
+.hue-0 .tcard__glow {
+  background: radial-gradient(circle, var(--hue0-accent) 0%, transparent 70%);
+}
+.hue-0 .tcard__avatar {
+  background: var(--hue0-g);
+}
+
+.hue-1 {
+  border-color: var(--hue1-accent);
+}
+.hue-1 .tcard__glow {
+  background: radial-gradient(circle, var(--hue1-accent) 0%, transparent 70%);
+}
+.hue-1 .tcard__avatar {
+  background: var(--hue1-g);
+}
+
+.hue-2 {
+  border-color: var(--hue2-accent);
+}
+.hue-2 .tcard__glow {
+  background: radial-gradient(circle, var(--hue2-accent) 0%, transparent 70%);
+}
+.hue-2 .tcard__avatar {
+  background: var(--hue2-g);
+}
+
+.hue-3 {
+  border-color: var(--hue3-accent);
+}
+.hue-3 .tcard__glow {
+  background: radial-gradient(circle, var(--hue3-accent) 0%, transparent 70%);
+}
+.hue-3 .tcard__avatar {
+  background: var(--hue3-g);
+}
+
+.hue-4 {
+  border-color: var(--hue4-accent);
+}
+.hue-4 .tcard__glow {
+  background: radial-gradient(circle, var(--hue4-accent) 0%, transparent 70%);
+}
+.hue-4 .tcard__avatar {
+  background: var(--hue4-g);
+}
+
+/* ── 查看完整总结 ── */
+
+.next__summary {
+  margin-top: 22rpx;
+  text-align: center;
+}
+
+.next__summary-text {
+  font-size: 20rpx;
+  color: var(--blue-200);
+}
