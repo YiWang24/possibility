@@ -2,7 +2,9 @@
 
 .page {
   min-height: 100vh;
-  padding: 0 48rpx;
+  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
+  padding-left: 48rpx;
+  padding-right: 48rpx;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -37,7 +39,8 @@
   flex-direction: column;
   align-items: center;
   gap: 20rpx;
-  padding-bottom: 80rpx;
+  /* 底部留白走 margin：padding-bottom 归 .safe-bottom 管（见 app.wxss）*/
+  margin-bottom: 64rpx;
 }
 
 .actions__error {

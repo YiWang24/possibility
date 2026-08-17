@@ -2,7 +2,10 @@
 
 .page {
   height: 100vh;
-  padding: 24rpx;
+  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
+  padding-left: 24rpx;
+  padding-right: 24rpx;
+  padding-bottom: 24rpx;
   box-sizing: border-box;
 }
 
@@ -163,7 +166,11 @@
 }
 
 .foot {
-  padding: 24rpx 8rpx 48rpx;
+  /* padding-bottom 归 .safe-bottom 管（见 app.wxss）*/
+  padding-top: 24rpx;
+  padding-left: 8rpx;
+  padding-right: 8rpx;
+  margin-bottom: 32rpx;
 }
 
 .foot__text {

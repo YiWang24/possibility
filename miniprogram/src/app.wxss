@@ -11,11 +11,18 @@ page {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 与 iOS 一致的安全区处理：导航栏用 custom，页面自己让开状态栏 */
+/* 与 iOS 一致的安全区处理：导航栏用 custom，页面自己让开状态栏。
+ * 带 env() 之外还留一档最小间距 —— 无刘海机型和模拟器上 inset 是 0，
+ * 只靠 env() 会让顶栏直接贴边。
+ *
+ * ⚠️ 用上这两个类的元素，在页面 wxss 里**不要写 `padding` 简写**：
+ * 简写与这里同为单类选择器，而页面样式排在全局之后，会把 padding-top /
+ * padding-bottom 一起覆盖掉，安全区就静默失效了。写 padding-left /
+ * padding-right / 另一侧的长写法。 */
 .safe-top {
-  padding-top: env(safe-area-inset-top);
+  padding-top: calc(env(safe-area-inset-top) + 24rpx);
 }
 
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16rpx);
 }

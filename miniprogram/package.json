@@ -6,9 +6,10 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\"",
+    "lint:tokens": "node scripts/check-design-tokens.mjs",
     "size": "node scripts/check-package-size.mjs",
     "structure": "node scripts/check-structure.mjs",
-    "check": "npm run typecheck && npm run structure && npm run size"
+    "check": "npm run typecheck && npm run structure && npm run lint:tokens && npm run size"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

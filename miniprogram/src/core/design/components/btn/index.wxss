@@ -45,7 +45,7 @@
   width: 28rpx;
   height: 28rpx;
   border-radius: 50%;
-  border: 3rpx solid rgba(255, 255, 255, 0.3);
+  border: 3rpx solid var(--track);
   border-top-color: var(--ink);
   animation: btn-spin 700ms linear infinite;
 }

@@ -5,8 +5,10 @@
  * 它本身又与原型 CSS 的 `:root` 变量一一对应 —— 所以这里是「回到 CSS」，
  * 变量名与原型保持一致，改色只改这一个文件。
  *
- * ⚠️ 禁止在页面 wxss 里写死十六进制色值。CI 的 `lint:tokens` 会拦
- * （对应 web 的 `web/scripts/check-design-tokens.mjs`）。
+ * ⚠️ 页面/组件的 wxss 里禁止写死颜色（十六进制或 rgba），一律从这里取。
+ * `npm run lint:tokens` 会拦（对应 web 的 `web/scripts/check-design-tokens.mjs`）。
+ * 只管颜色：字号与圆角在 iOS 那边本来就是各视图内联的数字（Theme.swift 里没有字阶），
+ * 这里跟着走，不另造一套基准里不存在的体系。
  */
 
 page,
@@ -88,6 +90,53 @@ page,
   --r-card: 22rpx;
   --r-sheet: 30rpx;
   --r-chip: 999rpx;
+
+  /* ── 品牌色的透明档与浅色梯度 ──
+     iOS 各 Feature 里 `Color(hex: 0x6FA5FF, alpha:)` 出现 25 次、
+     `.white.opacity(0.045)` 5 次 —— 是复用的设计语言而非某个页面的私料，
+     所以收在这里。页面需要「品牌色带透明」时一律从这取，不要自己写 rgba。 */
+  --blue-line: rgba(111, 165, 255, 0.34); /* 强调描边（主路径卡 / 重试胶囊）*/
+  --blue-line-soft: rgba(111, 165, 255, 0.2); /* 面板描边 */
+  --blue-wash: rgba(94, 150, 255, 0.1); /* 极淡底色（重试胶囊）*/
+  --surface-ghost: rgba(255, 255, 255, 0.045); /* 次级路径卡底 */
+  /* 浅色梯度：eyebrow → 链接 → 卡内标签，越大越浅 */
+  --blue-100: #91b1ff;
+  --blue-200: #9dbcff;
+  --blue-300: #afc7ff;
+  --blue-400: #b8cdff;
+
+  /* ── 强调卡描边（三色同为 alpha 0.25，用色相区分卡片语义）── */
+  --line-accent-blue: rgba(111, 165, 255, 0.25); /* hero 卡 */
+  --line-accent-violet: rgba(169, 125, 255, 0.25); /* 「两股拉力」*/
+  --line-accent-teal: rgba(62, 217, 164, 0.25); /* 「下一步的小验证」*/
+
+  /* 长正文：比 --sub 亮、比 --ink 暗，用于需要连读数行的卡片正文 */
+  --body-dim: #c6cdde;
+  /* 渐变底/实色按钮上的文字（iOS 直接写 Color.white）*/
+  --on-accent: #ffffff;
+  /* 半透明白：spinner 轨道等「比 --line 明显、但仍是白纱」的地方 */
+  --track: rgba(255, 255, 255, 0.3);
+  /* 弹层遮罩（--stage 的 0.72）*/
+  --scrim: rgba(5, 7, 13, 0.72);
+
+  /* 品牌染色渐变（面板 / 主路径 / hero 卡） */
+  --tint-panel: linear-gradient(
+    135deg,
+    rgba(94, 150, 255, 0.11) 0%,
+    rgba(143, 123, 255, 0.055) 100%
+  );
+  --tint-primary: linear-gradient(
+    135deg,
+    rgba(62, 112, 232, 0.28) 0%,
+    rgba(107, 85, 211, 0.18) 100%
+  );
+  --tint-hero: linear-gradient(
+    135deg,
+    rgba(64, 101, 203, 0.24) 0%,
+    rgba(113, 73, 170, 0.12) 100%
+  );
+  /* 用户气泡（ChatView.bubbleBackground） */
+  --user-bubble: linear-gradient(135deg, #3e77f2 0%, #2a50d6 100%);
 
   /* ── 阴影（CardBackground）── */
   --shadow-card: 0 2rpx 8rpx rgba(0, 0, 0, 0.55);
