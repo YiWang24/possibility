@@ -8,6 +8,12 @@ on:
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
       - '.github/workflows/web.yml'
+      # 一致性护栏交叉读取 iOS / Android / edge function 源码：
+      # 这些目录单独改动也必须触发，否则三端会悄悄漂移。
+      - 'ios/**'
+      - 'android/**'
+      - 'supabase/functions/**'
+      - 'docs/design/prototype/**'
   workflow_dispatch:
 
 # 纯检查工作流：GITHUB_TOKEN 只需要读仓库，不给默认的可写权限
@@ -16,7 +22,7 @@ permissions:
 
 jobs:
   web-check:
-    name: 类型 / 设计 token 护栏 / 构建
+    name: 类型 / 设计 token 护栏 / iOS 一致性 / 构建
     runs-on: ubuntu-latest
     steps:
       # action 一律锁定到 commit SHA：tag 是可变引用，SonarCloud 视为供应链风险
@@ -39,6 +45,11 @@ jobs:
       # 按文件 ratchet —— 存量只许减少，新增代码必须走 token。
       - name: 设计 token 护栏
         run: pnpm --filter @possibility/web run lint:tokens
+
+      # 三端一致性护栏：以 iOS 为基准，交叉校验 web / Android / 原型 / edge function。
+      # 脚本此前只能手工执行，导致三端漂移无人拦截。
+      - name: iOS 一致性护栏
+        run: pnpm --filter @possibility/web run lint:mobile-parity
 
       - name: 构建
         run: pnpm --filter @possibility/web run build
