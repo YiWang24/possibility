@@ -1,0 +1,257 @@
+/* 万花筒小工具 · 共享基座
+   风格方向：深色 editorial —— 衬线大标题与全大写小字标签形成尺度对比，
+   靠留白节奏与微妙的层叠制造深度，点缀色按语义（维度/分组）取自产品既有色板。
+   设计 token 对齐主产品原型（--paper / --ink / --line）。 */
+
+:root {
+  --paper: #0A0C12;
+  --paper-raised: #11141D;
+  --paper-sunken: #070810;
+  --ink: #F2F4F9;
+  --ink-soft: rgba(242, 244, 249, 0.72);
+  --ink-faint: rgba(242, 244, 249, 0.44);
+  --ink-ghost: rgba(242, 244, 249, 0.24);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --accent: #5E96FF;
+
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --serif: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", Georgia,
+    "Times New Roman", serif;
+
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
+  --gutter: 22px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  touch-action: manipulation;
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* ============ 布局骨架 ============ */
+
+#app {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen {
+  display: none;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.screen.is-active {
+  display: flex;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding: 0 var(--gutter);
+}
+
+.pad-top {
+  padding-top: calc(var(--safe-top) + 18px);
+}
+
+.dock {
+  padding: 14px var(--gutter) calc(var(--safe-bottom) + 16px);
+  background: linear-gradient(to top, var(--paper) 62%, rgba(10, 12, 18, 0));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ============ 排版 ============ */
+
+.kicker {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+}
+
+.display {
+  font-family: var(--serif);
+  font-size: 33px;
+  line-height: 1.32;
+  letter-spacing: 0.01em;
+  white-space: pre-line;
+  font-weight: 600;
+}
+
+.lede {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  line-height: 1.75;
+}
+
+.eyebrow {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* ============ 控件 ============ */
+
+.btn {
+  appearance: none;
+  border: 0;
+  width: 100%;
+  padding: 15px 20px;
+  border-radius: 999px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--paper);
+  background: var(--ink);
+  cursor: pointer;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.btn:active {
+  opacity: 0.72;
+  transform: scale(0.985);
+}
+
+.btn[disabled] {
+  opacity: 0.26;
+  pointer-events: none;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-strong);
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--ink-faint);
+  border: 0;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px;
+  width: auto;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.row > .btn {
+  flex: 1;
+}
+
+/* ============ 进度 ============ */
+
+.rail {
+  height: 2px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+  flex: none;
+}
+
+.rail > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--accent);
+  transition: width 0.42s cubic-bezier(0.22, 0.9, 0.3, 1);
+  width: 0;
+}
+
+/* ============ 提示条 ============ */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 96px);
+  transform: translate(-50%, 8px);
+  background: rgba(28, 32, 44, 0.96);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: 78vw;
+  text-align: center;
+  z-index: 40;
+}
+
+.toast.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ============ 结果卡通用 ============ */
+
+.notice {
+  border-left: 2px solid var(--line-strong);
+  padding: 2px 0 2px 12px;
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  border: 0;
+}
+
+.share-preview {
+  width: 100%;
+  border-radius: 14px;
+  display: block;
+  border: 1px solid var(--line);
+}

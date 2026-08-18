@@ -1,0 +1,389 @@
+/* 取舍卡牌界面 —— 牌面用衬线大字符做主视觉，选中态靠上浮 + 主色描边 + 序号角标，
+   避免落进「均匀灰卡网格」。情境卡按压力等级换语义色，压力条给出体感。 */
+
+/* ============ 入口 ============ */
+
+.hub-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.hub-item {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 18px;
+  padding: 20px 20px 22px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--sans);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.hub-item::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--tint, var(--accent));
+}
+
+.hub-item:active {
+  transform: scale(0.99);
+  border-color: var(--line-strong);
+}
+
+.hub-glyph {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--tint, var(--accent));
+  line-height: 1;
+}
+
+.hub-name {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 600;
+  margin-top: 12px;
+}
+
+.hub-copy {
+  font-size: 13px;
+  color: var(--ink-faint);
+  line-height: 1.65;
+  margin-top: 6px;
+}
+
+.hub-resume {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--tint, var(--accent));
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+/* ============ 规则 ============ */
+
+.rules {
+  list-style: none;
+  counter-reset: rule;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.rule-item {
+  counter-increment: rule;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 12px;
+}
+
+.rule-item::before {
+  content: counter(rule, decimal-leading-zero);
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--tint, var(--accent));
+  padding-top: 2px;
+}
+
+.rule-title {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.rule-copy {
+  font-size: 13px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+  margin-top: 3px;
+}
+
+/* ============ 牌面 ============ */
+
+.deck {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin-top: 22px;
+}
+
+.card {
+  appearance: none;
+  position: relative;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 13px;
+  padding: 15px 9px 13px;
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    background 0.18s ease, color 0.18s ease;
+}
+
+.card:active {
+  transform: scale(0.97);
+}
+
+.card.is-on {
+  border-color: var(--tint, var(--accent));
+  background: var(--paper-sunken);
+  color: var(--ink);
+  transform: translateY(-3px);
+}
+
+.card-glyph {
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink-ghost);
+  transition: color 0.18s ease;
+}
+
+.card.is-on .card-glyph {
+  color: var(--tint, var(--accent));
+}
+
+.card-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.card-index {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tint, var(--accent));
+  font-variant-numeric: tabular-nums;
+}
+
+.card.is-doomed {
+  border-color: #E86A6A;
+  background: rgba(232, 106, 106, 0.08);
+}
+
+.card.is-doomed .card-glyph {
+  color: #E86A6A;
+}
+
+.count-hint {
+  font-size: 13px;
+  color: var(--ink-faint);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============ 情境 ============ */
+
+.pressure {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pressure-bars {
+  display: flex;
+  gap: 4px;
+}
+
+.pressure-bars > i {
+  width: 22px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+
+.pressure-bars > i.is-on {
+  background: var(--tint, var(--accent));
+}
+
+.pressure-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tint, var(--accent));
+}
+
+.scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.scene-item {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  border-radius: 15px;
+  padding: 16px 17px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--sans);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.scene-item:active {
+  transform: scale(0.99);
+  border-color: var(--line-strong);
+}
+
+.scene-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scene-theme {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.sev-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.scene-title {
+  font-family: var(--serif);
+  font-size: 17.5px;
+  font-weight: 600;
+  margin-top: 7px;
+}
+
+.scene-copy {
+  font-size: 13px;
+  color: var(--ink-faint);
+  line-height: 1.7;
+  margin-top: 5px;
+}
+
+/* 决策屏的大情境卡 */
+.scene-hero {
+  border: 1px solid var(--line-strong);
+  background: var(--paper-raised);
+  border-radius: 20px;
+  padding: 26px 22px;
+  margin-top: 22px;
+}
+
+.scene-hero .scene-title {
+  font-size: 25px;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+
+.scene-hero .scene-copy {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  margin-top: 12px;
+}
+
+.held-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 22px;
+}
+
+.held-chip {
+  font-size: 11.5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--ink-faint);
+}
+
+/* ============ 结果 ============ */
+
+.final-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 26px 0 8px;
+}
+
+.final-card {
+  border: 1px solid var(--tint, var(--accent));
+  border-radius: 15px;
+  padding: 20px 8px 16px;
+  text-align: center;
+  background: var(--paper-raised);
+}
+
+.final-glyph {
+  font-family: var(--serif);
+  font-size: 30px;
+  color: var(--tint, var(--accent));
+  line-height: 1;
+}
+
+.final-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 11px;
+  line-height: 1.35;
+}
+
+.group-block {
+  margin-top: 26px;
+}
+
+.group-title {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.group-copy {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  line-height: 1.75;
+  margin-top: 7px;
+}
+
+.stat-row {
+  display: flex;
+  gap: 26px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.stat-num {
+  font-family: var(--serif);
+  font-size: 27px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
