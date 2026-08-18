@@ -77,7 +77,7 @@ requireText(
 );
 requireText(
   "features/studio/self-discovery.ts",
-  "用${strength?.tag ?? \"你的优势\"}，去探索${like.tag}",
+  "实验：用${strength}探索${like.tag}",
   "结果页必须把喜欢与擅长组合为可验证方向",
 );
 requireText(
@@ -87,8 +87,8 @@ requireText(
 );
 requireText(
   "features/studio/WantToDoView.tsx",
-  "写下真实答案，按回车添加",
-  "每个探索问题必须支持用户自由输入",
+  "写下 1–3 句真实经历",
+  "开放叙事题必须支持用户自由输入真实经历",
 );
 requireText(
   "features/home/PortraitSection.tsx",
@@ -97,7 +97,7 @@ requireText(
 );
 requireText(
   "features/studio/WantToDoView.tsx",
-  "查看完整行动报告 ¥9.9",
+  "解锁完整深入报告 ¥9.9",
   "完整探索必须先展示免费基本结论，再提供 ¥9.9 完整行动报告",
 );
 requireText(
@@ -137,8 +137,12 @@ for (const [path, socialKind, discoveryMarker] of [
     ? "../android/app/src/main/java/app/possibility/android/features/studio/SelfDiscoveryScreen.kt"
     : "../ios/Possibility/Features/Studio/AssessmentView.swift";
   requireText(discoveryPath, discoveryMarker, `${discoveryPath} 必须同步喜欢 × 擅长完整探索`);
-  requireText(discoveryPath, "context-friction", `${discoveryPath} 必须保留完整的 16 题探索结构`);
-  requireText(deepAnalysisPath, "查看完整行动报告 ¥9.9", `${deepAnalysisPath} 必须同步完整行动报告 ¥9.9 入口`);
+  // 71 题量表由「兴趣主题 09 + 优势动作 13 + 证据 + 环境 10 + 取舍 06 + 价值 + 叙事 05」生成，
+  // 锁生成器的题组标签而非某道题的 id：题干可改写，题组结构不能少。
+  for (const marker of ["兴趣主题 · ", "优势动作 · ", "外部证据 · E", "发挥环境 · ", "取舍判断 · ", "真实叙事 · "]) {
+    requireText(discoveryPath, marker, `${discoveryPath} 必须保留完整的 71 题探索结构（缺少「${marker.trim()}」题组）`);
+  }
+  requireText(deepAnalysisPath, "解锁完整深入报告 ¥9.9", `${deepAnalysisPath} 必须同步完整行动报告 ¥9.9 入口`);
 }
 for (const path of [
   "../ios/Possibility/Core/Models/DimensionData.swift",
@@ -149,8 +153,8 @@ for (const path of [
 }
 requireText(
   "../supabase/functions/analyze-self-discovery/index.ts",
-  'value.responses.length !== 16',
-  "完整探索必须覆盖全部 16 个原创证据问题",
+  'value.responses.length !== 71',
+  "完整探索必须覆盖全部 71 个原创证据问题",
 );
 requireText(
   "features/community/CommunityView.tsx",
@@ -190,5 +194,78 @@ for (const path of [
 ]) {
   requireText(path, "env(safe-area-inset-bottom)", "底部固定操作不得被 iPhone 手势区遮挡");
 }
+
+// ==================== 塔罗 / 额度 / 付费墙 / 咨询（2026-08 审计补） ====================
+
+// 每日基础额度三端同值
+requireText("features/chat/tarot.ts", "DAILY_TAROT_LIMIT = 3", "web 塔罗每日基础次数必须为 3");
+requireText("../ios/Possibility/Features/Chat/TarotModels.swift", "dailyLimit = 3", "iOS 塔罗每日基础次数必须为 3");
+requireText(
+  "../android/app/src/main/java/app/possibility/android/features/chat/TarotModels.kt",
+  "DAILY_LIMIT = 3",
+  "Android 塔罗每日基础次数必须为 3",
+);
+
+// 额度权威在服务端：三端都必须接 tarot-quota（本地缓存只作离线兜底）
+requireText("features/chat/tarot.ts", '"tarot-quota"', "web 必须调用 tarot-quota 对账额度");
+requireText("../ios/Possibility/Core/Network/SupabaseService.swift", '"tarot-quota"', "iOS 必须调用 tarot-quota 对账额度");
+requireText(
+  "../android/app/src/main/java/app/possibility/android/core/network/SupabaseService.kt",
+  '"tarot-quota"',
+  "Android 必须调用 tarot-quota 对账额度",
+);
+
+// 分享奖励只能在用户真的完成分享后发放
+requireText(
+  "../ios/Possibility/Features/Chat/TarotPanel.swift",
+  "guard completed else",
+  "iOS 分享奖励必须以 completionWithItemsHandler 的 completed 为准",
+);
+requireText(
+  "../android/app/src/main/java/app/possibility/android/features/chat/TarotPanel.kt",
+  "TAROT_SHARE_CHOSEN",
+  "Android 分享奖励必须等 chooser 的选中回调，不得在打开分享面板时就发放",
+);
+
+// 付费墙：单商品结账（iOS ProfileModel.Checkout 结构）+ 关键动作登录门控
+requireText("features/profile/PaywallView.tsx", "ProfileCheckout", "web 付费墙必须按 iOS Checkout 结算单一商品");
+requireText(
+  "../android/app/src/main/java/app/possibility/android/features/profile/PaywallView.kt",
+  "ProfileCheckout",
+  "Android 付费墙必须按 iOS Checkout 结算单一商品",
+);
+requireText(
+  "../android/app/src/main/java/app/possibility/android/features/profile/PaywallView.kt",
+  'AuthGateCenter.require("paywall")',
+  "Android 付费前必须过登录门控（iOS trigger .paywall）",
+);
+requireText(
+  "../android/app/src/main/java/app/possibility/android/features/me/MeScreen.kt",
+  'AuthGateCenter.require("profile_edit")',
+  "Android 编辑公开主页必须过登录门控（iOS trigger .profileEdit）",
+);
+
+// 服务卡 CTA 与咨询文案跟随 iOS
+requireText("features/profile/ProfilePanels.tsx", "向 TA 咨询", "服务卡咨询 CTA 必须与 iOS 一致");
+forbidText("features/profile/ProfilePanels.tsx", "选择这项服务", "不得改写 iOS 的服务卡 CTA 文案");
+requireText("features/profile/ConsultChatSheet.tsx", "1 对 1 咨询", "咨询类型标签必须与 iOS 一致");
+forbidText("features/profile/ConsultChatSheet.tsx", "深度咨询", "不得改写 iOS 的咨询类型标签");
+
+// 语音日记诚实性：识别失败必须报错，不得伪造转写写库
+forbidText(
+  "../ios/Possibility/Features/Home/HomeModel.swift",
+  "sampleTranscript",
+  "iOS 不得在 ASR 失败时伪造日记转写提交 analyze-diary",
+);
+requireText(
+  "../ios/Possibility/Features/Home/HomeModel.swift",
+  "没有识别到足够的内容",
+  "iOS ASR 失败必须与 Android 同款报错引导重录",
+);
+forbidText(
+  "../ios/Possibility/Features/Home/HomeModel.swift",
+  "exploredDays = 47",
+  "已探索天数不得预置演示值，起点与 Android/web 一致为 1",
+);
 
 console.log("✅ 手机端 iOS 布局结构检查通过。");

@@ -542,7 +542,9 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 }
 .chat-next-panel .cap{font-size:9px;letter-spacing:.16em;color:#91B1FF}
 .chat-next-panel h4{font-size:13.5px;margin-top:5px}
+.chat-next-note{font-size:9.5px;color:var(--faint);margin-top:5px}
 .chat-next-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.chat-next-grid.single{grid-template-columns:1fr}
 .chat-path{
   all:unset;cursor:pointer;box-sizing:border-box;min-height:72px;padding:11px;border-radius:14px;
   background:rgba(255,255,255,.045);border:1px solid var(--line);transition:transform .18s,border-color .18s,background .18s;
@@ -550,9 +552,49 @@ h1.page{font-size:27px;font-weight:700;letter-spacing:.03em;margin-top:6px}
 .chat-path:hover{transform:translateY(-2px);border-color:rgba(111,165,255,.42);background:rgba(94,150,255,.09)}
 .chat-path:active{transform:scale(.98)}
 .chat-path.primary{grid-column:1/-1;min-height:66px;background:linear-gradient(125deg,rgba(62,112,232,.28),rgba(107,85,211,.18));border-color:rgba(111,165,255,.34)}
+.chat-path.tarot{background:rgba(62,112,232,.2);border-color:rgba(111,165,255,.34)}
 .chat-path i{font-style:normal;font-size:15px}.chat-path b{display:block;font-size:11.5px;margin-top:7px}.chat-path small{display:block;font-size:9px;color:var(--faint);line-height:1.45;margin-top:3px}
 .chat-next-summary{all:unset;cursor:pointer;display:block;margin:11px auto 0;font-size:10px;color:#9DBCFF;padding:4px 8px}
 .chat-next-summary:hover{color:#fff}
+.tarot-panel{
+  margin:14px 4px 0;padding:15px;border-radius:20px;background:linear-gradient(150deg,rgba(76,108,214,.16),rgba(128,96,208,.09));
+  border:1px solid rgba(126,150,255,.24);opacity:0;animation:msgin .42s ease forwards;
+}
+.tarot-panel .cap{font-size:9px;letter-spacing:.16em;color:#A9BEFF}
+.tarot-panel h4{font-size:13.5px;margin-top:5px}
+.tarot-note{font-size:10px;color:var(--faint);line-height:1.6;margin-top:7px}
+.tarot-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:12px}
+.tarot-card{
+  all:unset;cursor:pointer;box-sizing:border-box;position:relative;aspect-ratio:2/3;border-radius:9px;
+  display:grid;place-items:center;background:linear-gradient(160deg,rgba(58,84,176,.5),rgba(96,72,168,.34));
+  border:1px solid rgba(132,158,255,.28);transition:transform .16s,border-color .16s;
+}
+.tarot-card:hover{transform:translateY(-3px);border-color:rgba(150,175,255,.6)}
+.tarot-card.picked{border-color:#9DBCFF;background:linear-gradient(160deg,rgba(88,124,240,.72),rgba(126,96,214,.5));transform:translateY(-3px)}
+.tarot-back{font-size:13px;color:rgba(220,230,255,.6)}
+.tarot-order{position:absolute;top:3px;right:4px;font-size:8.5px;color:#fff;background:rgba(20,28,58,.72);border-radius:5px;padding:1px 4px}
+.tarot-slots{display:grid;gap:7px;margin-top:12px}
+.tarot-slot{padding:10px 11px;border-radius:13px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.tarot-pos{display:block;font-size:8.5px;letter-spacing:.14em;color:#91B1FF}
+.tarot-slot b{display:block;font-size:11.5px;margin-top:4px}
+.tarot-slot small{display:block;font-size:9.5px;color:var(--faint);line-height:1.5;margin-top:2px}
+.tarot-answer{font-size:11px;line-height:1.72;margin-top:12px}
+.tarot-disclaimer{font-size:8.5px;color:var(--faint);line-height:1.5;margin-top:10px}
+.tarot-unlock{display:grid;gap:7px;margin-top:12px}
+.tarot-unlock-card{display:flex;flex-direction:column;gap:7px;padding:15px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid var(--line)}
+.tarot-unlock-card b{font-size:14px;font-weight:700;color:var(--ink)}
+.tarot-unlock-card small{font-size:10px;line-height:1.5;color:var(--sub)}
+.tarot-unlock-cta{margin-top:4px;width:100%;padding:11px 0;border:0;border-radius:999px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:600;color:#AFC7FF;background:rgba(94,150,255,.1);transition:transform .16s ease,filter .16s ease}
+.tarot-unlock-cta.primary{color:#fff;background:linear-gradient(125deg,#3E70E8,#6B55D3)}
+.tarot-unlock-cta:hover{filter:brightness(1.12)}
+.tarot-unlock-cta:active{transform:scale(.97)}
+.tarot-alt-buy{display:block;width:100%;margin-top:10px;padding:9px 0;background:none;border:0;cursor:pointer;font:inherit;font-size:11.5px;font-weight:600;color:#AFC7FF;text-align:center}
+.tarot-alt-buy:hover{color:#D2E0FF}
+.tarot-panel .chat-actions button[disabled]{opacity:.42;cursor:not-allowed}
+@media (prefers-reduced-motion:reduce){
+  .tarot-panel,.chat-next-panel{animation:none;opacity:1}
+  .tarot-card,.tarot-card:hover,.tarot-card.picked,.chat-path:hover{transition:none;transform:none}
+}
 .chat-summary-hero{margin:8px 0 18px;padding:22px;border-radius:24px;background:linear-gradient(145deg,rgba(64,101,203,.24),rgba(113,73,170,.12));border:1px solid rgba(111,165,255,.25)}
 .chat-summary-hero .eyebrow,.chat-summary-card .eyebrow{font-size:10px;letter-spacing:.18em;color:#91B1FF}
 .chat-summary-hero h3{font-size:22px;line-height:1.45;margin-top:10px}
@@ -3730,7 +3772,118 @@ const CHAT_PROMPTS = {
   '情感':['这段关系里，你最舍不得失去的是什么，最不能继续忍受的又是什么？','你希望对方改变，还是希望自己终于有勇气做一个决定？'],
   '默认':['这件事里，你最想得到什么，又最担心失去什么？','最近哪一个真实瞬间，让它开始反复出现在你心里？']
 };
-const chatState={started:false,topic:'',question:'',turn:0,answers:[],stage:'idle',correction:false};
+const chatState={started:false,topic:'',question:'',turn:0,answers:[],stage:'idle',correction:false,
+  recommendedNextStep:'',tarotPhase:'none',tarotRequired:false,tarotCandidates:[],tarotSelection:[],tarotReading:null};
+
+/* ===== 三张牌象征分析（对齐 iOS Features/Chat/TarotModels.swift + TarotPanel.swift） =====
+   原型无后端：额度只存 localStorage，购买与分享均为演示态，与 iOS 的 UserDefaults 兜底同构。 */
+const TAROT_DAILY_LIMIT=3;
+const TAROT_POSITIONS=['现状','核心阻力','行动走向'];
+const TAROT_SHARE_CHANNELS=[
+  {id:'wechat',label:'微信',note:'发给好友'},
+  {id:'moments',label:'朋友圈',note:'发布海报'},
+  {id:'xiaohongshu',label:'小红书',note:'发布笔记'},
+  {id:'weibo',label:'微博',note:'分享动态'},
+  {id:'other',label:'更多渠道',note:'打开系统分享'}
+];
+const TAROT_DECK=[
+  {id:'fool',name:'愚者',numeral:'0',symbol:'✦',light:'新的尝试与开放性',shadow:'准备不足、只凭冲动',action:'先做一个可撤回的小实验'},
+  {id:'magician',name:'魔术师',numeral:'I',symbol:'∞',light:'资源正在聚拢',shadow:'高估掌控力或包装',action:'列出手上真正可调用的三项资源'},
+  {id:'priestess',name:'女祭司',numeral:'II',symbol:'☾',light:'安静观察与直觉',shadow:'关键信息仍藏在水面下',action:'先补一条最影响判断的事实'},
+  {id:'empress',name:'皇后',numeral:'III',symbol:'❋',light:'滋养、增长与创造',shadow:'投入过多而缺少边界',action:'给成长设一个明确的资源上限'},
+  {id:'emperor',name:'皇帝',numeral:'IV',symbol:'◇',light:'结构、秩序与执行',shadow:'过度控制或路径僵化',action:'把目标拆成可检查的里程碑'},
+  {id:'hierophant',name:'教皇',numeral:'V',symbol:'✥',light:'经验、规则与可信指引',shadow:'被惯例和他人答案束缚',action:'找一位走过此路的人核对现实'},
+  {id:'lovers',name:'恋人',numeral:'VI',symbol:'♡',light:'价值一致后的选择',shadow:'想同时保住所有可能',action:'先写下你最不愿交换掉的价值'},
+  {id:'chariot',name:'战车',numeral:'VII',symbol:'➹',light:'方向明确、主动推进',shadow:'速度盖过了风险检查',action:'推进前设一个停止条件'},
+  {id:'strength',name:'力量',numeral:'VIII',symbol:'♢',light:'稳定的韧性与耐心',shadow:'用硬撑代替真实调整',action:'把最消耗你的环节先减半'},
+  {id:'hermit',name:'隐者',numeral:'IX',symbol:'⌁',light:'独立思考与内在校准',shadow:'信息闭环、越想越窄',action:'独处判断后再找外部证据复核'},
+  {id:'wheel',name:'命运之轮',numeral:'X',symbol:'◌',light:'窗口变化、出现转机',shadow:'把偶然当成必然',action:'准备好机会出现时的触发动作'},
+  {id:'justice',name:'正义',numeral:'XI',symbol:'⚖',light:'权衡、因果与边界',shadow:'只看对错，忽略真实代价',action:'用同一组标准比较收益与代价'},
+  {id:'hanged',name:'倒吊人',numeral:'XII',symbol:'⌛',light:'换视角、暂缓有价值',shadow:'停滞被包装成等待',action:'为等待设置截止日与观察指标'},
+  {id:'death',name:'死神',numeral:'XIII',symbol:'✧',light:'旧阶段结束后的更新',shadow:'抗拒必要的告别',action:'明确停止什么，才有空间开始什么'},
+  {id:'temperance',name:'节制',numeral:'XIV',symbol:'≈',light:'整合、调配与渐进',shadow:'妥协过多导致方向模糊',action:'设计一个两边都能验证的过渡方案'},
+  {id:'devil',name:'恶魔',numeral:'XV',symbol:'△',light:'看见欲望与现实牵引',shadow:'被恐惧、利益或执念绑住',action:'指出你最难承认的那项代价'},
+  {id:'tower',name:'高塔',numeral:'XVI',symbol:'ϟ',light:'打破失真的旧假设',shadow:'突发变化与脆弱基础',action:'先检查最可能让计划失效的前提'},
+  {id:'star',name:'星星',numeral:'XVII',symbol:'☆',light:'希望、方向感与恢复',shadow:'愿景尚未落到现实',action:'把愿景变成未来七天的一次行动'},
+  {id:'moon',name:'月亮',numeral:'XVIII',symbol:'☽',light:'感受敏锐、梦境与想象',shadow:'焦虑让信号变得失真',action:'把事实、猜测和担心分成三列'},
+  {id:'sun',name:'太阳',numeral:'XIX',symbol:'☼',light:'清晰、活力与可见成果',shadow:'过度乐观、忽略维护成本',action:'趁动力充足完成一个可展示成果'},
+  {id:'judgement',name:'审判',numeral:'XX',symbol:'⌃',light:'复盘后的召唤与决定',shadow:'反复等待外界替你确认',action:'用过去的证据为自己做一次判断'},
+  {id:'world',name:'世界',numeral:'XXI',symbol:'◎',light:'整合、完成与进入新周期',shadow:'执着完美收尾才肯开始',action:'定义何时算完成，然后进入下一步'}
+];
+function tarotTodayKey(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function loadTarotQuota(){
+  const fresh={date:tarotTodayKey(),used:0,shareRewardCount:0,purchasedCredits:0,subscriptionActive:false};
+  try{
+    const saved=JSON.parse(localStorage.getItem('possibility.tarot.quota.v1')||'null');
+    if(saved&&saved.date===fresh.date){
+      return {date:fresh.date,
+        used:Math.max(0,Number(saved.used)||0),
+        shareRewardCount:Math.max(0,Number(saved.shareRewardCount)||0),
+        purchasedCredits:Math.max(0,Number(saved.purchasedCredits)||0),
+        subscriptionActive:saved.subscriptionActive===true};
+    }
+  }catch(err){/* localStorage 不可用时退回今日新额度 */}
+  return fresh;
+}
+function saveTarotQuota(q){
+  try{ localStorage.setItem('possibility.tarot.quota.v1',JSON.stringify(q)); }catch(err){/* 隐私模式忽略 */}
+}
+function tarotRemaining(q){
+  if(q.subscriptionActive) return Infinity;
+  return Math.max(0,TAROT_DAILY_LIMIT+q.shareRewardCount-q.used)+q.purchasedCredits;
+}
+function tarotRemainingLabel(q){
+  return q.subscriptionActive?'包月不限次':`${tarotRemaining(q)} 次`;
+}
+function consumeTarotAttempt(){
+  const q=loadTarotQuota();
+  if(tarotRemaining(q)<=0) return false;
+  if(q.subscriptionActive) return true;
+  if(q.used<TAROT_DAILY_LIMIT+q.shareRewardCount) q.used+=1;
+  else q.purchasedCredits=Math.max(0,q.purchasedCredits-1);
+  saveTarotQuota(q);
+  return true;
+}
+function isUnclearQuestion(question){
+  const clean=(question||'').trim().replace(/[？?。！!，,]/g,'');
+  if(clean.length<4) return true;
+  return ['怎么办','怎么选','帮我看看','我该怎么办','给个建议','你觉得呢','看看未来'].includes(clean);
+}
+function tarotCandidates(count=12){
+  const pool=TAROT_DECK.slice();
+  const picked=[];
+  while(pool.length&&picked.length<count){
+    const [card]=pool.splice(Math.floor(Math.random()*pool.length),1);
+    picked.push({card,reversed:Math.random()<0.5});
+  }
+  return picked;
+}
+function tarotMeaning(drawn){ return drawn.reversed?drawn.card.shadow:drawn.card.light; }
+function tarotQuestionLens(question){
+  if(/创业|事业|工作|转行|升职|项目|生意/.test(question))
+    return {focus:'这件事更取决于资源、节奏和验证，而不是一张“必成或必败”的判决',experiment:'先用真实客户、现金流或作品反馈验证最关键的商业假设'};
+  if(/感情|恋爱|复合|结婚|对方|关系/.test(question))
+    return {focus:'关系的走向取决于双方真实行动，牌面只能帮你看见自己的期待与盲区',experiment:'观察一次具体沟通后的回应、边界和持续行动'};
+  if(/考试|考研|录取|上岸|申请|面试/.test(question))
+    return {focus:'结果仍由准备质量和外部标准共同决定，牌面提示的是当前策略',experiment:'用一次模拟成绩或真实反馈检查最薄弱的一环'};
+  return {focus:'未来没有被牌面写死，这组象征更适合用来照见你的期待、风险和下一步',experiment:'选择一个七天内可完成、结果可观察的小行动'};
+}
+function buildTarotReading(question,cards){
+  if(cards.length!==3) return {question,cards,answer:'需要抽取三张牌后才能开始分析。'};
+  const [present,friction,direction]=cards;
+  const lens=tarotQuestionLens(question);
+  const tone=direction.reversed?'尚未稳定，需要先处理阻力':'存在向前展开的空间';
+  const rev=c=>c.reversed?'·逆位':'';
+  const answer=[
+    `先说结论：${tone}，但这不是对未来的保证。${lens.focus}。`,
+    `三张牌把问题放在三个位置上：「${present.card.name}${rev(present)}」显示当下更接近${tarotMeaning(present)}；「${friction.card.name}${rev(friction)}」提醒核心卡点可能是${tarotMeaning(friction)}；「${direction.card.name}${rev(direction)}」把行动走向指向${tarotMeaning(direction)}。`,
+    `把牌意落回现实：${direction.card.action}，并${lens.experiment}。等到这条证据出现，再判断“会不会”会更可靠。`
+  ].join('<br><br>');
+  return {question,cards,answer};
+}
 function appendChat(who,html){
   const s=$('#chatScroll');
   s.appendChild(el(`<div class="msg ${who}"><div class="bubble">${html}</div></div>`));
@@ -3764,16 +3917,16 @@ function renderInsight(){
   },850);
   chatState.stage='review';
 }
-function chatNextActionsHTML(showSummary=true){
+function chatNextActionsHTML(showTarot=true){
+  const recommendedLabel = chatState.recommendedNextStep==='match' ? '优先看相似经验'
+    : chatState.recommendedNextStep==='lab' ? '优先放进实验室' : '';
   return `<div class="chat-next-panel">
-    <div class="cap">信息已经足够 · 选择下一步</div>
-    <h4>把刚才的理解带去哪里？</h4>
-    <div class="chat-next-grid">
-      <button class="chat-path primary" onclick="openLabFromChat()"><i>◉</i><b>去人生实验室</b><small>带着当前问题，推演几种可能</small></button>
-      <button class="chat-path" onclick="openSimilarFromChat()"><i>⌁</i><b>看相似经历</b><small>去社区找走过这段路的人</small></button>
-      <button class="chat-path" onclick="shareChatExploration()"><i>↗</i><b>分享这次探索</b><small>发给一个你信任的人</small></button>
+    <h4>用不同方式继续看这个问题</h4>
+    ${recommendedLabel?`<div class="chat-next-note">基于这轮回答，${recommendedLabel}</div>`:''}
+    <div class="chat-next-grid${showTarot?'':' single'}">
+      ${showTarot?'<button class="chat-path tarot" onclick="openTarotFromChat()"><i>✦</i><b>塔罗预测分析</b><small>抽 3 张牌，换一个象征视角</small></button>':''}
+      <button class="chat-path" onclick="openLabFromChat()"><i>◉</i><b>带入人生实验室</b><small>推演不同选择与现实代价</small></button>
     </div>
-    ${showSummary?'<button class="chat-next-summary" onclick="openChatSummary()">先查看完整总结 →</button>':''}
   </div>`;
 }
 function confirmChatInsight(){
@@ -3824,6 +3977,154 @@ function openChatSummary(){
     <div class="chat-summary-card next"><div class="eyebrow">下一步的小验证</div><h4>先收集一个真实证据</h4><p>未来 7 天，做一次成本很低、可以撤回的小尝试。记录行动前后的期待、精力和抗拒，再判断你是“不想要”，还是“暂时承担不起”。</p></div>
     ${chatNextActionsHTML(false)}`;
   $('#chatSummaryPage').classList.add('open');
+}
+/* 塔罗五阶段状态机：offer → drawing → confirm → result / locked（对齐 iOS TarotPhase） */
+function openTarotFromChat(opts={}){
+  chatState.tarotRequired=opts.required===true;
+  const q=loadTarotQuota();
+  if(tarotRemaining(q)<=0){ renderTarotPanel('locked'); return; }
+  renderTarotPanel('offer');
+}
+function renderTarotPanel(phase){
+  chatState.tarotPhase=phase;
+  const old=$('#tarotPanel'); if(old) old.remove();
+  const panel=el(`<div class="tarot-panel" id="tarotPanel">${tarotPanelHTML(phase)}</div>`);
+  $('#chatScroll').appendChild(panel); scrollBottom();
+}
+function tarotUnlockCardHTML(title,note,action,handler,primary){
+  return `<div class="tarot-unlock-card">
+      <b>${title}</b>
+      <small>${note}</small>
+      <button class="tarot-unlock-cta${primary?' primary':''}" onclick="${handler}">${action}</button>
+    </div>`;
+}
+function tarotPanelHTML(phase){
+  const q=loadTarotQuota();
+  if(phase==='locked'){
+    return `<div class="cap">今天的基础次数已用完</div>
+      <h4>塔罗预测分析</h4>
+      <p class="tarot-note">每天有 ${TAROT_DAILY_LIMIT} 次基础机会。你可以免费分享领取次数、开通连续包月，或购买加量包。</p>
+      <div class="tarot-unlock">
+        ${tarotUnlockCardHTML('分享免费领取次数','每次完成分享 +1 次，不限次数','立即分享','shareTarotForCredit()')}
+        ${tarotUnlockCardHTML('¥9.9 连续包月','首月优惠；第 2 个月起 ¥25/月，可随时关闭','立即开通','subscribeTarot()',true)}
+        ${tarotUnlockCardHTML('¥19 15次加量包','15 次 ¥19；也可选择 100 次 ¥99','购买次数','purchaseTarotCredit(15)')}
+      </div>
+      <button class="tarot-alt-buy" onclick="purchaseTarotCredit(100)">购买 100 次 · ¥99</button>`;
+  }
+  if(phase==='offer'){
+    const unclear=isUnclearQuestion(chatState.question);
+    return `<div class="cap">换一个视角 · 剩余 ${tarotRemainingLabel(q)}</div>
+      <h4>用三张牌看这个问题</h4>
+      <p class="tarot-note">${unclear?'你的问题还比较概括，牌面会先照见处境，而不是给出判决。':'牌面不预测既定结局，它帮你把处境、阻力和下一步分开看。'}</p>
+      <div class="chat-actions">
+        <button class="gochip" onclick="beginTarotDraw()">开始抽牌</button>
+        ${chatState.tarotRequired?'':'<button class="chip" onclick="dismissTarotPanel()">暂时不用</button>'}
+      </div>`;
+  }
+  if(phase==='drawing'){
+    const picked=chatState.tarotSelection.length;
+    const cards=chatState.tarotCandidates.map((d,i)=>{
+      const on=chatState.tarotSelection.includes(i);
+      return `<button class="tarot-card${on?' picked':''}" onclick="toggleTarotCard(${i})" aria-pressed="${on}" aria-label="第 ${i+1} 张候选牌">
+        <span class="tarot-back">✦</span>${on?`<span class="tarot-order">${chatState.tarotSelection.indexOf(i)+1}</span>`:''}</button>`;
+    }).join('');
+    return `<div class="cap">正在抽牌 · 已选 ${picked}/3</div>
+      <h4>凭直觉选三张</h4>
+      <p class="tarot-note">依次对应${TAROT_POSITIONS.map(p=>`「${p}」`).join('')}。牌面暂时朝下。</p>
+      <div class="tarot-grid">${cards}</div>
+      <div class="chat-actions">
+        <button class="gochip" onclick="confirmTarotSelection()" ${picked===3?'':'disabled'}>确认这三张</button>
+        <button class="chip" onclick="beginTarotDraw()">重新洗牌</button>
+      </div>`;
+  }
+  if(phase==='confirm'){
+    const rows=chatState.tarotSelection.map((idx,i)=>{
+      const d=chatState.tarotCandidates[idx];
+      return `<div class="tarot-slot"><span class="tarot-pos">${TAROT_POSITIONS[i]}</span>
+        <b>${d.card.symbol} ${d.card.name}${d.reversed?'·逆位':''}</b>
+        <small>${tarotMeaning(d)}</small></div>`;
+    }).join('');
+    return `<div class="cap">确认牌面 · 将消耗 1 次</div>
+      <h4>这是你抽到的三张</h4>
+      <div class="tarot-slots">${rows}</div>
+      <div class="chat-actions">
+        <button class="gochip" onclick="runTarotReading()">生成分析</button>
+        <button class="chip" onclick="beginTarotDraw()">重新抽牌</button>
+      </div>`;
+  }
+  const r=chatState.tarotReading;
+  const rows=r.cards.map((d,i)=>`<div class="tarot-slot"><span class="tarot-pos">${TAROT_POSITIONS[i]}</span>
+    <b>${d.card.symbol} ${d.card.name}${d.reversed?'·逆位':''}</b><small>${tarotMeaning(d)}</small></div>`).join('');
+  return `<div class="cap">三张牌分析 · 剩余 ${tarotRemainingLabel(loadTarotQuota())}</div>
+    <h4>${escapeHTML(r.question||'此刻的问题')}</h4>
+    <div class="tarot-slots">${rows}</div>
+    <p class="tarot-answer">${r.answer}</p>
+    <p class="tarot-disclaimer">象征参考，不构成命运判定，也不替代医疗、法律或财务建议。</p>
+    <div class="chat-actions">
+      <button class="chip" onclick="shareTarotForCredit()">分享并得 1 次</button>
+      <button class="chip" onclick="openTarotFromChat()">再抽一次</button>
+    </div>`;
+}
+function dismissTarotPanel(){
+  const p=$('#tarotPanel'); if(p) p.remove();
+  chatState.tarotPhase='none';
+}
+function beginTarotDraw(){
+  chatState.tarotCandidates=tarotCandidates(12);
+  chatState.tarotSelection=[];
+  renderTarotPanel('drawing');
+}
+function toggleTarotCard(i){
+  const sel=chatState.tarotSelection, at=sel.indexOf(i);
+  if(at>=0) sel.splice(at,1);
+  else if(sel.length<3) sel.push(i);
+  else { toast('已经选满三张了'); return; }
+  renderTarotPanel('drawing');
+}
+function confirmTarotSelection(){
+  if(chatState.tarotSelection.length!==3){ toast('先选满三张牌'); return; }
+  renderTarotPanel('confirm');
+}
+function runTarotReading(){
+  if(!consumeTarotAttempt()){ renderTarotPanel('locked'); return; }
+  const cards=chatState.tarotSelection.map(i=>chatState.tarotCandidates[i]);
+  chatState.tarotReading=buildTarotReading(chatState.question,cards);
+  chatState.stage='review';
+  renderTarotPanel('result');
+  chatState.recommendedNextStep=isUnclearQuestion(chatState.question)?'match':'lab';
+  setTimeout(()=>{
+    $('#chatScroll').appendChild(el(chatNextActionsHTML(false)));scrollBottom();
+  },620);
+}
+async function shareTarotForCredit(){
+  const r=chatState.tarotReading;
+  const text=r?`我用三张牌看了一个问题：${r.question}\n\n${r.cards.map((d,i)=>`${TAROT_POSITIONS[i]}：${d.card.name}${d.reversed?'·逆位':''}`).join('\n')}`
+    :'我在万花筒用三张牌换了个视角看自己的问题。';
+  let shared=false;
+  if(navigator.share){
+    try{ await navigator.share({title:'我的三张牌',text}); shared=true; }
+    catch(err){ if(err&&err.name==='AbortError') return; }
+  }
+  if(!shared){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){ await navigator.clipboard.writeText(text); shared=true; }
+    }catch(err){/* 剪贴板不可用时仍按演示态发放 */}
+  }
+  const q=loadTarotQuota();
+  q.shareRewardCount+=1; saveTarotQuota(q);
+  toast(shared?'已分享，获得 1 次分析':'已生成分享文案，获得 1 次分析');
+  renderTarotPanel(chatState.tarotReading?'result':'offer');
+}
+function purchaseTarotCredit(count){
+  const packSize = count===100 ? 100 : 15;
+  const q=loadTarotQuota(); q.purchasedCredits+=packSize; saveTarotQuota(q);
+  toast(`演示环境：已增加 ${packSize} 次`);
+  renderTarotPanel('offer');
+}
+function subscribeTarot(){
+  const q=loadTarotQuota(); q.subscriptionActive=true; saveTarotQuota(q);
+  toast('演示环境：已开通包月不限次');
+  renderTarotPanel('offer');
 }
 function openLabFromChat(){
   const q=chatState.question||$('#askText').value.trim();

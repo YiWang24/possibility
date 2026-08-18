@@ -9,7 +9,14 @@ import {
   readJson,
 } from "../_shared/errors.ts";
 
-type Axis = "like" | "skill" | "evidence" | "environment" | "choice" | "value" | "open";
+type Axis =
+  | "like"
+  | "skill"
+  | "evidence"
+  | "environment"
+  | "choice"
+  | "value"
+  | "open";
 
 type DiscoveryResponse = {
   id: string;
@@ -102,7 +109,8 @@ const outputSchema = {
   },
 } as const;
 
-const systemPrompt = `你是一名严谨、温和的自我理解分析助手。你的工作是根据用户对完整原创探索题的回答，区分“喜欢的事”和“擅长的事”，并提出可验证的行动假设。题库包括：9 个兴趣母题的强度评分、13 种优势动作的“喜欢度 × 自然擅长度”双评分、外部证据、10 组环境偏好、强制取舍、价值判断和 5 个真实叙事问题。
+const systemPrompt =
+  `你是一名严谨、温和的自我理解分析助手。你的工作是根据用户对完整原创探索题的回答，区分“喜欢的事”和“擅长的事”，并提出可验证的行动假设。题库包括：9 个兴趣母题的强度评分、13 种优势动作的“喜欢度 × 自然擅长度”双评分、外部证据、10 组环境偏好、强制取舍、价值判断和 5 个真实叙事问题。
 
 分析原则：
 1. 喜欢的事是用户反复被吸引、愿意投入和主动了解的“内容领域”，不要把行为能力误写成兴趣。
@@ -130,13 +138,6 @@ function cleanString(value: unknown, max: number): string {
   return cleaned;
 }
 
-function cleanStrings(value: unknown, maxItems: number, maxLength: number): string[] {
-  if (!Array.isArray(value) || value.length > maxItems) {
-    throw new HttpError(400, "INVALID_INPUT", "回答选项数量不正确。");
-  }
-  return value.map((item) => cleanString(item, maxLength));
-}
-
 function cleanEvidence(value: unknown): Array<{ tag: string; count: number }> {
   if (!Array.isArray(value) || value.length > 13) {
     throw new HttpError(400, "INVALID_INPUT", "证据摘要格式不正确。");
@@ -154,7 +155,10 @@ function cleanEvidence(value: unknown): Array<{ tag: string; count: number }> {
 }
 
 function validateInput(value: unknown): DiscoveryInput {
-  if (!isRecord(value) || !Array.isArray(value.responses) || !isRecord(value.evidence)) {
+  if (
+    !isRecord(value) || !Array.isArray(value.responses) ||
+    !isRecord(value.evidence)
+  ) {
     throw new HttpError(400, "INVALID_INPUT", "缺少完整的探索回答。");
   }
   if (value.responses.length !== 71) {
@@ -168,7 +172,11 @@ function validateInput(value: unknown): DiscoveryInput {
     }
     const id = cleanString(item.id, 40);
     const rawAxis = item.axis;
-    if (typeof rawAxis !== "string" || !["like", "skill", "evidence", "environment", "choice", "value", "open"].includes(rawAxis)) {
+    if (
+      typeof rawAxis !== "string" ||
+      !["like", "skill", "evidence", "environment", "choice", "value", "open"]
+        .includes(rawAxis)
+    ) {
       throw new HttpError(400, "INVALID_INPUT", "回答维度不正确。");
     }
     const axis = rawAxis as Axis;
@@ -185,8 +193,12 @@ function validateInput(value: unknown): DiscoveryInput {
       kind: cleanString(item.kind, 24),
       question: cleanString(item.question, 160),
       tag: typeof item.tag === "string" ? cleanString(item.tag, 40) : undefined,
-      left: typeof item.left === "string" ? cleanString(item.left, 60) : undefined,
-      right: typeof item.right === "string" ? cleanString(item.right, 60) : undefined,
+      left: typeof item.left === "string"
+        ? cleanString(item.left, 60)
+        : undefined,
+      right: typeof item.right === "string"
+        ? cleanString(item.right, 60)
+        : undefined,
       response: item.response,
     };
   });
@@ -212,7 +224,10 @@ Deno.serve(async (req) => {
       model: runtimeConfig.structuredModel,
       maxTokens: 2_048,
       system: systemPrompt,
-      prompt: `以下是用户完成的自我探索回答与客户端证据计数。只能依据这些内容分析：\n${JSON.stringify(input)}`,
+      prompt:
+        `以下是用户完成的自我探索回答与客户端证据计数。只能依据这些内容分析：\n${
+          JSON.stringify(input)
+        }`,
       schema: outputSchema,
       track: { userId: user.id, feature: "analyze_self_discovery" },
       trace: { name: "analyze-self-discovery", userId: user.id },

@@ -111,13 +111,13 @@ fun ChatSummarySheet(
                     item {
                         Box(Modifier.padding(top = 2.dp)) {
                             ChatNextPanel(
-                                showSummaryLink = false,
                                 preferredPath = model.recommendedNextStep,
                                 matchedTravelers = model.matchedTravelers,
                                 matchReasons = model.matchReasons,
                                 onGoLab = onGoLab,
                                 onGoSimilar = onGoSimilar,
-                                shareText = model.shareText,
+                                onTarot = {},
+                                showTarot = false,
                                 onOpenTraveler = onOpenTraveler,
                             )
                         }

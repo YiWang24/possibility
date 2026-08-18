@@ -1,25 +1,14 @@
 "use client";
 /* 下一步面板 —— 移植自 iOS ChatSummaryView.ChatNextPanel / ChatTravelerCard
  *
- * 「信息已经足够 · 选择下一步」：去人生实验室 / 看走过这条路的人（/match 命中 2 张方形旅人卡）/ 分享 + 可选完整总结链接。 */
+ * 回答完成后给出塔罗预测分析 / 人生实验室两个行动入口；
+ * 相似经验直接用下方的用户卡片呈现，不再重复放一张功能卡。 */
 
 import Link from "next/link";
 import { TravelerAvatar } from "@/components/ui/Avatar";
 import { hue, mockAvatarById } from "@/lib/theme";
-import { useToast } from "@/components/ui/Toast";
 import type { Traveler } from "@/lib/models";
 import type { RecommendedNextStep } from "./store";
-
-function copyShare(shareText: string) {
-  if (typeof navigator !== "undefined" && navigator.share) {
-    void navigator.share({ text: shareText }).catch(() => {});
-    return;
-  }
-  if (typeof navigator !== "undefined" && navigator.clipboard) {
-    void navigator.clipboard.writeText(shareText);
-  }
-  useToast.getState().show("已复制探索文案，去分享给信任的人");
-}
 
 function PathCell({
   icon,
@@ -27,23 +16,25 @@ function PathCell({
   note,
   className,
   onClick,
+  href,
 }: {
   icon: string;
   title: string;
   note: string;
   className?: string;
   onClick?: () => void;
+  href?: string;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex flex-col items-start p-[11px] rounded-tile text-left transition active:scale-[0.97] ${className ?? ""}`}
-    >
+  const content = (
+    <>
       <span className="text-lead text-ink">{icon}</span>
       <span className="text-caption font-semibold text-ink mt-[7px]">{title}</span>
       <span className="text-micro leading-[1.5] text-faint mt-[3px]">{note}</span>
-    </button>
+    </>
   );
+  const classes = `flex-1 flex flex-col items-start p-[11px] rounded-tile text-left transition active:scale-[0.97] ${className ?? ""}`;
+  if (href) return <Link href={href} onClick={onClick} className={classes}>{content}</Link>;
+  return <button onClick={onClick} className={classes}>{content}</button>;
 }
 
 function ChatTravelerCard({ traveler, reason }: { traveler: Traveler; reason?: string }) {
@@ -76,41 +67,25 @@ function ChatTravelerCard({ traveler, reason }: { traveler: Traveler; reason?: s
 }
 
 export function ChatNextPanel({
-  showSummaryLink,
   preferredPath,
   matchedTravelers,
   matchReasons,
   onGoLab,
   onGoSimilar,
-  shareText,
-  onOpenSummary,
+  onTarot,
+  showTarot = true,
+  labHref,
 }: {
-  showSummaryLink: boolean;
   preferredPath: RecommendedNextStep | null;
   matchedTravelers: Traveler[];
   matchReasons: Record<number, string>;
   onGoLab: () => void;
   onGoSimilar: () => void;
-  shareText: string;
-  onOpenSummary?: () => void;
+  onTarot: () => void;
+  showTarot?: boolean;
+  labHref: string;
 }) {
-  const eyebrow = preferredPath == null ? "信息已经足够 · 选择下一步" : "这轮探索先到这里 · 为你推荐";
-  const title =
-    preferredPath === "match"
-      ? "看看走过相似处境的人"
-      : preferredPath === "lab"
-        ? "把现在的判断放进现实里推演"
-        : "把刚才的理解带去哪里？";
-
-  const shareCell = (
-    <PathCell
-      icon="↗"
-      title="分享这次探索"
-      note="发给一个你信任的人"
-      className="bg-white/[0.045] border border-line"
-      onClick={() => copyShare(shareText)}
-    />
-  );
+  const recommendedLabel = preferredPath === "match" ? "优先看相似经验" : preferredPath === "lab" ? "优先放进实验室" : null;
 
   return (
     <div
@@ -120,67 +95,55 @@ export function ChatNextPanel({
         border: "1px solid rgba(111,165,255,0.2)",
       }}
     >
-      <span className="text-micro tracking-[1.6px] text-brand-lite">{eyebrow}</span>
-      <span className="text-body font-semibold text-ink mt-[5px]">{title}</span>
+      <span className="text-body font-semibold text-ink">用不同方式继续看这个问题</span>
+      {recommendedLabel ? <span className="mt-1 text-micro text-faint">基于这轮回答，{recommendedLabel}</span> : null}
 
-      {preferredPath !== "match" ? (
-        <button
+      <div className={`mt-[11px] grid gap-2 ${showTarot ? "sm:grid-cols-2" : "grid-cols-1"}`}>
+        {showTarot ? (
+          <PathCell
+            icon="✦"
+            title="塔罗预测分析"
+            note="抽 3 张牌，换一个象征视角"
+            className="border border-brand-bright/35 bg-brand/15"
+            onClick={onTarot}
+          />
+        ) : null}
+        <PathCell
+          icon="◉"
+          title="带入人生实验室"
+          note="推演不同选择与现实代价"
+          className="border border-line bg-white/[0.045]"
           onClick={onGoLab}
-          className="mt-[11px] text-left p-[11px] rounded-tile transition active:scale-[0.98]"
-          style={{
-            background: "linear-gradient(135deg,rgba(62,112,232,0.28),rgba(107,85,211,0.18))",
-            border: "1px solid rgba(111,165,255,0.34)",
-          }}
-        >
-          <span className="text-lead text-ink block">◉</span>
-          <span className="text-caption font-semibold text-ink mt-[7px] block">去人生实验室</span>
-          <span className="text-micro leading-[1.5] text-faint mt-[3px] block">带着当前问题，推演几种可能</span>
-        </button>
-      ) : null}
+          href={labHref}
+        />
+      </div>
 
-      {preferredPath === "lab" ? (
-        <div className="mt-2 flex gap-2">{shareCell}</div>
-      ) : matchedTravelers.length === 0 && preferredPath === "match" ? (
-        <div className="mt-[11px] flex items-center gap-2.5 p-[13px] rounded-tile bg-white/[0.045] border border-line">
-          <span className="w-3.5 h-3.5 rounded-full border-2 border-brand-lite border-t-transparent animate-spin" />
+      {matchedTravelers.length === 0 && preferredPath === "match" ? (
+        <div className="mt-[11px] flex items-center gap-[9px] rounded-tile border border-line bg-white/[0.045] p-[13px]">
+          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand-lite border-t-transparent" />
           <span className="text-caption text-sub">正在为你找走过相似处境的人…</span>
         </div>
-      ) : matchedTravelers.length === 0 ? (
-        <div className="mt-2 flex gap-2">
-          <PathCell
-            icon="⌁"
-            title="看相似经历"
-            note="去社区找走过这段路的人"
-            className="bg-white/[0.045] border border-line"
-            onClick={onGoSimilar}
-          />
-          {shareCell}
-        </div>
-      ) : (
+      ) : null}
+
+      {matchedTravelers.length > 0 ? (
         <>
-          <span className="text-micro tracking-[1.6px] text-brand-lite mt-[13px]">看看走过这条路的人</span>
-          <div className="flex gap-2.5 mt-[9px]">
+          <span className="mt-[13px] text-micro tracking-[1.6px] text-brand-lite">与你当前处境接近的经验</span>
+          <div className="mt-[9px] flex gap-2.5 overflow-x-auto pb-1">
             {matchedTravelers.slice(0, 2).map((t) =>
               t.id > 0 ? (
-                <Link key={t.id} href={`/traveler/${t.id}`} className="transition active:scale-[0.97]">
+                <Link key={t.id} href={`/traveler/${t.id}`} className="shrink-0 transition active:scale-[0.97]">
                   <ChatTravelerCard traveler={t} reason={matchReasons[t.id]} />
                 </Link>
               ) : (
-                <button key={t.id} onClick={onGoSimilar} className="transition active:scale-[0.97]">
+                <button key={t.id} onClick={onGoSimilar} className="shrink-0 transition active:scale-[0.97]">
                   <ChatTravelerCard traveler={t} reason={matchReasons[t.id]} />
                 </button>
               ),
             )}
           </div>
-          <div className="mt-2 flex gap-2">{shareCell}</div>
         </>
-      )}
-
-      {showSummaryLink ? (
-        <button onClick={onOpenSummary} className="mt-[11px] text-micro text-brand-lite self-center">
-          先查看完整总结 →
-        </button>
       ) : null}
+
     </div>
   );
 }
