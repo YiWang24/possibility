@@ -86,6 +86,29 @@ page,
   --accent-3: #ffb067;
   --accent-4: #3ed9a4;
 
+  /* 卡面点缀色的底衬与描边档（CardIconChip：12%/24% 常态，20%/50% 选中）。
+     WXSS 没有 color-mix，透明档只能逐档写死；改点缀色时这 20 行要一起改。 */
+  --accent-0-wash: rgba(94, 150, 255, 0.12);
+  --accent-0-wash-on: rgba(94, 150, 255, 0.2);
+  --accent-0-line: rgba(94, 150, 255, 0.24);
+  --accent-0-line-on: rgba(94, 150, 255, 0.5);
+  --accent-1-wash: rgba(143, 123, 255, 0.12);
+  --accent-1-wash-on: rgba(143, 123, 255, 0.2);
+  --accent-1-line: rgba(143, 123, 255, 0.24);
+  --accent-1-line-on: rgba(143, 123, 255, 0.5);
+  --accent-2-wash: rgba(227, 92, 193, 0.12);
+  --accent-2-wash-on: rgba(227, 92, 193, 0.2);
+  --accent-2-line: rgba(227, 92, 193, 0.24);
+  --accent-2-line-on: rgba(227, 92, 193, 0.5);
+  --accent-3-wash: rgba(255, 176, 103, 0.12);
+  --accent-3-wash-on: rgba(255, 176, 103, 0.2);
+  --accent-3-line: rgba(255, 176, 103, 0.24);
+  --accent-3-line-on: rgba(255, 176, 103, 0.5);
+  --accent-4-wash: rgba(62, 217, 164, 0.12);
+  --accent-4-wash-on: rgba(62, 217, 164, 0.2);
+  --accent-4-line: rgba(62, 217, 164, 0.24);
+  --accent-4-line-on: rgba(62, 217, 164, 0.5);
+
   /* ── 圆角（Theme.Radius）── */
   --r-card: 22rpx;
   --r-sheet: 30rpx;

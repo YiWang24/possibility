@@ -135,21 +135,31 @@ export interface SimulationResult {
  */
 export interface SimulationHorizon {
   key: string
+  /** 「7天」「3个月」「5年」—— 不带「后」，用处都是 `${label}后` 这样拼 */
   label: string
+  /**
+   * 表盘上的紧凑标签，避免 14 个刻度互相挤压。
+   * 年份档只留数字（10 年例外，孤零零一个「10」读不出单位）。
+   */
+  dialLabel: string
   apiYears: number
 }
 
 export const SIMULATION_HORIZONS: SimulationHorizon[] = [
-  { key: 'day7', label: '7 天后', apiYears: 1 },
-  { key: 'day30', label: '30 天后', apiYears: 1 },
-  { key: 'month3', label: '3 个月后', apiYears: 1 },
-  { key: 'month6', label: '6 个月后', apiYears: 1 },
-  { key: 'year1', label: '1 年后', apiYears: 1 },
-  { key: 'year2', label: '2 年后', apiYears: 2 },
-  { key: 'year3', label: '3 年后', apiYears: 3 },
-  { key: 'year4', label: '4 年后', apiYears: 4 },
-  { key: 'year5', label: '5 年后', apiYears: 5 },
-  { key: 'year6', label: '6 年后', apiYears: 6 },
+  { key: 'day7', label: '7天', dialLabel: '7天', apiYears: 1 },
+  { key: 'day30', label: '30天', dialLabel: '30天', apiYears: 1 },
+  { key: 'month3', label: '3个月', dialLabel: '3月', apiYears: 1 },
+  { key: 'month6', label: '6个月', dialLabel: '6月', apiYears: 1 },
+  { key: 'year1', label: '1年', dialLabel: '1', apiYears: 1 },
+  { key: 'year2', label: '2年', dialLabel: '2', apiYears: 2 },
+  { key: 'year3', label: '3年', dialLabel: '3', apiYears: 3 },
+  { key: 'year4', label: '4年', dialLabel: '4', apiYears: 4 },
+  { key: 'year5', label: '5年', dialLabel: '5', apiYears: 5 },
+  { key: 'year6', label: '6年', dialLabel: '6', apiYears: 6 },
+  { key: 'year7', label: '7年', dialLabel: '7', apiYears: 7 },
+  { key: 'year8', label: '8年', dialLabel: '8', apiYears: 8 },
+  { key: 'year9', label: '9年', dialLabel: '9', apiYears: 9 },
+  { key: 'year10', label: '10年', dialLabel: '10年', apiYears: 10 },
 ]
 
 /** POST /lab-choices 出参（schemas.ts LabChoiceOutput） */

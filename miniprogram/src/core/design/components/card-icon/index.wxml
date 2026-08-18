@@ -1,0 +1,3 @@
+<view class="ci ci--{{variant}} ci--a{{accent}} {{emphasized ? 'ci--on' : ''}}">
+  <text class="ci__glyph">{{glyph}}</text>
+</view>

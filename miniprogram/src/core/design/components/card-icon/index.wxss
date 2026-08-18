@@ -1,0 +1,71 @@
+/**
+ * 卡面图标 —— 规格对齐 iOS `CardIconChip`（27pt 圆角方 + 12%/24%）与 `CardIconMark`。
+ * 尺寸按 750/390 换算（iOS pt × 1.923）。
+ */
+
+.ci {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* accent = -1 时不设 color，让父级的 color 透下来（CardIconMark 的用法） */
+}
+
+.ci__glyph {
+  line-height: 1;
+  color: inherit;
+}
+
+/* ── chip：圆角方底衬，扇形选择卡与「自定义选择」卡用 ── */
+
+.ci--chip {
+  width: 52rpx;
+  height: 52rpx;
+  flex-shrink: 0;
+  /* iOS 是 size/3 的连续圆角，WXSS 只有普通圆角，取同一比例 */
+  border-radius: 17rpx;
+  border-width: 1rpx;
+  border-style: solid;
+  border-color: transparent;
+  background: transparent;
+}
+
+.ci--chip .ci__glyph {
+  font-size: 27rpx;
+  font-weight: 500;
+}
+
+/* ── mark：裸字形，正文行内用（底线卡、拖拽浮标）──
+   那里已经有卡片边框，再套一层底衬会太吵。 */
+
+.ci--mark {
+  width: auto;
+  height: auto;
+}
+
+.ci--mark .ci__glyph {
+  font-size: 27rpx;
+  font-weight: 500;
+}
+
+/* ── 点缀色档位 ──
+   字形着 --accent-N，chip 的底衬与描边取同一枚色的透明档，
+   一张卡只有一个色源（与 iOS 的 stampGlow 同理）。 */
+
+.ci--a0 { color: var(--accent-0); }
+.ci--a1 { color: var(--accent-1); }
+.ci--a2 { color: var(--accent-2); }
+.ci--a3 { color: var(--accent-3); }
+.ci--a4 { color: var(--accent-4); }
+
+.ci--chip.ci--a0 { background: var(--accent-0-wash); border-color: var(--accent-0-line); }
+.ci--chip.ci--a1 { background: var(--accent-1-wash); border-color: var(--accent-1-line); }
+.ci--chip.ci--a2 { background: var(--accent-2-wash); border-color: var(--accent-2-line); }
+.ci--chip.ci--a3 { background: var(--accent-3-wash); border-color: var(--accent-3-line); }
+.ci--chip.ci--a4 { background: var(--accent-4-wash); border-color: var(--accent-4-line); }
+
+/* 选中态：底色与描边同时加重，字形不换色 */
+.ci--chip.ci--on.ci--a0 { background: var(--accent-0-wash-on); border-color: var(--accent-0-line-on); }
+.ci--chip.ci--on.ci--a1 { background: var(--accent-1-wash-on); border-color: var(--accent-1-line-on); }
+.ci--chip.ci--on.ci--a2 { background: var(--accent-2-wash-on); border-color: var(--accent-2-line-on); }
+.ci--chip.ci--on.ci--a3 { background: var(--accent-3-wash-on); border-color: var(--accent-3-line-on); }
+.ci--chip.ci--on.ci--a4 { background: var(--accent-4-wash-on); border-color: var(--accent-4-line-on); }
