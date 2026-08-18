@@ -355,7 +355,7 @@ fun SelfDiscoveryScreen(
                 Text(question.hint, color = Theme.sub, fontSize = 12.5.sp, lineHeight = 19.sp, modifier = Modifier.padding(top = 8.dp))
                 DiscoveryQuestionInput(question, current, Modifier.padding(top = 18.dp)) { answers[question.id] = it }
                 Row(Modifier.padding(top = 22.dp), horizontalArrangement = Arrangement.spacedBy(11.dp)) {
-                    DiscoveryButton("上一个", false, Modifier.weight(1f), ::back)
+                    DiscoveryButton("上一个", false, Modifier.weight(1f), onClick = ::back)
                     DiscoveryButton(if (index == SelfDiscoveryData.questions.lastIndex) "交给 AI 综合分析" else "继续", true, Modifier.weight(1.45f), enabled = canAdvance, onClick = ::advance)
                 }
             }
