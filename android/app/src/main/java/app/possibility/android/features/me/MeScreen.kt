@@ -51,6 +51,8 @@ import app.possibility.android.core.ToastCenter
 import app.possibility.android.core.model.MyProfile
 import app.possibility.android.core.network.SupabaseService
 import app.possibility.android.core.theme.Theme
+import app.possibility.android.features.auth.AuthGateCenter
+import app.possibility.android.features.auth.AuthGateHost
 import kotlinx.coroutines.launch
 
 // MARK: - 我的主页 Tab（对应 ios/Possibility/Features/Me/MeView.swift · 原型 #scr-me）
@@ -75,6 +77,11 @@ fun MeScreen() {
 
     var tab by remember { mutableStateOf("persona") }
     var editMode by remember { mutableStateOf<MeEditMode?>(null) }
+    // 编辑公开主页是关键动作（对应 iOS MeView trigger .profileEdit）：
+    // 会话中途过期时先就地补登录，成功后继续进入编辑。
+    val requestEdit: (MeEditMode) -> Unit = { mode ->
+        AuthGateCenter.require("profile_edit") { editMode = mode }
+    }
     var showPrivacy by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var accountBusy by remember { mutableStateOf(false) }
@@ -87,13 +94,13 @@ fun MeScreen() {
                 .padding(horizontal = 22.dp).padding(top = 20.dp, bottom = 40.dp),
         ) {
             PageHeader("MY PUBLIC PAGE", "我的主页")
-            Box(Modifier.padding(top = 16.dp)) { Hero(profile) { editMode = MeEditMode.BASIC } }
+            Box(Modifier.padding(top = 16.dp)) { Hero(profile) { requestEdit(MeEditMode.BASIC) } }
             Box(Modifier.padding(top = 16.dp)) { Tabs(tab) { tab = it } }
             Box(Modifier.padding(top = 16.dp)) {
                 when (tab) {
-                    "story" -> StoryPanel(profile) { editMode = MeEditMode.STORY }
-                    "advice" -> AdvicePanel(profile) { editMode = MeEditMode.ADVICE }
-                    "service" -> ServicePanel(profile) { editMode = MeEditMode.SERVICE }
+                    "story" -> StoryPanel(profile) { requestEdit(MeEditMode.STORY) }
+                    "advice" -> AdvicePanel(profile) { requestEdit(MeEditMode.ADVICE) }
+                    "service" -> ServicePanel(profile) { requestEdit(MeEditMode.SERVICE) }
                     else -> PersonaPanel(facts) { showPrivacy = true }
                 }
             }
@@ -139,6 +146,9 @@ fun MeScreen() {
             scope.launch { MyProfileStore.syncFromRemote() }
         }
     }
+
+    // 编辑门控（requestEdit）在此渲染补登录页。
+    AuthGateHost()
 
     if (showDeleteConfirm) {
         AlertDialog(

@@ -580,6 +580,28 @@ class SupabaseService(val supabase: SupabaseClient) {
             put("user_state", json.encodeToJsonElement(userState))
         })
 
+    /** tarot-quota 出参（status / consume / reward 共用）。 */
+    @Serializable
+    data class RemoteTarotQuota(
+        val date: String = "",
+        val used: Int = 0,
+        @SerialName("share_reward_count") val shareRewardCount: Int = 0,
+        val remaining: Int = 0,
+        val allowed: Boolean? = null,
+        val claimed: Boolean? = null,
+    )
+
+    /**
+     * POST /tarot-quota：塔罗额度对账（action ∈ status / consume / reward）。
+     * 服务端按 Asia/Shanghai 划天，已用次数与分享奖励以服务端为准；
+     * 离线或函数未部署时由调用方退回本地缓存，绝不阻塞抽牌体验。
+     */
+    suspend fun tarotQuota(action: String, channel: String? = null): RemoteTarotQuota =
+        callFunction("tarot-quota", buildJsonObject {
+            put("action", action)
+            channel?.let { put("channel", it) }
+        })
+
     /**
      * POST /simulate 完整出参：{scenarios, bottom_line_analysis, recommended_traveler_ids}
      * @param carryCards 底线卡（最多 6 张，validate.ts validateSimulateInputV2）

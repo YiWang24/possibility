@@ -48,9 +48,6 @@ final class HomeModel {
     }
     private var diaryInputMethod: DiaryInputMethod = .voice
 
-    /// demo：录音得到的预置 transcript（真实 STT 非主线）
-    private let sampleTranscript = "今天又在纠结要不要转产品。会议上帮团队理清了一个乱成一团的需求，那一刻很有成就感，但一想到要放弃做了六年的设计，还是会慌。"
-
     var elapsedText: String {
         String(format: "%d:%02d", elapsed / 60, elapsed % 60)
     }
@@ -85,7 +82,7 @@ final class HomeModel {
     /// 完成录音 → 将本次转写提交 analyze-diary（服务端按既有日记规则分析并落库）。
     /// 模型持有分析任务：便于中途取消，也避免网关偶发挂起时 UI 卡死。
     ///
-    /// ASR 不可用时仍保留 demo transcript，但情绪/关键词绝不由客户端伪造：必须来自 analyze-diary。
+    /// 未识别到真实文本时停止提交，绝不把演示内容写进用户日记（对齐 Android HomeModel）。
     func startAnalyzeDiary(using supabase: SupabaseService) {
         guard !analyzing else { return }
         diaryInputMethod = .voice
@@ -99,11 +96,17 @@ final class HomeModel {
             if self.sttStarted { try? await Task.sleep(for: .milliseconds(600)) }
             guard !Task.isCancelled else { return }
             let localText = self.transcribedText.trimmingCharacters(in: .whitespacesAndNewlines)
-            let transcript = localText.count >= 4 ? localText : self.sampleTranscript
-            self.lastTranscript = transcript
+            guard localText.count >= 4 else {
+                self.lastTranscript = nil
+                self.analysis = nil
+                self.analysisError = "没有识别到足够的内容，请重录或直接输入文字。"
+                self.analyzing = false
+                return
+            }
+            self.lastTranscript = localText
             // 展示可编辑的转写全文，供用户手动修正后重新分析
-            self.transcript = transcript
-            await self.runAnalysis(transcript: transcript, using: supabase)
+            self.transcript = localText
+            await self.runAnalysis(transcript: localText, using: supabase)
         }
     }
 
@@ -178,7 +181,7 @@ final class HomeModel {
     //
     // 真实优先：录音时若权限与识别器可用则实时转写，analyzeDiary 用真实文本；
     // 任一环节不可用（Info.plist 未配置权限文案 / 用户拒绝 / 识别失败 / 文本过短）
-    // 均静默回退 sampleTranscript，不打断主流程。
+    // 由 startAnalyzeDiary 报错并引导重录或改用文字输入，绝不伪造转写。
 
     private var audioEngine: AVAudioEngine?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
@@ -507,8 +510,9 @@ final class HomeModel {
         }
         return todayEmoji ?? ""
     }
-    /// 已探索天数：最早一条日记距今 +1；无日记 = 第 1 天；未加载/失败保持 demo 值
-    private(set) var exploredDays = 47
+    /// 已探索天数：最早一条日记距今 +1；无日记 = 第 1 天（Android/web 同款起点）；
+    /// 加载成功后由 loadDiaryOverview 修正。
+    private(set) var exploredDays = 1
 
     /// 「今天」始终对应真实日期；只有今天的数据来自云端。
     var diaryTodayDate: String {

@@ -35,12 +35,14 @@ export function ChatSummaryView({
   onGoSimilar,
   onFinish,
   onClose,
+  labHref,
 }: {
   model: ChatModel;
   onGoLab: () => void;
   onGoSimilar: () => void;
   onFinish: () => void;
   onClose: () => void;
+  labHref: string;
 }) {
   const answer = (index: number, fallback: string) =>
     model.answers.length > index ? model.answers[index] : fallback;
@@ -113,13 +115,16 @@ export function ChatSummaryView({
 
             <div className="mt-0.5">
               <ChatNextPanel
-                showSummaryLink={false}
                 preferredPath={model.recommendedNextStep}
                 matchedTravelers={model.matchedTravelers}
                 matchReasons={model.matchReasons}
                 onGoLab={onGoLab}
                 onGoSimilar={onGoSimilar}
-                shareText={model.shareText}
+                onTarot={() => {
+                  model.setShowSummary(false);
+                  model.offerOptionalTarot();
+                }}
+                labHref={labHref}
               />
             </div>
           </div>

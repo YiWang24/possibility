@@ -43,12 +43,16 @@ Deno.test("front-door prompt requires an answer before product routing", () => {
     "visible chat reply must fit within one mobile screen",
   );
   assert(
-    prompt.includes("这个理解接近你吗？"),
-    "verification state needs an explicit cue",
+    prompt.includes("不先走“澄清—确认—再回答”的流程"),
+    "a clear question must be answered in the same turn",
   );
   assert(
-    prompt.includes("仍在收集事实"),
-    "clarifying replies must not request verification",
+    prompt.includes("默认不邀请用户确认整份理解"),
+    "answers must not be gated behind a whole-understanding confirmation",
+  );
+  assert(
+    prompt.includes("不要用“这个理解接近你吗？”作为流程关卡"),
+    "the legacy verification cue must not act as a process gate",
   );
 });
 

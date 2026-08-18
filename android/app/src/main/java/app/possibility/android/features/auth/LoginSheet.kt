@@ -53,7 +53,7 @@ private const val MIN_PASSWORD_LENGTH = 6
  * 微信登录照 iOS 预留但默认禁用，wechatEnabled=false 时不显示）。
  */
 @Composable
-fun LoginSheet(onDismiss: () -> Unit) {
+fun LoginSheet(onDismiss: () -> Unit, gate: Boolean = false) {
     val service = SupabaseService.shared
     val scope = rememberCoroutineScope()
 
@@ -125,7 +125,10 @@ fun LoginSheet(onDismiss: () -> Unit) {
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                "登录后画像、推演与社区都会绑定到你的账号，换设备也能接着往下走。",
+                // 对应 iOS LoginSheet 的 .sheet / .wall 两种呈现：门控是「会话过期补登录」，
+                // 登录墙的品牌与绑定说明由 AuthWallView 的 hero 承担，这里不重复。
+                if (gate) "会话已过期，重新登录后继续刚才的操作。"
+                else "登录后画像、推演与社区都会绑定到你的账号，换设备也能接着往下走。",
                 color = Theme.sub,
                 fontSize = 11.5.sp,
                 lineHeight = 17.sp,

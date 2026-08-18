@@ -27,7 +27,9 @@ final class ChatModel {
         let id = UUID()
         let role: Role
         var text: String
+        var source: Source? = nil
         enum Role { case user, ai }
+        enum Source { case tarot }
     }
 
     /// 对话阶段（对照原型 chatState.stage）
@@ -69,6 +71,7 @@ final class ChatModel {
     // MARK: API 失败重试
 
     private enum RequestContext {
+        case direct
         case clarify
         case correctionFollowUp
         case confirm
@@ -101,9 +104,25 @@ final class ChatModel {
     private(set) var restoredTopic: String?
     private(set) var restoredQuestion: String?
 
+    // MARK: 塔罗（象征性反思工具）
+
+    var tarotPhase: TarotPhase = .none
+    var tarotCandidates: [DrawnTarotCard] = []
+    var tarotSelection: [DrawnTarotCard] = []
+    var tarotReading: TarotReading?
+    var tarotQuota = TarotQuota.load()
+    var showTarotShare = false
+    var isTarotSubmitting = false
+    var tarotRequired = false
+    private var tarotQuestion: String
+    /// 含糊问题必须完成澄清，再进入三张牌回答；不会因一次较长补充绕回直接回答。
+    private var clarificationRequired: Bool
+
     init(launch: ChatLaunch, entryPoint: ChatEntryPoint) {
         self.launch = launch
         self.entryPoint = entryPoint
+        tarotQuestion = launch.question
+        clarificationRequired = TarotEngine.isUnclearQuestion(launch.question)
     }
 
     var confirmLabel: String { hadCorrection ? "这次准确了" : "嗯，比较接近" }
@@ -126,6 +145,11 @@ final class ChatModel {
     var displayTopic: String? { restoredTopic ?? launch.topic?.rawValue }
     /// 总结页 / 分享文案的问题（历史恢复后取该会话首条用户消息）
     var displayQuestion: String { restoredQuestion ?? launch.question }
+    var resolvedQuestion: String {
+        answers.isEmpty ? displayQuestion : "\(displayQuestion)；补充：\(answers.joined(separator: "；"))"
+    }
+    var tarotRemainingLabel: String { tarotQuota.remainingLabel }
+    var tarotDisplayQuestion: String { tarotQuestion.isEmpty ? displayQuestion : tarotQuestion }
 
     /// 历史入口条目（排除当前会话自身）
     var historyEntries: [RemoteConversation] {
@@ -135,6 +159,8 @@ final class ChatModel {
     // MARK: 启动：把首页问题作为第一条用户消息并请求 AI
 
     func start(supabase: SupabaseService) async {
+        // 塔罗额度以服务端为准（防重装重置 / 换设备翻倍）；离线时保持本地缓存。
+        Task { await refreshTarotQuota(supabase: supabase) }
         guard messages.isEmpty else { return }
         messages.append(Message(role: .user, text: launch.question))
         // 首条已发出才算一次对话开始；问题正文不上报，只报入口
@@ -149,10 +175,17 @@ final class ChatModel {
                 replyChars: messages.last?.text.count ?? 0,
                 persistToFacts: true
             )
-            stage = .review
-            showActionChips = true
+            stage = .ready
+            showActionChips = false
+            showNextPanel = true
+            recommendedNextStep = .lab
+            requestMatch(supabase: supabase)
         } else {
-            await performAssistant(userText: launch.question, context: .clarify, supabase: supabase)
+            await performAssistant(
+                userText: launch.question,
+                context: clarificationRequired ? .clarify : .direct,
+                supabase: supabase
+            )
         }
     }
 
@@ -174,6 +207,11 @@ final class ChatModel {
         resetMatch()
         messages.append(Message(role: .user, text: clean))
         answers.append(clean)
+        tarotPhase = .none
+        tarotCandidates = []
+        tarotSelection = []
+        tarotReading = nil
+        showTarotShare = false
 
         if previousStage == .correction {
             // 纠正回合：用户已经输入新内容，始终续轮请求 /chat。
@@ -181,8 +219,125 @@ final class ChatModel {
                 await performAssistant(userText: clean, context: .correctionFollowUp, supabase: supabase)
             }
         } else {
-            Task { await performAssistant(userText: clean, context: .clarify, supabase: supabase) }
+            if TarotEngine.isUnclearQuestion(clean) { clarificationRequired = true }
+            Task {
+                await performAssistant(
+                    userText: clean,
+                    context: clarificationRequired ? .clarify : .direct,
+                    supabase: supabase
+                )
+            }
         }
+    }
+
+    // MARK: 三张牌流程
+
+    func offerOptionalTarot() {
+        guard !isStreaming else { return }
+        openTarot(question: resolvedQuestion, required: false)
+    }
+
+    private func openTarot(question: String, required: Bool, replaceLastReply: Bool = false) {
+        tarotQuestion = question
+        tarotRequired = required
+        tarotCandidates = []
+        tarotSelection = []
+        tarotReading = nil
+        showTarotShare = false
+        showNextPanel = false
+
+        let reply: String
+        if tarotQuota.remaining <= 0 {
+            tarotPhase = .locked
+            reply = "现在问题已经清楚，但它需要通过塔罗牌进行象征性分析。今天 3 次基础机会已用完，可通过分享 App 宣传海报、连续包月或购买次数包解锁。"
+        } else {
+            tarotPhase = .offer
+            reply = "现在问题已经清楚。这个问题需要抽取塔罗牌：请从 12 张候选牌中亲手选出 3 张，确认后我会结合三个牌位给出答案。牌意会作为反思线索，而不是命运保证。"
+        }
+        guard required else { return }
+        if replaceLastReply,
+           let index = messages.lastIndex(where: { $0.role == .ai }) {
+            messages[index].text = reply
+        } else {
+            messages.append(Message(role: .ai, text: reply))
+        }
+    }
+
+    func beginTarotDraw() {
+        guard tarotQuota.remaining > 0 else {
+            tarotPhase = .locked
+            return
+        }
+        tarotCandidates = TarotEngine.candidates()
+        tarotSelection = []
+        tarotReading = nil
+        showTarotShare = false
+        tarotPhase = .drawing
+    }
+
+    func prepareTarotConfirmation(cardIDs: [String]) {
+        guard tarotPhase == .drawing, tarotQuota.remaining > 0 else { return }
+        let chosen = cardIDs.compactMap { id in tarotCandidates.first(where: { $0.id == id }) }
+        guard chosen.count == 3, Set(chosen.map(\.id)).count == 3 else { return }
+        tarotSelection = chosen
+        tarotPhase = .confirm
+    }
+
+    func confirmTarotDraw(supabase: SupabaseService) {
+        guard tarotPhase == .confirm, tarotSelection.count == 3, !isTarotSubmitting else { return }
+        isTarotSubmitting = true
+        guard tarotQuota.consume() else {
+            isTarotSubmitting = false
+            tarotPhase = .locked
+            return
+        }
+        // 服务端同步扣减；离线时本地已扣，下次 status 对账。
+        Task { _ = try? await supabase.tarotQuota(action: "consume") }
+        let reading = TarotEngine.reading(question: tarotQuestion, cards: tarotSelection)
+        tarotReading = reading
+        messages.append(Message(role: .ai, text: reading.answer, source: .tarot))
+        tarotPhase = .result
+        stage = .ready
+        showActionChips = false
+        showNextPanel = true
+        recommendedNextStep = .lab
+        isTarotSubmitting = false
+        requestMatch(supabase: supabase)
+    }
+
+    func dismissTarot() {
+        tarotPhase = .none
+        tarotCandidates = []
+        tarotSelection = []
+        showNextPanel = true
+    }
+
+    func answerWithoutTarot(supabase: SupabaseService) {
+        guard !isStreaming else { return }
+        tarotPhase = .none
+        showTarotShare = false
+        let request = "不使用塔罗。请基于我刚才的问题直接给出能够落到现实证据和行动上的建议。"
+        messages.append(Message(role: .user, text: request))
+        Task { await performAssistant(userText: request, context: .direct, supabase: supabase) }
+    }
+
+    func claimTarotShareReward(channel: TarotShareChannel, supabase: SupabaseService) {
+        tarotQuota.rewardShare()
+        if tarotPhase == .locked { tarotPhase = .offer }
+        // 服务端同步入账（微信在服务端记作 friend）；失败静默，下次 status 对账。
+        Task { _ = try? await supabase.tarotQuota(action: "reward", channel: channel.remoteValue) }
+    }
+
+    /// 服务端额度对账：拉取已用次数与分享奖励；失败静默（本地缓存兜底）。
+    func refreshTarotQuota(supabase: SupabaseService) async {
+        guard let remote = try? await supabase.tarotQuota(action: "status") else { return }
+        tarotQuota.merge(remote: remote)
+        if tarotPhase == .locked, tarotQuota.remaining > 0 { tarotPhase = .offer }
+    }
+
+    func purchaseTarotAccess(_ product: TarotPurchaseProduct) {
+        tarotQuota.purchase(product)
+        if tarotPhase == .locked { tarotPhase = .offer }
     }
 
     // MARK: 验证反馈（chips）—— 每一步都续接真实 API
@@ -402,11 +557,17 @@ final class ChatModel {
         matchReasons = [:]
         matchAttempted = false
         retryRequest = nil
+        tarotPhase = .none
+        tarotCandidates = []
+        tarotSelection = []
+        tarotReading = nil
+        showTarotShare = false
+        clarificationRequired = convo.crossroads?.ready != true && TarotEngine.isUnclearQuestion(restoredQuestion ?? "")
 
-        if shouldOfferVerification(resultReady: convo.crossroads?.ready == true) {
-            // 历史会话也必须同时满足“结构已成形 + 最后一轮明确邀请确认”。
-            stage = .review
-            showActionChips = true
+        if convo.crossroads?.ready == true {
+            stage = .ready
+            showActionChips = false
+            showNextPanel = true
             requestMatch(supabase: supabase)
         } else {
             stage = .clarify
@@ -440,24 +601,22 @@ final class ChatModel {
         }
         retryRequest = nil
 
-        if result.conclusion?.ready == true, context != .rejection {
+        switch context {
+        case .direct:
+            clarificationRequired = false
             stage = .ready
             showActionChips = false
             showNextPanel = true
-            recommendedNextStep = result.conclusion?.nextStep
-            if recommendedNextStep == .match {
-                requestMatch(supabase: supabase)
-            }
-            return
-        }
-
-        switch context {
+            recommendedNextStep = result.conclusion?.nextStep ?? .lab
+            requestMatch(supabase: supabase)
         case .clarify:
-            // 只有“结构已清晰 + 本轮明确邀请确认”才进入验证态。
-            if shouldOfferVerification(resultReady: result.ready) {
-                try? await Task.sleep(for: .milliseconds(850))
-                stage = .review
-                showActionChips = true
+            // 含糊问题被澄清后直接进入三张牌回答，不再增加一轮“确认我的理解”。
+            if result.ready || result.conclusion?.ready == true {
+                clarificationRequired = false
+                stage = .ready
+                showActionChips = false
+                showNextPanel = false
+                openTarot(question: resolvedQuestion, required: true, replaceLastReply: true)
             } else {
                 stage = .clarify
                 showActionChips = false
@@ -650,7 +809,7 @@ final class ChatModel {
     }
 
     private static func goldenReply(for launch: ChatLaunch) -> String {
-        "我先试着说一个**暂时的理解**：你卡住的可能不只是「该选哪一个」，而是既想保护「真正重视的东西」，又不想放弃「现实里已经出现的信号」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**\(goldenSummary(for: launch))**。\n\n所以你需要的也许不是别人替你判断，而是把**真实意愿**和**害怕付出的代价**拆开来看。这个理解接近你吗？"
+        "先说我的判断：你现在不必急着替两条路判输赢，更值得先验证哪一边更接近你的主动意愿，哪一边只是你害怕失去的安全感。\n\n目前最关键的张力是：**\(goldenSummary(for: launch))**。这意味着答案不会只来自“想不想”，还取决于那项代价能否被具体降低。\n\n先做一个可撤回的小验证：用一周接触目标路径中的真实任务，再写下它让你更有能量还是更想逃离；同时列出当前选择最不能失去的底线。两条证据会比继续空想更接近答案。"
     }
 
 }

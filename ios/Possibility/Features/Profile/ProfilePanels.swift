@@ -274,15 +274,13 @@ struct LockedBlock: View {
 // MARK: - 底部付费栏（原型 prof-paybar）
 
 struct PayBar: View {
-    @Bindable var model: ProfileModel
-    let toast: ToastCenter
+    let onOpenChat: () -> Void
 
     var body: some View {
         HStack(spacing: 9) {
-            Button { openConsult() } label: {
+            Button(action: onOpenChat) {
                 HStack(spacing: 8) {
-                    Text("向 TA 咨询")
-                    Text("¥\(NSDecimalNumber(decimal: model.consultPrice).stringValue)").font(.system(size: 15, weight: .bold))
+                    Text("免费发起 1v1 聊天")
                 }
                 .font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.white)
                 .frame(maxWidth: .infinity).frame(minHeight: 50)
@@ -294,13 +292,5 @@ struct PayBar: View {
         .padding(.horizontal, 14).padding(.top, 12).padding(.bottom, 8)
         .background(.ultraThinMaterial)
         .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 1) }
-    }
-
-    private func openConsult() {
-        if let consult = model.services.first(where: { $0.kind == "consult" }) {
-            model.checkout = .service(consult)
-        } else {
-            toast.show("咨询服务加载中")
-        }
     }
 }

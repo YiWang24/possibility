@@ -1,6 +1,5 @@
 package app.possibility.android.features.chat
 
-import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -75,8 +74,12 @@ import app.possibility.android.features.profile.clickableNoRipple
 fun ChatScreen(topic: String, initialQuestion: String, onDismiss: () -> Unit) {
     val service = SupabaseService.shared
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val model = remember(topic, initialQuestion) {
-        ChatModel(topic = topic.ifBlank { null }, question = initialQuestion, service = service, scope = scope)
+        ChatModel(
+            topic = topic.ifBlank { null }, question = initialQuestion,
+            service = service, scope = scope, context = context.applicationContext,
+        )
     }
     var profileTraveler by remember { mutableStateOf<Traveler?>(null) }
 
@@ -203,7 +206,7 @@ private fun MessagesScroll(
     val listState = rememberLazyListState()
     // 新 token / chips / 面板出现时滚动到底部
     val lastText = model.messages.lastOrNull()?.text
-    LaunchedEffect(lastText, model.showActionChips, model.showNextPanel, model.messages.size) {
+    LaunchedEffect(lastText, model.showActionChips, model.showNextPanel, model.tarotPhase, model.messages.size) {
         val target = listState.layoutInfo.totalItemsCount - 1
         if (target >= 0) listState.animateScrollToItem(target)
     }
@@ -213,7 +216,7 @@ private fun MessagesScroll(
         modifier = modifier.fillMaxWidth(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 12.dp),
     ) {
-        model.messages.forEach { msg ->
+        model.messages.filter { model.tarotPhase != TarotPhase.RESULT || it.source != ChatModel.Message.Source.TAROT }.forEach { msg ->
             // 流开始时会先插入一条空 AI 消息作为 token 容器；首个 token 到达前不渲染空气泡。
             if (msg.text.isNotEmpty()) {
                 item(key = msg.id) { Bubble(msg) }
@@ -235,18 +238,25 @@ private fun MessagesScroll(
                 )
             }
         }
+        if (model.tarotPhase != TarotPhase.NONE) {
+            item(key = "tarot-panel") { TarotPanel(model) }
+        }
+        if (model.tarotPhase == TarotPhase.RESULT) {
+            model.messages.lastOrNull { it.source == ChatModel.Message.Source.TAROT }?.let { tarotReply ->
+                if (tarotReply.text.isNotEmpty()) item(key = tarotReply.id) { Bubble(tarotReply) }
+            }
+        }
         if (model.showNextPanel) {
             item(key = "nextpanel") {
                 Box(Modifier.padding(top = 14.dp)) {
                     ChatNextPanel(
-                        showSummaryLink = true,
                         preferredPath = model.recommendedNextStep,
                         matchedTravelers = model.matchedTravelers,
                         matchReasons = model.matchReasons,
                         onGoLab = onGoLab,
                         onGoSimilar = onGoSimilar,
-                        shareText = model.shareText,
-                        onOpenSummary = { model.showSummary = true },
+                        onTarot = { model.offerOptionalTarot() },
+                        showTarot = model.tarotPhase != TarotPhase.RESULT,
                         onOpenTraveler = onOpenTraveler,
                     )
                 }
@@ -521,17 +531,15 @@ private fun historyTimeLabel(raw: String?): String? {
  */
 @Composable
 fun ChatNextPanel(
-    showSummaryLink: Boolean,
     preferredPath: ChatRecommendedNextStep?,
     matchedTravelers: List<Traveler>,
     matchReasons: Map<Int, String>,
     onGoLab: () -> Unit,
     onGoSimilar: () -> Unit,
-    shareText: String,
-    onOpenSummary: () -> Unit = {},
+    onTarot: () -> Unit,
+    showTarot: Boolean = true,
     onOpenTraveler: (Traveler) -> Unit = {},
 ) {
-    val context = LocalContext.current
     val panelShape = RoundedCornerShape(20.dp)
     Column(
         Modifier
@@ -544,58 +552,46 @@ fun ChatNextPanel(
             .padding(14.dp),
     ) {
         Text(
-            if (preferredPath == null) "信息已经足够 · 选择下一步" else "这轮探索先到这里 · 为你推荐",
-            color = Color(0xFF91B1FF),
-            fontSize = 9.sp,
-            letterSpacing = 1.6.sp,
-        )
-        Text(
-            when (preferredPath) {
-                ChatRecommendedNextStep.MATCH -> "看看走过相似处境的人"
-                ChatRecommendedNextStep.LAB -> "把现在的判断放进现实里推演"
-                null -> "把刚才的理解带去哪里？"
-            },
+            "用不同方式继续看这个问题",
             color = Theme.ink,
             fontSize = 13.5.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 5.dp),
         )
+        val recommendedLabel = when (preferredPath) {
+            ChatRecommendedNextStep.MATCH -> "优先看相似经验"
+            ChatRecommendedNextStep.LAB -> "优先放进实验室"
+            null -> null
+        }
+        if (recommendedLabel != null) {
+            Text("基于这轮回答，$recommendedLabel", color = Theme.faint, fontSize = 9.5.sp, modifier = Modifier.padding(top = 5.dp))
+        }
 
-        if (preferredPath != ChatRecommendedNextStep.MATCH) {
+        Row(Modifier.padding(top = 11.dp).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (showTarot) {
+                val tarotShape = RoundedCornerShape(14.dp)
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .background(Color(0xFF3E70E8).copy(alpha = 0.2f), tarotShape)
+                        .border(1.dp, Color(0xFF6FA5FF).copy(alpha = 0.34f), tarotShape)
+                        .clickableNoRipple(onTarot),
+                ) {
+                    PathLabel(icon = "✦", title = "塔罗预测分析", note = "抽 3 张牌，换一个象征视角")
+                }
+            }
             val labShape = RoundedCornerShape(14.dp)
             Box(
                 Modifier
-                    .padding(top = 11.dp)
-                    .fillMaxWidth()
-                    .background(
-                        Brush.linearGradient(
-                            listOf(Color(0xFF3E70E8).copy(alpha = 0.28f), Color(0xFF6B55D3).copy(alpha = 0.18f)),
-                        ),
-                        labShape,
-                    )
-                    .border(1.dp, Color(0xFF6FA5FF).copy(alpha = 0.34f), labShape)
+                    .weight(1f)
+                    .background(Color.White.copy(alpha = 0.045f), labShape)
+                    .border(1.dp, Theme.line, labShape)
                     .clickableNoRipple(onGoLab),
             ) {
-                PathLabel(icon = "◉", title = "去人生实验室", note = "带着当前问题，推演几种可能")
-            }
-        }
-
-        val shareCell: @Composable () -> Unit = {
-            val cellShape = RoundedCornerShape(14.dp)
-            Box(
-                Modifier
-                    .background(Color.White.copy(alpha = 0.045f), cellShape)
-                    .border(1.dp, Theme.line, cellShape)
-                    .clickableNoRipple { shareExploration(context, shareText) },
-            ) {
-                PathLabel(icon = "↗", title = "分享这次探索", note = "发给一个你信任的人")
+                PathLabel(icon = "◉", title = "带入人生实验室", note = "推演不同选择与现实代价")
             }
         }
 
         when {
-            preferredPath == ChatRecommendedNextStep.LAB -> {
-                Box(Modifier.padding(top = 8.dp)) { shareCell() }
-            }
             matchedTravelers.isEmpty() && preferredPath == ChatRecommendedNextStep.MATCH -> {
                 val loadingShape = RoundedCornerShape(14.dp)
                 Row(
@@ -612,27 +608,9 @@ fun ChatNextPanel(
                     Text("正在为你找走过相似处境的人…", color = Theme.sub, fontSize = 11.sp)
                 }
             }
-            matchedTravelers.isEmpty() -> {
-                Row(
-                    Modifier.padding(top = 8.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    val similarShape = RoundedCornerShape(14.dp)
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .background(Color.White.copy(alpha = 0.045f), similarShape)
-                            .border(1.dp, Theme.line, similarShape)
-                            .clickableNoRipple(onGoSimilar),
-                    ) {
-                        PathLabel(icon = "⌁", title = "看相似经历", note = "去社区找走过这段路的人")
-                    }
-                    Box(Modifier.weight(1f)) { shareCell() }
-                }
-            }
-            else -> {
+            matchedTravelers.isNotEmpty() -> {
                 Text(
-                    "看看走过这条路的人",
+                    "与你当前处境接近的经验",
                     color = Color(0xFF91B1FF),
                     fontSize = 9.sp,
                     letterSpacing = 1.6.sp,
@@ -650,21 +628,8 @@ fun ChatNextPanel(
                         )
                     }
                 }
-                Box(Modifier.padding(top = 8.dp)) { shareCell() }
             }
-        }
-
-        if (showSummaryLink) {
-            Text(
-                "先查看完整总结 →",
-                color = Color(0xFF9DBCFF),
-                fontSize = 10.sp,
-                modifier = Modifier
-                    .padding(top = 11.dp)
-                    .fillMaxWidth()
-                    .clickableNoRipple(onOpenSummary),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
+            else -> Unit
         }
     }
 }
@@ -759,13 +724,4 @@ internal fun markdownBold(raw: String): AnnotatedString = buildAnnotatedString {
         }
         i++
     }
-}
-
-/** 系统分享（对应 iOS ShareLink）。 */
-internal fun shareExploration(context: android.content.Context, text: String) {
-    val intent = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, text)
-    }
-    context.startActivity(Intent.createChooser(intent, "分享这次探索"))
 }

@@ -1,11 +1,12 @@
 "use client";
 /* 探索对话状态机 —— 移植自 iOS ChatModel.swift（付费漏斗主线，技术设计文档 §9.1）
  *
- * 首页发问 → 流式承接迷茫 / 澄清 → AI 给出「暂时的理解」→ 验证反馈
- * （嗯，比较接近 / 还不太对，可循环纠正）→ 信息足够 → 下一步面板。
+ * 首页发问 → 清晰问题直接回答，附带塔罗 / 实验室 / 相似经验
+ * → 含糊问题持续单问题澄清 → 问题清晰后进入三张塔罗的抽取与确认。
  *
- * 四条示例问题的首轮、验证后的结论与纠正追问使用本地 mock，保证产品主线确定可达；
- * 用户在纠正追问后给出自己的改写时，再把完整上下文交给 /chat。岔路口成形后用 match_query 调 /match。
+ * 四条示例问题的首轮使用本地直接回答，保证产品主线确定可达；普通问题交给 /chat。
+ * 塔罗每日额度由服务端原子计数，未部署或离线时按账号使用 localStorage 降级。
+ * 岔路口成形后用 match_query 调 /match。
  *
  * 采用 iOS Observable 语义：类持有可变状态，通过 version 号驱动 useSyncExternalStore 重渲染。 */
 
@@ -14,6 +15,21 @@ import { callFunction, supabase } from "@/lib/supabase";
 import { isSampleQuestion, type MatchQuery, type MatchResponse, type RemoteConversation, type Traveler, type TrajectoryNode } from "@/lib/models";
 import { DEMO_TRAVELERS } from "@/lib/demo-data";
 import { useData } from "@/stores/data";
+import {
+  buildTarotReading,
+  claimTarotShareReward as persistTarotShareReward,
+  consumeTarotAttempt,
+  createTarotCandidates,
+  applyTarotDemoPurchase,
+  isUnclearQuestion,
+  loadTarotQuota,
+  tarotRemaining as remainingTarotCount,
+  type DrawnTarotCard,
+  type TarotQuotaState,
+  type TarotPurchaseProduct,
+  type TarotReading,
+  type TarotShareChannel,
+} from "./tarot";
 
 export type ChatEntryPoint = "home" | "tab" | "card";
 
@@ -27,15 +43,17 @@ export interface ChatMessage {
   id: string;
   role: "user" | "ai";
   text: string;
+  source?: "tarot";
 }
 
 /** 对话阶段（对照原型 chatState.stage） */
 export type ChatStage = "clarify" | "review" | "correction" | "ready";
+export type TarotPhase = "none" | "offer" | "drawing" | "confirm" | "result" | "locked";
 
 /** AI 收尾推荐的单一后续路径 */
 export type RecommendedNextStep = "match" | "lab";
 
-type RequestContext = "clarify" | "correctionFollowUp" | "confirm" | "rejection";
+type RequestContext = "direct" | "clarify" | "correctionFollowUp" | "confirm" | "rejection";
 
 interface RetryRequest {
   userText: string;
@@ -84,7 +102,7 @@ function goldenSummary(topic: string | undefined): string {
 }
 
 function goldenReply(launch: ChatLaunch): string {
-  return `我先试着说一个**暂时的理解**：你卡住的可能不只是「该选哪一个」，而是既想保护「真正重视的东西」，又不想放弃「现实里已经出现的信号」。\n\n我们把它收敛成一个更清楚的岔路口：\n\n**${goldenSummary(launch.topic)}**。\n\n所以你需要的也许不是别人替你判断，而是把**真实意愿**和**害怕付出的代价**拆开来看。这个理解接近你吗？`;
+  return `先说我的判断：你现在不必急着替两条路判输赢，更值得先验证哪一边更接近你的主动意愿，哪一边只是你害怕失去的安全感。\n\n目前最关键的张力是：**${goldenSummary(launch.topic)}**。这意味着答案不会只来自“想不想”，还取决于那项代价能否被具体降低。\n\n先做一个可撤回的小验证：用一周接触目标路径中的真实任务，再写下它让你更有能量还是更想逃离；同时列出当前选择最不能失去的底线。两条证据会比继续空想更接近答案。`;
 }
 
 export class ChatModel {
@@ -112,6 +130,7 @@ export class ChatModel {
   /** 服务端会话 ID：首轮 done 事件返回，后续追问带回以延续历史 */
   private conversationId: string | null = null;
   private startedWithMock = false;
+  private startRequested = false;
   /** 最近一次 done 事件（或历史恢复）携带的岔路口信号 */
   crossroads: ChatStreamDone["crossroads"] | null = null;
 
@@ -130,9 +149,26 @@ export class ChatModel {
 
   private abortController: AbortController | null = null;
 
+  // MARK: 塔罗（象征性反思工具）
+  tarotPhase: TarotPhase = "none";
+  tarotCandidates: DrawnTarotCard[] = [];
+  tarotSelection: DrawnTarotCard[] = [];
+  tarotReading: TarotReading | null = null;
+  tarotQuota: TarotQuotaState = { date: "", used: 0, sharedChannels: [], shareRewardCount: 0, purchasedCredits: 0, subscriptionActive: false };
+  showTarotShare = false;
+  isTarotSubmitting = false;
+  private tarotStorageKey = "";
+  private tarotQuestion: string;
+  /** 含糊问题在澄清完成前不应因单轮补充较长而误走直接回答。 */
+  private clarificationRequired: boolean;
+  /** true 表示这次塔罗是澄清流程的回答环节，不展示“不抽牌”分支。 */
+  tarotRequired = false;
+
   constructor(launch: ChatLaunch, entryPoint: ChatEntryPoint) {
     this.launch = launch;
     this.entryPoint = entryPoint;
+    this.tarotQuestion = launch.question;
+    this.clarificationRequired = isUnclearQuestion(launch.question);
   }
 
   // MARK: - 订阅（useSyncExternalStore）
@@ -163,7 +199,7 @@ export class ChatModel {
   get displayTopic(): string | undefined {
     return this.restoredTopic ?? this.launch.topic ?? undefined;
   }
-  /** 总结页 / 分享文案的问题（历史恢复后取该会话首条用户消息） */
+  /** 总结页的问题（历史恢复后取该会话首条用户消息） */
   get displayQuestion(): string {
     return this.restoredQuestion ?? this.launch.question;
   }
@@ -171,27 +207,43 @@ export class ChatModel {
   get historyEntries(): RemoteConversation[] {
     return this.history.filter((c) => c.id !== this.conversationId);
   }
-  /** 分享文案（原型 shareChatExploration 模板） */
-  get shareText(): string {
-    const a0 = this.answers[0] ?? "真正想要的生活";
-    const a1 = this.answers.length > 1 ? this.answers[1] : "暂时不能失去的东西";
-    return `我刚在万花筒探索了一个问题：${this.displayQuestion}\n\n我现在更清楚的是：我既想靠近${a0}，也在保护${a1}。`;
+  get tarotRemaining(): number {
+    return remainingTarotCount(this.tarotQuota);
+  }
+  get tarotRemainingLabel(): string {
+    return this.tarotQuota.subscriptionActive ? "包月不限次" : `${this.tarotRemaining} 次`;
+  }
+  get tarotDisplayQuestion(): string {
+    return this.tarotQuestion || this.displayQuestion;
+  }
+  get resolvedQuestion(): string {
+    if (this.answers.length === 0) return this.displayQuestion;
+    return `${this.displayQuestion}；补充：${this.answers.join("；")}`;
   }
 
   // MARK: - 启动：把首页问题作为第一条用户消息并请求 AI
 
   async start(): Promise<void> {
-    if (this.messages.length) return;
+    if (this.startRequested || this.messages.length) return;
+    // React Strict Mode 会在开发环境重复触发 effect；必须在第一个 await 前占位。
+    this.startRequested = true;
+    await this.initializeTarotQuota();
     this.messages.push({ id: uid(), role: "user", text: this.launch.question });
     this.emit();
     if (isSampleQuestion(this.launch.question)) {
       this.startedWithMock = true;
       await this.appendLocalReply(goldenReply(this.launch));
-      this.stage = "review";
-      this.showActionChips = true;
+      this.stage = "ready";
+      this.showActionChips = false;
+      this.showNextPanel = true;
+      this.recommendedNextStep = "lab";
+      this.requestMatch();
       this.emit();
     } else {
-      await this.performAssistant(this.launch.question, "clarify");
+      await this.performAssistant(
+        this.launch.question,
+        isUnclearQuestion(this.launch.question) ? "clarify" : "direct",
+      );
     }
   }
 
@@ -213,17 +265,156 @@ export class ChatModel {
     this.resetMatch();
     this.messages.push({ id: uid(), role: "user", text: clean });
     this.answers.push(clean);
+    this.tarotPhase = "none";
+    this.tarotReading = null;
+    this.showTarotShare = false;
     this.emit();
 
     if (previousStage === "correction") {
       void this.performAssistant(clean, "correctionFollowUp");
     } else {
-      void this.performAssistant(clean, "clarify");
+      if (isUnclearQuestion(clean)) this.clarificationRequired = true;
+      void this.performAssistant(clean, this.clarificationRequired ? "clarify" : "direct");
     }
   }
 
   setInput(text: string): void {
     this.input = text;
+    this.emit();
+  }
+
+  private async initializeTarotQuota(): Promise<void> {
+    const loaded = await loadTarotQuota();
+    this.tarotStorageKey = loaded.storageKey;
+    this.tarotQuota = loaded.state;
+    this.emit();
+  }
+
+  private async openTarot(question: string, required: boolean, replaceLastReply = false): Promise<void> {
+    if (!this.tarotStorageKey) await this.initializeTarotQuota();
+    this.tarotQuestion = question;
+    this.tarotRequired = required;
+    this.tarotCandidates = [];
+    this.tarotSelection = [];
+    this.tarotReading = null;
+    this.showTarotShare = false;
+    this.showNextPanel = false;
+    if (this.tarotRemaining <= 0) {
+      this.tarotPhase = "locked";
+      if (required) {
+        await this.setRequiredTarotReply("现在问题已经清楚，但它需要通过塔罗牌进行象征性分析。今天 3 次基础机会已用完，可通过分享 App 宣传海报、连续包月或购买次数包解锁。", replaceLastReply);
+      } else {
+        this.emit();
+      }
+      return;
+    }
+    this.tarotPhase = "offer";
+    if (required) {
+      await this.setRequiredTarotReply("现在问题已经清楚。这个问题需要抽取塔罗牌：请从 12 张候选牌中亲手选出 3 张，确认后我会结合三个牌位给出答案。牌意会作为反思线索，而不是命运保证。", replaceLastReply);
+    } else {
+      this.emit();
+    }
+  }
+
+  private async setRequiredTarotReply(text: string, replaceLastReply: boolean): Promise<void> {
+    const last = this.messages[this.messages.length - 1];
+    if (replaceLastReply && last?.role === "ai") {
+      last.text = text;
+      this.emit();
+      return;
+    }
+    await this.appendLocalReply(text);
+  }
+
+  offerOptionalTarot(): void {
+    if (this.isStreaming) return;
+    void this.openTarot(this.resolvedQuestion, false);
+  }
+
+  beginTarotDraw(): void {
+    if (this.tarotRemaining <= 0) {
+      this.tarotPhase = "locked";
+      this.emit();
+      return;
+    }
+    this.tarotCandidates = createTarotCandidates(12);
+    this.tarotSelection = [];
+    this.tarotReading = null;
+    this.showTarotShare = false;
+    this.tarotPhase = "drawing";
+    this.emit();
+  }
+
+  prepareTarotConfirmation(cardIds: string[]): void {
+    if (this.tarotPhase !== "drawing" || this.tarotRemaining <= 0) return;
+    const chosen = cardIds
+      .map((id) => this.tarotCandidates.find((card) => card.id === id))
+      .filter((card): card is DrawnTarotCard => Boolean(card));
+    if (chosen.length !== 3 || new Set(chosen.map((card) => card.id)).size !== 3) return;
+    this.tarotSelection = chosen;
+    this.tarotPhase = "confirm";
+    this.emit();
+  }
+
+  async confirmTarotDraw(): Promise<void> {
+    if (this.tarotPhase !== "confirm" || this.tarotRemaining <= 0 || this.isTarotSubmitting) return;
+    if (this.tarotSelection.length !== 3) return;
+    this.isTarotSubmitting = true;
+    this.emit();
+    const consumed = await consumeTarotAttempt(this.tarotStorageKey, this.tarotQuota);
+    this.isTarotSubmitting = false;
+    this.tarotQuota = consumed.state;
+    if (!consumed.allowed) {
+      this.tarotPhase = "locked";
+      this.emit();
+      return;
+    }
+    this.tarotReading = buildTarotReading(this.tarotQuestion, this.tarotSelection);
+    this.messages.push({ id: uid(), role: "ai", text: this.tarotReading.answer, source: "tarot" });
+    this.tarotPhase = "result";
+    this.stage = "ready";
+    this.showActionChips = false;
+    this.showNextPanel = true;
+    this.recommendedNextStep = "lab";
+    this.requestMatch();
+    this.emit();
+  }
+
+  dismissTarot(): void {
+    this.tarotPhase = "none";
+    this.tarotCandidates = [];
+    this.tarotSelection = [];
+    this.showNextPanel = true;
+    this.emit();
+  }
+
+  answerWithoutTarot(): void {
+    if (this.isStreaming) return;
+    this.tarotPhase = "none";
+    this.showTarotShare = false;
+    const request = "不使用塔罗。请基于我刚才的问题直接给出能够落到现实证据和行动上的建议。";
+    this.messages.push({ id: uid(), role: "user", text: request });
+    this.emit();
+    void this.performAssistant(request, "direct");
+  }
+
+  prepareTarotShare(): void {
+    this.showTarotShare = true;
+    this.emit();
+  }
+
+  async claimTarotShareReward(channel: TarotShareChannel): Promise<boolean> {
+    const reward = await persistTarotShareReward(this.tarotStorageKey, this.tarotQuota, channel);
+    this.tarotQuota = reward.state;
+    if (this.tarotPhase === "locked") this.tarotPhase = "offer";
+    this.emit();
+    return reward.claimed;
+  }
+
+  async purchaseTarotAccess(product: TarotPurchaseProduct): Promise<void> {
+    await sleep(650);
+    this.tarotQuota = applyTarotDemoPurchase(this.tarotStorageKey, this.tarotQuota, product);
+    if (this.tarotPhase === "locked") this.tarotPhase = "offer";
     this.emit();
   }
 
@@ -473,10 +664,13 @@ export class ChatModel {
     this.matchReasons = {};
     this.matchAttempted = false;
     this.retryRequest = null;
+    const restoredReady = convo.crossroads?.ready === true;
+    this.clarificationRequired = !restoredReady && isUnclearQuestion(this.restoredQuestion ?? "");
 
-    if (this.shouldOfferVerificationOnRestore(convo.crossroads?.ready === true)) {
-      this.stage = "review";
-      this.showActionChips = true;
+    if (restoredReady) {
+      this.stage = "ready";
+      this.showActionChips = false;
+      this.showNextPanel = true;
       this.requestMatch();
     } else {
       this.stage = "clarify";
@@ -498,24 +692,25 @@ export class ChatModel {
     }
     this.retryRequest = null;
 
-    if (result.conclusion?.ready && context !== "rejection") {
-      this.stage = "ready";
-      this.showActionChips = false;
-      this.showNextPanel = true;
-      this.recommendedNextStep = result.conclusion?.next_step ?? null;
-      if (this.recommendedNextStep === "match") this.requestMatch();
-      this.emit();
-      return;
-    }
-
     switch (context) {
+      case "direct":
+        this.clarificationRequired = false;
+        this.stage = "ready";
+        this.showActionChips = false;
+        this.showNextPanel = true;
+        this.recommendedNextStep = result.conclusion?.next_step ?? "lab";
+        this.requestMatch();
+        break;
       case "clarify":
-        // 只有“结构已清晰 + 本轮明确邀请确认”才进入验证态。
-        if (this.shouldOfferVerification(result.ready)) {
+        // 一旦含糊对话被澄清，不再走旧的“确认理解”卡点，而是直接进入塔罗回答。
+        if (result.ready || result.conclusion?.ready) {
+          this.clarificationRequired = false;
+          this.stage = "ready";
+          this.showActionChips = false;
+          this.showNextPanel = false;
           this.emit();
-          await sleep(850);
-          this.stage = "review";
-          this.showActionChips = true;
+          await this.openTarot(this.resolvedQuestion, true, true);
+          return;
         } else {
           this.stage = "clarify";
           this.showActionChips = false;
@@ -532,10 +727,11 @@ export class ChatModel {
         }
         break;
       case "confirm":
+        this.clarificationRequired = false;
         this.stage = "ready";
         this.showNextPanel = true;
         this.recommendedNextStep = result.conclusion?.next_step ?? "match";
-        if (this.recommendedNextStep === "match") this.requestMatch();
+        this.requestMatch();
         break;
       case "rejection":
         this.hadCorrection = true;
@@ -552,10 +748,6 @@ export class ChatModel {
     const reply = [...this.messages].reverse().find((m) => m.role === "ai" && m.text.length > 0)?.text;
     if (!reply) return false;
     return VERIFICATION_CUES.some((cue) => reply.includes(cue));
-  }
-
-  private shouldOfferVerificationOnRestore(resultReady: boolean): boolean {
-    return this.shouldOfferVerification(resultReady);
   }
 
   /** 通用续轮：把 userText 经 /chat 流式发送（带 conversation_id）。 */
@@ -643,7 +835,6 @@ export class ChatModel {
 
     this.isStreaming = false;
     this.emit();
-    if (ready || conclusion?.next_step === "match") this.requestMatch();
     return { delivered: true, ready, conclusion };
   }
 

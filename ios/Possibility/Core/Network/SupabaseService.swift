@@ -428,6 +428,17 @@ final class SupabaseService {
         )
     }
 
+    /// POST /tarot-quota：塔罗额度对账（action ∈ status / consume / reward）。
+    /// 服务端按 Asia/Shanghai 划天，已用次数与分享奖励以服务端为准；
+    /// 离线或函数未部署时由调用方退回本地缓存，绝不阻塞抽牌体验。
+    func tarotQuota(action: String, channel: String? = nil) async throws -> RemoteTarotQuota {
+        struct Body: Encodable {
+            let action: String
+            let channel: String?
+        }
+        return try await callFunction("tarot-quota", body: Body(action: action, channel: channel), as: RemoteTarotQuota.self)
+    }
+
     /// POST /simulate 完整出参：{scenarios, bottom_line_analysis, recommended_traveler_ids}
     /// - Parameter carryCards: 底线卡（最多 6 张，validate.ts validateSimulateInputV2）
     func simulateFull(
