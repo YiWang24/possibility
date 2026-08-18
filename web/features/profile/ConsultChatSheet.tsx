@@ -27,7 +27,7 @@ function serviceKindLabel(kind: string): string {
     case "companion":
       return "阶段陪跑";
     default:
-      return "深度咨询";
+      return "1 对 1 咨询";
   }
 }
 
@@ -47,7 +47,7 @@ export function ConsultChatSheet({
     {
       id: "welcome",
       role: "traveler",
-      text: `你好，我是${traveler.name}。你可以先免费说说现在的处境和最想确认的问题，我看到后会回复你。`,
+      text: `你好，我是${traveler.name}。可以先免费聊聊你现在的处境；如果需要更深入的支持，再从下面选择服务。`,
     },
   ]);
   const [selectedService, setSelectedService] = useState<TravelerServiceItem | null>(null);
@@ -76,11 +76,11 @@ export function ConsultChatSheet({
         {
           id: messageId(),
           role: "traveler",
-          text: "收到。免费聊天可以先把情况聊清楚；如果你需要更系统的分析、资料或持续陪跑，也可以从上方服务中选择适合的一项。",
+          text: "我看到了。你可以先说说：在这个问题里，最希望我用亲身经历帮你判断的是什么？",
         },
       ]);
       replyTimer.current = null;
-    }, 650);
+    }, 550);
   };
 
   const pay = (service: TravelerServiceItem) => {

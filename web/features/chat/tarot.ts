@@ -284,6 +284,7 @@ function questionLens(question: string): { focus: string; experiment: string } {
 }
 
 export function buildTarotReading(question: string, cards: DrawnTarotCard[]): TarotReading {
+  if (cards.length !== 3) return { question, cards, answer: "需要抽取三张牌后才能开始分析。" };
   const [present, friction, direction] = cards;
   const lens = questionLens(question);
   const directionTone = direction.reversed ? "尚未稳定，需要先处理阻力" : "存在向前展开的空间";

@@ -368,7 +368,7 @@ function serviceCtaLabel(kind: string): string {
     case "companion":
       return "申请陪跑";
     default:
-      return "选择这项服务";
+      return "向 TA 咨询";
   }
 }
 

@@ -20,7 +20,7 @@ import { useData } from "@/stores/data";
 import { DEMO_TRAVELERS, DEMO_TRAVELER_DETAILS, demoServices } from "@/lib/demo-data";
 import type { TravelerDetail, TravelerServiceItem } from "@/lib/models";
 import { StoryPanel, TimelinePanel, AdvicePanel, ServicePanel } from "./ProfilePanels";
-import { PaywallView } from "./PaywallView";
+import { PaywallView, type ProfileCheckout } from "./PaywallView";
 import { ConsultChatSheet } from "./ConsultChatSheet";
 
 type TabKey = "story" | "timeline" | "advice" | "service";
@@ -44,7 +44,8 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
   const [services, setServices] = useState<TravelerServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<TabKey>("story");
-  const [showPaywall, setShowPaywall] = useState(false);
+  // 结账对象由入口决定（iOS ProfileModel.Checkout）：锁定块 → unlock；服务卡 → 该项服务。
+  const [checkout, setCheckout] = useState<ProfileCheckout | null>(null);
   const [showConsultChat, setShowConsultChat] = useState(false);
 
   const traveler =
@@ -226,7 +227,7 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
                 traveler={traveler}
                 detail={detail}
                 unlocked={unlocked}
-                onOpenPaywall={() => setShowPaywall(true)}
+                onOpenPaywall={() => setCheckout({ kind: "unlock" })}
               />
             )}
             {tab === "timeline" && <TimelinePanel traveler={traveler} />}
@@ -234,11 +235,14 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
               <AdvicePanel
                 detail={detail}
                 unlocked={unlocked}
-                onOpenPaywall={() => setShowPaywall(true)}
+                onOpenPaywall={() => setCheckout({ kind: "unlock" })}
               />
             )}
             {tab === "service" && (
-              <ServicePanel services={displayServices} onCheckout={() => setShowPaywall(true)} />
+              <ServicePanel
+                services={displayServices}
+                onCheckout={(service) => setCheckout({ kind: "service", service })}
+              />
             )}
           </div>
 
@@ -262,12 +266,12 @@ export function ProfileView({ travelerId }: { travelerId: number }) {
             onClose={() => setShowConsultChat(false)}
           />
         ) : null}
-        {showPaywall && (
+        {checkout && (
           <PaywallView
             travelerId={travelerId}
             travelerName={traveler.name}
-            services={displayServices}
-            onClose={() => setShowPaywall(false)}
+            checkout={checkout}
+            onClose={() => setCheckout(null)}
             onUnlocked={() => void useData.getState().loadUnlocks()}
           />
         )}

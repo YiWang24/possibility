@@ -35,6 +35,8 @@ enum TarotShareChannel: String, CaseIterable, Identifiable {
     case wechat, moments, xiaohongshu, weibo, other
 
     var id: String { rawValue }
+    /// 服务端渠道名：历史原因微信记作 friend（web tarot.ts 同款映射）。
+    var remoteValue: String { self == .wechat ? "friend" : rawValue }
     var label: String {
         switch self {
         case .wechat: "微信"
@@ -57,6 +59,21 @@ enum TarotShareChannel: String, CaseIterable, Identifiable {
 
 enum TarotPurchaseProduct {
     case subscription, credits15, credits100
+}
+
+/// tarot-quota Edge Function 出参（status / consume / reward 共用）。
+struct RemoteTarotQuota: Decodable {
+    var date: String?
+    var used: Int?
+    var shareRewardCount: Int?
+    var remaining: Int?
+    var allowed: Bool?
+    var claimed: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case date, used, remaining, allowed, claimed
+        case shareRewardCount = "share_reward_count"
+    }
 }
 
 struct TarotQuota: Codable {
@@ -106,6 +123,17 @@ struct TarotQuota: Codable {
     mutating func rewardShare() {
         // 分享奖励没有每日上限，每次完成系统分享都增加 1 次。
         shareRewardCount += 1
+        persist()
+    }
+
+    /// 服务端对账（web tarot.ts remoteState 同款合并）：日期与已用次数以服务端为准，
+    /// 分享奖励两边取大；购买次数与包月是本地演示态，保持本地值。
+    mutating func merge(remote: RemoteTarotQuota) {
+        if let date = remote.date, !date.isEmpty { self.date = date }
+        if let used = remote.used { self.used = max(0, used) }
+        if let rewards = remote.shareRewardCount {
+            shareRewardCount = max(shareRewardCount, max(0, rewards))
+        }
         persist()
     }
 

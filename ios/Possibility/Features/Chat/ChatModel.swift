@@ -159,6 +159,8 @@ final class ChatModel {
     // MARK: 启动：把首页问题作为第一条用户消息并请求 AI
 
     func start(supabase: SupabaseService) async {
+        // 塔罗额度以服务端为准（防重装重置 / 换设备翻倍）；离线时保持本地缓存。
+        Task { await refreshTarotQuota(supabase: supabase) }
         guard messages.isEmpty else { return }
         messages.append(Message(role: .user, text: launch.question))
         // 首条已发出才算一次对话开始；问题正文不上报，只报入口
@@ -289,6 +291,8 @@ final class ChatModel {
             tarotPhase = .locked
             return
         }
+        // 服务端同步扣减；离线时本地已扣，下次 status 对账。
+        Task { _ = try? await supabase.tarotQuota(action: "consume") }
         let reading = TarotEngine.reading(question: tarotQuestion, cards: tarotSelection)
         tarotReading = reading
         messages.append(Message(role: .ai, text: reading.answer, source: .tarot))
@@ -317,9 +321,18 @@ final class ChatModel {
         Task { await performAssistant(userText: request, context: .direct, supabase: supabase) }
     }
 
-    func claimTarotShareReward() {
+    func claimTarotShareReward(channel: TarotShareChannel, supabase: SupabaseService) {
         tarotQuota.rewardShare()
         if tarotPhase == .locked { tarotPhase = .offer }
+        // 服务端同步入账（微信在服务端记作 friend）；失败静默，下次 status 对账。
+        Task { _ = try? await supabase.tarotQuota(action: "reward", channel: channel.remoteValue) }
+    }
+
+    /// 服务端额度对账：拉取已用次数与分享奖励；失败静默（本地缓存兜底）。
+    func refreshTarotQuota(supabase: SupabaseService) async {
+        guard let remote = try? await supabase.tarotQuota(action: "status") else { return }
+        tarotQuota.merge(remote: remote)
+        if tarotPhase == .locked, tarotQuota.remaining > 0 { tarotPhase = .offer }
     }
 
     func purchaseTarotAccess(_ product: TarotPurchaseProduct) {

@@ -128,7 +128,15 @@ async function makeAppPoster() {
   return { file, url: URL.createObjectURL(blob) };
 }
 
-function TarotCardFace({ card, position }: { card: DrawnTarotCard; position: string }) {
+function TarotCardFace({
+  card,
+  position,
+  revealMeaning = false,
+}: {
+  card: DrawnTarotCard;
+  position: string;
+  revealMeaning?: boolean;
+}) {
   return (
     <div
       className="relative min-h-[174px] rounded-tile border border-brand-bright/35 bg-gradient-to-b from-brand/20 to-white/[0.035] p-3 text-center"
@@ -137,6 +145,31 @@ function TarotCardFace({ card, position }: { card: DrawnTarotCard; position: str
       <span className={`mt-3 block text-heading leading-none text-ink ${card.reversed ? "rotate-180" : ""}`}>{card.symbol}</span>
       <span className="mt-3 block text-caption font-semibold text-ink">{card.name}</span>
       <span className="mt-1 block text-micro text-faint">{card.reversed ? "逆位" : "正位"}</span>
+      {revealMeaning ? (
+        <span className="mt-2 block text-micro leading-[1.5] text-sub line-clamp-2">{card.reversed ? card.shadow : card.light}</span>
+      ) : null}
+    </div>
+  );
+}
+
+/** iOS TarotPanel.heading —— 眉标 + 当前问题，offer / drawing / confirm 三个阶段共用。 */
+function TarotHeading({ question }: { question: string }) {
+  return (
+    <>
+      <span className="block text-micro tracking-[1.6px] text-brand-lite">三张牌 · 象征分析</span>
+      <h2 className="mt-[5px] text-callout font-semibold leading-[1.5] text-ink">{question}</h2>
+    </>
+  );
+}
+
+/** iOS TarotPanel.quotaFooter —— 剩余额度 + 解锁入口。 */
+function QuotaFooter({ model }: { model: ChatModel }) {
+  return (
+    <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
+      <span className="text-micro text-faint">可用额度：{model.tarotRemainingLabel}</span>
+      <button onClick={() => model.prepareTarotShare()} className="text-micro font-semibold text-brand-lite">
+        解锁更多次数 ↗
+      </button>
     </div>
   );
 }
@@ -354,8 +387,7 @@ export function TarotPanel({ model }: { model: ChatModel }) {
   if (model.tarotPhase === "offer") {
     return (
       <section className="mt-4 rounded-card border border-brand-bright/25 bg-gradient-to-br from-brand/15 to-white/[0.035] p-4">
-        <span className="text-micro tracking-[1.7px] text-brand-lite">象征性塔罗 · 不是确定性预测</span>
-        <h2 className="mt-2 text-body font-semibold text-ink">让你亲手抽三张牌</h2>
+        <TarotHeading question={model.tarotDisplayQuestion} />
         <p className="mt-2 text-footnote leading-[1.75] text-sub">
           {model.tarotRequired
             ? "从 12 张候选牌中选出 3 张，会分别对应现状、核心阻力和行动走向。选完后需要你再点击确认。"
@@ -363,50 +395,59 @@ export function TarotPanel({ model }: { model: ChatModel }) {
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button onClick={() => model.beginTarotDraw()} className="rounded-chip bg-brand px-4 py-2.5 text-caption font-semibold text-white">
-            开始抽牌 · {model.tarotRemainingLabel}
+            开始抽取 3 张牌
           </button>
           {!model.tarotRequired ? (
-            <button onClick={() => model.dismissTarot()} className="rounded-chip border border-line px-4 py-2.5 text-caption font-semibold text-sub">
-              暂不抽牌
+            <button onClick={() => model.answerWithoutTarot()} className="rounded-chip border border-line px-4 py-2.5 text-caption font-semibold text-sub">
+              暂时不抽牌
             </button>
           ) : null}
         </div>
+        <QuotaFooter model={model} />
+        {model.showTarotShare ? <TarotUnlockOptions model={model} /> : null}
       </section>
     );
   }
 
   if (model.tarotPhase === "drawing") {
-    const choose = (cardId: string) => {
-      if (selected.includes(cardId) || selected.length >= 3) return;
-      const next = [...selected, cardId];
-      setSelected(next);
-      if (next.length === 3) window.setTimeout(() => model.prepareTarotConfirmation(next), 320);
+    // iOS TarotPanel.toggle：可反选，选满 3 张后不再追加；确认动作由按钮显式触发。
+    const toggle = (cardId: string) => {
+      if (selected.includes(cardId)) {
+        setSelected(selected.filter((id) => id !== cardId));
+        return;
+      }
+      if (selected.length >= 3) return;
+      setSelected([...selected, cardId]);
     };
     return (
       <section className="mt-4 rounded-card border border-brand-bright/25 bg-gradient-to-br from-brand/15 to-white/[0.035] p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <span className="text-micro tracking-[1.7px] text-brand-lite">请凭直觉选择</span>
-            <h2 className="mt-1 text-body font-semibold text-ink">从 12 张中抽取 3 张</h2>
-          </div>
-          <span className="text-caption text-sub">{`${selected.length} / 3`}</span>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {model.tarotCandidates.map((card) => {
-            const index = selected.indexOf(card.id);
+        <TarotHeading question={model.tarotDisplayQuestion} />
+        <p className="mt-3 text-caption font-semibold text-sub">请选择 3 张 · 已选 {selected.length}/3</p>
+        <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-6">
+          {model.tarotCandidates.map((card, index) => {
+            const isSelected = selected.includes(card.id);
             return (
-              <button key={card.id} onClick={() => choose(card.id)} className="transition hover:-translate-y-1 active:scale-[0.97]">
-                {index >= 0 ? (
-                  <TarotCardFace card={card} position={POSITIONS[index]} />
-                ) : (
-                  <div className="flex min-h-[174px] items-center justify-center rounded-tile border border-brand-bright/35 bg-gradient-to-b from-brand/25 to-card text-title text-brand-lite shadow-card">
-                    ✦
-                  </div>
-                )}
+              <button
+                key={card.id}
+                aria-pressed={isSelected}
+                onClick={() => toggle(card.id)}
+                className={`flex h-[72px] flex-col items-center justify-center gap-[7px] rounded-field border transition active:scale-[0.97] ${
+                  isSelected ? "border-brand-lite bg-brand-deep/60 text-white" : "border-line bg-white/[0.045] text-sub"
+                }`}
+              >
+                <span className="text-title font-semibold leading-none">{isSelected ? "✦" : "◌"}</span>
+                <span className="text-micro font-medium">候选 {index + 1}</span>
               </button>
             );
           })}
         </div>
+        <button
+          disabled={selected.length !== 3}
+          onClick={() => model.prepareTarotConfirmation(selected)}
+          className="mt-4 rounded-chip bg-brand px-4 py-2.5 text-caption font-semibold text-white disabled:opacity-55"
+        >
+          确认这 3 张牌
+        </button>
       </section>
     );
   }
@@ -414,8 +455,8 @@ export function TarotPanel({ model }: { model: ChatModel }) {
   if (model.tarotPhase === "confirm" && model.tarotSelection.length === 3) {
     return (
       <section className="mt-4 rounded-card border border-brand-bright/25 bg-gradient-to-br from-brand/15 to-white/[0.035] p-4">
-        <span className="text-micro tracking-[1.7px] text-brand-lite">抽牌完成 · 请确认</span>
-        <h2 className="mt-2 text-body font-semibold text-ink">这是你选中的三张牌</h2>
+        <TarotHeading question={model.tarotDisplayQuestion} />
+        <p className="mt-3 text-footnote font-semibold text-sub">确认你的三张牌</p>
         <p className="mt-2 text-footnote leading-[1.7] text-sub">点击确认后才会使用 1 次今日机会，并根据三个牌位生成问题答案。</p>
         <div className="mt-4 grid grid-cols-3 gap-2">
           {model.tarotSelection.map((card, index) => (
@@ -428,14 +469,14 @@ export function TarotPanel({ model }: { model: ChatModel }) {
             onClick={() => void model.confirmTarotDraw()}
             className="rounded-chip bg-brand px-4 py-2.5 text-caption font-semibold text-white disabled:opacity-55"
           >
-            {model.isTarotSubmitting ? "正在生成解读…" : "确认这三张牌"}
+            {model.isTarotSubmitting ? "正在生成答案…" : "确认并查看分析"}
           </button>
           <button
             disabled={model.isTarotSubmitting}
             onClick={() => model.beginTarotDraw()}
             className="rounded-chip border border-line px-4 py-2.5 text-caption font-semibold text-sub disabled:opacity-55"
           >
-            重新抽取
+            重新选择
           </button>
         </div>
       </section>
@@ -448,15 +489,10 @@ export function TarotPanel({ model }: { model: ChatModel }) {
         <span className="text-micro tracking-[1.7px] text-brand-lite">你的三张牌</span>
         <div className="mt-3 grid grid-cols-3 gap-2">
           {model.tarotReading.cards.map((card, index) => (
-            <TarotCardFace key={card.id} card={card} position={POSITIONS[index]} />
+            <TarotCardFace key={card.id} card={card} position={POSITIONS[index]} revealMeaning />
           ))}
         </div>
-        <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
-          <span className="text-micro text-faint">可用额度：{model.tarotRemainingLabel}</span>
-          <button onClick={() => model.prepareTarotShare()} className="text-micro font-semibold text-brand-lite">
-            解锁更多次数 ↗
-          </button>
-        </div>
+        <QuotaFooter model={model} />
         {model.showTarotShare ? <TarotUnlockOptions model={model} /> : null}
       </section>
     );
@@ -464,7 +500,7 @@ export function TarotPanel({ model }: { model: ChatModel }) {
 
   return (
     <section className="mt-4 rounded-card border border-violet-soft/30 bg-gradient-to-br from-violet-soft/20 to-white/[0.035] p-4">
-      <span className="text-micro tracking-[1.7px] text-brand-lite">今日塔罗次数已用完</span>
+      <span className="text-micro tracking-[1.7px] text-brand-lite">今天的基础次数已用完</span>
       <h2 className="mt-2 text-body font-semibold text-ink">选择适合你的解锁方式</h2>
       <p className="mt-2 text-footnote leading-[1.75] text-sub">
         你每天有 3 次基础机会。用完后可无限次分享 App 海报，每次免费领取 1 次；也可连续包月或购买次数包。

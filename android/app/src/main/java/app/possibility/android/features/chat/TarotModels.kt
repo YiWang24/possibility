@@ -1,6 +1,7 @@
 package app.possibility.android.features.chat
 
 import android.content.Context
+import app.possibility.android.core.network.SupabaseService
 import java.time.LocalDate
 
 data class TarotCard(
@@ -30,6 +31,10 @@ enum class TarotShareChannel(val label: String, val note: String) {
     XIAOHONGSHU("小红书", "发布笔记"),
     WEIBO("微博", "分享动态"),
     OTHER("更多渠道", "打开系统分享"),
+    ;
+
+    /** 服务端渠道名：历史原因微信记作 friend（web tarot.ts 同款映射）。 */
+    val remoteValue: String get() = if (this == WECHAT) "friend" else name.lowercase()
 }
 
 data class TarotQuota(
@@ -78,6 +83,20 @@ class TarotQuotaStore(context: Context) {
 
     fun rewardShare(current: TarotQuota): TarotQuota =
         current.copy(shareRewardCount = current.shareRewardCount + 1).also(::save)
+
+    /**
+     * 服务端对账（web tarot.ts remoteState 同款合并）：日期与已用次数以服务端为准，
+     * 分享奖励两边取大；购买次数与包月是本地演示态，保持本地值。
+     */
+    fun merge(current: TarotQuota, remote: SupabaseService.RemoteTarotQuota): TarotQuota {
+        val merged = current.copy(
+            date = remote.date.ifEmpty { current.date },
+            used = remote.used.coerceAtLeast(0),
+            shareRewardCount = maxOf(current.shareRewardCount, remote.shareRewardCount.coerceAtLeast(0)),
+        )
+        save(merged)
+        return merged
+    }
 
     fun purchase(current: TarotQuota, product: TarotPurchaseProduct): TarotQuota {
         val updated = when (product) {

@@ -224,6 +224,7 @@ struct TarotPanel: View {
 struct TarotSharePosterSheet: View {
     @Bindable var model: ChatModel
 
+    @Environment(SupabaseService.self) private var supabase
     @Environment(ToastCenter.self) private var toast
     @Environment(\.dismiss) private var dismiss
     @State private var poster: UIImage?
@@ -286,7 +287,7 @@ struct TarotSharePosterSheet: View {
             ActivityShareSheet(items: items) { completed in
                 sharingChannel = nil
                 guard completed else { return }
-                model.claimTarotShareReward()
+                model.claimTarotShareReward(channel: channel, supabase: supabase)
                 toast.show("分享完成，已领取 1 次")
             }
         }

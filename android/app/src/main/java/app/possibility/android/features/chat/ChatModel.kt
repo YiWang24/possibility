@@ -7,9 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import app.possibility.android.core.model.Crossroads
+import app.possibility.android.core.model.DemoData
 import app.possibility.android.core.model.ExploreTopic
 import app.possibility.android.core.model.MatchQuery
 import app.possibility.android.core.model.RemoteConversation
+import app.possibility.android.core.model.TrajectoryNode
 import app.possibility.android.core.model.Traveler
 import app.possibility.android.core.network.ChatConclusion
 import app.possibility.android.core.network.ChatRecommendedNextStep
@@ -18,6 +20,7 @@ import app.possibility.android.core.network.ChatStreamClient
 import app.possibility.android.core.network.ChatStreamEvent
 import app.possibility.android.core.network.SupabaseService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // 探索对话视图模型（付费漏斗主线，对应 ios/Possibility/Features/Chat/ChatModel.swift）。
@@ -26,7 +29,8 @@ import kotlinx.coroutines.launch
 // （嗯，比较接近 / 还不太对，可循环纠正）→ 信息足够 → 下一步面板
 // （去人生实验室 / 看走过这条路的人 / 分享 / 完整总结）。对照原型 chatState 阶段机。
 //
-// 所有问题（包括首页预置问题）都直接进入真实 /chat 流式接口。
+// 首页四条示例问题的首轮使用本地 mock，保证产品主线确定可达；用户在此之后给出自己的
+// 改写或反馈时，再把完整上下文（原问题 + mock 理解 + 用户反馈）交给 /chat。
 // 岔路口成形后用 crossroads.match_query 调 /match。
 
 /** 对话阶段（对照原型 chatState.stage） */
@@ -92,6 +96,8 @@ class ChatModel(
 
     /** 服务端会话 ID：首轮 done 事件返回，后续追问带回以延续历史 */
     private var conversationId: String? = null
+    /** 四条示例问题从本地 mock 开场；第一次转真实 API 时需要显式补齐这段上下文。 */
+    private var startedWithMock = false
     /** 最近一次 done 事件（或历史恢复）携带的岔路口信号 */
     private var crossroads: Crossroads? = null
 
@@ -160,10 +166,22 @@ class ChatModel(
     // MARK: 启动：把首页问题作为第一条用户消息并请求 AI
 
     fun start() {
+        // 塔罗额度以服务端为准（防重装重置 / 换设备翻倍）；离线时保持本地缓存。
+        scope.launch { refreshTarotQuota() }
         if (messages.isNotEmpty()) return
         messages.add(Message(Message.Role.USER, question))
         scope.launch {
-            performAssistant(question, if (clarificationRequired) RequestContext.CLARIFY else RequestContext.DIRECT)
+            if (ExploreTopic.isSampleQuestion(question)) {
+                startedWithMock = true
+                appendLocalReply(goldenReply())
+                stage = ChatStage.READY
+                showActionChips = false
+                showNextPanel = true
+                recommendedNextStep = ChatRecommendedNextStep.LAB
+                requestMatch()
+            } else {
+                performAssistant(question, if (clarificationRequired) RequestContext.CLARIFY else RequestContext.DIRECT)
+            }
         }
     }
 
@@ -260,6 +278,8 @@ class ChatModel(
             tarotPhase = TarotPhase.LOCKED
             return
         }
+        // 服务端同步扣减；离线时本地已扣，下次 status 对账。
+        scope.launch { runCatching { service.tarotQuota("consume") } }
         val reading = TarotEngine.reading(tarotQuestion, tarotSelection)
         tarotReading = reading
         messages.add(Message(Message.Role.AI, reading.answer, Message.Source.TAROT))
@@ -281,9 +301,18 @@ class ChatModel(
         scope.launch { performAssistant(request, RequestContext.DIRECT) }
     }
 
-    fun claimTarotShareReward() {
+    fun claimTarotShareReward(channel: TarotShareChannel) {
         tarotQuota = tarotQuotaStore.rewardShare(tarotQuota)
         if (tarotPhase == TarotPhase.LOCKED) tarotPhase = TarotPhase.OFFER
+        // 服务端同步入账（微信在服务端记作 friend）；失败静默，下次 status 对账。
+        scope.launch { runCatching { service.tarotQuota("reward", channel.remoteValue) } }
+    }
+
+    /** 服务端额度对账：拉取已用次数与分享奖励；失败静默（本地缓存兜底）。 */
+    private suspend fun refreshTarotQuota() {
+        val remote = runCatching { service.tarotQuota("status") }.getOrNull() ?: return
+        tarotQuota = tarotQuotaStore.merge(tarotQuota, remote)
+        if (tarotPhase == TarotPhase.LOCKED && tarotQuota.remaining > 0) tarotPhase = TarotPhase.OFFER
     }
 
     fun purchaseTarotAccess(product: TarotPurchaseProduct) {
@@ -341,6 +370,9 @@ class ChatModel(
         matchAttempted = true
         scope.launch {
             if (service.travelers.value.isEmpty()) service.loadTravelers()
+            val pool = service.travelers.value.ifEmpty { DemoData.travelers }
+            applyMatchFallback(pool)
+
             val query = effectiveMatchQuery()
             runCatching {
                 val response = service.match(query)
@@ -353,10 +385,101 @@ class ChatModel(
                     reasons[t.id] = m.reason
                     if (travelers.size == 2) break
                 }
-                matchedTravelers = travelers
-                matchReasons = reasons
+                // 服务端只解析出一位时，沿用已经按当前对话精准筛过的本地/模拟卡，
+                // 不从素材池头部随便补一个无关人物。
+                for (traveler in matchedTravelers) {
+                    if (travelers.size >= 2) break
+                    if (travelers.any { it.id == traveler.id }) continue
+                    travelers.add(traveler)
+                    matchReasons[traveler.id]?.let { reasons[traveler.id] = it }
+                }
+                if (travelers.size == 2) {
+                    matchedTravelers = travelers
+                    matchReasons = reasons
+                }
+            }
+            // 失败时保留已经展示的两张兜底卡，不让网络失败打断主线。
+        }
+    }
+
+    private fun applyMatchFallback(pool: List<Traveler>) {
+        val context = (listOf(displayQuestion) + answers).joinToString("；")
+        val localMatches = pool
+            .map { it to localMatchScore(it, context) }
+            .filter { it.second > 0 }
+            .sortedWith(compareByDescending<Pair<Traveler, Int>> { it.second }.thenBy { it.first.id })
+            .take(2)
+            .map { it.first }
+
+        val selected = localMatches.toMutableList()
+        while (selected.size < 2) {
+            selected.add(makeSyntheticTraveler(selected.size))
+        }
+        matchedTravelers = selected
+        matchReasons = selected.associate { it.id to fallbackReason(it) }
+    }
+
+    /** 只把与当前原话存在明确语义交集的本地素材放上去；零分不硬凑。 */
+    private fun localMatchScore(traveler: Traveler, context: String): Int {
+        val profile = (listOf(traveler.bio, traveler.quote) + traveler.tags).joinToString(" ").lowercase()
+        val ctx = context.lowercase()
+        val semanticSignals: List<Pair<List<String>, List<String>>> = listOf(
+            listOf("转行", "转型", "换赛道", "职业", "工作", "产品", "设计") to listOf("转型", "转行", "产品", "设计"),
+            listOf("读研", "考研", "读书", "留学", "本科", "学习") to listOf("本科", "硕士", "在读", "学习"),
+            listOf("裸辞", "休息", "间隔年", "gap", "倦怠") to listOf("裸辞", "gap", "休息", "环岛"),
+            listOf("独立开发", "创业", "自由职业", "副业", "做产品") to listOf("独立开发", "创业", "产品", "一个人"),
+            listOf("心理", "咨询", "倾听", "助人") to listOf("心理", "咨询", "倾听"),
+        )
+        var score = 0
+        for ((queryWords, profileWords) in semanticSignals) {
+            if (queryWords.any { ctx.contains(it.lowercase()) } && profileWords.any { profile.contains(it.lowercase()) }) {
+                score += 3
             }
         }
+        for (tag in traveler.tags) {
+            if (tag.length >= 3 && ctx.contains(tag.lowercase())) score += 2
+        }
+        return score
+    }
+
+    private fun fallbackReason(traveler: Traveler): String {
+        if (traveler.id < 0) return traveler.quote
+        val clue = traveler.tags.firstOrNull() ?: traveler.bio
+        return "本地经历中，TA 的「$clue」与你现在要验证的选择和代价最接近。"
+    }
+
+    /**
+     * 素材库覆盖不到当前处境时，用用户自己的两股拉力生成一张明确标注的模拟路径卡。
+     * 两张卡分别代表“先靠近”与“先守底线”，避免只给单一方向造成确认偏误。
+     * id 取负数：ChatScreen 据此把点击路由到社区相似经历，而不是不存在的旅人主页。
+     */
+    private fun makeSyntheticTraveler(index: Int): Traveler {
+        val approaching = answers.firstOrNull() ?: displayQuestion
+        val protecting = if (answers.size > 1) answers[1] else "当前不能轻易失去的部分"
+        val moveFirst = index % 2 == 0
+        val quote = if (moveFirst) {
+            "先用一次可撤回的小尝试验证「$approaching」，同时为「$protecting」设好停止条件。"
+        } else {
+            "先补足能保护「$protecting」的现实条件，再给「$approaching」设一个明确复盘日。"
+        }
+        return Traveler(
+            id = -9101 - index,
+            name = if (moveFirst) "模拟路径 · 先试一步" else "模拟路径 · 先守底线",
+            initial = if (moveFirst) "试" else "守",
+            hue = if (moveFirst) 0 else 4,
+            isSimilar = true,
+            quote = quote,
+            bio = "基于本轮回答生成的对照经历样本",
+            tags = if (moveFirst) listOf("可撤回尝试", "主动验证") else listOf("先补缓冲", "定期复盘"),
+            dims = emptyList(),
+            trajectory = listOf(
+                TrajectoryNode(
+                    age = "下一步",
+                    title = if (moveFirst) "做一次最小现实接触" else "先补齐关键保护条件",
+                    detail = quote,
+                ),
+            ),
+        )
     }
 
     private fun effectiveMatchQuery(): MatchQuery {
@@ -548,10 +671,31 @@ class ChatModel(
 
             val client = ChatStreamClient(tokenProvider = { service.jwt() })
 
+            // mock 首轮尚无 conversation_id，因此第一次调用 API 时把原问题、mock 理解和用户
+            // 最新反馈合并进 message，确保模型知道用户正在认同或否定什么。
+            val apiMessage = if (startedWithMock && conversationId == null) {
+                val continuationInstruction = when (userText) {
+                    CONFIRM_PHRASE, CONFIRM_AFTER_CORRECTION_PHRASE ->
+                        "用户已经确认你的理解准确。不要继续索取信息，也不要复述“我看见了你的困惑”。请基于上述完整上下文，" +
+                            "直接给出有依据但不说死的暂时分析、贴合这个用户的低成本建议；先完成回答，再自然承接人生实验室与相似经历。"
+                    CORRECTION_PHRASE ->
+                        "用户明确认为刚才的理解不准确。请真正重新阅读上下文，不要使用固定道歉模板，也不要为原判断辩护；" +
+                            "指出你需要修正的具体假设，并只追问一个最能降低不确定性的问题。"
+                    else ->
+                        "请承接这段上下文继续倾听。如果用户不认同初步理解，不要为原判断辩护，也不要立即换一组新的二者对立。" +
+                            "先区分：是对两股拉力的具体理解不准确，还是用户的问题本身就不适合二元框架。如果不适合，停止使用 vs 结构，" +
+                            "转而探索多重方向、信息缺口、行动阻力或尚未命名的感受。"
+                }
+                "此前的本地示例对话上下文：\n用户最初的问题：$question\n助手给出的初步理解：${goldenReply()}" +
+                    "\n\n用户现在的反馈或补充：$userText\n\n$continuationInstruction"
+            } else {
+                userText
+            }
+
             val request = ChatRequest(
                 conversationId = conversationId,
                 topic = displayTopic ?: "综合",
-                message = userText,
+                message = apiMessage,
                 history = history,
             )
 
@@ -594,6 +738,38 @@ class ChatModel(
             isStreaming = false
         }
     }
+
+    /** 四条首页示例问题首轮使用的本地 mock 回复；空气泡 + 延迟，复用流式的打字机观感。 */
+    private suspend fun appendLocalReply(text: String) {
+        isStreaming = true
+        try {
+            val aiMessage = Message(Message.Role.AI, "")
+            messages.add(aiMessage)
+            delay(700)
+            aiMessage.text = text
+        } finally {
+            isStreaming = false
+        }
+    }
+
+    // MARK: 兜底内容（四条首页示例问题首轮的本地 mock）
+
+    private fun goldenSummary(): String = when (topicEnum) {
+        ExploreTopic.FAMILY ->
+            "不想放弃在大城市继续拼搏、证明自己能站稳脚跟的可能 vs 对父母的感恩与牵挂，让你越来越想回家陪伴他们"
+        ExploreTopic.STUDY ->
+            "想用读研突破学历与职业发展的天花板 vs 害怕放下已经拥有的工作节奏，承担收入、时间和机会成本"
+        ExploreTopic.LOVE ->
+            "想守住这段感情，把彼此带向真正共同的生活 vs 害怕为爱换城后失去自己的事业根基与生活主动权"
+        ExploreTopic.CAREER, null ->
+            "想赌一次更高薪、拥有更大影响力的可能 vs 舍不得放下多年深耕的积累，走进一个全新而未知的领域"
+    }
+
+    private fun goldenReply(): String =
+        "先说我的判断：你现在不必急着替两条路判输赢，更值得先验证哪一边更接近你的主动意愿，哪一边只是你害怕失去的安全感。" +
+            "\n\n目前最关键的张力是：**${goldenSummary()}**。这意味着答案不会只来自“想不想”，还取决于那项代价能否被具体降低。" +
+            "\n\n先做一个可撤回的小验证：用一周接触目标路径中的真实任务，再写下它让你更有能量还是更想逃离；" +
+            "同时列出当前选择最不能失去的底线。两条证据会比继续空想更接近答案。"
 
     companion object {
         private const val CONFIRM_PHRASE = "嗯，这个理解比较接近我。"

@@ -1,7 +1,10 @@
 package app.possibility.android.features.chat
 
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color as AndroidColor
@@ -38,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import app.possibility.android.core.ToastCenter
 import app.possibility.android.core.theme.Theme
@@ -332,9 +336,10 @@ private fun TarotSharePosterDialog(model: ChatModel, onDismiss: () -> Unit) {
                                 .background(Theme.raised, RoundedCornerShape(15.dp))
                                 .border(1.dp, Theme.line, RoundedCornerShape(15.dp))
                                 .clickableNoRipple {
-                                    sharePoster(context, channel)
-                                    model.claimTarotShareReward()
-                                    ToastCenter.show("分享已打开，完成后获得 1 次")
+                                    sharePoster(context, channel) {
+                                        model.claimTarotShareReward(channel)
+                                        ToastCenter.show("分享完成，已领取 1 次")
+                                    }
                                 }
                                 .padding(13.dp),
                         ) {
@@ -372,7 +377,40 @@ private fun PosterPreview() {
     }
 }
 
-private fun sharePoster(context: Context, channel: TarotShareChannel) {
+// 对齐 iOS ActivityShareSheet 的 completionWithItemsHandler：只有系统回调
+// EXTRA_CHOSEN_COMPONENT（用户真的选中了分享目标）才算完成，直接关掉分享面板不发奖励。
+// receiver 挂 applicationContext 并自解注册；同一时间只保留一个，防重复打开泄漏。
+private var pendingShareChosenReceiver: BroadcastReceiver? = null
+
+private fun shareChooser(
+    context: Context,
+    target: Intent,
+    title: String,
+    onChosen: () -> Unit,
+): Intent {
+    val app = context.applicationContext
+    pendingShareChosenReceiver?.let { previous -> runCatching { app.unregisterReceiver(previous) } }
+    val action = "${app.packageName}.action.TAROT_SHARE_CHOSEN"
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(receiverContext: Context?, intent: Intent?) {
+            runCatching { app.unregisterReceiver(this) }
+            if (pendingShareChosenReceiver === this) pendingShareChosenReceiver = null
+            onChosen()
+        }
+    }
+    pendingShareChosenReceiver = receiver
+    ContextCompat.registerReceiver(app, receiver, IntentFilter(action), ContextCompat.RECEIVER_NOT_EXPORTED)
+    // 系统需要往回调 intent 里填 EXTRA_CHOSEN_COMPONENT，PendingIntent 必须可变。
+    val sender = PendingIntent.getBroadcast(
+        app,
+        0,
+        Intent(action).setPackage(app.packageName),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+    ).intentSender
+    return Intent.createChooser(target, title, sender)
+}
+
+private fun sharePoster(context: Context, channel: TarotShareChannel, onChosen: () -> Unit) {
     runCatching {
         val bitmap = Bitmap.createBitmap(1080, 1440, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -408,12 +446,12 @@ private fun sharePoster(context: Context, channel: TarotShareChannel) {
             putExtra(Intent.EXTRA_TEXT, "万花筒 · 认识你自己，推演人生的可能性")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(intent, "通过${channel.label}分享"))
+        context.startActivity(shareChooser(context, intent, "通过${channel.label}分享", onChosen))
     }.onFailure {
         val fallback = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, "万花筒 · 认识你自己，推演人生的可能性")
         }
-        context.startActivity(Intent.createChooser(fallback, "分享万花筒"))
+        context.startActivity(shareChooser(context, fallback, "分享万花筒", onChosen))
     }
 }

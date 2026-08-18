@@ -118,6 +118,13 @@ export function ChatNextPanel({
         />
       </div>
 
+      {matchedTravelers.length === 0 && preferredPath === "match" ? (
+        <div className="mt-[11px] flex items-center gap-[9px] rounded-tile border border-line bg-white/[0.045] p-[13px]">
+          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-brand-lite border-t-transparent" />
+          <span className="text-caption text-sub">正在为你找走过相似处境的人…</span>
+        </div>
+      ) : null}
+
       {matchedTravelers.length > 0 ? (
         <>
           <span className="mt-[13px] text-micro tracking-[1.6px] text-brand-lite">与你当前处境接近的经验</span>

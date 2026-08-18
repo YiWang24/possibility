@@ -50,6 +50,7 @@ import app.possibility.android.core.model.TrajectoryNode
 import app.possibility.android.core.model.TravelerDetail
 import app.possibility.android.core.model.TravelerServiceItem
 import app.possibility.android.core.theme.Theme
+import app.possibility.android.features.auth.AuthGateHost
 
 // 旅人主页（原型 profilePage）—— 对应 ios/Possibility/Features/Profile/ProfileView.swift + ProfilePanels.swift。
 // 全屏 Dialog：顶栏 + hero + 4 Tab（她的故事/时间线/经验与建议/可提供服务）+ 底部 PayBar。
@@ -73,7 +74,7 @@ fun TravelerProfileSheet(traveler: Traveler, onDismiss: () -> Unit) {
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         val model = remember(traveler.id) { ProfileModel(traveler) }
-        var showPaywall by remember { mutableStateOf(false) }
+        var checkout by remember { mutableStateOf<ProfileCheckout?>(null) }
         var showConsultChat by remember { mutableStateOf(false) }
 
         LaunchedEffect(traveler.id) { model.load() }
@@ -95,7 +96,11 @@ fun TravelerProfileSheet(traveler: Traveler, onDismiss: () -> Unit) {
                         Hero(model)
                         TabsBar(model)
                         Box(Modifier.padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 8.dp)) {
-                            Panel(model) { showPaywall = true }
+                            Panel(
+                                model,
+                                onUnlock = { checkout = ProfileCheckout.Unlock },
+                                onService = { checkout = ProfileCheckout.Service(it) },
+                            )
                         }
                     }
                     PayBar { showConsultChat = true }
@@ -103,16 +108,19 @@ fun TravelerProfileSheet(traveler: Traveler, onDismiss: () -> Unit) {
             }
         }
 
-        if (showPaywall) {
+        checkout?.let { current ->
             PaywallSheet(
                 traveler = traveler,
-                onDismiss = { showPaywall = false },
+                checkout = current,
+                onDismiss = { checkout = null },
                 onUnlocked = { model.markUnlocked() },
             )
         }
         if (showConsultChat) {
             ConsultChatDialog(model = model, traveler = traveler, onDismiss = { showConsultChat = false })
         }
+        // 付费解锁的登录门控在此渲染补登录页（AuthGateCenter.require("paywall")）。
+        AuthGateHost()
     }
 }
 
@@ -299,12 +307,12 @@ private fun TabsBar(model: ProfileModel) {
 // MARK: Panel 分发
 
 @Composable
-private fun Panel(model: ProfileModel, onUnlock: () -> Unit) {
+private fun Panel(model: ProfileModel, onUnlock: () -> Unit, onService: (TravelerServiceItem) -> Unit) {
     when (model.tab) {
         ProfileTab.STORY -> StoryPanel(model, onUnlock)
         ProfileTab.TIMELINE -> TimelinePanel(model)
         ProfileTab.ADVICE -> AdvicePanel(model, onUnlock)
-        ProfileTab.SERVICE -> ServicePanel(model, onUnlock)
+        ProfileTab.SERVICE -> ServicePanel(model, onService)
     }
 }
 
@@ -537,10 +545,11 @@ private fun AdvicePanel(model: ProfileModel, onUnlock: () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ServicePanel(model: ProfileModel, onCheckout: () -> Unit) {
+private fun ServicePanel(model: ProfileModel, onService: (TravelerServiceItem) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         model.services.forEach { service ->
-            ServiceCard(service, onCheckout)
+            // 对齐 iOS ServicePanel：点某项服务就结算该项服务，而不是笼统打开付费墙。
+            ServiceCard(service) { onService(service) }
         }
         // how it works
         val steps = listOf(

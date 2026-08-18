@@ -73,6 +73,6 @@ fun AuthGateHost() {
         sheetState = sheetState,
         containerColor = GateSheetBackground,
     ) {
-        LoginSheet(onDismiss = { AuthGateCenter.onLoginSuccess() })
+        LoginSheet(onDismiss = { AuthGateCenter.onLoginSuccess() }, gate = true)
     }
 }
