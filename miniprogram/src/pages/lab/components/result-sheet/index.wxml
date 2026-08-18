@@ -1,0 +1,214 @@
+<!--
+  推演结果 —— 版式对应 iOS `Features/Lab/ResultView.swift` 的 body 自上而下。
+  分档配色、底线测试的答案都在 index.ts 里摊平好，这里只贴类名。
+-->
+<view class="rsheet" catchtouchmove="noop">
+  <!-- 顶栏：返回 + 「选择 · 时长后」 -->
+  <view class="bar safe-top">
+    <view class="bar__back" bindtap="onClose"><text>‹</text></view>
+    <view class="bar__text">
+      <text class="bar__title">推演结果</text>
+      <text class="bar__sub">{{result.choice}} · {{result.horizon.label}}后</text>
+    </view>
+  </view>
+
+  <scroll-view class="body" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- 引子 + 三档切换 -->
+    <view class="head">
+      <text class="head__line"
+        >「<text class="head__q">{{result.question}}</text
+        >」的三种可能 —— 先看一般情况，再看两端。</text
+      >
+      <view class="seg">
+        <view
+          wx:for="{{tabs}}"
+          wx:key="key"
+          class="seg__item {{tab === index ? 'seg__item--on' : ''}}"
+          data-index="{{index}}"
+          bindtap="onTabTap"
+        >
+          <text class="seg__text">{{item.title}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ── 当前档的结局 ── -->
+    <view wx:if="{{panel}}" class="panel sim--{{panel.accentKey}}">
+      <!-- 概述：分档底色 + 右上角光斑 -->
+      <view class="sum">
+        <text class="sum__eyebrow">{{panel.eyebrow}}</text>
+        <text class="sum__headline">{{panel.headline}}</text>
+      </view>
+
+      <!-- 画像维度：label 定宽，正文自换行 -->
+      <view wx:if="{{panel.dimensions.length}}" class="dims kaleido-card">
+        <view wx:for="{{panel.dimensions}}" wx:key="label" class="dims__row">
+          <text class="dims__label">{{item.label}}</text>
+          <text class="dims__text">{{item.text}}</text>
+        </view>
+      </view>
+
+      <!-- 可能获得 / 需要留意 -->
+      <view class="lists">
+        <view class="list kaleido-card list--gain">
+          <view class="list__head">
+            <view class="list__dot"></view>
+            <text class="list__title">可能获得</text>
+          </view>
+          <view wx:for="{{panel.gains}}" wx:key="*this" class="list__row">
+            <view class="list__bullet"></view>
+            <text class="list__text">{{item}}</text>
+          </view>
+        </view>
+        <view class="list kaleido-card list--cost">
+          <view class="list__head">
+            <view class="list__dot"></view>
+            <text class="list__title">需要留意</text>
+          </view>
+          <view wx:for="{{panel.costs}}" wx:key="*this" class="list__row">
+            <view class="list__bullet"></view>
+            <text class="list__text">{{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 最关键的条件：虚线框，和上面的实底卡区分开 -->
+      <view wx:if="{{panel.keyCondition}}" class="keybox">
+        <text class="keybox__label">最关键的条件：</text>
+        <text class="keybox__text">{{panel.keyCondition}}</text>
+      </view>
+    </view>
+
+    <!-- ── 底线压力测试：只在「最坏的结果」这档，且真的带了底线卡 ── -->
+    <view wx:if="{{floorShow}}" class="floor">
+      <text class="floor__eyebrow">FLOOR TEST · 底线压力测试</text>
+      <text class="floor__title">最坏的结果，会击穿你带进来的底线吗？</text>
+      <text class="floor__note">逐张确认：如果这个结局真的发生，这张底线卡还守得住吗？</text>
+
+      <view wx:for="{{floorRows}}" wx:key="id" class="frow">
+        <view class="frow__head">
+          <card-icon icon="{{item.icon}}" variant="mark" />
+          <text class="frow__name">{{item.name}}</text>
+        </view>
+        <text class="frow__risk">{{item.risk}}</text>
+        <view class="frow__btns">
+          <view
+            class="fbtn {{item.verdict === 'ok' ? 'fbtn--ok' : ''}}"
+            data-id="{{item.id}}"
+            data-verdict="ok"
+            bindtap="onFloorTap"
+          >
+            <text>最差如此，仍可承受</text>
+          </view>
+          <view
+            class="fbtn {{item.verdict === 'bad' ? 'fbtn--bad' : ''}}"
+            data-id="{{item.id}}"
+            data-verdict="bad"
+            bindtap="onFloorTap"
+          >
+            <text>这已经越过底线</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 结论：全部答完才出现，否则等于替用户下判断 -->
+      <view wx:if="{{floorDone}}" class="verdict {{floorPass ? 'verdict--ok' : 'verdict--bad'}}">
+        <block wx:if="{{floorPass}}">
+          <text class="verdict__eyebrow">可以继续转变 · 但不是盲目乐观</text>
+          <text class="verdict__headline"
+            >你看见了最差结果，也确认它没有击穿带入的 {{floorCount}} 张底线卡。</text
+          >
+          <text class="verdict__body"
+            >这说明这条路值得继续验证。下一步不是立刻跳下去，而是为这些底线分别保留现实缓冲。</text
+          >
+        </block>
+        <block wx:else>
+          <text class="verdict__eyebrow">暂时不要直接跨过去</text>
+          <text class="verdict__headline">最坏结果会击穿：{{floorRejected}}</text>
+          <text class="verdict__body"
+            >这不等于你不适合改变。先为这些底线建立保护条件，再回来重新测试。</text
+          >
+        </block>
+      </view>
+    </view>
+
+    <!-- ── 底线分析：服务端给了 bottom_line_analysis 才有 ── -->
+    <view
+      wx:if="{{result.bottomLine}}"
+      class="bline {{result.bottomLine.isAcceptable ? 'bline--ok' : 'bline--bad'}}"
+    >
+      <text class="bline__eyebrow">BOTTOM LINE · 底线分析</text>
+      <block wx:if="{{result.bottomLine.isAcceptable}}">
+        <text class="bline__title">最坏的结果，仍在你的底线之内</text>
+        <text class="bline__note"
+          >结合你带走的底线卡与三种结局推演，这条路的最差情况大概率守得住。</text
+        >
+      </block>
+      <block wx:else>
+        <text class="bline__title">最坏的结果，可能击穿你的底线</text>
+        <text class="bline__note"
+          >结合你带走的底线卡与三种结局推演，先为下面的风险建立保护条件，再考虑迈出这一步。</text
+        >
+      </block>
+
+      <view wx:if="{{result.bottomLine.risks.length}}" class="blist blist--risk">
+        <view class="blist__head">
+          <view class="blist__dot"></view>
+          <text class="blist__title">需要警惕的风险</text>
+        </view>
+        <view wx:for="{{result.bottomLine.risks}}" wx:key="*this" class="blist__row">
+          <view class="blist__bullet"></view>
+          <text class="blist__text">{{item}}</text>
+        </view>
+      </view>
+
+      <view wx:if="{{result.bottomLine.protectiveConditions.length}}" class="blist blist--guard">
+        <view class="blist__head">
+          <view class="blist__dot"></view>
+          <text class="blist__title">保护条件</text>
+        </view>
+        <view wx:for="{{result.bottomLine.protectiveConditions}}" wx:key="*this" class="blist__row">
+          <view class="blist__bullet"></view>
+          <text class="blist__text">{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ── 类似经验的人 ── -->
+    <view wx:if="{{people.length}}" class="people">
+      <view class="people__head">
+        <text class="people__title">类似经验的人</text>
+        <text class="people__trailing">左右滑动查看</text>
+      </view>
+      <!-- 出血到屏幕边，滚动内容再补回边距（同实验室页的底线卡横滑） -->
+      <scroll-view class="people__scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+        <view class="people__row">
+          <view
+            wx:for="{{people}}"
+            wx:key="id"
+            class="pcard kaleido-card hue-{{item.hue}}"
+            data-id="{{item.id}}"
+            bindtap="onTravelerTap"
+          >
+            <view class="pcard__band">
+              <view class="pcard__avatar"><text class="pcard__initial">{{item.initial}}</text></view>
+            </view>
+            <view class="pcard__body">
+              <text class="pcard__name">{{item.name}}</text>
+              <text class="pcard__quote">{{item.quote}}</text>
+              <view wx:if="{{item.tags.length}}" class="pcard__tags">
+                <tag-pill wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" text="{{tag}}" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="again">
+      <btn block bind:tap="onClose"><text>重新选择</text></btn>
+    </view>
+
+    <view class="tail safe-bottom"></view>
+  </scroll-view>
+</view>

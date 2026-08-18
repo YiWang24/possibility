@@ -1,0 +1,8 @@
+{
+  "component": true,
+  "usingComponents": {
+    "btn": "../../../../core/design/components/btn/index",
+    "card-icon": "../../../../core/design/components/card-icon/index",
+    "tag-pill": "../../../../core/design/components/tag-pill/index"
+  }
+}

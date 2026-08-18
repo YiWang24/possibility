@@ -109,6 +109,13 @@ page,
   --accent-4-line: rgba(62, 217, 164, 0.24);
   --accent-4-line-on: rgba(62, 217, 164, 0.5);
 
+  /* 卡面右上角的印章光晕（iOS `stampGlow = accent.opacity(0.17)`） */
+  --accent-0-glow: rgba(94, 150, 255, 0.17);
+  --accent-1-glow: rgba(143, 123, 255, 0.17);
+  --accent-2-glow: rgba(227, 92, 193, 0.17);
+  --accent-3-glow: rgba(255, 176, 103, 0.17);
+  --accent-4-glow: rgba(62, 217, 164, 0.17);
+
   /* ── 圆角（Theme.Radius）── */
   --r-card: 22rpx;
   --r-sheet: 30rpx;
@@ -339,6 +346,135 @@ page,
   --cta-shadow: 0 16rpx 28rpx rgba(79, 125, 255, 0.6);
   /* 结账页底色（iOS 的 presentationBackground） */
   --paywall-bg: #11141d;
+
+  /* ── 人生实验室（iOS Features/Lab/）── */
+
+  /* 表盘底：径向三段，中心略偏上（iOS RadialGradient center 0.5/0.42） */
+  --dial-base: radial-gradient(
+    circle at 50% 42%,
+    #1e222e 0%,
+    #161923 55%,
+    #0f1118 100%
+  );
+  --dial-edge: rgba(255, 255, 255, 0.09);
+  /* 指针把手：亮盘 + 内芯极光 */
+  --dial-knob: #f2f4f9;
+  --dial-knob-ring: rgba(255, 255, 255, 0.15);
+  /* 指针杆自上而下淡出 */
+  --dial-arm: linear-gradient(
+    to bottom,
+    rgba(111, 165, 255, 0.85) 0%,
+    rgba(111, 165, 255, 0) 100%
+  );
+  /* 拖拽悬停时的虚线热区圈 */
+  --dial-hot-line: rgba(111, 165, 255, 0.55);
+
+  /* 选择卡：未选虚线描边，选中实线 + 渐变底 */
+  --choice-bg: #151922;
+  --choice-line: rgba(255, 255, 255, 0.2);
+  --choice-line-on: rgba(111, 165, 255, 0.72);
+  --choice-bg-on: linear-gradient(
+    135deg,
+    rgba(94, 150, 255, 0.26) 0%,
+    rgba(143, 123, 255, 0.13) 100%
+  );
+  --choice-shadow-on: 0 16rpx 24rpx rgba(79, 125, 255, 0.5);
+  /* 「写一张自己的卡」用品红一族，和模型生成的卡分开 */
+  --choice-create-bg: #131720;
+  --choice-create-line: rgba(255, 255, 255, 0.13);
+  --choice-create-line-on: rgba(231, 132, 211, 0.82);
+  --choice-create-bg-on: linear-gradient(
+    135deg,
+    rgba(227, 92, 193, 0.24) 0%,
+    rgba(143, 123, 255, 0.14) 100%
+  );
+
+  /* 三种未来的分档配色（iOS ResultView TabSpec）：顺光 / 大概率 / 背光 */
+  --sim-best-accent: #f06acd;
+  --sim-best-bg: linear-gradient(135deg, #2c1533 0%, #1a1226 100%);
+  --sim-likely-accent: #6fa5ff;
+  --sim-likely-bg: linear-gradient(135deg, #152048 0%, #11142b 100%);
+  --sim-worst-accent: #ff8a5e;
+  --sim-worst-bg: linear-gradient(135deg, #33160e 0%, #1c0f0c 100%);
+  /* 「最关键的条件」虚线框 */
+  --sim-key-line: rgba(111, 165, 255, 0.45);
+  --sim-key-bg: linear-gradient(
+    135deg,
+    rgba(94, 150, 255, 0.12) 0%,
+    rgba(215, 244, 100, 0.08) 100%
+  );
+  /* 底线分析 / 底线测试面板的深空底 */
+  --sim-panel-bg: #11151d;
+  /* 推演遮罩：几乎不透明，只留一点底层轮廓 */
+  --sim-overlay: rgba(8, 9, 15, 0.94);
+
+  /* 选择卡：未选中的落影、印章光晕（自定义卡那张单列，iOS 用的是 0.15） */
+  --choice-shadow: 0 6rpx 12rpx rgba(0, 0, 0, 0.5);
+  --choice-create-glow: rgba(227, 92, 193, 0.15);
+  --choice-create-shadow-on: 0 16rpx 24rpx rgba(215, 90, 194, 0.48);
+  --choice-tick-create-g: linear-gradient(135deg, #e35cc1, #8f7bff);
+
+  /* 输入面：问题编辑框与自定义卡编辑器共用 */
+  --field-bg: rgba(6, 8, 16, 0.54);
+  --field-line: rgba(255, 255, 255, 0.1);
+  --field-bg-focus: rgba(6, 8, 16, 0.5);
+  --field-line-focus: rgba(111, 165, 255, 0.4);
+
+  --editor-bg: linear-gradient(
+    135deg,
+    rgba(94, 150, 255, 0.08) 0%,
+    rgba(227, 92, 193, 0.055) 100%
+  );
+  --editor-line: rgba(143, 161, 255, 0.19);
+
+  /* 手势提示条 */
+  --hint-badge-bg: rgba(143, 123, 255, 0.1);
+  --hint-badge-line: rgba(143, 123, 255, 0.17);
+  --hint-badge-ink: #d9d0f5;
+  --hint-ink: #b6bed0;
+  --hint-dim: #5d6578;
+
+  /* 生成中提示胶囊 */
+  --cload-bg: rgba(94, 150, 255, 0.08);
+  --cload-line: rgba(111, 165, 255, 0.22);
+
+  /* 拖拽浮标 */
+  --ghost-bg: rgba(22, 26, 38, 0.94);
+  --ghost-line: rgba(111, 165, 255, 0.55);
+  --ghost-shadow: 0 0 46rpx rgba(79, 125, 255, 0.35);
+
+  /* ── 推演结果页（iOS ResultView）── */
+  /* 顶栏用半透明底 + 模糊，压住下面滚动过去的内容（iOS .ultraThinMaterial） */
+  --sim-bar-bg: rgba(16, 19, 28, 0.86);
+  /* 三档结局的光斑：叠在 --sim-*-bg 之上，位置在右上角（iOS RadialGradient topTrailing） */
+  --sim-best-glow: rgba(240, 106, 205, 0.4);
+  --sim-likely-glow: rgba(111, 165, 255, 0.4);
+  --sim-worst-glow: rgba(255, 138, 94, 0.4);
+  --sim-best-line: rgba(240, 106, 205, 0.35);
+  --sim-likely-line: rgba(111, 165, 255, 0.35);
+  --sim-worst-line: rgba(255, 138, 94, 0.35);
+
+  /* 底线压力测试 / 底线分析：两块面板共用一套「守得住 / 会击穿」的色语言 */
+  --floor-accent: #ff9b77;
+  --floor-line: rgba(255, 122, 77, 0.24);
+  --floor-ok: #3ed9a4;
+  --floor-ok-bg: rgba(62, 217, 164, 0.08);
+  --floor-ok-line: rgba(62, 217, 164, 0.3);
+  --floor-ok-wash: rgba(62, 217, 164, 0.12);
+  --floor-ok-line-on: rgba(62, 217, 164, 0.55);
+  --floor-bad: #ff8a5e;
+  --floor-bad-bg: rgba(255, 122, 77, 0.08);
+  --floor-bad-line: rgba(255, 122, 77, 0.3);
+  --floor-bad-wash: rgba(255, 138, 94, 0.12);
+  --floor-bad-line-on: rgba(255, 138, 94, 0.55);
+  /* 未选中的按钮：比 --raised 更淡，让「还没答」和「答过了」一眼分开 */
+  --floor-btn-bg: rgba(255, 255, 255, 0.05);
+  --bottom-ok-line: rgba(62, 217, 164, 0.24);
+
+  /* 旅人头像：压在色带上，靠半透明黑底压出层次，描边提亮轮廓 */
+  --avatar-bg: rgba(8, 10, 18, 0.42);
+  --avatar-line: rgba(255, 255, 255, 0.28);
+  --avatar-ink: #ffffff;
 }
 
 /* ── 通用卡片样式（对应 iOS 的 .kaleidoCard() modifier）── */

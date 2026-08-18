@@ -1,0 +1,728 @@
+/**
+ * 推演结果样式 —— 对应 iOS `Features/Lab/ResultView.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ *
+ * 分档配色沿用实验室页那套「每档一个类设自定义属性」的写法（见 pages/lab/index.wxss）：
+ * `.sim--best|likely|worst` 只负责把 `--tab-accent` / `--tab-bg` / `--tab-glow` /
+ * `--tab-line` 定下来，下面的规则统一引用 —— 换配色只改这三行。
+ */
+
+@import '../../../../core/design/tokens.wxss';
+
+.rsheet {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 顶栏 ── */
+
+.bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 25rpx; /* 13 */
+  padding-left: 42rpx; /* 22 */
+  padding-right: 42rpx;
+  padding-bottom: 23rpx; /* 12 */
+  background: var(--sim-bar-bg);
+  border-bottom: 1rpx solid var(--line);
+}
+
+.bar__back {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 50%;
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx; /* 2 */
+}
+
+.bar__title {
+  font-size: 31rpx; /* 16 */
+  font-weight: 600;
+  letter-spacing: 2rpx; /* 0.8 */
+  color: var(--ink);
+}
+
+.bar__sub {
+  font-size: 21rpx; /* 11 */
+  color: var(--faint);
+}
+
+/* ── 滚动区 ── */
+
+.body {
+  flex: 1;
+  /* Skyline 下 flex:1 的 scroll-view 需要显式高度约束才不塌 */
+  height: 0;
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 15rpx; /* 8 */
+  box-sizing: border-box;
+}
+
+.tail {
+  height: 58rpx; /* 30 */
+}
+
+/* ── 引子 + 三档切换 ── */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 31rpx; /* 16 */
+  padding-top: 8rpx; /* 4 */
+}
+
+.head__line {
+  font-size: 23rpx; /* 12 */
+  line-height: 1.33; /* +4 行距 */
+  color: var(--sub);
+}
+
+.head__q {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.seg {
+  display: flex;
+  flex-direction: row;
+  gap: 8rpx; /* 4 */
+  padding-left: 8rpx;
+  padding-right: 8rpx;
+  padding-top: 8rpx;
+  padding-bottom: 8rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+}
+
+.seg__item {
+  flex: 1;
+  padding-top: 17rpx; /* 9 */
+  padding-bottom: 17rpx;
+  border-radius: var(--r-chip);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.seg__item--on {
+  background: var(--btn-g);
+}
+
+.seg__text {
+  font-size: 25rpx; /* 13 */
+  color: var(--sub);
+}
+
+.seg__item--on .seg__text {
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+/* ── 结局面板 ── */
+
+.panel {
+  margin-top: 31rpx; /* 16 */
+  display: flex;
+  flex-direction: column;
+  gap: 23rpx; /* 12 */
+}
+
+/* 三档配色：顺光 / 大概率 / 背光 */
+.sim--best {
+  --tab-accent: var(--sim-best-accent);
+  --tab-bg: var(--sim-best-bg);
+  --tab-glow: var(--sim-best-glow);
+  --tab-line: var(--sim-best-line);
+}
+.sim--likely {
+  --tab-accent: var(--sim-likely-accent);
+  --tab-bg: var(--sim-likely-bg);
+  --tab-glow: var(--sim-likely-glow);
+  --tab-line: var(--sim-likely-line);
+}
+.sim--worst {
+  --tab-accent: var(--sim-worst-accent);
+  --tab-bg: var(--sim-worst-bg);
+  --tab-glow: var(--sim-worst-glow);
+  --tab-line: var(--sim-worst-line);
+}
+
+/* 概述：分档渐变底，右上角一枚光斑（iOS RadialGradient topTrailing r=180） */
+.sum {
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 38rpx;
+  padding-bottom: 38rpx;
+  border-radius: 42rpx; /* 22 */
+  background-image: radial-gradient(circle 346rpx at 100% 0%, var(--tab-glow) 0%, transparent 100%),
+    var(--tab-bg);
+  border: 1rpx solid var(--tab-line);
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.sum__eyebrow {
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 5rpx; /* 2.5 */
+  color: var(--tab-accent);
+}
+
+.sum__headline {
+  font-size: 31rpx; /* 16 */
+  font-weight: 700;
+  line-height: 1.38; /* +6 行距 */
+  color: var(--ink);
+}
+
+/* 画像维度：label 定宽，正文自换行；行间一条分隔线 */
+.dims {
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 12rpx; /* 6 */
+  padding-bottom: 12rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.dims__row {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 25rpx; /* 13 */
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+}
+
+.dims__row + .dims__row {
+  border-top: 1rpx solid var(--line);
+}
+
+.dims__label {
+  flex-shrink: 0;
+  width: 115rpx; /* 60 */
+  font-size: 23rpx; /* 12 */
+  color: var(--faint);
+}
+
+.dims__text {
+  flex: 1;
+  font-size: 25rpx; /* 13 */
+  line-height: 1.23; /* +3 行距 */
+  color: var(--ink);
+}
+
+/* ── 可能获得 / 需要留意 ── */
+
+.lists {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 21rpx; /* 11 */
+}
+
+.list {
+  flex: 1;
+  /* 两列等宽：不写 min-width 的话长词会把其中一列顶宽 */
+  min-width: 0;
+  box-sizing: border-box;
+  padding-left: 31rpx; /* 16 */
+  padding-right: 31rpx;
+  padding-top: 31rpx;
+  padding-bottom: 31rpx;
+  border-radius: 35rpx; /* 18 */
+  display: flex;
+  flex-direction: column;
+  gap: 19rpx; /* 10 */
+}
+
+.list--gain {
+  --list-dot: var(--teal);
+}
+
+.list--cost {
+  --list-dot: var(--pink);
+}
+
+.list__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx; /* 6 */
+}
+
+.list__dot {
+  width: 13rpx; /* 7 */
+  height: 13rpx;
+  border-radius: 50%;
+  background: var(--list-dot);
+}
+
+.list__title {
+  font-size: 23rpx; /* 12 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.list__row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 15rpx; /* 8 */
+}
+
+.list__bullet {
+  flex-shrink: 0;
+  width: 8rpx; /* 4 */
+  height: 8rpx;
+  margin-top: 12rpx; /* 6 —— 和第一行文字的视觉中线对齐 */
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.list__text {
+  flex: 1;
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.17; /* +2 行距 */
+  color: var(--sub);
+}
+
+/* 最关键的条件：虚线框 + 蓝→柠檬渐变底，和上面的实底卡分开 */
+.keybox {
+  padding-left: 35rpx; /* 18 */
+  padding-right: 35rpx;
+  padding-top: 29rpx; /* 15 */
+  padding-bottom: 29rpx;
+  border-radius: 31rpx; /* 16 */
+  background: var(--sim-key-bg);
+  border: 2rpx dashed var(--sim-key-line);
+  font-size: 24rpx; /* 12.5 */
+  line-height: 1.32; /* +4 行距 */
+  color: var(--sub);
+}
+
+.keybox__label {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── 底线压力测试 ── */
+
+.floor {
+  margin-top: 27rpx; /* 14 */
+  padding-left: 33rpx; /* 17 */
+  padding-right: 33rpx;
+  padding-top: 33rpx;
+  padding-bottom: 33rpx;
+  border-radius: 40rpx; /* 21 */
+  background: var(--sim-panel-bg);
+  border: 1rpx solid var(--floor-line);
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.floor__eyebrow {
+  font-size: 16rpx; /* 8.5 */
+  font-weight: 600;
+  letter-spacing: 4rpx; /* 2.2 */
+  color: var(--floor-accent);
+}
+
+.floor__title {
+  font-size: 29rpx; /* 15 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.floor__note {
+  font-size: 20rpx; /* 10.5 */
+  line-height: 1.3;
+  color: var(--sub);
+}
+
+/* 一张底线卡 */
+.frow {
+  margin-top: 10rpx;
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+  border-radius: 27rpx; /* 14 */
+  background: var(--raised);
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+/* 图标跟着面板的橙色走，不用卡面点缀色 —— 这里说的是「风险」不是「选项」。
+   card-icon 不传 accent 时不设 color，正好继承这一行的颜色；卡名自己定了 --ink，
+   不会跟着变橙。 */
+.frow__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx; /* 6 */
+  color: var(--floor-accent);
+}
+
+.frow__name {
+  font-size: 25rpx; /* 13 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.frow__risk {
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.43; /* +5 行距 */
+  color: var(--sub);
+}
+
+.frow__btns {
+  display: flex;
+  flex-direction: row;
+  gap: 15rpx; /* 8 */
+}
+
+.fbtn {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding-top: 17rpx; /* 9 */
+  padding-bottom: 17rpx;
+  border-radius: var(--r-chip);
+  background: var(--floor-btn-bg);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx; /* 10.5 */
+  color: var(--sub);
+}
+
+.fbtn--ok {
+  font-weight: 600;
+  background: var(--floor-ok-wash);
+  border-color: var(--floor-ok-line-on);
+  color: var(--floor-ok);
+}
+
+.fbtn--bad {
+  font-weight: 600;
+  background: var(--floor-bad-wash);
+  border-color: var(--floor-bad-line-on);
+  color: var(--floor-bad);
+}
+
+/* 结论块 */
+.verdict {
+  margin-top: 10rpx;
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 27rpx;
+  padding-bottom: 27rpx;
+  border-radius: 27rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx; /* 6 */
+}
+
+.verdict--ok {
+  --verdict-accent: var(--floor-ok);
+  background: var(--floor-ok-bg);
+  border: 1rpx solid var(--floor-ok-line);
+}
+
+.verdict--bad {
+  --verdict-accent: var(--floor-accent);
+  background: var(--floor-bad-bg);
+  border: 1rpx solid var(--floor-bad-line);
+}
+
+.verdict__eyebrow {
+  font-size: 17rpx; /* 9 */
+  font-weight: 600;
+  letter-spacing: 3rpx; /* 1.6 */
+  color: var(--verdict-accent);
+}
+
+.verdict__headline {
+  font-size: 25rpx; /* 13 */
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.verdict__body {
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.35;
+  color: var(--sub);
+}
+
+/* ── 底线分析 ── */
+
+.bline {
+  margin-top: 27rpx; /* 14 */
+  padding-left: 33rpx; /* 17 */
+  padding-right: 33rpx;
+  padding-top: 33rpx;
+  padding-bottom: 33rpx;
+  border-radius: 40rpx; /* 21 */
+  background: var(--sim-panel-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.bline--ok {
+  --bline-accent: var(--floor-ok);
+  border: 1rpx solid var(--bottom-ok-line);
+}
+
+.bline--bad {
+  --bline-accent: var(--floor-accent);
+  border: 1rpx solid var(--floor-line);
+}
+
+.bline__eyebrow {
+  font-size: 16rpx; /* 8.5 */
+  font-weight: 600;
+  letter-spacing: 4rpx; /* 2.2 */
+  color: var(--bline-accent);
+}
+
+.bline__title {
+  font-size: 29rpx; /* 15 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.bline__note {
+  font-size: 20rpx; /* 10.5 */
+  line-height: 1.3;
+  color: var(--sub);
+}
+
+/* 风险 / 保护条件两张小卡，结构与结局面板的两列一致，只换点色 */
+.blist {
+  margin-top: 10rpx;
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+  border-radius: 27rpx; /* 14 */
+  background: var(--raised);
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.blist--risk {
+  --blist-dot: var(--floor-bad);
+}
+
+.blist--guard {
+  --blist-dot: var(--floor-ok);
+}
+
+.blist__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx; /* 6 */
+}
+
+.blist__dot {
+  width: 13rpx; /* 7 */
+  height: 13rpx;
+  border-radius: 50%;
+  background: var(--blist-dot);
+}
+
+.blist__title {
+  font-size: 23rpx; /* 12 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.blist__row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 15rpx; /* 8 */
+}
+
+.blist__bullet {
+  flex-shrink: 0;
+  width: 8rpx; /* 4 */
+  height: 8rpx;
+  margin-top: 12rpx;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.blist__text {
+  flex: 1;
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.35; /* +4 行距 */
+  color: var(--sub);
+}
+
+/* ── 类似经验的人 ── */
+
+.people {
+  margin-top: 23rpx; /* 12 */
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.people__head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.people__title {
+  font-size: 29rpx; /* 15 */
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: var(--ink);
+}
+
+.people__trailing {
+  font-size: 23rpx; /* 12 */
+  color: var(--faint);
+}
+
+/* 出血到屏幕边，滚动内容再补回内容边距（同实验室页底线卡横滑） */
+.people__scroll {
+  margin-left: -38rpx;
+  margin-right: -38rpx;
+  width: calc(100% + 76rpx);
+  white-space: nowrap;
+}
+
+.people__row {
+  display: flex;
+  flex-direction: row;
+  gap: 19rpx; /* 10 */
+  padding-left: 38rpx;
+  padding-right: 38rpx;
+  padding-top: 8rpx;
+  padding-bottom: 8rpx;
+}
+
+.pcard {
+  flex-shrink: 0;
+  width: 323rpx; /* 168 */
+  /* 固定高度：横滑行嵌在竖向 scroll-view 里，只靠内容高度会塌（同 iOS 的注释） */
+  height: 331rpx; /* 172 */
+  box-sizing: border-box;
+  border-radius: 35rpx; /* 18 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 头图色带：五档旅人配色，WXSS 拼不出变量名，所以每档一条规则（同 next-panel） */
+.pcard__band {
+  height: 100rpx; /* 52 */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.hue-0 .pcard__band { background: var(--hue0-g); }
+.hue-1 .pcard__band { background: var(--hue1-g); }
+.hue-2 .pcard__band { background: var(--hue2-g); }
+.hue-3 .pcard__band { background: var(--hue3-g); }
+.hue-4 .pcard__band { background: var(--hue4-g); }
+
+.pcard__avatar {
+  width: 69rpx; /* 36 */
+  height: 69rpx;
+  border-radius: 50%;
+  background: var(--avatar-bg);
+  border: 2rpx solid var(--avatar-line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.pcard__initial {
+  font-size: 27rpx; /* 14 */
+  font-weight: 700;
+  color: var(--avatar-ink);
+}
+
+.pcard__body {
+  flex: 1;
+  min-height: 0;
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 25rpx; /* 13 */
+  padding-bottom: 27rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx; /* 5 */
+}
+
+.pcard__name {
+  font-size: 25rpx; /* 13 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* 引语最多两行，超出省略 —— 卡高固定，放不下第三行 */
+.pcard__quote {
+  flex: 1;
+  font-size: 21rpx; /* 11 */
+  line-height: 1.19; /* +2 行距 */
+  color: var(--sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pcard__tags {
+  display: flex;
+  flex-direction: row;
+  gap: 10rpx; /* 5 */
+}
+
+/* ── 重新选择 ── */
+
+.again {
+  margin-top: 46rpx; /* 24 */
+}

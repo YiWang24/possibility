@@ -1,6 +1,196 @@
+<!--
+  人生实验室 —— 版式对应 iOS `Features/Lab/LabView.swift` 的 body 自上而下。
+  牌堆、拖拽浮标、加载浮层的几何都在 index.ts 里算好，这里只贴 style。
+-->
 <view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 2 · D · 待复刻</text>
+  <view class="head">
+    <text class="head__eyebrow">LIFE LAB</text>
+    <text class="head__title">人生实验室</text>
+  </view>
+
+  <!-- ── 当前探索问题 ── -->
+  <view class="qcard kaleido-card">
+    <text class="qcard__label">当前探索问题</text>
+
+    <block wx:if="{{editing}}">
+      <textarea
+        class="qcard__field"
+        value="{{draft}}"
+        bindinput="onDraftInput"
+        auto-height
+        maxlength="-1"
+        adjust-position
+        show-confirm-bar="{{false}}"
+        placeholder="想探索的那个问题"
+        placeholder-class="ph"
+      />
+      <view class="qcard__row">
+        <text class="qcard__cancel" bindtap="onDraftCancel">取消</text>
+        <view class="qcard__ok" bindtap="onDraftSave"><text>确定</text></view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <text class="qcard__text">{{question}}</text>
+      <view class="qcard__row">
+        <text class="qcard__edit" bindtap="onEditQuestion">更换问题 ›</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- ── 时间旋钮 ── -->
+  <view class="dial-area">
+    <dial
+      size="{{dialSize}}"
+      index="{{horizonIndex}}"
+      pick="{{pick}}"
+      hot="{{hot}}"
+      bind:change="onDialChange"
+    />
+  </view>
+
+  <!-- ── 档位速选 ── -->
+  <scroll-view class="presets" scroll-x enable-flex show-scrollbar="{{false}}">
+    <view class="presets__row">
+      <view
+        wx:for="{{presets}}"
+        wx:key="key"
+        class="preset {{presetKey === item.key ? 'preset--on' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onPresetTap"
+      >
+        <text class="preset__text">{{item.label}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <text class="dial-hint">拖动旋钮，从 7 天到 10 年任意停留</text>
+
+  <!-- ── 选择卡 ── -->
+  <view class="sec-head">
+    <text class="sec-head__title">我的选择卡</text>
+    <text class="sec-head__trailing">点选或拖进上方转盘</text>
+  </view>
+
+  <view class="ghint">
+    <text class="ghint__badge">手势</text>
+    <text class="ghint__item">单击选中</text>
+    <text class="ghint__dot">·</text>
+    <text class="ghint__item">按住拖入转盘</text>
+    <text class="ghint__dot">·</text>
+    <text class="ghint__dim">长按自定义卡可删除</text>
+  </view>
+
+  <!-- 生成中：牌堆保持可交互，只在上方加一条提示 -->
+  <view wx:if="{{choicesLoading}}" class="cload">
+    <view class="cload__spin"></view>
+    <text class="cload__text">正在根据当前问题生成专属选择卡……</text>
+  </view>
+  <view wx:elif="{{choicesEmpty}}" class="cretry" bindtap="onRetryChoices">
+    <text>重新生成选择卡</text>
+  </view>
+
+  <!-- 写一张自己的选择卡 -->
+  <view wx:if="{{showEditor}}" class="editor">
+    <view class="editor__head">
+      <text class="editor__title">写一张自己的选择卡</text>
+      <text class="editor__cap">名称 ≤18 字 · 描述 ≤42 字</text>
+    </view>
+    <input
+      class="editor__field"
+      value="{{customName}}"
+      bindinput="onNameInput"
+      maxlength="18"
+      placeholder="选择名称，例如：去大厂做 AI"
+      placeholder-class="ph"
+    />
+    <textarea
+      class="editor__field editor__field--area"
+      value="{{customDesc}}"
+      bindinput="onDescInput"
+      maxlength="42"
+      show-confirm-bar="{{false}}"
+      placeholder="一句话描述这条路"
+      placeholder-class="ph"
+    />
+    <view class="editor__row">
+      <text class="editor__cancel" bindtap="onEditorCancel">取消</text>
+      <view class="editor__ok" bindtap="onEditorSubmit"><text>加入牌堆</text></view>
+    </view>
+  </view>
+
+  <!-- 扇形牌堆：绝对定位 + JS 算好的 transform -->
+  <view class="deck" style="height: {{deckHeight}}rpx;">
+    <view
+      wx:for="{{deck}}"
+      wx:key="id"
+      class="dcard dcard--a{{item.accent}} {{item.on ? 'dcard--on' : ''}} {{item.isCreate ? 'dcard--create' : ''}}"
+      style="z-index: {{item.z}}; transform: translateX(-50%) translate({{item.x}}rpx, {{item.y}}rpx) rotate({{item.rotate}}deg) scale({{item.scale}});"
+      data-id="{{item.id}}"
+      bindtap="onCardTap"
+      bindlongpress="onCardLongPress"
+      bindtouchstart="onCardTouchStart"
+      bindtouchmove="onCardTouchMove"
+      bindtouchend="onCardTouchEnd"
+      bindtouchcancel="onCardTouchEnd"
+    >
+      <card-icon icon="{{item.icon}}" accent="{{item.accent}}" emphasized="{{item.on}}" />
+      <text class="dcard__name">{{item.name}}</text>
+      <text class="dcard__desc">{{item.desc}}</text>
+      <view wx:if="{{item.on}}" class="dcard__tick"><text>✓</text></view>
+    </view>
+  </view>
+
+  <!-- ── 底线卡 ── -->
+  <view class="carry">
+    <view class="carry__head">
+      <text class="carry__title">什么要一起带走？</text>
+      <text class="carry__count"><text class="carry__count-on">{{carryCount}}</text>/3</text>
+    </view>
+    <scroll-view class="carry__scroll" scroll-x enable-flex show-scrollbar="{{false}}">
+      <view class="carry__row">
+        <view
+          wx:for="{{carryCards}}"
+          wx:key="id"
+          class="ccard {{item.on ? 'ccard--on' : ''}}"
+          style="width: {{carryCardWidth}}rpx;"
+          data-id="{{item.id}}"
+          bindtap="onCarryTap"
+        >
+          <card-icon icon="{{item.icon}}" variant="mark" accent="{{item.on ? 0 : -1}}" />
+          <text class="ccard__name">{{item.name}}</text>
+          <text class="ccard__source">{{item.source}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="cta">
+    <btn block disabled="{{!canSim}}" bind:tap="onRunSim"><text>开始推演</text></btn>
+  </view>
+
+  <view class="disclaimer">
+    <text>推演基于你的动态画像与 1,842 位相似旅人的真实经历</text>
+    <text>它不是预言，是一面镜子</text>
   </view>
 </view>
+
+<!-- 拖拽浮标：跟手指走，不吃事件 -->
+<view
+  wx:if="{{ghostShow}}"
+  class="ghost"
+  style="left: {{ghostX}}px; top: {{ghostY}}px;"
+>
+  <card-icon icon="{{ghostIcon}}" variant="mark" accent="0" />
+  <text class="ghost__name">{{ghostName}}</text>
+</view>
+
+<!-- 推演加载浮层 -->
+<view wx:if="{{loading}}" class="simload" catchtouchmove="noop">
+  <orb size="{{212}}" />
+  <text class="simload__title">正在推演 {{pick}}</text>
+  <text class="simload__step">{{loadStep}}</text>
+</view>
+
+<!-- 三种未来 + 底线分析 -->
+<result-sheet wx:if="{{resultShow}}" result="{{result}}" bind:close="onResultClose" />

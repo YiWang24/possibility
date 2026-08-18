@@ -1,4 +1,10 @@
 {
   "navigationBarTitleText": "人生实验室",
-  "usingComponents": {}
+  "usingComponents": {
+    "dial": "./components/dial/index",
+    "result-sheet": "./components/result-sheet/index",
+    "btn": "../../core/design/components/btn/index",
+    "card-icon": "../../core/design/components/card-icon/index",
+    "orb": "../../core/design/components/orb/index"
+  }
 }

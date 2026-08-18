@@ -1,26 +1,612 @@
+/**
+ * 人生实验室样式 —— 对应 iOS `Features/Lab/LabView.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ *
+ * 选择卡的印章光晕用「每档一个类设一个自定义属性」而不是五份完整规则：
+ * WXSS 拼不出变量名（`var(--accent-{{n}}-glow)` 不成立），但自定义属性本身
+ * 是正常继承的，所以让 `.dcard--aN` 只负责把 `--stamp-glow` 定下来，
+ * 卡面规则统一引用它 —— 加一档点缀色时只多一行。
+ */
+
+@import '../../core/design/tokens.wxss';
+
 .page {
   min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
+  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss） */
+  padding-left: 42rpx; /* 22 */
+  padding-right: 42rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 200rpx); /* 44 + 自定义 tabBar */
   box-sizing: border-box;
 }
 
-.placeholder {
-  padding: 48rpx 32rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 12rpx;
+/* 输入框占位色（textarea / input 的 placeholder-class） */
+.ph {
+  color: var(--faint);
 }
 
-.placeholder__title {
-  font-size: 34rpx;
+/* ── 页头（PageHeader）── */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx; /* 6 */
+  margin-top: 14rpx; /* .safe-top 已给 24rpx，补到 iOS 的 20pt */
+}
+
+.head__eyebrow {
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 7rpx; /* 3.5 */
+  color: var(--faint);
+}
+
+.head__title {
+  font-size: 52rpx; /* 27 */
+  font-weight: 700;
+  letter-spacing: 2rpx; /* 0.8 */
+  color: var(--ink);
+}
+
+/* ── 当前探索问题 ── */
+
+.qcard {
+  margin-top: 35rpx; /* 18 */
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 35rpx; /* 18 */
+  padding-bottom: 35rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.qcard__label {
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 5rpx; /* 2.5 */
+  color: var(--faint);
+}
+
+.qcard__text {
+  margin-top: 15rpx; /* 8 */
+  font-size: 32rpx; /* 16.5 */
+  font-weight: 700;
+  line-height: 1.3; /* +5 行距 */
+  color: var(--ink);
+}
+
+.qcard__row {
+  margin-top: 19rpx; /* 10 */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 27rpx;
+}
+
+.qcard__edit {
+  font-size: 23rpx; /* 12 */
+  color: var(--blue);
+}
+
+.qcard__field {
+  margin-top: 15rpx; /* 8 */
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 96rpx; /* 2 行 */
+  max-height: 192rpx; /* 4 行 */
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 23rpx; /* 12 */
+  padding-bottom: 23rpx;
+  border-radius: 27rpx; /* 14 */
+  background: var(--field-bg-focus);
+  border: 1rpx solid var(--field-line-focus);
+  font-size: 27rpx; /* 14 */
+  line-height: 1.22; /* +3 行距 */
+  color: var(--ink);
+}
+
+.qcard__cancel {
+  font-size: 24rpx; /* 12.5 */
+  color: var(--faint);
+}
+
+.qcard__ok {
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 15rpx; /* 8 */
+  padding-bottom: 15rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  font-size: 24rpx; /* 12.5 */
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+/* ── 时间旋钮 ── */
+
+.dial-area {
+  margin-top: 58rpx; /* 30 */
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+/* ── 档位速选 ── */
+
+.presets {
+  margin-top: 35rpx; /* 18 */
+  width: 100%;
+  white-space: nowrap;
+}
+
+.presets__row {
+  display: flex;
+  flex-direction: row;
+  gap: 15rpx; /* 8 */
+  padding-left: 2rpx;
+  padding-right: 2rpx;
+}
+
+.preset {
+  flex-shrink: 0;
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 15rpx; /* 8 */
+  padding-bottom: 15rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+}
+
+.preset--on {
+  background: var(--btn-g);
+  border-color: var(--blue-line-strong);
+}
+
+.preset__text {
+  font-size: 23rpx; /* 12 */
+  color: var(--sub);
+}
+
+.preset--on .preset__text {
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+.dial-hint {
+  margin-top: 23rpx; /* 12 */
+  display: block;
+  text-align: center;
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 2rpx; /* 1 */
+  color: var(--faint);
+}
+
+/* ── 分区标题（SectionHeader）── */
+
+.sec-head {
+  margin-top: 46rpx; /* 24 */
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sec-head__title {
+  font-size: 29rpx; /* 15 */
+  font-weight: 600;
+  letter-spacing: 2rpx; /* 0.9 */
+  color: var(--ink);
+}
+
+.sec-head__trailing {
+  font-size: 23rpx; /* 12 */
+  color: var(--faint);
+}
+
+/* ── 手势提示 ── */
+
+.ghint {
+  margin-top: 19rpx; /* 10 */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx; /* 6 */
+}
+
+.ghint__badge {
+  padding-left: 13rpx; /* 7 */
+  padding-right: 13rpx;
+  padding-top: 6rpx; /* 3 */
+  padding-bottom: 6rpx;
+  border-radius: var(--r-chip);
+  background: var(--hint-badge-bg);
+  border: 1rpx solid var(--hint-badge-line);
+  font-size: 17rpx; /* 9 */
+  color: var(--hint-badge-ink);
+}
+
+.ghint__item {
+  font-size: 18rpx; /* 9.5 */
+  color: var(--hint-ink);
+}
+
+.ghint__dot,
+.ghint__dim {
+  font-size: 18rpx;
+  color: var(--hint-dim);
+}
+
+/* ── 生成中 / 重新生成 ── */
+
+.cload {
+  margin-top: 19rpx; /* 10 */
+  align-self: flex-start;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15rpx; /* 8 */
+  padding-left: 23rpx; /* 12 */
+  padding-right: 23rpx;
+  padding-top: 12rpx; /* 6 */
+  padding-bottom: 12rpx;
+  border-radius: var(--r-chip);
+  background: var(--cload-bg);
+  border: 1rpx solid var(--cload-line);
+}
+
+/* 转圈：借边框画一枚缺口环，不额外引资源 */
+.cload__spin {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--cload-line);
+  border-top-color: var(--blue);
+  animation: cload-spin 0.8s linear infinite;
+}
+
+@keyframes cload-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.cload__text {
+  font-size: 19rpx; /* 10 */
+  color: var(--sub);
+}
+
+.cretry {
+  margin-top: 19rpx;
+  align-self: flex-start;
+  font-size: 22rpx; /* 11.5 */
+  font-weight: 600;
+  color: var(--blue);
+}
+
+/* ── 自定义卡编辑器 ── */
+
+.editor {
+  margin-top: 19rpx; /* 10 */
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+  border-radius: 33rpx; /* 17 */
+  background: var(--editor-bg);
+  border: 1rpx solid var(--editor-line);
+  display: flex;
+  flex-direction: column;
+  gap: 19rpx; /* 10 */
+}
+
+.editor__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editor__title {
+  font-size: 23rpx; /* 12 */
   font-weight: 600;
   color: var(--ink);
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+.editor__cap {
+  font-size: 17rpx; /* 9 */
+  color: var(--faint);
+}
+
+.editor__field {
+  width: 100%;
+  box-sizing: border-box;
+  padding-left: 21rpx; /* 11 */
+  padding-right: 21rpx;
+  padding-top: 17rpx; /* 9 */
+  padding-bottom: 17rpx;
+  border-radius: 21rpx; /* 11 */
+  background: var(--field-bg);
+  border: 1rpx solid var(--field-line);
+  font-size: 22rpx; /* 11.5 */
+  color: var(--ink);
+}
+
+.editor__field--area {
+  height: 92rpx; /* 固定 2 行，和 iOS lineLimit(2...2) 同 */
+}
+
+.editor__row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 27rpx;
+}
+
+.editor__cancel {
+  font-size: 22rpx; /* 11.5 */
+  color: var(--faint);
+}
+
+.editor__ok {
+  padding-left: 31rpx; /* 16 */
+  padding-right: 31rpx;
+  padding-top: 13rpx; /* 7 */
+  padding-bottom: 13rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+/* ── 扇形牌堆 ── */
+
+.deck {
+  position: relative;
+  margin-top: 12rpx; /* 6 */
+  width: 100%;
+}
+
+.dcard {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 223rpx; /* 116 */
+  height: 285rpx; /* 148 */
+  box-sizing: border-box;
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 33rpx; /* 17 */
+  padding-bottom: 33rpx;
+  border-radius: 35rpx; /* 18 */
+  /* 扇形以卡片底边为轴张开（iOS anchor: .bottom） */
+  transform-origin: 50% 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background-color: var(--choice-bg);
+  background-image: var(--stamp-glow);
+  border: 3rpx dashed var(--choice-line); /* 1.5pt */
+  box-shadow: var(--choice-shadow);
+}
+
+/* 每档点缀色只负责定下印章光晕，卡面规则不必复制五遍 */
+.dcard--a0 { --stamp-glow: radial-gradient(circle 231rpx at 82% -12%, var(--accent-0-glow) 0%, transparent 100%); }
+.dcard--a1 { --stamp-glow: radial-gradient(circle 231rpx at 82% -12%, var(--accent-1-glow) 0%, transparent 100%); }
+.dcard--a2 { --stamp-glow: radial-gradient(circle 231rpx at 82% -12%, var(--accent-2-glow) 0%, transparent 100%); }
+.dcard--a3 { --stamp-glow: radial-gradient(circle 231rpx at 82% -12%, var(--accent-3-glow) 0%, transparent 100%); }
+.dcard--a4 { --stamp-glow: radial-gradient(circle 231rpx at 82% -12%, var(--accent-4-glow) 0%, transparent 100%); }
+
+.dcard--on {
+  background-image: var(--choice-bg-on), var(--stamp-glow);
+  border-style: solid;
+  border-color: var(--choice-line-on);
+  box-shadow: var(--choice-shadow-on);
+}
+
+.dcard--create {
+  background-color: var(--choice-create-bg);
+  --stamp-glow: radial-gradient(circle 231rpx at 82% -12%, var(--choice-create-glow) 0%, transparent 100%);
+  border-color: var(--choice-create-line);
+}
+
+.dcard--create.dcard--on {
+  background-image: var(--choice-create-bg-on), var(--stamp-glow);
+  border-color: var(--choice-create-line-on);
+  box-shadow: var(--choice-create-shadow-on);
+}
+
+.dcard__name {
+  margin-top: 19rpx; /* 10 */
+  font-size: 25rpx; /* 13 */
+  font-weight: 600;
+  line-height: 1.23; /* +3 行距 */
+  color: var(--ink);
+}
+
+.dcard__desc {
+  margin-top: 12rpx; /* 6 */
+  font-size: 20rpx; /* 10.5 */
+  line-height: 1.19; /* +2 行距 */
+  color: var(--sub);
+}
+
+.dcard__tick {
+  position: absolute;
+  top: 19rpx; /* 10 */
+  right: 23rpx; /* 12 */
+  width: 38rpx; /* 20 */
+  height: 38rpx;
+  border-radius: 50%;
+  background: var(--btn-g);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font-size: 21rpx; /* 11 */
+  font-weight: 700;
+  color: var(--on-accent);
+}
+
+.dcard--create .dcard__tick {
+  background: var(--choice-tick-create-g);
+}
+
+/* ── 底线卡 ── */
+
+.carry {
+  margin-top: 46rpx; /* 24 */
+}
+
+.carry__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.carry__title {
+  font-size: 29rpx; /* 15 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.carry__count {
+  font-size: 23rpx; /* 12 */
+  color: var(--faint);
+}
+
+.carry__count-on {
+  font-weight: 700;
+  color: var(--blue);
+}
+
+/* 横滑区全出血到屏幕边，滚动内容再补回安全边距，末尾半张卡才有「还能滑」的暗示 */
+.carry__scroll {
+  margin-top: 27rpx; /* 14 */
+  margin-left: -42rpx;
+  margin-right: -42rpx;
+  width: calc(100% + 84rpx);
+  white-space: nowrap;
+}
+
+.carry__row {
+  display: flex;
+  flex-direction: row;
+  gap: 17rpx; /* 9 */
+  padding-left: 42rpx;
+  padding-right: 42rpx;
+}
+
+.ccard {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding-left: 23rpx; /* 12 */
+  padding-right: 23rpx;
+  padding-top: 23rpx;
+  padding-bottom: 23rpx;
+  border-radius: 27rpx; /* 14 */
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10rpx; /* 5 */
+}
+
+.ccard--on {
+  background: var(--blue-wash);
+  border-width: 3rpx; /* 1.4pt */
+  border-color: var(--blue-line-strong);
+}
+
+.ccard__name {
+  font-size: 24rpx; /* 12.5 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ccard__source {
+  font-size: 18rpx; /* 9.5 */
+  color: var(--faint);
+}
+
+/* ── 开始推演 ── */
+
+.cta {
+  margin-top: 50rpx; /* 26 */
+}
+
+.disclaimer {
+  margin-top: 27rpx; /* 14 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx; /* +4 行距 */
+  font-size: 21rpx; /* 11 */
+  color: var(--faint);
+}
+
+/* ── 拖拽浮标 ── */
+
+.ghost {
+  position: fixed;
+  z-index: 60;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15rpx; /* 8 */
+  padding-left: 35rpx; /* 18 */
+  padding-right: 35rpx;
+  padding-top: 23rpx; /* 12 */
+  padding-bottom: 23rpx;
+  border-radius: 31rpx; /* 16 */
+  background: var(--ghost-bg);
+  border: 3rpx solid var(--ghost-line);
+  box-shadow: var(--ghost-shadow);
+  /* 浮标只是影子，别把手势从卡片上抢走 */
+  pointer-events: none;
+}
+
+.ghost__name {
+  font-size: 27rpx; /* 14 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* ── 推演加载浮层 ── */
+
+.simload {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  background: var(--sim-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 42rpx; /* 22 */
+  padding-left: 77rpx; /* 40 */
+  padding-right: 77rpx;
+  padding-top: 77rpx;
+  padding-bottom: 77rpx;
+  box-sizing: border-box;
+}
+
+.simload__title {
+  font-size: 35rpx; /* 18 */
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink);
+}
+
+.simload__step {
+  font-size: 24rpx; /* 12.5 */
+  text-align: center;
   color: var(--sub);
 }

@@ -1,0 +1,40 @@
+<!-- 时间旋钮：底盘 → 色环 → 刻度(canvas) → 数字标签 → 指针 → 圆心文字 -->
+<view
+  class="dial {{hot ? 'dial--hot' : ''}}"
+  style="width: {{size}}rpx; height: {{size}}rpx;"
+  bindtouchstart="onTouchStart"
+  bindtouchmove="onTouchMove"
+  bindtouchend="onTouchEnd"
+  bindtouchcancel="onTouchEnd"
+>
+  <view class="dial__ring {{still ? 'dial__ring--still' : ''}}"></view>
+  <view class="dial__base"></view>
+
+  <canvas
+    class="dial__ticks"
+    type="2d"
+    id="{{canvasId}}"
+    style="width: {{size}}rpx; height: {{size}}rpx;"
+  ></canvas>
+
+  <view
+    wx:for="{{labels}}"
+    wx:key="key"
+    class="dial__label {{item.on ? 'dial__label--on' : ''}} {{item.small ? 'dial__label--sm' : ''}}"
+    style="left: {{item.x}}rpx; top: {{item.y}}rpx;"
+  >{{item.text}}</view>
+
+  <!-- 指针：以圆心为轴旋转，杆自上而下淡出，端点一枚亮盘 -->
+  <view class="dial__arm" style="transform: translate(-50%, -100%) rotate({{armAngle}}deg);">
+    <view class="dial__arm-line"></view>
+    <view class="dial__knob"></view>
+  </view>
+
+  <view class="dial__hub">
+    <text class="dial__horizon">{{horizonLabel}}</text>
+    <text class="dial__after">后</text>
+    <view class="dial__pick {{pick ? '' : 'dial__pick--empty'}}">
+      <text class="dial__pick-text">{{pick || '把选择卡拖进来'}}</text>
+    </view>
+  </view>
+</view>

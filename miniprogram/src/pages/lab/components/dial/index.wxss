@@ -1,0 +1,167 @@
+/**
+ * 时间旋钮样式 —— 层序与 iOS `DialView` 的 ZStack 一致：
+ * 色环 → 底盘 → 刻度 → 标签 → 指针 → 圆心文字。
+ */
+
+.dial {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ── 外圈色环：conic 极光，缓慢自转 ── */
+
+.dial__ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  /* Skyline 不支持 conic 时退化成一圈纯蓝，形状与旋转都还在 */
+  background: var(--blue);
+  background-image: var(--orb-conic);
+  opacity: 0.5;
+  animation: dial-spin 24s linear infinite;
+}
+
+.dial__ring--still {
+  animation: none;
+}
+
+@keyframes dial-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── 底盘：盖住色环内侧，只留一道发光边 ── */
+
+.dial__base {
+  position: absolute;
+  left: 8rpx;
+  top: 8rpx;
+  right: 8rpx;
+  bottom: 8rpx;
+  border-radius: 50%;
+  background: var(--dial-base);
+  border: 1rpx solid var(--dial-edge);
+}
+
+/* 拖拽悬停：整圈热区高亮，告诉用户「松手就放进来」 */
+.dial--hot .dial__base {
+  border-color: var(--dial-hot-line);
+  border-style: dashed;
+}
+
+.dial__ticks {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* ── 数字标签：坐标由 JS 算好，这里只做居中回退 ── */
+
+.dial__label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 20rpx;
+  color: var(--faint);
+  letter-spacing: 0.5rpx;
+}
+
+.dial__label--sm {
+  font-size: 17rpx;
+}
+
+.dial__label--on {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── 指针 ── */
+
+.dial__arm {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* 杆长 = 半径 - 刻度带；用 40% 让端点亮盘落在刻度内沿 */
+  height: 40%;
+  width: 6rpx;
+  transform-origin: 50% 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dial__arm-line {
+  flex: 1;
+  width: 100%;
+  border-radius: 3rpx;
+  background: var(--dial-arm);
+}
+
+.dial__knob {
+  position: absolute;
+  top: -9rpx;
+  width: 26rpx;
+  height: 26rpx;
+  border-radius: 50%;
+  background: var(--dial-knob);
+  border: 2rpx solid var(--dial-knob-ring);
+  box-shadow: var(--cta-shadow);
+}
+
+/* ── 圆心：时长 + 已选择卡 ── */
+
+.dial__hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* 圆心文字不吃手势，拖拽从任何位置起手都算在表盘上 */
+  pointer-events: none;
+}
+
+.dial__horizon {
+  font-size: 60rpx;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+  letter-spacing: -1rpx;
+}
+
+.dial__after {
+  margin-top: 2rpx;
+  font-size: 22rpx;
+  color: var(--sub);
+  letter-spacing: 2rpx;
+}
+
+.dial__pick {
+  margin-top: 14rpx;
+  max-width: 240rpx;
+  padding-left: 18rpx;
+  padding-right: 18rpx;
+  padding-top: 7rpx;
+  padding-bottom: 7rpx;
+  border-radius: var(--r-chip);
+  background: var(--blue-wash);
+  border: 1rpx solid var(--blue-line);
+}
+
+.dial__pick--empty {
+  background: transparent;
+  border-color: var(--line);
+  border-style: dashed;
+}
+
+.dial__pick-text {
+  font-size: 21rpx;
+  color: var(--blue-300);
+}
+
+.dial__pick--empty .dial__pick-text {
+  color: var(--faint);
+}
