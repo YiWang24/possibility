@@ -1,0 +1,145 @@
+/* 测评界面样式 —— 霍兰德与优势探索共用。
+   李克特选项做成带刻度的行式按钮：左侧圆点尺寸随强度递增，
+   替代无个性的 radio，选中态用主色描边而非填充色块。 */
+
+.notices {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 26px;
+}
+
+/* ============ 题目 ============ */
+
+.question {
+  font-family: var(--serif);
+  font-size: 27px;
+  line-height: 1.5;
+  font-weight: 600;
+  margin-top: 18px;
+  letter-spacing: 0.01em;
+}
+
+.likert {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 34px;
+  padding-bottom: 8px;
+}
+
+.likert-row {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.likert-row:active {
+  transform: scale(0.99);
+}
+
+.likert-row.is-on {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.likert-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-ghost);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+/* 刻度感：五个选项的圆点由小到大 */
+.likert-row:nth-child(1) .likert-dot { width: 8px; height: 8px; }
+.likert-row:nth-child(2) .likert-dot { width: 11px; height: 11px; }
+.likert-row:nth-child(3) .likert-dot { width: 14px; height: 14px; }
+.likert-row:nth-child(4) .likert-dot { width: 17px; height: 17px; }
+.likert-row:nth-child(5) .likert-dot { width: 20px; height: 20px; }
+
+.likert-row.is-on .likert-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.likert-label {
+  flex: 1;
+}
+
+/* ============ 结果 ============ */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 26px;
+}
+
+.chip {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+
+.dim {
+  margin-top: 26px;
+}
+
+.dim-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dim-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.dim-pct {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.dim-rail {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  margin: 10px 0 9px;
+}
+
+.dim-rail > i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+.dim-desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+}

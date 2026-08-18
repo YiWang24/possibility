@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>万花筒 · 认识自己</title>
+  <link rel="stylesheet" href="./assets/base.css" />
+  <link rel="stylesheet" href="./assets/assessment.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="rail"><i></i></div>
+
+    <!-- 开始 -->
+    <section class="screen is-active" id="screen-intro">
+      <div class="scroll pad-top">
+        <div id="intro-body"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="dock">
+        <button class="btn" id="btn-start" type="button">开始</button>
+        <button class="btn-quiet" id="btn-reset-intro" type="button">清除进度，重新开始</button>
+      </div>
+    </section>
+
+    <!-- 答题 -->
+    <section class="screen" id="screen-quiz">
+      <div class="scroll pad-top">
+        <div id="quiz-body"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="dock">
+        <button class="btn-quiet" id="btn-back" type="button">← 上一题</button>
+      </div>
+    </section>
+
+    <!-- 结果 -->
+    <section class="screen" id="screen-result">
+      <div class="scroll pad-top">
+        <div id="result-body"></div>
+        <div style="height:28px"></div>
+      </div>
+      <div class="dock">
+        <div class="row">
+          <button class="btn btn-ghost" id="btn-save" type="button">保存图片</button>
+          <button class="btn" id="btn-post" type="button">发布笔记</button>
+        </div>
+        <button class="btn-quiet" id="btn-restart" type="button">重新测一次</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./assets/bridge.js"></script>
+  <script src="./assets/ui.js"></script>
+  <script src="./assets/share-card.js"></script>
+  <script src="./assets/assessment-engine.js"></script>
+  <script src="./assets/assessment-view.js"></script>
+  <script src="./assets/data.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>取舍卡牌 · 最后会留下什么</title>
+  <link rel="stylesheet" href="./assets/base.css" />
+  <link rel="stylesheet" href="./assets/cards.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="rail"><i></i></div>
+
+    <!-- 选择场景 -->
+    <section class="screen is-active" id="screen-hub">
+      <div class="scroll pad-top">
+        <p class="kicker">TRADE-DOWN CARDS</p>
+        <h1 class="display">当生活不断要求取舍
+你最后会守住什么？</h1>
+        <p class="lede">从 18 张底牌里选出 9 张，在一轮轮情境中做取舍，直到手里自然只剩下最重要的 3 张。</p>
+        <div class="hub-list" id="hub-list"></div>
+        <div style="height:24px"></div>
+      </div>
+    </section>
+
+    <!-- 规则 -->
+    <section class="screen" id="screen-intro">
+      <div class="scroll pad-top">
+        <div id="intro-body"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="dock">
+        <button class="btn" id="btn-begin" type="button">开始选牌</button>
+        <button class="btn-quiet js-hub" type="button">← 换一个场景</button>
+      </div>
+    </section>
+
+    <!-- 选牌 -->
+    <section class="screen" id="screen-select">
+      <div class="scroll pad-top">
+        <div id="select-head"></div>
+        <div class="deck" id="select-deck"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="dock">
+        <p class="count-hint" id="select-count"></p>
+        <button class="btn" id="btn-confirm-select" type="button" disabled>确认这 9 张</button>
+        <button class="btn-quiet js-hub" type="button">← 换一个场景</button>
+      </div>
+    </section>
+
+    <!-- 抽情境 -->
+    <section class="screen" id="screen-draw">
+      <div class="scroll pad-top">
+        <div id="draw-body"></div>
+        <div style="height:24px"></div>
+      </div>
+    </section>
+
+    <!-- 决策 -->
+    <section class="screen" id="screen-decision">
+      <div class="scroll pad-top">
+        <div id="decision-body"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="dock">
+        <button class="btn" id="btn-accept" type="button">接受，继续持有</button>
+        <button class="btn btn-ghost" id="btn-reject" type="button">不接受，交换 2 张</button>
+      </div>
+    </section>
+
+    <!-- 交换 -->
+    <section class="screen" id="screen-trade">
+      <div class="scroll pad-top">
+        <div id="trade-head"></div>
+        <div class="deck" id="trade-deck"></div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="dock">
+        <p class="count-hint" id="trade-count"></p>
+        <button class="btn" id="btn-confirm-trade" type="button" disabled>放下这 2 张</button>
+        <button class="btn-quiet" id="btn-cancel-trade" type="button">← 再想想</button>
+      </div>
+    </section>
+
+    <!-- 结果 -->
+    <section class="screen" id="screen-result">
+      <div class="scroll pad-top">
+        <div id="result-body"></div>
+        <div style="height:28px"></div>
+      </div>
+      <div class="dock">
+        <div class="row">
+          <button class="btn btn-ghost" id="btn-save" type="button">保存图片</button>
+          <button class="btn" id="btn-post" type="button">发布笔记</button>
+        </div>
+        <button class="btn-quiet" id="btn-restart" type="button">再玩一次</button>
+        <button class="btn-quiet js-hub" type="button">← 换一个场景</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="./assets/bridge.js"></script>
+  <script src="./assets/ui.js"></script>
+  <script src="./assets/share-card.js"></script>
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/view.js"></script>
+</body>
+</html>
