@@ -1,0 +1,14 @@
+<view class="ucard kaleido-card hue-{{hue}}" bindtap="onTap">
+  <!-- 色带 + 骑在带子下沿的头像（iOS HueBandHeader） -->
+  <view class="ucard__band">
+    <view class="ucard__avatar"><text class="ucard__initial">{{initial}}</text></view>
+  </view>
+  <view class="ucard__body">
+    <text class="ucard__name">{{name}}</text>
+    <text class="ucard__quote">{{quote}}</text>
+    <view wx:if="{{tags.length}}" class="ucard__tags">
+      <tag-pill wx:for="{{tags}}" wx:key="*this" text="{{item}}" />
+    </view>
+    <text class="ucard__more">查看详情 ›</text>
+  </view>
+</view>

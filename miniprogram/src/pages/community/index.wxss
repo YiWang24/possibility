@@ -1,26 +1,287 @@
+/**
+ * 万花筒社区样式 —— 对应 iOS `Features/Community/CommunityView.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ */
+
+@import '../../core/design/tokens.wxss';
+
 .page {
-  min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
-  box-sizing: border-box;
+  height: 100vh;
+  background: var(--paper);
 }
 
-.placeholder {
-  padding: 48rpx 32rpx;
+.scroll {
+  height: 100%;
+}
+
+.inner {
+  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss） */
+  padding-left: 42rpx; /* 22 */
+  padding-right: 42rpx;
+}
+
+/* 自定义 tabBar 盖住底部，内容要留出它的高度（同首页 / 实验室页） */
+.tail {
+  height: calc(env(safe-area-inset-bottom) + 200rpx);
+}
+
+/* ── 标题 ── */
+
+.head {
+  padding-top: 12rpx;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 8rpx;
 }
 
-.placeholder__title {
-  font-size: 34rpx;
-  font-weight: 600;
+.head__eyebrow {
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 7rpx; /* 3.5 */
+  color: var(--faint);
+}
+
+.head__row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 23rpx; /* 12 */
+}
+
+.head__title {
+  flex-shrink: 0;
+  font-size: 52rpx; /* 27 */
+  font-weight: 700;
+  letter-spacing: 2rpx; /* 0.8 */
   color: var(--ink);
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+/* 右侧那行小字：iOS 用衬线体 + 自动缩排，小程序没有 minimumScaleFactor，
+   改用固定小字号 + 允许折行 */
+.head__sub {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx; /* lineSpacing 3 */
+}
+
+.head__sub-line {
+  font-family: 'Songti SC', 'Noto Serif CJK SC', serif;
+  font-size: 20rpx; /* 10.5 */
+  letter-spacing: 1rpx; /* 0.35 */
+  text-align: right;
   color: var(--sub);
+}
+
+/* ── tab ── */
+
+.tabs {
+  padding-top: 31rpx; /* 16 */
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 38rpx; /* 20 */
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx; /* 6 */
+}
+
+.tab__text {
+  font-size: 29rpx; /* 15 */
+  color: var(--faint);
+}
+
+.tab__text--on {
+  font-size: 33rpx; /* 17 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 未选中也占位，否则切 tab 时基线会跳 */
+.tab__bar {
+  width: 35rpx; /* 18 */
+  height: 6rpx; /* 3 */
+  border-radius: var(--r-chip);
+  background: var(--aurora);
+  opacity: 0;
+}
+
+.tab__bar--on {
+  opacity: 1;
+}
+
+.tabs__gap {
+  flex: 1;
+}
+
+/* 放映开关。iOS 是同一个胶囊在「卡片 / 放映」两态间切，标签写当前模式；
+   小程序里放映是分包页，胶囊变成了跳转入口，所以标签写目的地而不是当前态 ——
+   否则一个高亮的「卡片」按钮点下去反而进放映，说不通。 */
+.wswitch {
+  flex-shrink: 0;
+  padding-left: 23rpx; /* 12 */
+  padding-right: 23rpx;
+  padding-top: 13rpx; /* 7 */
+  padding-bottom: 13rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.wswitch__icon {
+  font-size: 21rpx; /* 11 */
+  color: var(--sub);
+}
+
+.wswitch__text {
+  font-size: 22rpx; /* 11.5 */
+  font-weight: 500;
+  color: var(--sub);
+}
+
+/* ── 搜索 ── */
+
+.search {
+  margin-top: 31rpx; /* 16 */
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 19rpx; /* 10 */
+  padding-bottom: 19rpx;
+  border-radius: var(--r-chip);
+  background: var(--surface-ghost);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15rpx; /* 8 */
+}
+
+.search__icon {
+  font-size: 27rpx;
+  color: var(--faint);
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  font-size: 25rpx; /* 13 */
+  color: var(--ink);
+}
+
+.search__ph {
+  color: var(--faint);
+}
+
+.search__clear {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.search__clear-icon {
+  font-size: 22rpx;
+  color: var(--faint);
+}
+
+/* ── 双列瀑布流 ── */
+
+.feed {
+  margin-top: 31rpx; /* 16 */
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 21rpx; /* 11 */
+}
+
+.feed__col {
+  flex: 1;
+  /* 两列等宽：不写 min-width 长词会把其中一列顶宽（同推演结果页的两列） */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 21rpx; /* 11 */
+}
+
+.empty {
+  margin-top: 96rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.empty__text {
+  font-size: 24rpx;
+  color: var(--faint);
+}
+
+/* ── 右下角主按钮 ── */
+
+.fab {
+  position: fixed;
+  right: 42rpx; /* 22 */
+  /* 自定义 tabBar（约 64rpx 内容 + 安全区 + 16rpx 内衬）之上再留 28pt */
+  bottom: calc(env(safe-area-inset-bottom) + 134rpx);
+  z-index: 50;
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 25rpx; /* 13 */
+  padding-bottom: 25rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  box-shadow: var(--fab-shadow);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15rpx; /* 8 */
+}
+
+/* iOS 的 `MiniOrb` 是一枚旋转的 conic 圆片（不是首页那颗熔岩灯光球）。
+   这里用极光渐变 + 慢速自转近似：20pt 上分不出 conic 与线性渐变的差别，
+   而 conic-gradient 在 Skyline 下的支持还等 W0-0 冒烟确认，不值得为一个
+   38rpx 的装饰去赌，更不值得为它起一块 canvas。 */
+.fab__orb {
+  width: 38rpx; /* 20 */
+  height: 38rpx;
+  border-radius: 50%;
+  background: var(--aurora);
+}
+
+.fab__orb--spin {
+  animation: fab-orb-spin 8s linear infinite;
+}
+
+/* 与 iOS MiniOrb 同周期（OrbView.angle period: 8） */
+@keyframes fab-orb-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.fab__plus {
+  font-size: 29rpx; /* 15 */
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+.fab__text {
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 600;
+  letter-spacing: 1rpx; /* 0.5 */
+  color: var(--on-accent);
 }

@@ -1,6 +1,150 @@
-<view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 2 · E · 待复刻</text>
+<!--
+  万花筒社区 —— 版式对应 iOS `Features/Community/CommunityView.swift` 的 body 自上而下：
+  标题 · 双 tab（+放映开关）· 搜索 · 双列瀑布流 · 右下浮动主按钮。
+-->
+<view class="page">
+  <scroll-view
+    class="scroll"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    refresher-enabled
+    refresher-default-style="white"
+    refresher-background="transparent"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <view class="inner safe-top">
+      <!-- 标题：右侧那行小字随 tab 换，两个 tab 的气质不一样 -->
+      <view class="head">
+        <text class="head__eyebrow">KALEIDOSCOPE</text>
+        <view class="head__row">
+          <text class="head__title">万花筒社区</text>
+          <view class="head__sub">
+            <block wx:if="{{tab === 0}}">
+              <text class="head__sub-line">人生如逆旅，我亦是行人。</text>
+            </block>
+            <block wx:else>
+              <text class="head__sub-line">未来不是被我们预见的，</text>
+              <text class="head__sub-line">而是被我们亲手促成的。</text>
+            </block>
+          </view>
+        </view>
+      </view>
+
+      <!-- tab + 放映开关 -->
+      <view class="tabs">
+        <view wx:for="{{tabs}}" wx:key="*this" class="tab" data-index="{{index}}" bindtap="onTabTap">
+          <text class="tab__text {{tab === index ? 'tab__text--on' : ''}}">{{item}}</text>
+          <view class="tab__bar {{tab === index ? 'tab__bar--on' : ''}}"></view>
+        </view>
+        <view class="tabs__gap"></view>
+        <view wx:if="{{tab === 0}}" class="wswitch" bindtap="onWatchTap">
+          <text class="wswitch__icon">⬡</text>
+          <text class="wswitch__text">放映</text>
+        </view>
+      </view>
+
+      <!-- ── 为你推荐 ── -->
+      <block wx:if="{{tab === 0}}">
+        <view class="search">
+          <text class="search__icon">⌕</text>
+          <input
+            class="search__input"
+            value="{{query}}"
+            placeholder="搜索旅人、介绍或标签"
+            placeholder-class="search__ph"
+            confirm-type="search"
+            bindinput="onQueryInput"
+          />
+          <view wx:if="{{query}}" class="search__clear" bindtap="onQueryClear">
+            <text class="search__clear-icon">✕</text>
+          </view>
+        </view>
+
+        <!-- iOS 那边搜不到人时就是一片空白；这里补一句，免得看起来像加载失败 -->
+        <view wx:if="{{travelerEmpty}}" class="empty">
+          <text class="empty__text">没有匹配的旅人，换个词试试。</text>
+        </view>
+        <view wx:else class="feed">
+          <view class="feed__col">
+            <user-card
+              wx:for="{{travelerLeft}}"
+              wx:key="id"
+              name="{{item.name}}"
+              initial="{{item.initial}}"
+              hue="{{item.hue}}"
+              quote="{{item.quote}}"
+              tags="{{item.tags}}"
+              data-id="{{item.id}}"
+              bind:tap="onTravelerTap"
+            />
+          </view>
+          <view class="feed__col">
+            <user-card
+              wx:for="{{travelerRight}}"
+              wx:key="id"
+              name="{{item.name}}"
+              initial="{{item.initial}}"
+              hue="{{item.hue}}"
+              quote="{{item.quote}}"
+              tags="{{item.tags}}"
+              data-id="{{item.id}}"
+              bind:tap="onTravelerTap"
+            />
+          </view>
+        </view>
+      </block>
+
+      <!-- ── 悬赏贴 ── -->
+      <view wx:else class="feed">
+        <view class="feed__col">
+          <bounty-card
+            wx:for="{{bountyLeft}}"
+            wx:key="id"
+            question="{{item.question}}"
+            tags="{{item.tags}}"
+            reward-goal="{{item.rewardGoal}}"
+            amount="{{item.amount}}"
+            responses="{{item.responses}}"
+            data-id="{{item.id}}"
+            bind:tap="onBountyTap"
+          />
+        </view>
+        <view class="feed__col">
+          <bounty-card
+            wx:for="{{bountyRight}}"
+            wx:key="id"
+            question="{{item.question}}"
+            tags="{{item.tags}}"
+            reward-goal="{{item.rewardGoal}}"
+            amount="{{item.amount}}"
+            responses="{{item.responses}}"
+            data-id="{{item.id}}"
+            bind:tap="onBountyTap"
+          />
+        </view>
+      </view>
+
+      <view class="tail"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 右下角主按钮：推荐页抽人，悬赏页发帖（iOS drawFab / composeFab） -->
+  <view class="fab" bindtap="onFabTap">
+    <view
+      wx:if="{{tab === 0}}"
+      class="fab__orb {{reduceMotion ? '' : 'fab__orb--spin'}}"
+    ></view>
+    <text wx:else class="fab__plus">＋</text>
+    <text class="fab__text">{{tab === 0 ? '万花筒抽一位旅人' : '发布悬赏'}}</text>
   </view>
+
+  <compose-sheet
+    show="{{showCompose}}"
+    submitting="{{composing}}"
+    error="{{composeError}}"
+    bind:close="onComposeClose"
+    bind:submit="onComposeSubmit"
+  />
 </view>

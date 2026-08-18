@@ -1,0 +1,118 @@
+/**
+ * 悬赏卡 —— 对应 iOS `BountyCard`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ */
+
+@import '../../../../core/design/tokens.wxss';
+
+.bcard {
+  /* kaleido-card 的 --r-card 是 22rpx，这张卡 iOS 用的是 18pt */
+  border-radius: 35rpx;
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 27rpx; /* 14 */
+  padding-bottom: 27rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.bcard__tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10rpx; /* 5 */
+}
+
+/* 悬赏标签：比旅人标签更蓝更小（iOS BountyTagPill） */
+.bcard__tag {
+  padding-left: 13rpx; /* 7 */
+  padding-right: 13rpx;
+  padding-top: 8rpx; /* 4 */
+  padding-bottom: 8rpx;
+  border-radius: var(--r-chip);
+  background: var(--blue-wash);
+}
+
+.bcard__tag-text {
+  font-size: 18rpx; /* 9.5 */
+  font-weight: 500;
+  color: var(--badge-blue-ink);
+}
+
+.bcard__q {
+  font-size: 25rpx; /* 13 */
+  font-weight: 600;
+  line-height: 1.31; /* +4 行距 */
+  color: var(--ink);
+}
+
+.bcard__q--after-tags {
+  padding-top: 21rpx; /* 11 */
+}
+
+.bcard__goal {
+  padding-top: 17rpx; /* 9 */
+  font-size: 20rpx; /* 10.5 */
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--sub);
+  /* 最多两行：卡宽只有半屏，第三行会把底栏顶下去 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.bcard__rule {
+  margin-top: 23rpx; /* 12 */
+  height: 1rpx;
+  background: var(--line);
+}
+
+.bcard__foot {
+  padding-top: 19rpx; /* 10 */
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 12rpx; /* 6 */
+}
+
+.bcard__prize {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx; /* 2 */
+}
+
+.bcard__prize-label {
+  font-size: 16rpx; /* 8.5 */
+  font-weight: 500;
+  color: var(--faint);
+}
+
+/* 等宽数字：两列卡片并排时，金额位数不同也不会左右跳 */
+.bcard__prize-amount {
+  font-size: 31rpx; /* 16 */
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--apricot);
+}
+
+.bcard__foot-gap {
+  flex: 1;
+}
+
+.bcard__responses {
+  flex-shrink: 1;
+  min-width: 0;
+  font-size: 18rpx; /* 9.5 */
+  line-height: 1.2;
+  text-align: right;
+  color: var(--faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}

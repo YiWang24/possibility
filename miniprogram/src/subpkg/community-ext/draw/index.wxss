@@ -1,26 +1,277 @@
-.page {
-  min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
-  box-sizing: border-box;
-}
+/**
+ * 万花筒抽取样式 —— 对应 iOS `Features/Community/KaleidoscopeDrawView.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ *
+ * 这一页是「浮层做成页面」：iOS 的 sheet 底是 0x06080E α.97 压在毛玻璃上，
+ * 小程序这边直接给不透明的深底 —— 分包页背后没有社区页可透，
+ * 毛玻璃透出来的是白，反而比实底难看。
+ */
 
-.placeholder {
-  padding: 48rpx 32rpx;
+@import '../../../core/design/tokens.wxss';
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--stage);
+  padding-left: 54rpx; /* 28 */
+  padding-right: 54rpx;
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
 }
 
-.placeholder__title {
-  font-size: 34rpx;
-  font-weight: 600;
+/* 上下两颗极淡的光晕，把视线压向中间的转盘 */
+.glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--draw-glow-a), var(--draw-glow-b);
+  pointer-events: none;
+}
+
+/* ── 关闭 ── */
+
+.close {
+  position: relative;
+  align-self: flex-end;
+  /* 不能用 padding-top：会盖掉全局 .safe-top 的安全区 */
+  margin-top: 27rpx; /* 62 - 状态栏（iOS 的 62 是含状态栏的绝对位移） */
+  padding-bottom: 15rpx;
+}
+
+.close--hover {
+  opacity: 0.6;
+}
+
+.close__text {
+  color: var(--faint);
+  font-size: 24rpx; /* 12.5 */
+}
+
+/* ── 标题 ── */
+
+.head {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15rpx; /* 8 */
+  padding-top: 42rpx;
+}
+
+.head__title {
   color: var(--ink);
+  font-size: 38rpx; /* 20 */
+  font-weight: 700;
+  letter-spacing: 2rpx; /* 0.8 */
+  text-align: center;
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+.head__sub {
   color: var(--sub);
+  font-size: 23rpx; /* 12 */
+  line-height: 40rpx; /* 12 + lineSpacing 4 ≈ 21 */
+  text-align: center;
 }
+
+/* ── 主体：三段共用这块弹性区，各自居中 ── */
+
+.body {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 38rpx; /* Spacer(minLength: 20) */
+  padding-bottom: 38rpx;
+}
+
+/* ── 一段：模式卡 ── */
+
+.modes {
+  display: flex;
+  flex-direction: row;
+  gap: 23rpx; /* 12 */
+}
+
+.mode {
+  flex: 1;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 38rpx; /* 20 */
+  padding-bottom: 38rpx;
+  border-radius: 38rpx; /* 20 */
+  background: var(--card);
+  border: 3rpx solid var(--line); /* lineWidth 1.5 */
+}
+
+/* 选中：极光渐变底 + 亮描边 + 抬 2pt（iOS offset(y: -2)） */
+.mode--on {
+  background: var(--draw-mode-bg-on);
+  border-color: var(--choice-line-on);
+  transform: translateY(-4rpx);
+}
+
+.mode__emoji {
+  font-size: 42rpx; /* 22 */
+  line-height: 42rpx;
+}
+
+.mode__title {
+  color: var(--ink);
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 600;
+  padding-top: 19rpx; /* 10 */
+  text-align: center;
+}
+
+.mode__desc {
+  color: var(--sub);
+  font-size: 21rpx; /* 11 */
+  line-height: 27rpx; /* 11 + lineSpacing 3 */
+  padding-top: 10rpx; /* 5 */
+  text-align: center;
+}
+
+/* ── 二段：转盘 ──
+   canvas 的宽高由 index.ts 按 STAGE 写进 style（canvas 要的是像素尺寸，
+   不能用 rpx：那样 dpr 一乘就和绘制坐标系错开了）。
+   画布比盘面大一圈是为了让 halo 漫出盘外，负 margin 把版面尺寸抵回 DIAL ——
+   .spin__dial 那层就是用来锁住这个版面尺寸的，不能省。 */
+
+.spin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 38rpx; /* 20 */
+}
+
+.spin__dial {
+  flex-shrink: 0;
+}
+
+.spin__hint {
+  color: var(--faint);
+  font-size: 23rpx; /* 12 */
+  letter-spacing: 3rpx; /* 1.5 */
+}
+
+/* ── 三段：抽中的旅人卡 ──
+   与列表页的 user-card 同一张脸（色带 + 骑在下沿的头像），
+   但这里是浮层里唯一的实体卡：落影更重，且没有「查看详情」——
+   看主页是底部那颗主按钮的事。 */
+
+.rcard {
+  box-shadow: var(--draw-card-shadow);
+}
+
+.rcard__band {
+  position: relative;
+  height: 142rpx; /* 74 */
+}
+
+.hue-0 .rcard__band { background: var(--hue0-g); }
+.hue-1 .rcard__band { background: var(--hue1-g); }
+.hue-2 .rcard__band { background: var(--hue2-g); }
+.hue-3 .rcard__band { background: var(--hue3-g); }
+.hue-4 .rcard__band { background: var(--hue4-g); }
+
+/* 头像骑在色带下沿：iOS 的 offset(y: avatarSize * 0.4) = 52 * 0.4 */
+.rcard__avatar {
+  position: absolute;
+  left: 38rpx; /* 20 */
+  bottom: -40rpx; /* 52 * 0.4 = 20.8 */
+  width: 100rpx; /* 52 */
+  height: 100rpx;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 6rpx solid var(--card); /* strokeBorder(cardColor, lineWidth: 3) */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.hue-0 .rcard__avatar { background: var(--hue0-accent); }
+.hue-1 .rcard__avatar { background: var(--hue1-accent); }
+.hue-2 .rcard__avatar { background: var(--hue2-accent); }
+.hue-3 .rcard__avatar { background: var(--hue3-accent); }
+.hue-4 .rcard__avatar { background: var(--hue4-accent); }
+
+.rcard__initial {
+  font-size: 38rpx; /* 52 * 0.38 ≈ 19.8 */
+  font-weight: 600;
+  color: var(--avatar-ink);
+}
+
+/* top 28 是为了让正文让开压下来的头像 */
+.rcard__body {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 54rpx; /* 28 */
+  padding-bottom: 38rpx; /* 20 */
+}
+
+.rcard__name {
+  color: var(--ink);
+  font-size: 31rpx; /* 16 */
+  font-weight: 600;
+}
+
+.rcard__quote {
+  color: var(--sub);
+  font-size: 25rpx; /* 13 */
+  line-height: 46rpx; /* 13 + lineSpacing 5 ≈ 24 */
+}
+
+.rcard__tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10rpx; /* 5 */
+  padding-top: 8rpx; /* 4 */
+}
+
+/* ── 底部动作 ── */
+
+.foot {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 19rpx; /* 10 */
+  /* 不能用 padding-bottom：会盖掉全局 .safe-bottom 的安全区 */
+  margin-bottom: 96rpx; /* 50 */
+}
+
+/* btn 已经给了 --ink / 30rpx，这里只补 iOS 主按钮的字重 */
+.foot__cta {
+  font-weight: 600;
+}
+
+.foot__again {
+  padding-top: 4rpx; /* 2 */
+  padding-bottom: 8rpx;
+}
+
+.foot__again--hover {
+  opacity: 0.6;
+}
+
+.foot__again-text {
+  color: var(--faint);
+  font-size: 24rpx; /* 12.5 */
+}
+

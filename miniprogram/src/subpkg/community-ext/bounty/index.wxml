@@ -1,6 +1,162 @@
-<view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 2 · E · 待复刻</text>
+<!--
+  悬赏详情 —— 版式对应 iOS `BountyDetailView.swift` 的 body 自上而下。
+  回应区的四种状态（有内容 / 空 / 加载中 / 失败）在 index.ts 里算成 repliesState，
+  WXML 只按类名贴。
+-->
+<view class="page">
+  <!-- 顶栏：返回 + 「征集中 · N 人回应」 -->
+  <view class="topbar safe-top">
+    <view class="topbar__back" hover-class="topbar__back--hover" bindtap="onBack">
+      <text class="topbar__icon">‹</text>
+    </view>
+    <view class="topbar__text">
+      <text class="topbar__title">悬赏详情</text>
+      <text class="topbar__sub">{{statusText}} · {{responseCountText}}</text>
+    </view>
   </view>
+
+  <!-- 帖子主体还没到位：先转着，别摆一个会被整段替换掉的骨架 -->
+  <view wx:if="{{loading}}" class="loading">
+    <orb size="140" halo="{{false}}" />
+  </view>
+
+  <view wx:elif="{{failed}}" class="failed">
+    <text class="failed__text">这条悬赏没有加载出来，可能是网络不稳。</text>
+    <btn variant="ghost" bind:tap="onRetry"><text class="failed__cta">重试</text></btn>
+  </view>
+
+  <block wx:else>
+    <scroll-view class="scroll" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="inner">
+        <view wx:if="{{tags.length}}" class="tags">
+          <tag-pill wx:for="{{tags}}" wx:key="*this" text="{{item}}" />
+        </view>
+
+        <text class="question">{{question}}</text>
+
+        <!-- 发布者：远端一律匿名，演示数据用配套人设 -->
+        <view class="pub">
+          <view class="avatar avatar--pub avatar--h{{publisherHue}}">
+            <text class="avatar__initial">{{publisherInitial}}</text>
+          </view>
+          <view class="pub__text">
+            <text class="pub__name">{{publisherName}}</text>
+            <text class="pub__meta">{{publisherMeta}}</text>
+          </view>
+        </view>
+
+        <!-- 杏色悬赏卡：全站唯一的暖色实底卡 -->
+        <view class="prize">
+          <view class="prize__text">
+            <text class="prize__label">本帖悬赏</text>
+            <text class="prize__amount {{prizeBig ? 'prize__amount--big' : ''}}">{{prizeText}}</text>
+          </view>
+          <text class="prize__status">{{statusText}}</text>
+        </view>
+
+        <view class="copy kaleido-card">
+          <text class="copy__title">TA 想了解的具体情况</text>
+          <text class="copy__body">{{detail}}</text>
+        </view>
+
+        <!-- 亲历者回应 -->
+        <view class="replies">
+          <view class="replies__head">
+            <text class="replies__title">亲历者回应</text>
+            <text class="replies__count">{{responseCountText}}</text>
+          </view>
+
+          <view wx:for="{{replies}}" wx:key="index" class="reply">
+            <view class="avatar avatar--reply avatar--h{{item.hue}}">
+              <text class="avatar__initial">{{item.initial}}</text>
+            </view>
+            <view class="reply__text">
+              <view class="reply__head">
+                <text class="reply__name">{{item.name}}</text>
+                <text class="reply__role">{{item.role}}</text>
+              </view>
+              <text class="reply__body">{{item.text}}</text>
+            </view>
+          </view>
+
+          <view wx:if="{{repliesState === 'empty'}}" class="note">
+            <text class="note__text">还没有旅人回应，成为第一个分享经历的人吧。</text>
+          </view>
+          <view wx:elif="{{repliesState === 'loading'}}" class="note">
+            <text class="note__text">正在加载回应…</text>
+          </view>
+          <view wx:elif="{{repliesState === 'failed'}}" class="note">
+            <text class="note__text">回应暂时加载失败，请稍后再试。</text>
+          </view>
+        </view>
+
+        <view wx:if="{{sent}}" class="sent">
+          <text class="sent__text"
+            >你的名片与补充说明已发送，发帖人可以查看你的经历并与你联系。</text
+          >
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 底部动作栏：发过就变成不可点的「已发送」（同 iOS .disabled(sent)） -->
+    <view class="actionbar safe-bottom">
+      <view
+        class="action {{sent ? 'action--sent' : ''}}"
+        hover-class="{{sent ? '' : 'action--hover'}}"
+        bindtap="onSendTap"
+      >
+        <text class="action__text">{{sent ? '名片已发送 ✓' : '发送我的名片'}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 名片弹层（iOS 的 medium sheet） -->
+  <sheet
+    show="{{showCard}}"
+    title="发送我的名片"
+    maskClosable="{{!sending}}"
+    bind:close="onCardClose"
+  >
+    <view class="modal">
+      <view wx:if="{{cardLoading}}" class="note">
+        <text class="note__text">正在读取你的名片…</text>
+      </view>
+      <view wx:else class="mycard">
+        <view class="mycard__head">
+          <view class="avatar avatar--card avatar--h{{card.hue}}">
+            <text class="avatar__initial">{{card.initial}}</text>
+          </view>
+          <view class="mycard__text">
+            <text class="mycard__name">{{card.name}}</text>
+            <text class="mycard__bio">{{card.bio}}</text>
+          </view>
+        </view>
+        <view wx:if="{{card.tags.length}}" class="mycard__tags">
+          <tag-pill wx:for="{{card.tags}}" wx:key="*this" text="{{item}}" />
+        </view>
+      </view>
+
+      <text class="modal__label">补充一句话，让对方知道你为什么能回答</text>
+      <textarea
+        class="modal__input"
+        value="{{message}}"
+        placeholder="例如：我去年完成了相似转型，可以分享第一份工作的准备过程。"
+        placeholder-class="modal__ph"
+        maxlength="500"
+        disabled="{{sending}}"
+        bindinput="onMessageInput"
+      />
+      <text class="modal__note"
+        >发送后，你的回应会和公开画像一起展示在这条悬赏下，所有旅人可见；请不要在补充说明中留下联系方式。</text
+      >
+
+      <view
+        class="action {{sending ? 'action--off' : ''}}"
+        hover-class="{{sending ? '' : 'action--hover'}}"
+        bindtap="onConfirmSend"
+      >
+        <text class="action__text">{{sending ? '发送中…' : '确认发送名片'}}</text>
+      </view>
+    </view>
+  </sheet>
 </view>

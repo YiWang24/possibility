@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "tag-pill": "../../../../core/design/components/tag-pill/index"
+  }
+}

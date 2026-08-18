@@ -1,26 +1,161 @@
-.page {
-  min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
-  box-sizing: border-box;
-}
+/**
+ * 放映模式样式 —— 对应 iOS `Features/Community/WatchModeView.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ *
+ * 这一页几乎没有样式可写：视野里的东西都在 canvas 里（见 field.ts），
+ * WXSS 只负责顶栏、那块撑满的画布、和底部说明。
+ */
 
-.placeholder {
-  padding: 48rpx 32rpx;
+@import '../../../core/design/tokens.wxss';
+
+.page {
+  height: 100vh;
+  background: var(--stage);
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
 }
 
-.placeholder__title {
-  font-size: 34rpx;
-  font-weight: 600;
+/* ── 顶栏 ── */
+
+.topbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 19rpx; /* 10 */
+  padding-left: 31rpx; /* 16 */
+  padding-right: 31rpx;
+  padding-bottom: 19rpx; /* 10 */
+}
+
+.topbar__back {
+  flex-shrink: 0;
+  width: 65rpx; /* 34 */
+  height: 65rpx;
+  border-radius: 50%;
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar__back--hover {
+  opacity: 0.7;
+}
+
+.topbar__icon {
   color: var(--ink);
+  font-size: 38rpx; /* 20 */
+  line-height: 38rpx;
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+/* 搜索条：底色复用 --surface-ghost（iOS white 0.05，差 0.005 肉眼之下） */
+.search {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15rpx; /* 8 */
+  height: 65rpx; /* 34 */
+  padding-left: 25rpx; /* 13 */
+  padding-right: 15rpx;
+  border-radius: var(--r-chip);
+  background: var(--surface-ghost);
+  border: 1rpx solid var(--line);
+}
+
+.search__icon {
+  color: var(--faint);
+  font-size: 27rpx; /* 14 */
+}
+
+.search__input {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 25rpx; /* 13 */
+}
+
+.search__ph {
+  color: var(--faint);
+}
+
+.search__clear {
+  width: 38rpx; /* 20 */
+  height: 38rpx;
+  border-radius: 50%;
+  background: var(--raised);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.search__clear-icon {
   color: var(--sub);
+  font-size: 19rpx; /* 10 */
+}
+
+/* 「卡片」胶囊：与列表页的「放映」开关同一枚，只是这边是选中态
+   * （描边复用 --chip-on-line，iOS 是 #5E96FF 0.45） */
+.mode {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx; /* 4 */
+  height: 65rpx; /* 34 */
+  padding-left: 23rpx; /* 12 */
+  padding-right: 23rpx;
+  border-radius: var(--r-chip);
+  background: var(--chip-on-bg);
+  border: 1rpx solid var(--chip-on-line);
+}
+
+.mode--hover {
+  opacity: 0.7;
+}
+
+.mode__icon {
+  color: var(--blue-200);
+  font-size: 21rpx; /* 11 */
+}
+
+.mode__text {
+  color: var(--blue-200);
+  font-size: 23rpx; /* 12 */
+  font-weight: 600;
+}
+
+/* ── 网格画布 ── */
+
+.field {
+  flex: 1;
+  height: 0; /* Skyline 下 flex:1 的滚动/画布容器要显式给 0，否则不收缩 */
+  width: 100%;
+}
+
+.field__canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── 底部说明 ── */
+
+.caption {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding-top: 19rpx; /* 10 */
+  margin-bottom: 25rpx; /* 13 —— 不能用 padding：会盖掉 .safe-bottom 的安全区 */
+}
+
+.caption__text {
+  color: var(--watch-caption);
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 1rpx;
 }

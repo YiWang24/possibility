@@ -475,6 +475,53 @@ page,
   --avatar-bg: rgba(8, 10, 18, 0.42);
   --avatar-line: rgba(255, 255, 255, 0.28);
   --avatar-ink: #ffffff;
+
+  /* ── 万花筒社区（iOS Features/Community/）──
+     同上：iOS 内联在各视图里，Theme.swift 未收录，前缀标明作用域。
+
+     四处刻意复用既有 token 而不另造近义色（差值都在肉眼之下）：
+     - 搜索框底 white 0.05         → --surface-ghost（0.045）
+     - 放映开关描边 #5E96FF 0.45   → --chip-on-line（0.5）
+     - 抽取页底色 #06080E          → --stage（#05070D）
+     - 模式卡选中描边 #6FA5FF 0.7  → --choice-line-on（0.72）
+
+     悬赏标签胶囊也没有自己的 token：底色正好是 --blue-wash、文字正好是
+     --badge-blue-ink，两个都是精确相等。 */
+
+  /* 悬赏 / 抽取的浮动主按钮：比 --cta-shadow 再抬高一档（iOS r18 y10 α.65） */
+  --fab-shadow: 0 19rpx 35rpx rgba(79, 125, 255, 0.65);
+
+  /* 放映模式底部说明（iOS #9AA4BC 0.62） */
+  --watch-caption: rgba(154, 164, 188, 0.62);
+
+  /* 抽取浮层：上下两颗极淡的光晕，把视线压向中间的万花筒 */
+  --draw-glow-a: radial-gradient(
+    circle at 50% 30%,
+    rgba(94, 150, 255, 0.075) 0%,
+    rgba(94, 150, 255, 0) 100%
+  );
+  --draw-glow-b: radial-gradient(
+    circle at 50% 90%,
+    rgba(227, 92, 193, 0.035) 0%,
+    rgba(227, 92, 193, 0) 100%
+  );
+  /* 「类似 / 相反」模式卡选中态 */
+  --draw-mode-bg-on: linear-gradient(
+    135deg,
+    rgba(94, 150, 255, 0.16) 0%,
+    rgba(227, 92, 193, 0.1) 100%
+  );
+  /* 抽中的旅人卡：浮层里唯一的实体卡，落影比页面里的卡重得多 */
+  --draw-card-shadow: 0 23rpx 58rpx rgba(0, 0, 0, 0.5);
+
+  /* 悬赏详情的赏金卡：全站唯一的暖色实底卡，深棕字压在橙金渐变上 */
+  --prize-g: linear-gradient(135deg, #ffc98a 0%, #ffb067 55%, #f08e4e 100%);
+  --prize-ink: #2b1a08;
+  --prize-ink-soft: rgba(43, 26, 8, 0.8);
+  --prize-ink-faint: rgba(43, 26, 8, 0.75);
+  --prize-shadow: 0 15rpx 27rpx rgba(255, 176, 103, 0.25);
+  /* 名片已发送提示（底与描边复用底线测试那套「守得住」的绿） */
+  --sent-ink: #8ee7c8;
 }
 
 /* ── 通用卡片样式（对应 iOS 的 .kaleidoCard() modifier）── */

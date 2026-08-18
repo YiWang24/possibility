@@ -1,6 +1,49 @@
-<view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 2 · E · 待复刻</text>
+<!--
+  放映模式 —— 版式对应 iOS `WatchModeView.swift`：搜索条浮在顶部，
+  中间是一整片可拖的无限网格，底部一句说明。
+
+  网格里的一切（背景光、万花筒弧、35 颗气泡）都由 field.ts 画进这一张 canvas。
+  手势用 touch 三件套而不是 bindtap，原因见 index.ts。
+-->
+<view class="page">
+  <!-- 顶栏：返回 + 搜索 + 「卡片」= 回列表页 -->
+  <view class="topbar safe-top">
+    <view class="topbar__back" hover-class="topbar__back--hover" bindtap="onBack">
+      <text class="topbar__icon">‹</text>
+    </view>
+    <view class="search">
+      <text class="search__icon">⌕</text>
+      <input
+        class="search__input"
+        value="{{query}}"
+        placeholder="搜索旅人、介绍或标签"
+        placeholder-class="search__ph"
+        confirm-type="search"
+        bindinput="onQueryInput"
+      />
+      <view wx:if="{{query}}" class="search__clear" bindtap="onQueryClear">
+        <text class="search__clear-icon">✕</text>
+      </view>
+    </view>
+    <view class="mode" hover-class="mode--hover" bindtap="onBack">
+      <text class="mode__icon">▦</text>
+      <text class="mode__text">卡片</text>
+    </view>
+  </view>
+
+  <view class="field">
+    <canvas
+      id="watch-canvas"
+      class="field__canvas"
+      type="2d"
+      bindtouchstart="onTouchStart"
+      bindtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchEnd"
+    ></canvas>
+  </view>
+
+  <view class="caption safe-bottom">
+    <text class="caption__text">拖动探索 · 轻点认识一位旅人</text>
   </view>
 </view>

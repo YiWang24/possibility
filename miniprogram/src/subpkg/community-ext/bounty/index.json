@@ -1,4 +1,9 @@
 {
-  "navigationBarTitleText": "悬赏详情",
-  "usingComponents": {}
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "btn": "/core/design/components/btn/index",
+    "orb": "/core/design/components/orb/index",
+    "sheet": "/core/design/components/sheet/index",
+    "tag-pill": "/core/design/components/tag-pill/index"
+  }
 }

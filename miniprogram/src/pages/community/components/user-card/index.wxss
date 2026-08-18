@@ -1,0 +1,94 @@
+/**
+ * 旅人卡 —— 对应 iOS `UserCard` + `HueBandHeader`（bandHeight 64 / avatarSize 40）。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ *
+ * 五档旅人配色沿用全站那套「每档一条规则」的写法：WXSS 拼不出变量名，
+ * `.hue-{{n}} .xxx` 是唯一能把索引变成颜色的办法（同推演结果页的 .pcard__band）。
+ */
+
+@import '../../../../core/design/tokens.wxss';
+
+.ucard {
+  /* kaleido-card 的 --r-card 是 22rpx，这张卡 iOS 用的是 20pt */
+  border-radius: 38rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.ucard__band {
+  position: relative;
+  height: 123rpx; /* 64 */
+}
+
+.hue-0 .ucard__band { background: var(--hue0-g); }
+.hue-1 .ucard__band { background: var(--hue1-g); }
+.hue-2 .ucard__band { background: var(--hue2-g); }
+.hue-3 .ucard__band { background: var(--hue3-g); }
+.hue-4 .ucard__band { background: var(--hue4-g); }
+
+/* 头像骑在色带下沿：iOS 的 offset(x: 14, y: avatarSize * 0.4) */
+.ucard__avatar {
+  position: absolute;
+  left: 27rpx; /* 14 */
+  bottom: -31rpx; /* 40 * 0.4 = 16 */
+  width: 77rpx; /* 40 */
+  height: 77rpx;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 6rpx solid var(--card); /* iOS strokeBorder(cardColor, lineWidth: 3) */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.hue-0 .ucard__avatar { background: var(--hue0-accent); }
+.hue-1 .ucard__avatar { background: var(--hue1-accent); }
+.hue-2 .ucard__avatar { background: var(--hue2-accent); }
+.hue-3 .ucard__avatar { background: var(--hue3-accent); }
+.hue-4 .ucard__avatar { background: var(--hue4-accent); }
+
+.ucard__initial {
+  font-size: 29rpx; /* 40 * 0.38 = 15.2 */
+  font-weight: 600;
+  color: var(--avatar-ink);
+}
+
+/* top 22 是为了让正文让开压下来的头像 */
+.ucard__body {
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 42rpx; /* 22 */
+  padding-bottom: 27rpx; /* 14 */
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx; /* 6 */
+}
+
+.ucard__name {
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ucard__quote {
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.26; /* +3 行距 */
+  color: var(--sub);
+}
+
+.ucard__tags {
+  padding-top: 4rpx; /* 2 */
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10rpx; /* 5 */
+}
+
+.ucard__more {
+  padding-top: 10rpx; /* 5 */
+  font-size: 22rpx; /* 11.5 */
+  font-weight: 500;
+  color: var(--blue);
+}

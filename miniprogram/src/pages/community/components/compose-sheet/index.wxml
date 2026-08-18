@@ -1,0 +1,70 @@
+<sheet show="{{show}}" title="发布悬赏" maskClosable="{{!submitting}}" bind:close="onClose">
+  <view class="compose">
+    <text class="compose__lead">向亲历者征集真实经历，而不是抽象建议。</text>
+
+    <view class="field">
+      <text class="field__label">你想问什么？（必填，≤{{limitQuestion}} 字）</text>
+      <textarea
+        class="field__box field__box--q"
+        value="{{question}}"
+        maxlength="-1"
+        show-confirm-bar="{{false}}"
+        placeholder="例如：有没有人从设计转数据分析？想听第一年最难的是什么"
+        placeholder-class="ph"
+        bindinput="onQuestionInput"
+      />
+      <text wx:if="{{overQuestion}}" class="field__hint"
+        >问题最多 {{limitQuestion}} 字，当前 {{questionCount}} 字</text
+      >
+    </view>
+
+    <view class="field">
+      <text class="field__label">想了解的具体情况（选填）</text>
+      <textarea
+        class="field__box field__box--detail"
+        value="{{detail}}"
+        maxlength="-1"
+        show-confirm-bar="{{false}}"
+        placeholder="补充背景、真正的顾虑，让亲历者知道从哪里讲起。"
+        placeholder-class="ph"
+        bindinput="onDetailInput"
+      />
+    </view>
+
+    <view class="field">
+      <text class="field__label">标签（选填，空格或逗号分隔，≤{{limitTags}} 个）</text>
+      <textarea
+        class="field__box field__box--tags"
+        value="{{tagText}}"
+        maxlength="-1"
+        show-confirm-bar="{{false}}"
+        placeholder="例如：职业转型 数据分析 设计背景"
+        placeholder-class="ph"
+        bindinput="onTagInput"
+      />
+      <text wx:if="{{overTags}}" class="field__hint"
+        >标签最多 {{limitTags}} 个，当前 {{tagCount}} 个</text
+      >
+    </view>
+
+    <view class="field">
+      <text class="field__label">悬赏金额（选填）</text>
+      <input
+        class="field__box field__box--one"
+        value="{{reward}}"
+        placeholder="例如：29 或 ¥29"
+        placeholder-class="ph"
+        bindinput="onRewardInput"
+      />
+    </view>
+
+    <text wx:if="{{error}}" class="field__hint">{{error}}</text>
+
+    <view
+      class="submit {{questionValid && !overTags && !submitting ? '' : 'submit--off'}}"
+      bindtap="onSubmit"
+    >
+      <text class="submit__text">{{submitting ? '发布中…' : '发布悬赏'}}</text>
+    </view>
+  </view>
+</sheet>

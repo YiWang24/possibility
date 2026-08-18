@@ -1,0 +1,102 @@
+/**
+ * 发布悬赏表单 —— 对应 iOS `BountyComposeView`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ * 外框（圆角、遮罩、把手）由共享的 `sheet` 组件负责，这里只管表单本身。
+ */
+
+@import '../../../../core/design/tokens.wxss';
+
+.compose {
+  display: flex;
+  flex-direction: column;
+  gap: 27rpx; /* 14 */
+}
+
+.compose__lead {
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.3;
+  color: var(--sub);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.field__label {
+  font-size: 24rpx; /* 12.5 */
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.field__box {
+  box-sizing: border-box;
+  width: 100%;
+  padding-left: 23rpx; /* 12 */
+  padding-right: 23rpx;
+  padding-top: 23rpx;
+  padding-bottom: 23rpx;
+  border-radius: 25rpx; /* 13 */
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  font-size: 24rpx; /* 12.5 */
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+/* iOS 的 axis: .vertical + lineLimit(下限...上限)：这里换算成固定高度，
+   textarea 不给 auto-height —— 表单在弹层里，高度一跳键盘就会跟着抖 */
+.field__box--q {
+  height: 148rpx; /* 2~4 行 */
+}
+
+.field__box--detail {
+  height: 200rpx; /* 3~6 行 */
+}
+
+.field__box--tags {
+  height: 96rpx; /* 1~2 行 */
+}
+
+.field__box--one {
+  height: 82rpx; /* 1 行 */
+}
+
+.ph {
+  color: var(--faint);
+}
+
+/* 超限提示与发布失败共用一档橙色：都是「这条发不出去」的原因 */
+.field__hint {
+  font-size: 21rpx; /* 11 */
+  line-height: 1.35;
+  color: var(--apricot);
+}
+
+.submit {
+  margin-top: 12rpx;
+  padding-top: 27rpx; /* 14 */
+  padding-bottom: 27rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.submit--off {
+  background: var(--raised);
+}
+
+.submit__text {
+  font-size: 27rpx; /* 14 */
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+.submit--off .submit__text {
+  color: var(--faint);
+}

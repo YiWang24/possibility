@@ -1,4 +1,8 @@
 {
-  "navigationBarTitleText": "万花筒抽取",
-  "usingComponents": {}
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "btn": "../../../core/design/components/btn/index",
+    "kaleido-card": "../../../core/design/components/kaleido-card/index",
+    "tag-pill": "../../../core/design/components/tag-pill/index"
+  }
 }

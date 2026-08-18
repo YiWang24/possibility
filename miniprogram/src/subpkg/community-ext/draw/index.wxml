@@ -1,6 +1,83 @@
-<view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 2 · E · 待复刻</text>
+<!--
+  万花筒抽取 —— 版式对应 iOS `KaleidoscopeDrawView.swift`：
+  上标题、中主体、下动作，三段共用这一副骨架，只有中间的主体在换。
+
+  转盘（canvas）只在 spinning 段存在：`ready` 一为真才渲染节点，
+  index.ts 也是在这之后才量尺寸建 Kaleidoscope 的。
+-->
+<view class="page">
+  <view class="glow" />
+
+  <view class="close safe-top" hover-class="close--hover" bindtap="onClose">
+    <text class="close__text">关闭 ✕</text>
+  </view>
+
+  <view class="head">
+    <text class="head__title">{{title}}</text>
+    <text wx:if="{{sub}}" class="head__sub">{{sub}}</text>
+  </view>
+
+  <view class="body">
+    <!-- 一段：选类似 / 相反 -->
+    <view wx:if="{{phase === 'choose'}}" class="modes">
+      <view
+        wx:for="{{modes}}"
+        wx:key="mode"
+        class="mode {{mode === item.mode ? 'mode--on' : ''}}"
+        data-mode="{{item.mode}}"
+        bindtap="onPickMode"
+      >
+        <text class="mode__emoji">{{item.emoji}}</text>
+        <text class="mode__title">{{item.title}}</text>
+        <text class="mode__desc">{{item.desc}}</text>
+      </view>
+    </view>
+
+    <!-- 二段：转盘 -->
+    <view wx:elif="{{phase === 'spinning'}}" class="spin">
+      <!-- 画布比盘面大一圈（halo 要漫到盘外），用等量负 margin 抵回版面尺寸 -->
+      <view class="spin__dial" style="width: {{dial}}px; height: {{dial}}px;">
+        <canvas
+          wx:if="{{ready}}"
+          id="kaleido-canvas"
+          class="spin__canvas"
+          type="2d"
+          style="width: {{stage}}px; height: {{stage}}px; margin: -{{bleed}}px;"
+          aria-role="img"
+          aria-label="万花筒正在为你转出一位旅人"
+        ></canvas>
+      </view>
+      <text class="spin__hint">光在旋转，人生在折叠……</text>
+    </view>
+
+    <!-- 三段：抽中的旅人 -->
+    <kaleido-card wx:elif="{{drawn}}" radius="46" class="rcard hue-{{drawn.hue}}">
+      <view class="rcard__band">
+        <view class="rcard__avatar">
+          <text class="rcard__initial">{{drawn.initial}}</text>
+        </view>
+      </view>
+      <view class="rcard__body">
+        <text class="rcard__name">{{drawn.name}}</text>
+        <text class="rcard__quote">「{{drawn.quote}}」</text>
+        <view wx:if="{{drawn.tags.length}}" class="rcard__tags">
+          <tag-pill wx:for="{{drawn.tags}}" wx:key="*this" text="{{item}}" />
+        </view>
+      </view>
+    </kaleido-card>
+  </view>
+
+  <view class="foot safe-bottom">
+    <btn wx:if="{{phase === 'choose'}}" block bind:tap="onSpin">
+      <text class="foot__cta">开始转动 · 抽一位旅人</text>
+    </btn>
+    <block wx:elif="{{phase === 'result'}}">
+      <btn block bind:tap="onViewProfile">
+        <text class="foot__cta">查看 TA 的主页</text>
+      </btn>
+      <view class="foot__again" hover-class="foot__again--hover" bindtap="onAgain">
+        <text class="foot__again-text">再转一次</text>
+      </view>
+    </block>
   </view>
 </view>

@@ -1,0 +1,22 @@
+<view class="bcard kaleido-card" bindtap="onTap">
+  <view wx:if="{{tags.length}}" class="bcard__tags">
+    <view wx:for="{{tags}}" wx:key="*this" class="bcard__tag">
+      <text class="bcard__tag-text">{{item}}</text>
+    </view>
+  </view>
+
+  <text class="bcard__q {{tags.length ? 'bcard__q--after-tags' : ''}}">{{question}}</text>
+  <text wx:if="{{rewardGoal}}" class="bcard__goal">{{rewardGoal}}</text>
+
+  <view class="bcard__rule"></view>
+
+  <!-- 底栏：左边金额，右边回应数（iOS HStack(.bottom, 6)） -->
+  <view class="bcard__foot">
+    <view class="bcard__prize">
+      <text class="bcard__prize-label">悬赏金</text>
+      <text class="bcard__prize-amount">{{amount}}</text>
+    </view>
+    <view class="bcard__foot-gap"></view>
+    <text class="bcard__responses">{{responses}}</text>
+  </view>
+</view>

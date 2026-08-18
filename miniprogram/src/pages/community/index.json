@@ -1,4 +1,8 @@
 {
   "navigationBarTitleText": "万花筒社区",
-  "usingComponents": {}
+  "usingComponents": {
+    "user-card": "./components/user-card/index",
+    "bounty-card": "./components/bounty-card/index",
+    "compose-sheet": "./components/compose-sheet/index"
+  }
 }

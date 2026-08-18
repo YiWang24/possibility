@@ -1,26 +1,513 @@
-.page {
-  min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
-  box-sizing: border-box;
-}
+/**
+ * 悬赏详情样式 —— 对应 iOS `Features/Community/BountyDetailView.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx，注释里的数字是 iOS 原值。
+ *
+ * 头像有三种尺寸（发布者 40 / 回应 34 / 名片 42），配色是五档旅人色相。
+ * WXSS 拼不出变量名，所以 `.avatar--h0..4` 五条规则只负责底色，尺寸交给
+ * `--pub / --reply / --card` 三个修饰类 —— 同推演结果页的 `.pcard__band`。
+ */
 
-.placeholder {
-  padding: 48rpx 32rpx;
+@import '../../../core/design/tokens.wxss';
+
+.page {
+  height: 100vh;
+  background: var(--paper);
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
 }
 
-.placeholder__title {
-  font-size: 34rpx;
+/* ── 顶栏 ── */
+
+.topbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 23rpx; /* 12 */
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-bottom: 23rpx; /* 12 */
+  border-bottom: 1rpx solid var(--line);
+}
+
+.topbar__back {
+  width: 65rpx; /* 34 */
+  height: 65rpx;
+  border-radius: 50%;
+  background: var(--raised);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar__back--hover {
+  opacity: 0.7;
+}
+
+.topbar__icon {
+  font-size: 40rpx;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.topbar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx; /* 2 */
+}
+
+.topbar__title {
+  font-size: 31rpx; /* 16 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.topbar__sub {
+  font-size: 20rpx; /* 10.5 */
+  color: var(--faint);
+}
+
+/* ── 首帧 / 失败 ── */
+
+.loading {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.failed {
+  flex: 1;
+  padding-left: 42rpx;
+  padding-right: 42rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 31rpx; /* 16 */
+}
+
+.failed__text {
+  font-size: 25rpx; /* 13 */
+  text-align: center;
+  color: var(--sub);
+}
+
+.failed__cta {
+  font-size: 25rpx;
+  color: var(--ink);
+}
+
+/* ── 正文 ── */
+
+.scroll {
+  flex: 1;
+  /* Skyline 下 flex:1 的 scroll-view 需要显式高度约束才不塌 */
+  height: 0;
+}
+
+.inner {
+  padding-left: 42rpx; /* 22 */
+  padding-right: 42rpx;
+  padding-top: 31rpx; /* 16 */
+  padding-bottom: 46rpx; /* 24 */
+  display: flex;
+  flex-direction: column;
+  gap: 31rpx; /* 16 */
+}
+
+.tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 13rpx; /* 7 */
+}
+
+.question {
+  font-size: 40rpx; /* 21 */
+  font-weight: 700;
+  line-height: 1.29; /* +6 行距 */
+  color: var(--ink);
+}
+
+/* ── 头像（三档尺寸 × 五档色相）── */
+
+.avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1rpx solid var(--hairline-strong);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar__initial {
+  font-weight: 600;
+  color: var(--avatar-ink);
+}
+
+.avatar--h0 { background: var(--hue0-g); }
+.avatar--h1 { background: var(--hue1-g); }
+.avatar--h2 { background: var(--hue2-g); }
+.avatar--h3 { background: var(--hue3-g); }
+.avatar--h4 { background: var(--hue4-g); }
+
+/* 字号是 iOS 的 size * 0.36 */
+.avatar--pub {
+  width: 77rpx; /* 40 */
+  height: 77rpx;
+}
+
+.avatar--pub .avatar__initial {
+  font-size: 28rpx; /* 14.4 */
+}
+
+.avatar--reply {
+  width: 65rpx; /* 34 */
+  height: 65rpx;
+}
+
+.avatar--reply .avatar__initial {
+  font-size: 24rpx; /* 12.2 */
+}
+
+.avatar--card {
+  width: 81rpx; /* 42 */
+  height: 81rpx;
+}
+
+.avatar--card .avatar__initial {
+  font-size: 29rpx; /* 15.1 */
+}
+
+/* ── 发布者 ── */
+
+.pub {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 21rpx; /* 11 */
+}
+
+.pub__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx; /* 2 */
+}
+
+.pub__name {
+  font-size: 25rpx; /* 13 */
   font-weight: 600;
   color: var(--ink);
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+.pub__meta {
+  font-size: 21rpx; /* 11 */
+  color: var(--faint);
+}
+
+/* ── 悬赏卡 ── */
+
+.prize {
+  padding-left: 33rpx; /* 17 */
+  padding-right: 33rpx;
+  padding-top: 29rpx; /* 15 */
+  padding-bottom: 29rpx;
+  border-radius: 35rpx; /* 18 */
+  background: var(--prize-g);
+  box-shadow: var(--prize-shadow);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.prize__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx; /* 3 */
+}
+
+.prize__label {
+  font-size: 20rpx; /* 10.5 */
+  color: var(--prize-ink-faint);
+}
+
+.prize__amount {
+  font-size: 33rpx; /* 17 */
+  font-weight: 800;
+  color: var(--prize-ink);
+}
+
+/* 演示数据是纯金额，给到 iOS 的 24pt */
+.prize__amount--big {
+  font-size: 46rpx; /* 24 */
+  font-variant-numeric: tabular-nums;
+}
+
+.prize__status {
+  flex-shrink: 0;
+  font-size: 22rpx; /* 11.5 */
+  font-weight: 500;
+  color: var(--prize-ink-soft);
+}
+
+/* ── 具体情况 ── */
+
+.copy {
+  padding-left: 31rpx; /* 16 */
+  padding-right: 31rpx;
+  padding-top: 31rpx;
+  padding-bottom: 31rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 17rpx; /* 9 */
+}
+
+.copy__title {
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.copy__body {
+  font-size: 24rpx; /* 12.5 */
+  line-height: 1.48; /* +6 行距 */
   color: var(--sub);
+}
+
+/* ── 亲历者回应 ── */
+
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: 23rpx; /* 12 */
+}
+
+.replies__head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.replies__title {
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.replies__count {
+  font-size: 21rpx; /* 11 */
+  color: var(--faint);
+}
+
+.reply {
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+  border-radius: 27rpx; /* 14 */
+  background: var(--raised);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 21rpx; /* 11 */
+}
+
+.reply__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx; /* 3 */
+}
+
+.reply__head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 13rpx; /* 7 */
+}
+
+.reply__name {
+  font-size: 24rpx; /* 12.5 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.reply__role {
+  font-size: 19rpx; /* 10 */
+  color: var(--blue);
+}
+
+.reply__body {
+  font-size: 23rpx; /* 12 */
+  line-height: 1.42; /* +5 行距 */
+  color: var(--sub);
+}
+
+/* 空 / 加载中 / 失败共用一块底：三种都是「这里暂时没有内容」 */
+.note {
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+  border-radius: 27rpx; /* 14 */
+  background: var(--raised);
+}
+
+.note__text {
+  font-size: 23rpx; /* 12 */
+  color: var(--faint);
+}
+
+/* ── 已发送提示 ── */
+
+.sent {
+  padding-left: 25rpx; /* 13 */
+  padding-right: 25rpx;
+  padding-top: 25rpx;
+  padding-bottom: 25rpx;
+  border-radius: 25rpx; /* 13 */
+  background: var(--floor-ok-bg);
+  border: 1rpx solid var(--floor-ok-line);
+}
+
+.sent__text {
+  font-size: 22rpx; /* 11.5 */
+  line-height: 1.35; /* +4 行距 */
+  color: var(--sent-ink);
+}
+
+/* ── 底部动作栏 ── */
+
+.actionbar {
+  flex-shrink: 0;
+  padding-left: 38rpx; /* 20 */
+  padding-right: 38rpx;
+  padding-top: 23rpx; /* 12 */
+  border-top: 1rpx solid var(--line);
+}
+
+/* 主按钮：动作栏与名片弹层共用一档 */
+.action {
+  padding-top: 29rpx; /* 15 */
+  padding-bottom: 29rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.action--hover {
+  opacity: 0.85;
+}
+
+/* 已发送：换成 raised 实底，和「还能点」明显分开（iOS 同款） */
+.action--sent {
+  background: var(--raised);
+}
+
+.action--off {
+  opacity: 0.5;
+}
+
+.action__text {
+  font-size: 27rpx; /* 14 */
+  font-weight: 600;
+  color: var(--on-accent);
+}
+
+/* ── 名片弹层 ── */
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 27rpx; /* 14 */
+}
+
+.mycard {
+  padding-left: 27rpx; /* 14 */
+  padding-right: 27rpx;
+  padding-top: 27rpx;
+  padding-bottom: 27rpx;
+  border-radius: 31rpx; /* 16 */
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 19rpx; /* 10 */
+}
+
+.mycard__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 21rpx; /* 11 */
+}
+
+.mycard__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx; /* 3 */
+}
+
+.mycard__name {
+  font-size: 27rpx; /* 14 */
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.mycard__bio {
+  font-size: 22rpx; /* 11.5 */
+  color: var(--sub);
+}
+
+.mycard__tags {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12rpx; /* 6 */
+}
+
+.modal__label {
+  font-size: 22rpx; /* 11.5 */
+  color: var(--sub);
+}
+
+/* 弹层里的 textarea 不给 auto-height：高度一跳键盘就跟着抖（同发布悬赏表单） */
+.modal__input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 180rpx; /* 3~5 行 */
+  padding-left: 23rpx; /* 12 */
+  padding-right: 23rpx;
+  padding-top: 23rpx;
+  padding-bottom: 23rpx;
+  border-radius: 25rpx; /* 13 */
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  font-size: 24rpx; /* 12.5 */
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.modal__ph {
+  color: var(--faint);
+}
+
+.modal__note {
+  font-size: 20rpx; /* 10.5 */
+  line-height: 1.38; /* +4 行距 */
+  color: var(--faint);
 }
