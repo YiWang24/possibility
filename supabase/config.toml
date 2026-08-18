@@ -188,6 +188,9 @@ verify_jwt = true
 [functions.persona]
 verify_jwt = true
 
+[functions.tarot-quota]
+verify_jwt = true
+
 # 以下两个函数当前休眠（手机验证码 + 匿名合并已停用），代码与部署配置保留待恢复。
 # Auth Send SMS Hook：无用户 JWT，用 standardwebhooks secret 校验
 [functions.send-sms-hook]

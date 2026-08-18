@@ -30,7 +30,9 @@ function responseOf(row: QuotaRow) {
   return {
     date: row.usage_date,
     used: Number(row.used_count ?? 0),
-    shared_channels: (row.shared_channels ?? []).map((channel) => channel === "friend" ? "wechat" : channel),
+    shared_channels: (row.shared_channels ?? []).map((channel) =>
+      channel === "friend" ? "wechat" : channel
+    ),
     share_reward_count: Number(row.share_reward_count ?? 0),
     remaining: Number(row.remaining ?? 0),
   };
@@ -60,7 +62,10 @@ Deno.serve(async (req) => {
       const { data, error } = await db.rpc("consume_tarot_attempt");
       if (error) databaseFailure(error);
       const row = (data?.[0] ?? {}) as QuotaRow;
-      return jsonResponse({ ...responseOf(row), allowed: row.allowed === true });
+      return jsonResponse({
+        ...responseOf(row),
+        allowed: row.allowed === true,
+      });
     }
 
     if (action === "reward") {
@@ -76,10 +81,17 @@ Deno.serve(async (req) => {
       });
       if (error) databaseFailure(error);
       const row = (data?.[0] ?? {}) as QuotaRow;
-      return jsonResponse({ ...responseOf(row), claimed: row.claimed === true });
+      return jsonResponse({
+        ...responseOf(row),
+        claimed: row.claimed === true,
+      });
     }
 
-    throw new HttpError(400, "INVALID_ACTION", "action 必须是 status/consume/reward 之一。");
+    throw new HttpError(
+      400,
+      "INVALID_ACTION",
+      "action 必须是 status/consume/reward 之一。",
+    );
   } catch (error) {
     return errorResponse(error, req);
   }

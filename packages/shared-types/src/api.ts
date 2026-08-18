@@ -24,6 +24,7 @@ export const EDGE_FUNCTIONS = [
   'community',
   'lab-choices',
   'persona',
+  'tarot-quota',
   'merge-anonymous',
   'delete-account',
 ] as const
