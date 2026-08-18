@@ -1,26 +1,771 @@
+/**
+ * 首页样式 —— 对应 iOS `Features/Home/HomeView.swift` + `HomeCards.swift`。
+ *
+ * 尺寸换算：iOS 的点 × 1.923（750 / 390）= rpx。注释里的数字是 iOS 原值，
+ * 方便对着基准逐条核。
+ *
+ * 例外是数字形象舞台（`persona-stage`）：它内部按 px 排版，因为 canvas 里的
+ * 几何是照抄 iOS 的点坐标的，容器必须跟着用 px 才不会「画面缩不动、图形偏心」。
+ * 本文件只管它的出血外边距。
+ */
+
+@import '../../core/design/tokens.wxss';
+
 .page {
   min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
+  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss） */
+  padding-left: 42rpx; /* 22 */
+  padding-right: 42rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 200rpx); /* 40 + 自定义 tabBar */
   box-sizing: border-box;
 }
 
-.placeholder {
-  padding: 48rpx 32rpx;
+/* ── 问候（HomeView.greet）── */
+
+.greet {
   display: flex;
-  flex-direction: column;
-  gap: 12rpx;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 14rpx; /* .safe-top 已给 24rpx，补到 iOS 的 20pt */
 }
 
-.placeholder__title {
-  font-size: 34rpx;
+.greet__left {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx; /* 6 */
+}
+
+.greet__date {
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 6rpx; /* 3 */
+  color: var(--faint);
+}
+
+.greet__hi {
+  font-size: 52rpx; /* 27 */
+  font-weight: 700;
+  letter-spacing: 1.5rpx;
+  color: var(--ink);
+}
+
+.greet__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
+.greet__label {
+  font-size: 23rpx; /* 12 */
+  color: var(--sub);
+}
+
+/* 极光渐变文字。webview 渲染器（app.json 当前配置）支持 background-clip:text；
+   若某天首页切到 Skyline，需要在 W0-0 冒烟里确认，不支持就退回 --blue 实色。 */
+.greet__days {
+  font-size: 31rpx; /* 16 */
+  font-weight: 700;
+  background: var(--aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── 语音日记卡（DiaryCard）── */
+
+.diary {
+  margin-top: 35rpx; /* 18 */
+  padding: 33rpx 38rpx; /* 17 / 20 */
+  display: flex;
+  flex-direction: column;
+  gap: 27rpx; /* 14 */
+}
+
+.diary__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diary__title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 13rpx; /* 7 */
+}
+
+.diary__title-text {
+  font-size: 28rpx; /* 14.5 */
   font-weight: 600;
   color: var(--ink);
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+.diary__chev {
+  width: 35rpx;
+  height: 35rpx;
+  border-radius: var(--r-chip);
+  background: var(--chip-off-bg);
+  border: 1rpx solid var(--hairline-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27rpx;
+  color: var(--ink);
+}
+
+.diary__record {
+  padding: 12rpx 23rpx; /* 6 / 12 */
+  border-radius: var(--r-chip);
+  background: var(--diary-pill-bg);
+  color: var(--blue);
+  font-size: 24rpx; /* 12.5 */
+  font-weight: 500;
+}
+
+/* 周历 */
+
+.week {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx; /* 6 */
+}
+
+.day__dot {
+  position: relative;
+  width: 58rpx; /* 30 */
+  height: 58rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day__dot--on {
+  background: var(--day-filled);
+}
+
+/* 今天：外扩一圈虚线（iOS 的 .padding(-2) 描边） */
+.day__dot--today::after {
+  content: '';
+  position: absolute;
+  left: -8rpx;
+  top: -8rpx;
+  right: -8rpx;
+  bottom: -8rpx;
+  border-radius: var(--r-chip);
+  border: 4rpx dashed var(--day-today-ring);
+}
+
+.day__emoji {
+  font-size: 29rpx; /* 15 */
+}
+
+.day__label {
+  font-size: 19rpx; /* 10 */
+  color: var(--faint);
+}
+
+.day__label--today {
+  color: var(--blue);
+}
+
+/* ── AI 发问卡（HomeAskCard）── */
+
+.ask {
+  position: relative;
+  margin-top: 42rpx; /* 22 */
+  border-radius: 54rpx; /* 28 */
+  background: var(--ask-glow), var(--ask-bg);
+  border: 1rpx solid var(--ask-line);
+  overflow: hidden;
+}
+
+/* 熔岩灯光斑层：纯装饰，不接事件 */
+.ask__glow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.lava {
+  position: absolute;
+  border-radius: var(--r-chip);
+}
+
+.lava--1 {
+  width: 442rpx; /* 230 */
+  height: 442rpx;
+  right: -77rpx; /* 40 */
+  top: -135rpx; /* 70 */
+  background: var(--lava-1);
+  animation: lava1 13s ease-in-out infinite;
+}
+
+.lava--2 {
+  width: 385rpx; /* 200 */
+  height: 385rpx;
+  left: -115rpx; /* 60 */
+  bottom: -173rpx; /* 90 */
+  background: var(--lava-2);
+  animation: lava2 17s ease-in-out infinite;
+  /* 负延迟 = 直接从周期中段开始，对齐 iOS 的 delay: 6 */
+  animation-delay: -6s;
+}
+
+.lava--3 {
+  width: 288rpx; /* 150 */
+  height: 288rpx;
+  left: 32%;
+  top: 30%;
+  background: var(--lava-3);
+  animation: lava3 11s ease-in-out infinite;
+  animation-delay: -3s;
+}
+
+/* 关掉动画时停在第一帧：和四个签名动画一样，「静置成形」而不是不画 */
+.lava--still {
+  animation: none;
+}
+
+@keyframes lava1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-173rpx, 115rpx) scale(1.25);
+  }
+  50% {
+    transform: translate(-288rpx, 288rpx) scale(0.85);
+  }
+  75% {
+    transform: translate(-77rpx, 173rpx) scale(1.15);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes lava2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  30% {
+    transform: translate(212rpx, -154rpx) scale(1.3);
+  }
+  55% {
+    transform: translate(365rpx, -308rpx) scale(0.8);
+  }
+  80% {
+    transform: translate(115rpx, -77rpx) scale(1.1);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes lava3 {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  33% {
+    transform: translate(135rpx, 96rpx) scale(1.5);
+    opacity: 1;
+  }
+  66% {
+    transform: translate(-115rpx, -77rpx) scale(0.65);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+}
+
+.ask__body {
+  position: relative;
+  padding: 46rpx 42rpx 42rpx; /* 24 / 22 / 22 */
+}
+
+.ask__eyebrow {
+  position: relative;
+  padding-left: 50rpx; /* 26 */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.ask__rule {
+  position: absolute;
+  left: 0;
+  width: 35rpx; /* 18 */
+  height: 3rpx; /* 1.5 */
+  background: var(--eyebrow-rule);
+}
+
+.ask__eyebrow-text {
+  font-size: 21rpx; /* 11 */
+  letter-spacing: 7rpx; /* 3.5 */
+  color: var(--blue-200);
+}
+
+.ask__title {
+  margin-top: 23rpx; /* 12 */
+  font-size: 42rpx; /* 22 */
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.ask__title-line {
+  display: block;
+}
+
+.ask__title-hl {
+  color: var(--blue);
+}
+
+.ask__box {
+  position: relative;
+  margin-top: 31rpx; /* 16 */
+  padding: 23rpx 27rpx; /* 12 / 14 */
+  border-radius: 35rpx; /* 18 */
+  background: var(--ask-box-bg);
+  border: 1rpx solid var(--ask-box-line);
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx; /* 6 */
+}
+
+.ask__topic {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx; /* 5 */
+  padding: 8rpx 21rpx; /* 4 / 11 */
+  border-radius: var(--r-chip);
+  background: var(--pill-topic-bg);
+  border: 1rpx solid var(--pill-topic-line);
+  color: var(--blue-200);
+}
+
+.ask__topic-star {
+  font-size: 21rpx;
+}
+
+.ask__topic-name {
+  font-size: 21rpx;
+  font-weight: 600;
+}
+
+.ask__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 50rpx; /* 26，给右上角的清空按钮让位 */
+  min-height: 84rpx; /* 约两行 */
+  max-height: 168rpx; /* 约四行（iOS lineLimit 2...4） */
+  font-size: 29rpx; /* 15 */
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.ask__input-ph {
+  color: var(--faint);
+}
+
+.ask__actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  margin-top: 4rpx;
+}
+
+.ask__send {
+  padding: 19rpx 46rpx; /* 10 / 24 */
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  box-shadow: var(--ask-send-shadow);
+  color: var(--on-accent);
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 600;
+}
+
+.ask__send--off {
+  opacity: 0.4;
+}
+
+.ask__clear {
+  position: absolute;
+  top: 21rpx; /* 11 */
+  right: 25rpx; /* 13 */
+  width: 46rpx; /* 24 */
+  height: 46rpx;
+  border-radius: var(--r-chip);
+  background: var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 35rpx; /* 18 */
+  color: var(--ask-clear-ink);
+  transition: opacity 0.15s ease-out;
+}
+
+.ask__clear--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ask__chips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 15rpx; /* 8 */
+  margin-top: 27rpx; /* 14 */
+}
+
+.soft-chip {
+  padding: 15rpx 29rpx; /* 8 / 15 */
+  border-radius: var(--r-chip);
+  background: var(--chip-off-bg);
+  border: 1rpx solid var(--chip-off-line);
   color: var(--sub);
+  font-size: 24rpx; /* 12.5 */
+}
+
+.soft-chip--on {
+  background: var(--chip-on-bg);
+  border-color: var(--chip-on-line);
+  color: var(--blue-200);
+}
+
+/* ── 人生卡牌入口（LifeEntryButton）── */
+
+.life {
+  margin-top: 27rpx; /* 14 */
+  padding: 27rpx 31rpx; /* 14 / 16 */
+  border-radius: 31rpx; /* 16 */
+  background: var(--life-bg);
+  border: 1rpx solid var(--life-line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 23rpx; /* 12 */
+}
+
+/* 两张斜叠的小卡（miniDeck） */
+.life__deck {
+  position: relative;
+  flex-shrink: 0;
+  width: 65rpx; /* 34 */
+  height: 58rpx;
+}
+
+.life__card {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 42rpx; /* 22 */
+  height: 58rpx; /* 30 */
+  margin-left: -21rpx;
+  border-radius: 10rpx;
+}
+
+.life__card--a {
+  background: var(--hue4-g);
+  transform: translateX(-6rpx) rotate(-10deg);
+}
+
+.life__card--b {
+  background: var(--hue1-g);
+  transform: translateX(6rpx) rotate(8deg);
+}
+
+.life__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.life__eyebrow {
+  font-size: 19rpx; /* 10 */
+  letter-spacing: 2rpx;
+  color: var(--blue-200);
+}
+
+.life__title {
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.life__sub {
+  font-size: 21rpx; /* 11 */
+  color: var(--sub);
+}
+
+.life__chev {
+  flex-shrink: 0;
+  font-size: 29rpx; /* 15 */
+  color: var(--faint);
+}
+
+/* ── 动态画像区 ── */
+
+.portrait-section {
+  margin-top: 46rpx; /* 24 */
+  display: flex;
+  flex-direction: column;
+  gap: 23rpx; /* 12 */
+}
+
+/* SectionHeader */
+.section-head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.section-head__title {
+  font-size: 29rpx; /* 15 */
+  font-weight: 600;
+  letter-spacing: 1.7rpx;
+  color: var(--ink);
+}
+
+.section-head__link {
+  font-size: 23rpx; /* 12 */
+  color: var(--blue);
+}
+
+/* 尼采引文：左侧一条细竖线，正文衬线 */
+.quote {
+  position: relative;
+  padding-top: 8rpx;
+  padding-left: 27rpx; /* 14 */
+  display: flex;
+  flex-direction: column;
+  gap: 15rpx; /* 8 */
+}
+
+.quote::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2rpx;
+  background: var(--quote-rule);
+}
+
+.quote__text {
+  font-size: 23rpx; /* 12 */
+  font-family: Georgia, 'Songti SC', 'STSong', serif;
+  line-height: 1.75;
+  color: var(--sub);
+}
+
+.quote__by {
+  font-size: 21rpx; /* 11 */
+  color: var(--faint);
+  text-align: right;
+}
+
+/* 画像卡 */
+.portrait {
+  padding: 42rpx 38rpx 35rpx; /* 22 / 20 / 18 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 数字形象舞台贴到卡边（原型 margin: 0 -20px） */
+.portrait__stage {
+  display: block;
+  margin: -42rpx -38rpx 0;
+}
+
+/* 人生底牌 */
+
+.signature {
+  margin-top: 27rpx; /* 14 */
+  padding: 27rpx; /* 14 */
+  border-radius: 31rpx; /* 16 */
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 19rpx; /* 10 */
+}
+
+.signature__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.signature__title {
+  font-size: 25rpx; /* 13 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.signature__note {
+  font-size: 20rpx; /* 10.5 */
+  color: var(--faint);
+}
+
+.signature__row {
+  display: flex;
+  flex-direction: row;
+  gap: 15rpx; /* 8 */
+}
+
+/* iOS 这里给渐变叠了 0.85 透明度；用整块 opacity 会把字一起冲淡，
+   而 15% 的差别肉眼看不出来，所以直接用满色渐变。 */
+.signature__card {
+  flex: 1;
+  min-width: 0;
+  padding: 23rpx 12rpx; /* 12 */
+  border-radius: 23rpx; /* 12 */
+  background: var(--hue0-g);
+  border: 1rpx solid var(--card-glyph-line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx; /* 6 */
+  color: var(--on-accent);
+}
+
+.signature__glyph {
+  font-size: 25rpx; /* 13 */
+}
+
+.signature__name {
+  font-size: 23rpx; /* 12 */
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 完成度 */
+
+.progress {
+  margin-top: 35rpx; /* 18 */
+  max-width: 481rpx; /* 250 */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 19rpx; /* 10 */
+}
+
+.progress__track {
+  flex: 1;
+  height: 10rpx; /* 5 */
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: var(--r-chip);
+  background: var(--aurora);
+  transition: width 0.5s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.progress__text {
+  flex-shrink: 0;
+  font-size: 21rpx; /* 11 */
+  color: var(--sub);
+}
+
+/* 维度行 */
+
+.dims {
+  margin-top: 31rpx; /* 16 */
+  display: flex;
+  flex-direction: column;
+  gap: 17rpx; /* 9 */
+}
+
+.dim-row {
+  padding: 27rpx 31rpx; /* 14 / 16 */
+  border-radius: 31rpx; /* 16 */
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 23rpx; /* 12 */
+}
+
+/* 尚未填写：虚线框 + 极淡蓝底，一眼看出「这里还空着」 */
+.dim-row--todo {
+  background: var(--dim-todo-bg);
+  border: 2rpx dashed var(--dim-todo-line);
+}
+
+/* 底色是维度主题色的 15%，由数据算好走 inline style */
+.dim-row__icon {
+  flex-shrink: 0;
+  width: 65rpx; /* 34 */
+  height: 65rpx;
+  border-radius: 23rpx; /* 12 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 29rpx; /* 15 */
+  color: var(--ink);
+}
+
+.dim-row__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.dim-row__label {
+  font-size: 26rpx; /* 13.5 */
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dim-row__value {
+  font-size: 22rpx; /* 11.5 */
+  color: var(--sub);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dim-row__value--todo {
+  color: var(--blue);
+}
+
+.dim-row__chev {
+  flex-shrink: 0;
+  font-size: 27rpx; /* 14 */
+  color: var(--faint);
 }

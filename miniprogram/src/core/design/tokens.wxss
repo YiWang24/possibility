@@ -97,7 +97,13 @@ page,
      所以收在这里。页面需要「品牌色带透明」时一律从这取，不要自己写 rgba。 */
   --blue-line: rgba(111, 165, 255, 0.34); /* 强调描边（主路径卡 / 重试胶囊）*/
   --blue-line-soft: rgba(111, 165, 255, 0.2); /* 面板描边 */
+  --blue-line-strong: rgba(111, 165, 255, 0.6); /* 选中态胶囊描边 */
   --blue-wash: rgba(94, 150, 255, 0.1); /* 极淡底色（重试胶囊）*/
+
+  /* 「我添加的」——用户自己输入的关键词用绿色与系统推荐区分（DimensionSheet.sourceLegend）。
+     色值与 --hue2-accent 相同，但语义不同：这里表达「来源是我」，不是旅人配色。 */
+  --mine: #2fa98c;
+  --mine-line: rgba(62, 217, 164, 0.6);
   --surface-ghost: rgba(255, 255, 255, 0.045); /* 次级路径卡底 */
   /* 浅色梯度：eyebrow → 链接 → 卡内标签，越大越浅 */
   --blue-100: #91b1ff;
@@ -116,6 +122,8 @@ page,
   --on-accent: #ffffff;
   /* 半透明白：spinner 轨道等「比 --line 明显、但仍是白纱」的地方 */
   --track: rgba(255, 255, 255, 0.3);
+  /* 比 --line 重一档的描边（小圆钮 / 次级图标底的轮廓） */
+  --hairline-strong: rgba(255, 255, 255, 0.18);
   /* 弹层遮罩（--stage 的 0.72）*/
   --scrim: rgba(5, 7, 13, 0.72);
 
@@ -138,8 +146,115 @@ page,
   /* 用户气泡（ChatView.bubbleBackground） */
   --user-bubble: linear-gradient(135deg, #3e77f2 0%, #2a50d6 100%);
 
+  /* 右上角白色柔光 —— 叠在实色卡面上做出「有光源」的层次
+     （iOS `DimensionSheet.toolBackground` 的 RadialGradient）。
+     底色由数据给（各小工具自带 tint），这一层只负责打光。 */
+  --gloss-tr: radial-gradient(
+    circle at 100% 0%,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+
   /* ── 阴影（CardBackground）── */
   --shadow-card: 0 2rpx 8rpx rgba(0, 0, 0, 0.55);
+
+  /* ── 数字形象舞台（PersonaCanvasView.PersonaStageView）──
+     iOS 那边这几个值是写在视图里的内联色，Theme.swift 没有收录；但页面 wxss
+     是零色值的，所以只能落在这里。命名带 stage- 前缀标明作用域：它们只服务
+     首页的数字形象舞台，不是通用设计语言，别的页面不要取用。 */
+  --stage-bg: linear-gradient(135deg, #080c1a 0%, #10162b 55%, #080b16 100%);
+  --stage-glow-a: radial-gradient(
+    circle at 50% 48%,
+    rgba(83, 115, 255, 0.22) 0%,
+    rgba(83, 115, 255, 0) 100%
+  );
+  --stage-glow-b: radial-gradient(
+    circle at 30% 80%,
+    rgba(227, 92, 193, 0.12) 0%,
+    rgba(227, 92, 193, 0) 100%
+  );
+  /* 底部压暗，保证 caption 可读 */
+  --stage-scrim: linear-gradient(
+    to bottom,
+    rgba(7, 10, 20, 0) 38%,
+    rgba(7, 10, 20, 0.07) 62%,
+    rgba(7, 9, 18, 0.88) 100%
+  );
+  --stage-badge-bg: rgba(7, 11, 24, 0.54);
+  --stage-badge-line: rgba(198, 218, 255, 0.18);
+  --stage-badge-ink: #dce8ff;
+  /* inset 描边：集齐 3 张人生底牌时换成偏紫的高亮档 */
+  --stage-inset: rgba(172, 201, 255, 0.12);
+  --stage-inset-on: rgba(174, 174, 255, 0.22);
+
+  /* ── 首页（HomeView / HomeCards）──
+     同上：iOS 把这些写在各卡片视图里，Theme.swift 未收录。前缀标明作用域。 */
+
+  /* AI 发问卡（HomeAskCard.askBackground） */
+  --ask-bg: linear-gradient(135deg, #141a34 0%, #1a2350 50%, #10132a 100%);
+  --ask-glow: radial-gradient(
+    circle at 100% 0%,
+    rgba(111, 165, 255, 0.35) 0%,
+    rgba(111, 165, 255, 0) 100%
+  );
+  --ask-line: rgba(122, 158, 255, 0.3);
+  --ask-box-bg: rgba(6, 8, 16, 0.45);
+  --ask-box-line: rgba(255, 255, 255, 0.12);
+  --ask-send-shadow: 0 12rpx 20rpx rgba(79, 125, 255, 0.6);
+  --ask-clear-ink: #aeb7cc;
+  /* eyebrow 左侧的小横杠（--blue-200 的 0.6） */
+  --eyebrow-rule: rgba(157, 188, 255, 0.6);
+
+  /* 熔岩灯光斑（AskGlowLayer 的三颗球）。
+     iOS 用 blur(10/12/14) 把边缘化开；这里靠渐变本身的软收尾达到同样观感，
+     不用 filter —— Skyline 不保证支持，而且这一层是纯装饰，不值得赌。 */
+  --lava-1: radial-gradient(
+    circle,
+    rgba(111, 165, 255, 0.65) 0%,
+    rgba(143, 123, 255, 0.28) 52%,
+    rgba(143, 123, 255, 0) 72%
+  );
+  --lava-2: radial-gradient(
+    circle,
+    rgba(227, 92, 193, 0.42) 0%,
+    rgba(143, 123, 255, 0.2) 55%,
+    rgba(143, 123, 255, 0) 75%
+  );
+  --lava-3: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(157, 188, 255, 0.16) 55%,
+    rgba(157, 188, 255, 0) 72%
+  );
+
+  /* 话题胶囊与软标签的选中/未选中两态（HomeAskCard.softChip / askBox 的话题条） */
+  --chip-on-bg: rgba(94, 150, 255, 0.14);
+  --chip-on-line: rgba(94, 150, 255, 0.5);
+  --chip-off-bg: rgba(255, 255, 255, 0.07);
+  --chip-off-line: rgba(255, 255, 255, 0.1);
+  --pill-topic-bg: rgba(94, 150, 255, 0.16);
+  --pill-topic-line: rgba(94, 150, 255, 0.4);
+
+  /* 语音日记卡（DiaryCard）：记过的日子填极光，今天套一圈虚线 */
+  --day-filled: linear-gradient(135deg, #3e77f2 0%, #b03390 100%);
+  --day-today-ring: rgba(94, 150, 255, 0.55);
+  --diary-pill-bg: rgba(94, 150, 255, 0.12);
+
+  /* 人生卡牌入口（LifeEntryButton） */
+  --life-bg: linear-gradient(
+    135deg,
+    rgba(26, 35, 80, 0.6) 0%,
+    rgba(43, 27, 45, 0.4) 100%
+  );
+  --life-line: rgba(143, 123, 255, 0.3);
+
+  /* 画像卡（PortraitCard）：未填写的维度行用虚线框 + 极淡蓝底提示「这里还空着」 */
+  --dim-todo-bg: rgba(94, 150, 255, 0.06);
+  --dim-todo-line: rgba(94, 150, 255, 0.4);
+  /* 人生底牌小卡的描边 */
+  --card-glyph-line: rgba(174, 174, 255, 0.25);
+  /* 引文左侧的竖线（--sub 的 0.34） */
+  --quote-rule: rgba(152, 160, 179, 0.34);
 }
 
 /* ── 通用卡片样式（对应 iOS 的 .kaleidoCard() modifier）── */

@@ -1,0 +1,226 @@
+/**
+ * 动态画像维度浮层样式 —— 对应 iOS `DimensionSheet`。
+ *
+ * 左右内边距由 `<sheet>` 的 `.sheet__body` 提供，这里不再加，否则会双重缩进。
+ */
+
+.dim {
+  display: flex;
+  flex-direction: column;
+}
+
+.dim__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24rpx;
+}
+
+.dim__step {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.dim__step--2 {
+  margin-top: 42rpx;
+}
+
+.dim__num {
+  color: var(--blue);
+}
+
+.dim__q {
+  color: var(--ink);
+}
+
+.dim__rotate {
+  padding: 8rpx 4rpx;
+}
+
+.dim__rotate-text {
+  font-size: 23rpx;
+  color: var(--blue);
+}
+
+/* ── 关键词云 ── */
+
+.dim__chips {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 15rpx;
+  margin-top: 23rpx;
+}
+
+.chip {
+  padding: 15rpx 29rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  color: var(--sub);
+  font-size: 24rpx;
+}
+
+.chip--on {
+  background: var(--blue-deep);
+  border-color: var(--blue-line-strong);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+
+.chip--mine {
+  background: var(--mine);
+  border-color: var(--mine-line);
+  color: var(--on-accent);
+  font-weight: 500;
+}
+
+/* ── 来源图例 ── */
+
+.dim__legend {
+  display: flex;
+  flex-direction: row;
+  gap: 31rpx;
+  margin-top: 23rpx;
+  font-size: 21rpx;
+  color: var(--faint);
+}
+
+.dim__legend-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.dim__legend-dot {
+  width: 13rpx;
+  height: 13rpx;
+  border-radius: var(--r-chip);
+}
+
+.dim__legend-dot--sys {
+  background: var(--blue-deep);
+}
+
+.dim__legend-dot--mine {
+  background: var(--mine);
+}
+
+/* ── 自定义关键词 ── */
+
+.dim__custom {
+  display: flex;
+  flex-direction: column;
+  gap: 19rpx;
+  margin-top: 23rpx;
+}
+
+.dim__custom-toggle {
+  font-size: 24rpx;
+  color: var(--blue);
+}
+
+.dim__custom-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15rpx;
+}
+
+.dim__input {
+  flex: 1;
+  padding: 19rpx 27rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+  font-size: 25rpx;
+  color: var(--ink);
+}
+
+.dim__input-ph {
+  color: var(--faint);
+}
+
+.dim__add {
+  padding: 19rpx 31rpx;
+  border-radius: var(--r-chip);
+  background: var(--btn-g);
+  color: var(--on-accent);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+/* ── 小工具 ── */
+
+.dim__tools {
+  display: flex;
+  flex-direction: column;
+  gap: 21rpx;
+  margin-top: 23rpx;
+  margin-bottom: 42rpx;
+}
+
+/* 底色由数据给（DIMENSIONS[key].tools[].tint，上游是 iOS DimensionData），
+   走 inline style；这一层只负责右上角的柔光与描边。 */
+.tool {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 23rpx;
+  padding: 27rpx 29rpx;
+  border-radius: 35rpx;
+  border: 1rpx solid var(--line);
+  overflow: hidden;
+}
+
+.tool__gloss {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gloss-tr);
+  pointer-events: none;
+}
+
+.tool__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.tool__name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tool__desc {
+  font-size: 21rpx;
+  line-height: 1.5;
+  color: var(--sub);
+}
+
+/* 第三方工具的来源与访问说明：iOS 没有这两个字段（它的工具表更短），
+   web 侧有，保留下来是为了让「这是别人家的测评」这件事在点进去之前就清楚。 */
+.tool__provider {
+  font-size: 20rpx;
+  color: var(--faint);
+}
+
+.tool__duration {
+  flex-shrink: 0;
+  padding: 6rpx 17rpx;
+  border-radius: var(--r-chip);
+  background: var(--line);
+  color: var(--blue-200);
+  font-size: 20rpx;
+}

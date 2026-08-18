@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "sheet": "/core/design/components/sheet/index",
+    "btn": "/core/design/components/btn/index"
+  }
+}

@@ -1,4 +1,7 @@
 {
   "navigationBarTitleText": "认识自己",
-  "usingComponents": {}
+  "usingComponents": {
+    "persona-stage": "./components/persona-stage/index",
+    "dimension-sheet": "./components/dimension-sheet/index"
+  }
 }

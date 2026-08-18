@@ -105,13 +105,38 @@ export function getProfile(): Promise<RemoteProfile> {
   return invokeFunction<RemoteProfile>('get-profile')
 }
 
-/** POST /save-profile —— 写入一个维度的关键词 */
+/**
+ * POST /save-profile —— 写入一个维度的关键词。
+ *
+ * `action` 不能省：save-profile 是三合一入口（save_dimension / save_card_game /
+ * save_public_profile），switch 落到 default 会直接 400 INVALID_ACTION。
+ *
+ * `source: 'assessment'` 时后端还会读 `assessment_kind` / `assessment_answers` /
+ * `assessment_scores`（save-profile/index.ts 里从原始 body 取，不经 validator），
+ * 三者缺一就存不成一次测评记录 —— 所以做成必选组合而不是三个独立可选字段。
+ */
 export function saveDimension(input: {
   dimension: string
   tags: string[]
   source: 'manual' | 'assessment'
+  assessment?: {
+    kind: string
+    answers: number[]
+    scores: Record<string, number>
+  }
 }): Promise<{ profile_revision: number }> {
-  return invokeFunction('save-profile', { ...input })
+  const { assessment, ...rest } = input
+  return invokeFunction('save-profile', {
+    action: 'save_dimension',
+    ...rest,
+    ...(assessment
+      ? {
+          assessment_kind: assessment.kind,
+          assessment_answers: assessment.answers,
+          assessment_scores: assessment.scores,
+        }
+      : {}),
+  })
 }
 
 /** POST /profile-privacy —— 画像可见性与用途授权 */
@@ -151,6 +176,21 @@ export function finalizeDiaryEntry(entryUuid: string): Promise<{ status: string 
 /** POST /list-diary —— 日记列表 */
 export function listDiary(limit = 50): Promise<{ entries: RemoteDiaryEntry[] }> {
   return invokeFunction('list-diary', { limit })
+}
+
+/**
+ * POST /list-diary 带 offset 的分页版 —— 对应 iOS `SupabaseService.listDiaryPage`
+ * （HomeModel.swift 末尾的 extension）。
+ *
+ * 首页的「已探索第 N 天」要拿到最早一条日记，而服务端把 limit 钳到 50：
+ * 日记多于 50 条时窗口内的最早一条并不是真正的最早一条，天数会被低估。
+ * 所以需要 `total` 和按 `offset = total - 1` 取末位的能力。
+ */
+export function listDiaryPage(
+  limit: number,
+  offset: number,
+): Promise<{ entries: RemoteDiaryEntry[]; total: number }> {
+  return invokeFunction('list-diary', { limit, offset })
 }
 
 /**

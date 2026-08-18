@@ -59,3 +59,13 @@ const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '�
 export function diaryLabel(date: Date): string {
   return `${date.getMonth() + 1}月${date.getDate()}日 · ${WEEKDAYS[date.getDay()]}`
 }
+
+/** `M月d日 · 星期x`（首页问候栏，对应 iOS `HomeView.greet` 的 `M月d日 · EEEE`） */
+export function greetDateLabel(date: Date): string {
+  return `${date.getMonth() + 1}月${date.getDate()}日 · 星期${WEEKDAYS[date.getDay()]?.slice(1) ?? ''}`
+}
+
+/** 单字星期（首页周历列头，对应 iOS 的 `EEEEE`）：一 / 二 / … / 日 */
+export function weekdayNarrow(date: Date): string {
+  return WEEKDAYS[date.getDay()]?.slice(1) ?? ''
+}

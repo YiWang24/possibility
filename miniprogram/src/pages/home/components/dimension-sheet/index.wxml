@@ -1,0 +1,87 @@
+<sheet show="{{show}}" title="{{cfg.title}}" bind:close="onClose">
+  <view wx:if="{{cfg}}" class="dim">
+    <view class="dim__head">
+      <view class="dim__step">
+        <text class="dim__num">01</text>
+        <text class="dim__q">{{cfg.question}}</text>
+      </view>
+      <view class="dim__rotate" bindtap="onRotate">
+        <text class="dim__rotate-text">换一批 ↻</text>
+      </view>
+    </view>
+
+    <view class="dim__chips">
+      <view
+        wx:for="{{chips}}"
+        wx:key="word"
+        class="chip {{item.on ? (item.isCustom ? 'chip--mine' : 'chip--on') : ''}}"
+        data-word="{{item.word}}"
+        data-custom="{{item.isCustom}}"
+        bindtap="onToggle"
+      >
+        <text>{{item.word}}</text>
+      </view>
+    </view>
+
+    <view class="dim__legend">
+      <view class="dim__legend-item">
+        <view class="dim__legend-dot dim__legend-dot--sys" />
+        <text>系统推荐</text>
+      </view>
+      <view class="dim__legend-item">
+        <view class="dim__legend-dot dim__legend-dot--mine" />
+        <text>我添加的</text>
+      </view>
+    </view>
+
+    <view class="dim__custom">
+      <view class="dim__custom-toggle" bindtap="onToggleCustomInput">
+        <text>＋ 自己输入一个关键词</text>
+      </view>
+      <view wx:if="{{showCustomInput}}" class="dim__custom-row">
+        <input
+          class="dim__input"
+          value="{{customText}}"
+          placeholder="输入一个最像你的词"
+          placeholder-class="dim__input-ph"
+          confirm-type="done"
+          bindinput="onCustomInput"
+          bindconfirm="onAddCustom"
+        />
+        <view class="dim__add" bindtap="onAddCustom">
+          <text>添加</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="dim__step dim__step--2">
+      <text class="dim__num">02</text>
+      <text class="dim__q">或者，用小工具继续探索</text>
+    </view>
+
+    <view class="dim__tools">
+      <view
+        wx:for="{{cfg.tools}}"
+        wx:key="name"
+        class="tool"
+        style="background-color: {{item.tint}}"
+        data-index="{{index}}"
+        bindtap="onToolTap"
+      >
+        <view class="tool__gloss" />
+        <view class="tool__text">
+          <text class="tool__name">{{item.name}}</text>
+          <text class="tool__desc">{{item.desc}}</text>
+          <text wx:if="{{item.provider}}" class="tool__provider">{{item.provider}} · {{item.access}}</text>
+        </view>
+        <view class="tool__duration">
+          <text>{{item.duration}}</text>
+        </view>
+      </view>
+    </view>
+
+    <btn variant="primary" block disabled="{{!canSave}}" bind:tap="onSave">
+      <text>保存到我的画像</text>
+    </btn>
+  </view>
+</sheet>

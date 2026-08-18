@@ -1,0 +1,136 @@
+/**
+ * 数字形象舞台样式 —— 对应 iOS `PersonaStageView`。
+ *
+ * 全程用 px（不是 rpx）：画布里的几何常量是 iOS 的「点」，舞台跟着屏宽缩放
+ * 会与画布脱节。iOS 的 `.frame(height: 216)` 同样是固定值。
+ */
+
+.stage {
+  position: relative;
+  height: 216px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* 舞台背景：底色渐变 + 两团染色光晕（iOS 的三层 Gradient 叠在一起） */
+.stage__bg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--stage-glow-a), var(--stage-glow-b), var(--stage-bg);
+}
+
+.stage__canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 216px;
+}
+
+.stage__scrim {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--stage-scrim);
+  pointer-events: none;
+}
+
+/* inset 描边（原型 .digital-human-stage::after）：内缩 10px 的一圈细线 */
+.stage::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 1px solid var(--stage-inset);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+/* 集齐 3 张人生底牌 → 描边换成偏紫的高亮档（.has-life-cards） */
+.stage--on::after {
+  border-color: var(--stage-inset-on);
+}
+
+/* ── LIVE 徽标 ── */
+
+.stage__badge {
+  position: absolute;
+  left: 15px;
+  top: 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--stage-badge-bg);
+  border: 1px solid var(--stage-badge-line);
+}
+
+.stage__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--teal);
+}
+
+/* iOS BreatheModifier：7s 一个来回，scale 1 → 1.1、opacity 0.75 → 1 */
+.stage__dot--breathe {
+  animation: stage-breathe 7s ease-in-out infinite;
+}
+
+@keyframes stage-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.stage__badge-text {
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 1.8px;
+  color: var(--stage-badge-ink);
+}
+
+/* ── caption ── */
+
+.stage__caption {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stage__name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.stage__meta {
+  font-size: 9.5px;
+  line-height: 1.35;
+  color: var(--faint);
+  /* iOS lineLimit(2) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

@@ -1,0 +1,15 @@
+<view class="stage {{hasLifeCards ? 'stage--on' : ''}}">
+  <view class="stage__bg" />
+  <canvas id="{{canvasId}}" type="2d" class="stage__canvas" />
+  <view class="stage__scrim" />
+
+  <view class="stage__badge">
+    <view class="stage__dot {{still ? '' : 'stage__dot--breathe'}}" />
+    <text class="stage__badge-text">LIVE PROFILE FORM</text>
+  </view>
+
+  <view class="stage__caption">
+    <text class="stage__name">{{userName}} · 动态数字形象</text>
+    <text class="stage__meta">{{meta}}</text>
+  </view>
+</view>

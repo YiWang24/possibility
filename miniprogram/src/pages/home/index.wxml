@@ -1,6 +1,202 @@
 <view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 1 · A · 待复刻</text>
+  <!-- ── 问候 ── -->
+  <view class="greet">
+    <view class="greet__left">
+      <text class="greet__date">{{greetDate}}</text>
+      <text class="greet__hi">{{greeting}}，{{userName}}</text>
+    </view>
+    <view class="greet__right">
+      <text class="greet__label">已探索</text>
+      <text class="greet__days">第 {{exploredDays}} 天</text>
+    </view>
+  </view>
+
+  <!-- ── 语音日记 ── -->
+  <view class="diary kaleido-card">
+    <view class="diary__head">
+      <view class="diary__title" bindtap="onOpenDiary">
+        <text class="diary__title-text">我的语音日记</text>
+        <view class="diary__chev"><text>›</text></view>
+      </view>
+      <view class="diary__record" bindtap="onRecordToday">
+        <text>◉ 记录今日</text>
+      </view>
+    </view>
+
+    <view class="week">
+      <view
+        wx:for="{{week}}"
+        wx:key="date"
+        class="day"
+        data-date="{{item.date}}"
+        bindtap="onDayTap"
+      >
+        <view class="day__dot {{item.filled ? 'day__dot--on' : ''}} {{item.isToday ? 'day__dot--today' : ''}}">
+          <text class="day__emoji">{{item.emoji}}</text>
+        </view>
+        <text class="day__label {{item.isToday ? 'day__label--today' : ''}}">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ── AI 发问 ── -->
+  <view class="ask">
+    <view class="ask__glow">
+      <view class="lava lava--1 {{still ? 'lava--still' : ''}}" />
+      <view class="lava lava--2 {{still ? 'lava--still' : ''}}" />
+      <view class="lava lava--3 {{still ? 'lava--still' : ''}}" />
+    </view>
+
+    <view class="ask__body">
+      <view class="ask__eyebrow">
+        <view class="ask__rule" />
+        <text class="ask__eyebrow-text">今天想探索什么</text>
+      </view>
+
+      <view class="ask__title">
+        <text class="ask__title-line">说出那个</text>
+        <view class="ask__title-line">
+          <text class="ask__title-hl">在心里盘旋</text>
+          <text>的问题</text>
+        </view>
+      </view>
+
+      <view class="ask__box">
+        <view wx:if="{{topic}}" class="ask__topic">
+          <text class="ask__topic-star">✦</text>
+          <text class="ask__topic-name">{{topic}}</text>
+        </view>
+
+        <textarea
+          class="ask__input"
+          value="{{question}}"
+          placeholder="写下任何正在心里盘旋的问题…"
+          placeholder-class="ask__input-ph"
+          auto-height
+          maxlength="-1"
+          adjust-position="{{true}}"
+          hold-keyboard
+          bindinput="onQuestionInput"
+        />
+
+        <view class="ask__actions">
+          <view class="ask__send {{canSend ? '' : 'ask__send--off'}}" bindtap="onSend">
+            <text>发送</text>
+          </view>
+        </view>
+
+        <!-- 始终占位，只切换透明度：插拔节点会打断输入焦点（对齐 iOS 的注释） -->
+        <!-- textarea 是原生组件：同层渲染若在某机型上失效，它会盖住这个绝对定位的
+             按钮。波次 3 真机回归要专门看一眼，失效就把清空挪到 ask__actions 行里。 -->
+        <view
+          class="ask__clear {{question ? '' : 'ask__clear--hidden'}}"
+          bindtap="onClearQuestion"
+          aria-label="清空输入"
+        >
+          <text>×</text>
+        </view>
+      </view>
+
+      <view class="ask__chips">
+        <view
+          wx:for="{{topics}}"
+          wx:key="topic"
+          class="soft-chip {{topic === item.topic ? 'soft-chip--on' : ''}}"
+          data-index="{{index}}"
+          bindtap="onTopicTap"
+        >
+          <text>{{item.topic}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ── 人生卡牌入口 ── -->
+  <view class="life" bindtap="onOpenCardHub">
+    <view class="life__deck">
+      <view class="life__card life__card--a" />
+      <view class="life__card life__card--b" />
+    </view>
+    <view class="life__text">
+      <text class="life__eyebrow">四套卡牌探索 · 3–8 分钟</text>
+      <text class="life__title">人生卡牌：你最后会留下什么？</text>
+      <text class="life__sub">人生、婚姻、家庭、人际交往 · 选择一套开始</text>
+    </view>
+    <text class="life__chev">›</text>
+  </view>
+
+  <!-- ── 动态画像 ── -->
+  <view class="portrait-section">
+    <view class="section-head">
+      <text class="section-head__title">我的动态画像</text>
+      <view class="section-head__link" bindtap="onOpenStudio">
+        <text>探索更多画像 ›</text>
+      </view>
+    </view>
+
+    <view class="quote">
+      <text class="quote__text">{{quote}}</text>
+      <text class="quote__by">——尼采《道德的系谱》</text>
+    </view>
+
+    <view class="portrait kaleido-card">
+      <!-- 数字形象舞台：横向出血贴到卡边（原型 margin: 0 -20px） -->
+      <persona-stage
+        class="portrait__stage"
+        model="{{persona}}"
+        userName="{{userName}}"
+        summary="{{personaSummary}}"
+        paused="{{paused}}"
+      />
+
+      <view wx:if="{{lifeSignatureCards.length}}" class="signature">
+        <view class="signature__head">
+          <text class="signature__title">我的人生底牌</text>
+          <text class="signature__note">已参与数字形象生成</text>
+        </view>
+        <view class="signature__row">
+          <view wx:for="{{lifeSignatureCards}}" wx:key="name" class="signature__card">
+            <text class="signature__glyph">{{item.glyph}}</text>
+            <text class="signature__name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="progress">
+        <view class="progress__track">
+          <view class="progress__fill" style="width: {{percent}}%" />
+        </view>
+        <text class="progress__text">{{completed}}/{{total}} · {{percent}}%</text>
+      </view>
+
+      <view class="dims">
+        <view
+          wx:for="{{portraitDims}}"
+          wx:key="id"
+          class="dim-row {{item.isTodo ? 'dim-row--todo' : ''}}"
+          data-index="{{index}}"
+          bindtap="onDimTap"
+        >
+          <view class="dim-row__icon" style="background-color: {{item.iconBg}}">
+            <text>{{item.icon}}</text>
+          </view>
+          <view class="dim-row__text">
+            <text class="dim-row__label">{{item.label}}</text>
+            <text class="dim-row__value {{item.isTodo ? 'dim-row__value--todo' : ''}}">
+              {{item.isTodo ? '尚未填写' : item.value}}
+            </text>
+          </view>
+          <text class="dim-row__chev">›</text>
+        </view>
+      </view>
+    </view>
   </view>
 </view>
+
+<dimension-sheet
+  show="{{sheetShow}}"
+  dimKey="{{sheetDimKey}}"
+  initialSelected="{{sheetSelected}}"
+  bind:close="onSheetClose"
+  bind:save="onSheetSave"
+/>
