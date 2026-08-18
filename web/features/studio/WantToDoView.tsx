@@ -157,7 +157,7 @@ export function WantToDoView() {
           <div className="text-micro font-semibold tracking-[2.4px] text-brand">
             SELF-UNDERSTANDING METHOD
           </div>
-          <h1 className="mt-3 text-[28px] font-bold leading-[1.35] text-ink md:text-[36px]">
+          <h1 className="mt-3 text-display font-bold text-ink">
             用完整证据链，找到<br />你喜欢和擅长的事
           </h1>
           <p className="mt-4 max-w-[62ch] text-body leading-[1.9] text-sub">
@@ -166,10 +166,10 @@ export function WantToDoView() {
           </p>
 
           <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <FormulaCard eyebrow="WHAT" title="喜欢的事" desc="反复吸引你的内容领域" tint="#E35CC1" />
-            <FormulaCard eyebrow="HOW" title="擅长的事" desc="自然反复使用的行为模式" tint="#5E96FF" />
-            <FormulaCard eyebrow="ENERGY" title="能量来源" desc="什么让你越投入越有劲" tint="#F0A949" />
-            <FormulaCard eyebrow="CONTEXT" title="发挥环境" desc="哪里更容易稳定发挥" tint="#3ED9A4" />
+            <FormulaCard eyebrow="WHAT" title="喜欢的事" desc="反复吸引你的内容领域" tint="var(--color-magenta)" />
+            <FormulaCard eyebrow="HOW" title="擅长的事" desc="自然反复使用的行为模式" tint="var(--color-brand)" />
+            <FormulaCard eyebrow="ENERGY" title="能量来源" desc="什么让你越投入越有劲" tint="var(--color-apricot)" />
+            <FormulaCard eyebrow="CONTEXT" title="发挥环境" desc="哪里更容易稳定发挥" tint="var(--color-teal)" />
           </div>
 
           <div className="mt-6 grid gap-2.5 rounded-tile border border-line bg-card p-4 text-footnote leading-[1.7] text-sub sm:grid-cols-3">
@@ -191,7 +191,7 @@ export function WantToDoView() {
       {phase === "questions" && question && (
         <div className="mx-auto flex w-full max-w-[780px] flex-1 flex-col px-5 pb-7 pt-6 md:px-8 md:pt-10">
           <span className="text-micro font-semibold tracking-[2px] text-brand">{question.eyebrow}</span>
-          <h1 className="mt-2 text-[24px] font-bold leading-[1.5] text-ink md:text-[30px]">
+          <h1 className="mt-2 text-display font-bold text-ink">
             {question.title}
           </h1>
           <p className="mt-2 text-footnote leading-[1.8] text-sub">{question.hint}</p>
@@ -213,7 +213,7 @@ export function WantToDoView() {
         <div className="mx-auto flex w-full max-w-[620px] flex-1 flex-col items-center justify-center px-6 py-16 text-center">
           <div className="relative grid size-24 place-items-center rounded-full border border-brand/30 bg-brand/10">
             <div className="absolute inset-2 animate-spin rounded-full border border-transparent border-t-brand" />
-            <span className="text-[28px] text-brand-lite">✦</span>
+            <span className="text-heading text-brand-lite">✦</span>
           </div>
           <h1 className="mt-6 text-title font-bold text-ink">AI 正在整理你的证据</h1>
           <p className="mt-3 text-body leading-[1.8] text-sub">
@@ -230,14 +230,14 @@ export function WantToDoView() {
               {usedAi ? "AI 综合分析" : "本地证据归纳"}
             </span>
           </div>
-          <h1 className="mt-2 text-[28px] font-bold text-ink">你喜欢与擅长的基本结论</h1>
+          <h1 className="mt-2 text-display font-bold text-ink">你喜欢与擅长的基本结论</h1>
           <p className="mt-2 max-w-[70ch] text-footnote leading-[1.8] text-sub">{analysis.summary}</p>
 
           <FreeProfileSummary likes={analysis.likes} strengths={analysis.strengths} directions={analysis.directions} />
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <BasicInsightCard title="我喜欢什么" eyebrow="WHAT" tint="#E35CC1" items={analysis.likes} />
-            <BasicInsightCard title="我擅长什么" eyebrow="HOW" tint="#5E96FF" items={analysis.strengths} />
+            <BasicInsightCard title="我喜欢什么" eyebrow="WHAT" tint="var(--color-magenta)" items={analysis.likes} />
+            <BasicInsightCard title="我擅长什么" eyebrow="HOW" tint="var(--color-brand)" items={analysis.strengths} />
           </div>
 
           <DiscoveryMap
@@ -251,8 +251,8 @@ export function WantToDoView() {
             <>
               <div className="mt-6 text-subtitle font-bold text-ink">你的完整行动报告</div>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
-                <InsightCard title="为什么会喜欢" eyebrow="EVIDENCE" tint="#E35CC1" items={analysis.likes} />
-                <InsightCard title="优势如何发挥" eyebrow="EVIDENCE" tint="#5E96FF" items={analysis.strengths} />
+                <InsightCard title="为什么会喜欢" eyebrow="EVIDENCE" tint="var(--color-magenta)" items={analysis.likes} />
+                <InsightCard title="优势如何发挥" eyebrow="EVIDENCE" tint="var(--color-brand)" items={analysis.strengths} />
               </div>
               <FullActionReport analysis={analysis} energy={energySignals} context={contextSignals} interests={allInterests} strengths={allStrengths} />
               <p className="mt-4 text-micro leading-[1.7] text-faint">{analysis.confidence_note}</p>
@@ -331,7 +331,7 @@ function BasicInsightCard({
       <h2 className="mt-1 text-subtitle font-bold text-ink">{title}</h2>
       <div className="mt-4 flex flex-wrap gap-2">
         {items.map((item) => (
-          <span key={item.label} className="rounded-chip border px-3 py-2 text-caption font-semibold" style={{ color: tint, borderColor: `${tint}66`, background: `${tint}12` }}>
+          <span key={item.label} className="rounded-chip border px-3 py-2 text-caption font-semibold" style={{ color: tint, borderColor: `color-mix(in srgb, ${tint} 40%, transparent)`, background: `color-mix(in srgb, ${tint} 7%, transparent)` }}>
             {item.label}
           </span>
         ))}
@@ -469,7 +469,7 @@ function InterestBars({ items }: { items: Array<{ tag: string; like: number }> }
       {items.map((item) => (
         <div key={item.tag} className="grid grid-cols-[96px_1fr_30px] items-center gap-3 text-caption">
           <span className="font-medium text-ink">{item.tag}</span>
-          <span className="h-2 overflow-hidden rounded-full bg-raised"><span className="block h-full rounded-full bg-[linear-gradient(90deg,#E35CC1,#9C7BFF)]" style={{ width: `${item.like * 20}%` }} /></span>
+          <span className="h-2 overflow-hidden rounded-full bg-raised"><span className="block h-full rounded-full bg-[linear-gradient(90deg,var(--color-magenta),var(--color-violet-soft))]" style={{ width: `${item.like * 20}%` }} /></span>
           <span className="text-right text-brand-lite">{item.like}</span>
         </div>
       ))}
@@ -479,9 +479,9 @@ function InterestBars({ items }: { items: Array<{ tag: string; like: number }> }
 
 function StrengthTable({ items }: { items: Array<{ tag: string; like: number; skill: number; zone: string }> }) {
   const zoneColor: Record<string, string> = {
-    "天赋热爱区": "text-[#78E7C1] border-[#3ED9A4]/35 bg-[#3ED9A4]/10",
-    "兴趣潜力区": "text-[#A9C5FF] border-[#5E96FF]/35 bg-[#5E96FF]/10",
-    "熟练消耗区": "text-[#FFD18B] border-[#F0A949]/35 bg-[#F0A949]/10",
+    "天赋热爱区": "text-teal-lite border-teal/35 bg-teal/10",
+    "兴趣潜力区": "text-brand-lite border-brand/35 bg-brand/10",
+    "熟练消耗区": "text-apricot-lite border-apricot/35 bg-apricot/10",
     "非优先区": "text-sub border-line bg-raised",
   };
   return (
@@ -537,7 +537,7 @@ function LockedReportPreview() {
   ];
   return (
     <div className="mt-5 overflow-hidden rounded-field border border-white/10 bg-black/10">
-      {sections.map(([index, title, desc], sectionIndex) => <div key={title} className="relative flex items-start gap-3 border-b border-white/10 px-3.5 py-3.5 last:border-0"><span className="pt-0.5 text-micro font-bold text-brand-lite">{index}</span><div><div className="text-caption font-semibold text-ink">{title}</div><div className="mt-1 text-micro leading-[1.6] text-sub">{desc}</div></div>{sectionIndex > 1 && <span className="absolute right-3 top-3.5 rounded-chip border border-white/10 bg-black/15 px-2 py-1 text-[10px] text-faint">解锁查看</span>}</div>)}
+      {sections.map(([index, title, desc], sectionIndex) => <div key={title} className="relative flex items-start gap-3 border-b border-white/10 px-3.5 py-3.5 last:border-0"><span className="pt-0.5 text-micro font-bold text-brand-lite">{index}</span><div><div className="text-caption font-semibold text-ink">{title}</div><div className="mt-1 text-micro leading-[1.6] text-sub">{desc}</div></div>{sectionIndex > 1 && <span className="absolute right-3 top-3.5 rounded-chip border border-white/10 bg-black/15 px-2 py-1 text-micro text-faint">解锁查看</span>}</div>)}
       <div className="pointer-events-none absolute" />
     </div>
   );
@@ -573,9 +573,9 @@ function DiscoveryMap({
 
 function MapCell({ title, text, tone }: { title: string; text: string; tone: "green" | "blue" | "yellow" | "slate" }) {
   const colors = {
-    green: "bg-[#3ED9A4]/[0.08] text-[#78E7C1]",
-    blue: "bg-[#5E96FF]/[0.08] text-[#A9C5FF]",
-    yellow: "bg-[#F0A949]/[0.08] text-[#FFD18B]",
+    green: "bg-teal/[0.08] text-teal-lite",
+    blue: "bg-brand/[0.08] text-brand-lite",
+    yellow: "bg-apricot/[0.08] text-apricot-lite",
     slate: "bg-raised text-sub",
   };
   return <div className={`min-h-[124px] p-4 ${colors[tone]}`}><div className="text-caption font-semibold">{title}</div><p className="mt-2 text-caption leading-[1.7] text-sub">{text}</p></div>;
