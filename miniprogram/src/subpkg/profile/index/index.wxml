@@ -1,6 +1,204 @@
-<view class="page safe-top">
-  <view class="placeholder kaleido-card">
-    <text class="placeholder__title">{{title}}</text>
-    <text class="placeholder__hint">波次 1 · C · 待复刻</text>
+<view class="page">
+  <!-- ── 顶栏（吸顶，与 tabs 条同一族底色）── -->
+  <view class="topbar safe-top">
+    <view class="topbar__back" hover-class="topbar__btn--hover" bindtap="onBack">
+      <text class="topbar__icon">‹</text>
+    </view>
+    <view class="topbar__text">
+      <text class="topbar__title">{{name}}</text>
+      <text class="topbar__sub">真实经历 · 已验证</text>
+    </view>
+    <view class="topbar__more" hover-class="topbar__btn--hover" bindtap="onMore">
+      <text class="topbar__dots">···</text>
+    </view>
   </view>
+
+  <!-- 首帧只有光球：详情是异步的，但 hero 的骨架比一个空页面更容易误读成加载失败 -->
+  <view wx:if="{{loading}}" class="loading">
+    <orb size="160" halo="{{false}}" />
+  </view>
+
+  <block wx:else>
+    <scroll-view class="scroll" scroll-y enhanced show-scrollbar="{{false}}">
+      <!-- ── Hero ── -->
+      <view class="hero hue-{{hue}}">
+        <view class="hero__glow" />
+        <view class="hero__head">
+          <view class="hero__avatar">
+            <text class="hero__initial">{{initial}}</text>
+            <view class="hero__online" />
+          </view>
+          <view class="hero__id">
+            <view class="hero__name-row">
+              <text class="hero__name">{{name}}</text>
+              <text class="hero__verified">经历已验证</text>
+            </view>
+            <text wx:if="{{ageCity}}" class="hero__meta">{{ageCity}}</text>
+          </view>
+        </view>
+
+        <view wx:if="{{fromRole || toRole}}" class="hero__path">
+          <text class="hero__role">{{fromRole}}</text>
+          <text class="hero__arrow">→</text>
+          <text class="hero__role">{{toRole}}</text>
+        </view>
+        <text wx:if="{{yearsResult}}" class="hero__result">{{yearsResult}}</text>
+
+        <view wx:if="{{tags.length > 0}}" class="hero__tags">
+          <text wx:for="{{tags}}" wx:key="*this" class="hero__tag">{{item}}</text>
+        </view>
+      </view>
+
+      <!-- ── 页签（iOS 用 pinnedViews 吸顶；小程序用 sticky）── -->
+      <view class="tabs">
+        <view
+          wx:for="{{tabs}}"
+          wx:key="key"
+          class="tabs__item {{tab === item.key ? 'tabs__item--on' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onTab"
+        >
+          <text class="tabs__label">{{item.label}}</text>
+          <view class="tabs__bar" />
+        </view>
+      </view>
+
+      <view class="panel">
+        <!-- ── 她的故事 ── -->
+        <block wx:if="{{tab === 'story'}}">
+          <view wx:if="{{quote}}" class="quote">
+            <text class="quote__text">{{quote}}</text>
+          </view>
+          <view wx:if="{{intro}}" class="intro">
+            <text class="intro__title">我的转型故事</text>
+            <text class="intro__body">{{intro}}</text>
+          </view>
+          <view class="facts">
+            <view wx:for="{{facts}}" wx:key="label" class="facts__item">
+              <text class="facts__value">{{item.value}}</text>
+              <text class="facts__label">{{item.label}}</text>
+            </view>
+          </view>
+          <!-- full_text 在 iOS 上也是直接展开的：付费遮挡（LockedBlock）在基准里
+               定义了却从未接进任何视图，这里如实照搬「已展开」的实际行为。 -->
+          <view wx:if="{{fullText}}" class="note">
+            <text class="note__title">完整故事 · 最难的一关</text>
+            <text class="note__body">{{fullText}}</text>
+          </view>
+        </block>
+
+        <!-- ── 时间线 ── -->
+        <block wx:elif="{{tab === 'timeline'}}">
+          <view class="sec">
+            <text class="sec__title">人生关键轨迹</text>
+            <text class="sec__trailing">点击节点展开详情</text>
+          </view>
+          <view class="tl">
+            <view wx:for="{{nodes}}" wx:key="title" class="tl__row">
+              <view class="tl__rail">
+                <view class="tl__dot" />
+                <view wx:if="{{!item.isLast}}" class="tl__line" />
+              </view>
+              <view
+                class="tl__card"
+                hover-class="tl__card--hover"
+                hover-stay-time="60"
+                data-index="{{index}}"
+                bindtap="onToggleNode"
+              >
+                <view class="tl__head">
+                  <view class="tl__heading">
+                    <text class="tl__age">{{item.age}}</text>
+                    <text class="tl__title">{{item.title}}</text>
+                  </view>
+                  <text class="tl__chev {{openIndex === index ? 'tl__chev--on' : ''}}">›</text>
+                </view>
+                <text wx:if="{{openIndex === index}}" class="tl__detail">{{item.detail}}</text>
+              </view>
+            </view>
+          </view>
+          <view class="note">
+            <text class="note__title">轨迹说明</text>
+            <text class="note__body">以上节点由本人补充，并结合公开履历完成基础验证。经历只代表个人路径，不构成标准答案。</text>
+          </view>
+        </block>
+
+        <!-- ── 经验与建议 ── -->
+        <block wx:elif="{{tab === 'advice'}}">
+          <view class="sec">
+            <text class="sec__title">把踩过的坑留给后来人</text>
+            <text class="sec__trailing">全部可见</text>
+          </view>
+          <view class="chips">
+            <view
+              wx:for="{{adviceKinds}}"
+              wx:key="kind"
+              class="chips__item {{adviceKind === item.kind ? 'chips__item--on' : ''}}"
+              data-kind="{{item.kind}}"
+              bindtap="onAdviceKind"
+            >
+              <text class="chips__label">{{item.label}}</text>
+            </view>
+          </view>
+          <view class="advice">
+            <text class="advice__eyebrow">{{adviceEyebrow}}</text>
+            <text class="advice__title">{{adviceTitle}}</text>
+            <view class="advice__tips">
+              <view wx:for="{{tips}}" wx:key="*this" class="advice__tip">
+                <text class="advice__no">{{index + 1}}</text>
+                <text class="advice__text">{{item}}</text>
+              </view>
+            </view>
+          </view>
+        </block>
+
+        <!-- ── 可提供服务 ── -->
+        <block wx:else>
+          <view
+            wx:for="{{services}}"
+            wx:key="id"
+            class="svc svc--{{item.kind}}"
+          >
+            <view class="svc__head">
+              <view class="svc__id">
+                <text class="svc__kind">{{item.kindLabel}}</text>
+                <text class="svc__title">{{item.title}}</text>
+              </view>
+              <view class="svc__price">
+                <text class="svc__amount">¥{{item.priceText}}</text>
+                <text class="svc__unit"> / {{item.unit}}</text>
+              </view>
+            </view>
+            <text class="svc__desc">{{item.description}}</text>
+            <view wx:if="{{item.tags.length > 0}}" class="svc__tags">
+              <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="svc__tag">{{tag}}</text>
+            </view>
+            <btn block data-id="{{item.id}}" bindtap="onBuyService">
+              <text class="svc__cta">{{item.ctaLabel}}</text>
+            </btn>
+          </view>
+
+          <view class="steps">
+            <view wx:for="{{steps}}" wx:key="title" class="steps__row {{index > 0 ? 'steps__row--sep' : ''}}">
+              <text class="steps__no">{{index + 1}}</text>
+              <view class="steps__text">
+                <text class="steps__title">{{item.title}}</text>
+                <text class="steps__note">{{item.note}}</text>
+              </view>
+            </view>
+          </view>
+        </block>
+      </view>
+    </scroll-view>
+
+    <!-- ── 底部付费栏 ── -->
+    <view class="paybar safe-bottom">
+      <btn block bindtap="onConsult">
+        <view class="paybar__inner">
+          <text class="paybar__label">向 TA 咨询</text>
+          <text class="paybar__price">¥{{consultPriceText}}</text>
+        </view>
+      </btn>
+    </view>
+  </block>
 </view>

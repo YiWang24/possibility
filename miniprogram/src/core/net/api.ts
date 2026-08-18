@@ -10,7 +10,8 @@
  * 流式对话不在此列，见 `chat-stream.ts`：它必须直连函数 URL 读流。
  */
 
-import { invokeFunction, restSelect } from './request'
+import { currentSession } from './auth'
+import { ApiError, invokeFunction, restInsert, restSelect } from './request'
 import type {
   Bounty,
   BountyDetailResponse,
@@ -29,6 +30,7 @@ import type {
   TravelerDetail,
   TravelerServiceItem,
 } from '../models'
+import { PRICE_UNLOCK_PROFILE } from '../models'
 
 /* ============ 对话与推演 ============ */
 
@@ -376,4 +378,39 @@ export function loadTravelerServices(
 /** 旅人列表 —— 直读 `travelers`（community 的 list_travelers 带分页，按需二选一） */
 export function loadTravelers(): Promise<Traveler[]> {
   return restSelect<Traveler>('travelers', 'select=*&order=id.asc')
+}
+
+/**
+ * 解锁旅人完整经历 —— 对应 iOS `SupabaseService.unlockProfile`。
+ *
+ * 唯一一处 PostgREST 直写（见 `restInsert` 的说明：这张表后端没有 Edge Function）。
+ * 列名与 `0001_schema.sql` 的 `unlocks` 一致，`kind` 受
+ * `check (kind in ('profile','service'))` 约束。
+ *
+ * 表上有 `unique (user_id, kind, target_id)`：重复解锁会撞唯一键（PostgREST 409 /
+ * PostgreSQL 23505）。那说明**这个人早就解锁过了**，是成功语义而非失败 ——
+ * 若当成失败，用户重进付费墙再点一次就会收到一条假的 `purchase_failed` 埋点。
+ * 所以这里把它按成功返回。
+ *
+ * iOS 失败时只是 `return false`；这里保留异常向上抛，由付费墙决定怎么呈现
+ * （它需要区分「写失败」与「写成功」来决定上报 purchase_completed 还是 _failed）。
+ */
+export async function unlockProfile(travelerId: number): Promise<void> {
+  const userId = currentSession()?.user_id
+  // 理论上到不了这：小程序在 app.ts 启动时就把未登录的人挡在登录页了。
+  // 真到了说明会话被清了，明确报错比静默写一条 user_id 为空的脏数据好。
+  if (!userId) throw new ApiError('NOT_SIGNED_IN', '登录状态已失效，请重新登录', 401)
+
+  try {
+    await restInsert('unlocks', {
+      user_id: userId,
+      kind: 'profile',
+      target_id: String(travelerId),
+      amount: PRICE_UNLOCK_PROFILE,
+    })
+  } catch (e) {
+    const err = e as ApiError
+    if (err.status === 409 || err.code === '23505') return
+    throw e
+  }
 }

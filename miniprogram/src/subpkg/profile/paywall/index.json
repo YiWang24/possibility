@@ -1,4 +1,7 @@
 {
-  "navigationBarTitleText": "付费墙",
-  "usingComponents": {}
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "btn": "/core/design/components/btn/index",
+    "orb": "/core/design/components/orb/index"
+  }
 }

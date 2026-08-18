@@ -1,26 +1,167 @@
+/**
+ * 结账页 —— 对应 iOS `Features/Profile/PaywallView.swift`。
+ * 尺寸按 750/390 换算（iOS pt × 1.923），色值一律取 tokens.wxss。
+ */
+
 .page {
   min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
-  box-sizing: border-box;
+  /* padding-bottom 归 .safe-bottom 管，这里不能写 padding 简写（见 app.wxss） */
+  padding-left: 42rpx;
+  padding-right: 42rpx;
+  background: var(--paywall-bg);
 }
 
-.placeholder {
-  padding: 48rpx 32rpx;
+/* ── 表单 ── */
+
+.head {
   display: flex;
-  flex-direction: column;
-  gap: 12rpx;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  /* padding-top 归 .safe-top 管 */
+  padding-bottom: 4rpx;
 }
 
-.placeholder__title {
-  font-size: 34rpx;
+.head__title {
+  font-size: 35rpx;
   font-weight: 600;
   color: var(--ink);
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+.head__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62rpx;
+  height: 62rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--raised);
+}
+
+.head__close--hover {
+  opacity: 0.7;
+}
+
+.head__x {
+  font-size: 25rpx;
+  font-weight: 600;
+  line-height: 1;
   color: var(--sub);
+}
+
+.order {
+  display: flex;
+  align-items: center;
+  gap: 27rpx;
+  margin-top: 35rpx;
+  padding: 31rpx;
+  border-radius: 35rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+}
+
+.order__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.order__title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.order__sub {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 21rpx;
+  line-height: 1.6;
+  color: var(--sub);
+}
+
+.order__price {
+  flex-shrink: 0;
+  font-size: 42rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.note {
+  display: block;
+  margin-top: 25rpx;
+  font-size: 21rpx;
+  line-height: 1.85;
+  color: var(--faint);
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 154rpx;
+  padding-bottom: 154rpx;
+}
+
+.pay__label {
+  font-size: 27rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.page btn {
+  display: block;
+  margin-top: 38rpx;
+}
+
+/* ── 成功态 ── */
+
+.ok {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 154rpx;
+  text-align: center;
+}
+
+.ok__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 119rpx;
+  height: 119rpx;
+  border-radius: 50%;
+  background: var(--teal-wash);
+}
+
+.ok__glyph {
+  font-size: 54rpx;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--teal);
+}
+
+.ok__title {
+  margin-top: 31rpx;
+  font-size: 35rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ok__sub {
+  margin-top: 15rpx;
+  font-size: 23rpx;
+  line-height: 1.85;
+  color: var(--sub);
+}
+
+.ok__cta {
+  font-size: 27rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ok btn {
+  margin-top: 46rpx;
 }

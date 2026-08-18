@@ -147,3 +147,64 @@ export function restSelect<T>(table: string, query: string): Promise<T[]> {
       .catch(reject)
   })
 }
+
+/**
+ * PostgREST 直写 —— 仅用于「后端根本没给它做 Edge Function、写入本身就是纯记账」的表。
+ *
+ * 目前只有 `unlocks` 一张：iOS 的 `SupabaseService.unlockProfile` 就是 supabase-swift
+ * 直插这张表。上面 `restSelect` 说「写一律不要走这里」，理由是写路径的校验与埋点都在
+ * Edge Function 里 —— 但 `unlocks` 压根没有那个函数，没有可绕过的东西。小程序若为它
+ * 单造一个，同一张表就会出现两套写路径、两套校验，比复用这条路更难对齐。
+ *
+ * 安全性由 RLS 兜：`own_unlocks` 策略是
+ * `using (auth.uid() = user_id) with check (auth.uid() = user_id)`，
+ * 伪造他人 user_id 会被数据库直接拒掉。
+ *
+ * **不要往这里扩表**。凡是有 Edge Function 的写路径一律走 `invokeFunction`。
+ *
+ * 与 `restSelect` 不同，这里必须有会话：没登录时 `auth.uid()` 为空，with check 必不通过，
+ * 所以 token 失败直接 reject，不回退 anon key。
+ */
+export function restInsert(table: string, row: Record<string, unknown>): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const requestId = newRequestId()
+
+    accessToken()
+      .then((token) => {
+        wx.request({
+          url: restURL(table),
+          method: 'POST',
+          header: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token}`,
+            // 与埋点同理：没有 select 权限时要求回传插入的行会 403。
+            // 这里也确实不需要回传。
+            Prefer: 'return=minimal',
+            'X-Request-ID': requestId,
+          },
+          data: row,
+          timeout: 30_000,
+          success(res) {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve()
+              return
+            }
+            const raw = (res.data ?? {}) as { message?: string; code?: string }
+            reject(
+              new ApiError(
+                raw.code ?? `HTTP_${res.statusCode}`,
+                raw.message ?? `写入 ${table} 失败（${res.statusCode}）`,
+                res.statusCode,
+                requestId,
+              ),
+            )
+          },
+          fail(err) {
+            reject(new ApiError('NETWORK_ERROR', err.errMsg || '网络异常', 0, requestId))
+          },
+        })
+      })
+      .catch(reject)
+  })
+}

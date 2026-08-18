@@ -1,4 +1,7 @@
 {
-  "navigationBarTitleText": "旅人主页",
-  "usingComponents": {}
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "btn": "/core/design/components/btn/index",
+    "orb": "/core/design/components/orb/index"
+  }
 }

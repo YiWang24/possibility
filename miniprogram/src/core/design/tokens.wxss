@@ -255,6 +255,67 @@ page,
   --card-glyph-line: rgba(174, 174, 255, 0.25);
   /* 引文左侧的竖线（--sub 的 0.34） */
   --quote-rule: rgba(152, 160, 179, 0.34);
+
+  /* ── 旅人主页 / 付费墙（ProfileView / ProfilePanels / PaywallView）──
+     同上：iOS 内联在各视图里，Theme.swift 未收录，前缀标明作用域。
+
+     有三处刻意复用了既有 token 而不另造近义色 —— 色差都在 1% 以内，
+     肉眼分不出，多一个近义色只会让「该取哪个」变成日常疑问：
+     - iOS 正文 #C8CDDA / #C9CFDC / #C8CEDD → 统一用 --body-dim（#C6CDDE）
+     - iOS 服务标签底 white 0.055        → 用 --surface-ghost（0.045）
+     - iOS 成功勾底 #3ED9A4 0.14         → 用 --teal-wash（0.12） */
+
+  --profile-bg: #090b12;
+  /* 顶栏与 tabs 吸顶条：近乎不透明的纸色。
+     iOS 底部付费栏用 .ultraThinMaterial 毛玻璃，小程序两种渲染器下
+     backdrop-filter 都不保证，所以取实色 —— 观感差别只在滚动时的一层底纹。 */
+  --profile-bar: rgba(10, 12, 18, 0.92);
+  /* hero：斜向深蓝底 + 右上角蓝色泛光 */
+  --profile-hero-bg: linear-gradient(135deg, #111625 0%, #0b0e17 100%);
+  --profile-hero-glow: radial-gradient(
+    circle at 100% 0%,
+    rgba(94, 150, 255, 0.28) 0%,
+    rgba(94, 150, 255, 0) 70%
+  );
+  /* 头像右下角在线点的描边：挖出 hero 底色，做出「浮在头像上」的缺口 */
+  --profile-online-ring: #10131d;
+  /* 「经历已验证」徽标 / 服务流程的步骤序号 */
+  --badge-blue-bg: rgba(94, 150, 255, 0.13);
+  --badge-blue-line: rgba(94, 150, 255, 0.26);
+  --badge-blue-ink: #afc8ff;
+  /* 旅人标签胶囊 */
+  --profile-tag-bg: rgba(94, 150, 255, 0.11);
+  --profile-tag-line: rgba(94, 150, 255, 0.2);
+  --profile-tag-ink: #c6d7ff;
+  /* 「她的故事」引文卡 */
+  --story-quote-bg: linear-gradient(
+    135deg,
+    rgba(94, 150, 255, 0.15) 0%,
+    rgba(143, 123, 255, 0.08) 100%
+  );
+  /* 小节说明标题（完整故事 · 最难的一关 / 轨迹说明） */
+  --note-title-ink: #b9ccff;
+  /* 时间线：节点圆点挖底 + 外圈紫环 + 竖线自上而下淡出 */
+  --timeline-dot-ring: #0b0e17;
+  --timeline-dot-halo: rgba(143, 123, 255, 0.5);
+  --timeline-line: linear-gradient(
+    to bottom,
+    #8f7bff 0%,
+    rgba(143, 123, 255, 0.08) 100%
+  );
+  /* 建议条目序号底 / 结账成功勾底 */
+  --teal-wash: rgba(62, 217, 164, 0.12);
+  /* 三档服务卡：底色区分品类，描边取同色相 0.28 */
+  --svc-consult-bg: linear-gradient(135deg, #151c34 0%, #111327 100%);
+  --svc-consult-line: rgba(111, 165, 255, 0.28);
+  --svc-materials-bg: linear-gradient(135deg, #172820 0%, #101a17 100%);
+  --svc-materials-line: rgba(62, 217, 164, 0.28);
+  --svc-companion-bg: linear-gradient(135deg, #2b1b2d 0%, #17121f 100%);
+  --svc-companion-line: rgba(227, 92, 193, 0.28);
+  /* 主 CTA 投影（iOS PrimaryButton 与 PayBar 同一族） */
+  --cta-shadow: 0 16rpx 28rpx rgba(79, 125, 255, 0.6);
+  /* 结账页底色（iOS 的 presentationBackground） */
+  --paywall-bg: #11141d;
 }
 
 /* ── 通用卡片样式（对应 iOS 的 .kaleidoCard() modifier）── */

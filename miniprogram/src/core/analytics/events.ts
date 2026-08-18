@@ -53,3 +53,13 @@ export type ClientEvent = (typeof CLIENT_EVENTS)[number]
  * 需要长度/特征时上报派生值（`content_chars: 128` 而不是正文）。
  */
 export type EventProps = Record<string, string | number | boolean>
+
+/**
+ * 付费漏斗的商品标识 —— 埋点方案 §3.1 定死的三档：
+ * `unlock_profile` / `consult` / `companion`（对应 iOS `AppConfig.Price`）。
+ *
+ * 资料包（`materials`）**不在清单里**：它有价格有下单流程，却没登记 sku。
+ * iOS 的处理是宁可不上报也不错报到别的商品上（少一条事件可以补，
+ * 脏数据会污染转化率），小程序照此办理 —— 见付费墙的 `analyticsSKU`。
+ */
+export type AnalyticsSKU = 'unlock_profile' | 'consult' | 'companion'

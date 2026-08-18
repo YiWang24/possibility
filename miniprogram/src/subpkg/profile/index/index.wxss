@@ -1,26 +1,774 @@
-.page {
-  min-height: 100vh;
-  /* padding-top 归 .safe-top 管，不能写 padding 简写（见 app.wxss）*/
-  padding-left: 32rpx;
-  padding-right: 32rpx;
-  padding-bottom: 32rpx;
-  box-sizing: border-box;
-}
+/**
+ * 旅人主页 —— 对应 iOS `Features/Profile/ProfileView.swift` / `ProfilePanels.swift`。
+ * 尺寸按 750/390 换算（iOS pt × 1.923），色值一律取 tokens.wxss。
+ */
 
-.placeholder {
-  padding: 48rpx 32rpx;
+.page {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  height: 100vh;
+  background: var(--profile-bg);
 }
 
-.placeholder__title {
+/* ── 顶栏 ── */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 25rpx;
+  /* padding-top 归 .safe-top 管，这里不能写 padding 简写（见 app.wxss） */
+  padding-left: 42rpx;
+  padding-right: 42rpx;
+  padding-bottom: 21rpx;
+  flex-shrink: 0;
+  background: var(--profile-bar);
+  border-bottom: 1rpx solid var(--line);
+}
+
+.topbar__back,
+.topbar__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 69rpx;
+  height: 69rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+}
+
+.topbar__btn--hover {
+  opacity: 0.7;
+}
+
+.topbar__icon {
   font-size: 34rpx;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.topbar__dots {
+  font-size: 35rpx;
+  line-height: 1;
+  letter-spacing: 2rpx;
+  color: var(--sub);
+}
+
+.topbar__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar__title {
+  display: block;
+  font-size: 31rpx;
+  font-weight: 600;
+  letter-spacing: 1.2rpx;
+  color: var(--ink);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.topbar__sub {
+  display: block;
+  margin-top: 4rpx;
+  font-size: 21rpx;
+  color: var(--faint);
+}
+
+.loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Hero ── */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 42rpx 42rpx 38rpx;
+  background: var(--profile-hero-bg);
+  border-bottom: 1rpx solid var(--line);
+}
+
+/* 右上角泛光独立成层：与底色叠在同一个 background 简写里，
+   一改渐变就得两条一起动，拆开后各自可读 */
+.hero__glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 423rpx;
+  height: 423rpx;
+  pointer-events: none;
+  background: var(--profile-hero-glow);
+}
+
+.hero__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 31rpx;
+}
+
+.hero__avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 142rpx;
+  height: 142rpx;
+  flex-shrink: 0;
+  border-radius: 50rpx;
+}
+
+.hero__initial {
+  font-size: 54rpx;
   font-weight: 600;
   color: var(--ink);
 }
 
-.placeholder__hint {
-  font-size: 24rpx;
+/* 在线点：描边挖出 hero 底色，做出浮在头像上的缺口 */
+.hero__online {
+  position: absolute;
+  right: -4rpx;
+  bottom: -4rpx;
+  width: 33rpx;
+  height: 33rpx;
+  border-radius: 50%;
+  background: var(--teal);
+  border: 6rpx solid var(--profile-online-ring);
+}
+
+.hero__id {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero__name-row {
+  display: flex;
+  align-items: center;
+  gap: 15rpx;
+}
+
+.hero__name {
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: 1.2rpx;
+  color: var(--ink);
+}
+
+.hero__verified {
+  padding: 6rpx 13rpx;
+  border-radius: var(--r-chip);
+  background: var(--badge-blue-bg);
+  border: 1rpx solid var(--badge-blue-line);
+  color: var(--badge-blue-ink);
+  font-size: 19rpx;
+  line-height: 1.4;
+}
+
+.hero__meta {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 23rpx;
   color: var(--sub);
+}
+
+.hero__path {
+  position: relative;
+  margin-top: 35rpx;
+  font-size: 29rpx;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.hero__role {
+  color: var(--ink);
+}
+
+.hero__arrow {
+  padding: 0 12rpx;
+  color: var(--blue);
+}
+
+.hero__result {
+  position: relative;
+  display: block;
+  margin-top: 13rpx;
+  font-size: 23rpx;
+  color: var(--sub);
+}
+
+.hero__tags {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13rpx;
+  margin-top: 31rpx;
+}
+
+.hero__tag {
+  padding: 12rpx 19rpx;
+  border-radius: var(--r-chip);
+  background: var(--profile-tag-bg);
+  border: 1rpx solid var(--profile-tag-line);
+  color: var(--profile-tag-ink);
+  font-size: 21rpx;
+  line-height: 1.3;
+}
+
+/* 头像底色按旅人 hue 取（WXSS 里没法从变量名动态拼 var(--hue{{n}}-g)） */
+.hue-0 .hero__avatar {
+  background: var(--hue0-g);
+}
+.hue-1 .hero__avatar {
+  background: var(--hue1-g);
+}
+.hue-2 .hero__avatar {
+  background: var(--hue2-g);
+}
+.hue-3 .hero__avatar {
+  background: var(--hue3-g);
+}
+.hue-4 .hero__avatar {
+  background: var(--hue4-g);
+}
+
+/* ── 页签 ── */
+
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  background: var(--profile-bar);
+  border-bottom: 1rpx solid var(--line);
+}
+
+.tabs__item {
+  flex: 1;
+  padding-top: 29rpx;
+  text-align: center;
+}
+
+.tabs__label {
+  font-size: 22rpx;
+  color: var(--faint);
+}
+
+.tabs__item--on .tabs__label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tabs__bar {
+  height: 4rpx;
+  margin: 15rpx 38rpx 0;
+  background: var(--blue);
+  opacity: 0;
+}
+
+.tabs__item--on .tabs__bar {
+  opacity: 1;
+}
+
+.panel {
+  padding: 38rpx 38rpx 15rpx;
+}
+
+/* ── 她的故事 ── */
+
+.quote {
+  padding: 42rpx;
+  border-radius: 42rpx;
+  background: var(--story-quote-bg);
+  border: 1rpx solid var(--line-accent-blue);
+}
+
+.quote__text {
+  font-size: 29rpx;
+  font-weight: 500;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.intro {
+  margin-top: 35rpx;
+}
+
+.intro__title {
+  display: block;
+  font-size: 29rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.intro__body {
+  display: block;
+  margin-top: 19rpx;
+  font-size: 26rpx;
+  line-height: 1.85;
+  color: var(--body-dim);
+}
+
+.facts {
+  display: flex;
+  gap: 15rpx;
+  margin-top: 35rpx;
+}
+
+.facts__item {
+  flex: 1;
+  padding: 25rpx 0;
+  border-radius: 31rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+  text-align: center;
+}
+
+.facts__value {
+  display: block;
+  font-size: 29rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.facts__label {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 19rpx;
+  color: var(--faint);
+}
+
+/* 说明卡：完整故事 · 轨迹说明共用 */
+.note {
+  margin-top: 35rpx;
+  padding: 35rpx;
+  border-radius: 38rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+}
+
+.note__title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--note-title-ink);
+}
+
+.note__body {
+  display: block;
+  margin-top: 17rpx;
+  font-size: 25rpx;
+  line-height: 1.85;
+  color: var(--sub);
+}
+
+/* ── 小节标题（时间线 / 建议共用）── */
+
+.sec {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.sec__title {
+  font-size: 29rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.sec__trailing {
+  font-size: 21rpx;
+  color: var(--faint);
+}
+
+/* ── 时间线 ── */
+
+.tl {
+  margin-top: 23rpx;
+}
+
+.tl__row {
+  display: flex;
+  align-items: stretch;
+}
+
+.tl__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 29rpx;
+  flex-shrink: 0;
+  padding-top: 29rpx;
+}
+
+/* 圆点用两层描边：内圈挖出底色形成缺口，外圈紫环是光晕 */
+.tl__dot {
+  width: 29rpx;
+  height: 29rpx;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--aurora-deep);
+  border: 6rpx solid var(--timeline-dot-ring);
+  box-shadow: 0 0 0 2rpx var(--timeline-dot-halo);
+}
+
+.tl__line {
+  flex: 1;
+  width: 2rpx;
+  background: var(--timeline-line);
+}
+
+.tl__card {
+  flex: 1;
+  min-width: 0;
+  margin-left: 29rpx;
+  margin-bottom: 23rpx;
+  padding: 29rpx;
+  border-radius: 35rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+}
+
+.tl__card--hover {
+  opacity: 0.85;
+}
+
+.tl__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+}
+
+.tl__heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.tl__age {
+  display: block;
+  font-size: 21rpx;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.tl__title {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 27rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.tl__chev {
+  font-size: 29rpx;
+  line-height: 1.2;
+  color: var(--faint);
+  transition: transform 0.25s ease-out;
+}
+
+.tl__chev--on {
+  transform: rotate(90deg);
+}
+
+.tl__detail {
+  display: block;
+  margin-top: 17rpx;
+  font-size: 23rpx;
+  line-height: 1.75;
+  color: var(--sub);
+}
+
+/* ── 经验与建议 ── */
+
+.chips {
+  display: flex;
+  gap: 13rpx;
+  margin-top: 29rpx;
+}
+
+.chips__item {
+  padding: 13rpx 25rpx;
+  border-radius: var(--r-chip);
+  background: var(--raised);
+  border: 1rpx solid var(--line);
+}
+
+.chips__item--on {
+  background: var(--blue-wash);
+  border-color: var(--blue-line-strong);
+}
+
+.chips__label {
+  font-size: 23rpx;
+  color: var(--sub);
+}
+
+.chips__item--on .chips__label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.advice {
+  margin-top: 29rpx;
+  padding: 37rpx;
+  border-radius: 38rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+}
+
+.advice__eyebrow {
+  display: block;
+  font-size: 19rpx;
+  letter-spacing: 4rpx;
+  color: var(--blue);
+}
+
+.advice__title {
+  display: block;
+  margin-top: 13rpx;
+  font-size: 29rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.advice__tips {
+  margin-top: 27rpx;
+}
+
+.advice__tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 19rpx;
+  margin-top: 17rpx;
+}
+
+.advice__tip:first-child {
+  margin-top: 0;
+}
+
+.advice__no {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38rpx;
+  height: 38rpx;
+  flex-shrink: 0;
+  border-radius: 13rpx;
+  background: var(--teal-wash);
+  color: var(--teal);
+  font-size: 19rpx;
+}
+
+.advice__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 23rpx;
+  line-height: 1.75;
+  color: var(--body-dim);
+}
+
+/* ── 可提供服务 ── */
+
+.svc {
+  margin-bottom: 23rpx;
+  padding: 40rpx;
+  border-radius: 46rpx;
+  background: var(--svc-consult-bg);
+  border: 1rpx solid var(--svc-consult-line);
+}
+
+.svc--materials {
+  background: var(--svc-materials-bg);
+  border-color: var(--svc-materials-line);
+}
+
+.svc--companion {
+  background: var(--svc-companion-bg);
+  border-color: var(--svc-companion-line);
+}
+
+.svc__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 20rpx;
+}
+
+.svc__id {
+  flex: 1;
+  min-width: 0;
+}
+
+.svc__kind {
+  display: block;
+  font-size: 19rpx;
+  letter-spacing: 5rpx;
+  color: var(--blue-200);
+}
+
+.svc__title {
+  display: block;
+  margin-top: 13rpx;
+  font-size: 31rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.svc__price {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.svc__amount {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.svc__unit {
+  font-size: 21rpx;
+  color: var(--sub);
+}
+
+.svc__desc {
+  display: block;
+  margin-top: 23rpx;
+  font-size: 23rpx;
+  line-height: 1.75;
+  color: var(--sub);
+}
+
+.svc__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13rpx;
+  margin-top: 23rpx;
+}
+
+.svc__tag {
+  padding: 13rpx 19rpx;
+  border-radius: var(--r-chip);
+  background: var(--surface-ghost);
+  color: var(--body-dim);
+  font-size: 21rpx;
+  line-height: 1.3;
+}
+
+.svc__cta {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* 服务卡的 btn 是卡内主按钮，间距对齐 iOS 的 spacing 12 */
+.svc btn {
+  display: block;
+  margin-top: 23rpx;
+}
+
+.steps {
+  margin-top: 35rpx;
+  padding: 35rpx;
+  border-radius: 38rpx;
+  background: var(--card);
+  border: 1rpx solid var(--line);
+}
+
+.steps__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 23rpx;
+  padding: 19rpx 0;
+}
+
+.steps__row--sep {
+  border-top: 1rpx solid var(--line);
+}
+
+.steps__no {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42rpx;
+  height: 42rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--badge-blue-bg);
+  color: var(--blue);
+  font-size: 19rpx;
+}
+
+.steps__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.steps__title {
+  display: block;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.steps__note {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 21rpx;
+  color: var(--faint);
+}
+
+/* ── 底部付费栏 ── */
+
+.paybar {
+  flex-shrink: 0;
+  /* padding-bottom 归 .safe-bottom 管，这里不能写 padding 简写（见 app.wxss） */
+  padding-left: 27rpx;
+  padding-right: 27rpx;
+  padding-top: 23rpx;
+  background: var(--profile-bar);
+  border-top: 1rpx solid var(--line);
+}
+
+.paybar btn {
+  display: block;
+}
+
+/* btn 默认是胶囊（--r-chip），付费栏要的是 iOS 的 r16 圆角矩形。
+   能穿进组件内部改是因为 btn 开了 addGlobalClass。 */
+.paybar .btn {
+  height: 96rpx;
+  border-radius: 31rpx;
+  box-shadow: var(--cta-shadow);
+}
+
+.paybar__inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15rpx;
+}
+
+.paybar__label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.paybar__price {
+  font-size: 29rpx;
+  font-weight: 700;
+  color: var(--ink);
 }
