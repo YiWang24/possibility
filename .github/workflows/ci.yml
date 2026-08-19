@@ -21,8 +21,8 @@ jobs:
     name: Workflow 语法检查
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: reviewdog/action-actionlint@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: reviewdog/action-actionlint@144cce1f5f4aad4f36bfba866f46565ac2c93546 # v1.9.0
         with:
           fail_level: error
 
@@ -33,10 +33,10 @@ jobs:
     name: 密钥扫描（本次改动）
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           # gitleaks-action v2 现要求 PR 扫描显式传入 GitHub 自动令牌；该 job 只读取本仓库提交。
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,9 +46,9 @@ jobs:
     name: Deno 格式 / lint / 类型 / 单测
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.5
         with:
           deno-version: v2.x
 
@@ -59,9 +59,9 @@ jobs:
     name: 迁移 + RLS 验证
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1.7.1
         with:
           version: latest
 

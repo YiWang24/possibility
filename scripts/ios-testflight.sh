@@ -38,7 +38,7 @@ die() { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
 # API Key 三件套齐了才用；缺任何一个都退回 Xcode 账号，不半途而废地传一半参数。
 AUTH_ARGS=()
-if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
+if [[ -n "$ASC_KEY_ID" && -n "$ASC_ISSUER_ID" && -f "$ASC_KEY_PATH" ]]; then
   AUTH_ARGS=(
     -authenticationKeyPath "$ASC_KEY_PATH"
     -authenticationKeyID "$ASC_KEY_ID"
@@ -51,7 +51,7 @@ fi
 
 # 密钥文件缺失时 Supabase 回落到 AppConfig 内置值，PostHog/Sentry 直接不注册。
 # 发上 TestFlight 的包没埋点等于线上瞎跑，所以出声而不是静默通过。
-[ -f ios/Config/Config.xcconfig ] || cat <<'WARN' >&2
+[[ -f ios/Config/Config.xcconfig ]] || cat <<'WARN' >&2
 
 ⚠ ios/Config/Config.xcconfig 不存在。
   Supabase 会回落到 AppConfig 内置的线上值（能跑），但 PostHog / Sentry 不会注册。
@@ -83,22 +83,22 @@ xcodebuild -exportArchive \
   -allowProvisioningUpdates \
   "${AUTH_ARGS[@]}"
 
-[ -f "$IPA" ] || die "导出没产出 $IPA"
+[[ -f "$IPA" ]] || die "导出没产出 $IPA"
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$ARCHIVE/Info.plist")
 BUILD=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$ARCHIVE/Info.plist")
 log "已产出 ${IPA}（${BUNDLE_ID} ${VERSION} (${BUILD})）"
 
-[ -n "${SKIP_UPLOAD:-}" ] && { echo "SKIP_UPLOAD 已设置，到此为止。"; exit 0; }
+[[ -n "${SKIP_UPLOAD:-}" ]] && { echo "SKIP_UPLOAD 已设置，到此为止。"; exit 0; }
 
 # ── 上传 ──────────────────────────────────────────────────────────────────────
-if [ ${#AUTH_ARGS[@]} -gt 0 ]; then
+if (( ${#AUTH_ARGS[@]} > 0 )); then
   # altool 不接受任意路径，只在固定几个目录里按 AuthKey_<id>.p8 找；
   # API_PRIVATE_KEYS_DIR 是唯一能指定别处的开关。
   export API_PRIVATE_KEYS_DIR="$(dirname "$ASC_KEY_PATH")"
   log "上传 TestFlight（API Key ${ASC_KEY_ID}）"
   xcrun altool --upload-app -f "$IPA" -t ios \
     --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
-elif [ -n "${ASC_APPLE_ID:-}" ] && [ -n "${ASC_APP_PASSWORD:-}" ]; then
+elif [[ -n "${ASC_APPLE_ID:-}" && -n "${ASC_APP_PASSWORD:-}" ]]; then
   log "上传 TestFlight（Apple ID ${ASC_APPLE_ID}）"
   xcrun altool --upload-app -f "$IPA" -t ios \
     -u "$ASC_APPLE_ID" -p "$ASC_APP_PASSWORD"

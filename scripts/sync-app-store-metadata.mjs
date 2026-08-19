@@ -39,7 +39,7 @@ function createToken() {
 }
 
 async function request(path, options = {}) {
-  if (!/^\/[A-Za-z0-9./?&=_,\-\[\]]+$/.test(path)) throw new Error("Invalid App Store Connect API path.");
+  if (!/^\/[A-Za-z0-9./?&=,_\x5B\x5D-]+$/.test(path)) throw new Error("Invalid App Store Connect API path.");
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
     headers: {

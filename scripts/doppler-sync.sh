@@ -11,7 +11,7 @@ CONFIG="${1:?用法: doppler-sync.sh <stg|prd> [project-ref]}"
 PROJECT_REF="${2:-}"
 
 REF_ARGS=()
-if [ -n "$PROJECT_REF" ]; then
+if [[ -n "$PROJECT_REF" ]]; then
   REF_ARGS=(--project-ref "$PROJECT_REF")
 fi
 
@@ -36,7 +36,7 @@ doppler secrets download --no-file --format env \
   grep -v -E '^(DOPPLER_|SUPABASE_|ASC_)' > "$ENV_FILE"
 
 # 空文件会把"同步成功"变成静默的 no-op，宁可在这里失败。
-[ -s "$ENV_FILE" ] || { echo "✗ Doppler 未返回任何可同步的密钥" >&2; exit 1; }
+[[ -s "$ENV_FILE" ]] || { echo "✗ Doppler 未返回任何可同步的密钥" >&2; exit 1; }
 
 $SUPABASE secrets set "${REF_ARGS[@]}" --env-file "$ENV_FILE"
 

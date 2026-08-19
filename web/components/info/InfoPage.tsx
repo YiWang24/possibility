@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { SITE_SHORT_NAME } from "@/lib/site";
 
-type Section = { title: string; paragraphs: string[] };
+type Section = Readonly<{ title: string; paragraphs: readonly string[] }>;
+type InfoPageProps = Readonly<{
+  eyebrow: string;
+  title: string;
+  intro: string;
+  updated: string;
+  sections: readonly Section[];
+}>;
 
 export function InfoPage({
   eyebrow,
@@ -9,13 +16,7 @@ export function InfoPage({
   intro,
   updated,
   sections,
-}: {
-  eyebrow: string;
-  title: string;
-  intro: string;
-  updated: string;
-  sections: Section[];
-}) {
+}: InfoPageProps) {
   return (
     <main className="min-h-screen bg-stage px-6 py-12 text-ink sm:px-10 sm:py-20">
       <div className="mx-auto max-w-3xl">
