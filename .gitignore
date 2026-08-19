@@ -42,6 +42,10 @@ ios/Config/Config.xcconfig
 xcuserdata/
 DerivedData/
 .build/
+# 发布产物：scripts/ios-testflight.sh 的归档/ipa 落在这里（dSYM 单个就有 50MB+）
+ios/build/
+*.xcarchive/
+*.ipa
 
 # Android / Gradle
 android/.gradle/
