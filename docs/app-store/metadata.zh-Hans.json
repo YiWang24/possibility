@@ -1,0 +1,75 @@
+{
+  "app": {
+    "name": "我有可能",
+    "primaryCategory": "LIFESTYLE",
+    "secondaryCategory": "PRODUCTIVITY",
+    "ageRating": {
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "gambling": false,
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "userGeneratedContent": true,
+      "messagingAndChat": true,
+      "socialMedia": true,
+      "advertising": false,
+      "lootBox": false,
+      "unrestrictedWebAccess": false,
+      "healthOrWellnessTopics": false,
+      "contests": "NONE",
+      "parentalControls": false,
+      "gunsOrOtherWeapons": "NONE",
+      "ageAssurance": false,
+      "socialMediaAgeRestricted": false
+    }
+  },
+  "localizations": {
+    "zh-Hans": {
+      "subtitle": "在迷茫时，找到下一步",
+      "description": "有些问题不是缺少答案，而是还没有想清楚自己真正卡在哪里。\n\n我有可能先用 AI 对话接住你的迷茫，帮你把模糊的纠结整理成一个具体的岔路口；再从不同人生路径中找到与你处境相关的真实经验，帮助你比较代价、看见盲区，选一个可以在现实里验证的小行动。\n\n你可以在这里：\n• 和 AI 聊聊工作、关系、学习与生活选择\n• 通过人生实验室推演一般、乐观与警示情境\n• 用测评与卡牌游戏整理在意的价值和生活线索\n• 录下语音日记，获得转写、情绪与关键词整理\n• 在万花筒社区阅读和回应他人的人生经验\n• 管理自己的画像、公开范围与 AI 使用记录\n\n我有可能不会替你做决定，也不把推演当成预言。AI 生成内容仅供自我探索和信息整理，不能替代医疗、心理、法律或财务专业意见。社区经验来自个人经历，不代表对你的结果承诺。\n\n部分功能需要登录。语音日记需要麦克风和语音识别权限；你可以在系统设置中随时关闭。当前版本中的付费界面仍为演示流程，不会产生真实扣款。",
+      "keywords": "人生选择,自我探索,AI对话,职业规划,语音日记,人生实验,真实经验,情绪记录,个人成长,决策陪伴",
+      "promotionalText": "把说不清的纠结，整理成一个可以开始验证的下一步。",
+      "supportUrl": "https://maybeio.com/support",
+      "marketingUrl": "https://maybeio.com",
+      "privacyPolicyUrl": "https://maybeio.com/privacy",
+      "copyright": "© 2026 Yi Wang"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "docs/design/appstore/appstore-01-home.png",
+      "caption": "从迷茫开始，整理此刻真正卡住的问题。"
+    },
+    {
+      "file": "docs/design/appstore/appstore-02-lab.png",
+      "caption": "在人生实验室比较不同路径与下一步行动。"
+    },
+    {
+      "file": "docs/design/appstore/appstore-03-community.png",
+      "caption": "从真实人生经验中获得新的观察角度。"
+    },
+    {
+      "file": "docs/design/appstore/appstore-03b-community-watch.png",
+      "caption": "围观他人的选择，保留自己的判断。"
+    },
+    {
+      "file": "docs/design/appstore/appstore-04-me.png",
+      "caption": "管理画像、隐私范围与 AI 使用记录。"
+    }
+  ],
+  "review": {
+    "contactFirstName": "Yi",
+    "contactLastName": "Wang",
+    "contactEmail": "yiwang2457@gmail.com",
+    "contactPhone": "19898024931",
+    "demoAccountRequired": false,
+    "notes": "这是公开测试版本。首次启动需要注册或登录；可使用任意可接收邮件的测试邮箱注册。核心功能包括 AI 探索对话、人生实验室、语音日记、画像工作室和万花筒社区。付费界面当前为演示流程，不会产生真实扣款。应用不提供医疗诊断、心理治疗或对未来的保证。"
+  }
+}

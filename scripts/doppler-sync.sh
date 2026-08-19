@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # 将 Doppler 中的服务端密钥单向同步到 Supabase Edge Functions Secrets
 # 用法：scripts/doppler-sync.sh <stg|prd> [supabase-project-ref]
-# 过滤 DOPPLER_* / SUPABASE_* 前缀（Supabase 禁止 SUPABASE_ 前缀，且客户端配置无需上传）
+# 过滤 DOPPLER_* / SUPABASE_* / ASC_* 前缀（Supabase 禁止 SUPABASE_ 前缀，客户端配置无需上传，
+# ASC_* 是 iOS 发布用的 App Store Connect 凭据 —— Edge Function 用不到它，
+# 同步过去只是白白让签名私钥多待一个地方）
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -9,7 +11,7 @@ CONFIG="${1:?用法: doppler-sync.sh <stg|prd> [project-ref]}"
 PROJECT_REF="${2:-}"
 
 REF_ARGS=()
-if [ -n "$PROJECT_REF" ]; then
+if [[ -n "$PROJECT_REF" ]]; then
   REF_ARGS=(--project-ref "$PROJECT_REF")
 fi
 
@@ -31,10 +33,10 @@ trap 'rm -f "$ENV_FILE"' EXIT
 
 doppler secrets download --no-file --format env \
   --project possibility --config "$CONFIG" |
-  grep -v -E '^(DOPPLER_|SUPABASE_)' > "$ENV_FILE"
+  grep -v -E '^(DOPPLER_|SUPABASE_|ASC_)' > "$ENV_FILE"
 
 # 空文件会把"同步成功"变成静默的 no-op，宁可在这里失败。
-[ -s "$ENV_FILE" ] || { echo "✗ Doppler 未返回任何可同步的密钥" >&2; exit 1; }
+[[ -s "$ENV_FILE" ]] || { echo "✗ Doppler 未返回任何可同步的密钥" >&2; exit 1; }
 
 $SUPABASE secrets set "${REF_ARGS[@]}" --env-file "$ENV_FILE"
 

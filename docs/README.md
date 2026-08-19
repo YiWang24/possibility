@@ -9,6 +9,7 @@
 | `features/` | 单个功能模块的设计稿：一份文档只讲一个功能 |
 | `design/` | 设计资产：原型、设计稿、图标、上架截图、图片母版 |
 | `marketing/` | 对外物料：海报、扑克牌等可出图的宣传件 |
+| `app-store/` | App Store Connect 元数据、审核说明与本地化上架素材索引 |
 | `demo-video/` | 产品 demo 视频的 Remotion 工程（唯一的可运行工程，不是文档） |
 
 ---

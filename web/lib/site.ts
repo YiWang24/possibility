@@ -14,6 +14,12 @@ export const SITE_SHORT_NAME = "Possibility";
 export const SITE_DESCRIPTION = "认识你自己，推演你的人生可能性";
 export const SITE_LOCALE = "zh_CN";
 
+export const PUBLIC_INFO = {
+  privacy: "/privacy",
+  terms: "/terms",
+  support: "/support",
+} as const;
+
 /** 品牌色 —— 与 app/globals.css 的 --color-stage 及 aurora 渐变保持一致 */
 export const BRAND_STAGE = "#05070d";
 export const BRAND_AURORA: readonly string[] = ["#5e96ff", "#8f7bff", "#e35cc1", "#ff7a4d"];
@@ -37,7 +43,7 @@ export const APP_ROUTES: readonly string[] = [
 ];
 
 /** 可公开索引的路由 */
-export const PUBLIC_ROUTES: readonly string[] = ["/"];
+export const PUBLIC_ROUTES: readonly string[] = ["/", ...Object.values(PUBLIC_INFO)];
 
 /** 把站内路径拼成绝对 URL —— sitemap / canonical / OG 都要求绝对地址 */
 export function absoluteURL(path: string): string {

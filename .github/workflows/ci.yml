@@ -1,22 +1,54 @@
 name: CI
 
+permissions:
+  contents: read
+  pull-requests: read
+
 on:
   pull_request:
     paths:
       - 'supabase/**'
       - 'scripts/**'
       - 'package.json'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/*.yml'
   workflow_dispatch:
 
 jobs:
+  # 起因：一个 workflow 文件里写了 `100 + github.run_number`，GitHub Actions 表达式
+  # 语法没有算术运算符，导致三次 push 都在 0 秒原地失败——而 YAML 语法本身是合法的，
+  # 普通 yamllint/ruby -ryaml 查不出这个错，得真的解析 workflow 语义才能抓到。
+  workflow-lint:
+    name: Workflow 语法检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: reviewdog/action-actionlint@dbe5299849118fd6f099ba563d263d770955a64a # v1.73.2
+        with:
+          fail_level: error
+
+  # 起因：一次误提交把 ios/build/ 整个带进仓库，里面 Xcode 写的 Packaging.log 含一个
+  # altool 现签的 App Store Connect bearer token。本该在推送前就被挡下来。
+  # gitleaks 只需扫本次 PR 新增的提交，不必每次全量翻 348 个历史提交。
+  secret-scan:
+    name: 密钥扫描（本次改动）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          # gitleaks-action v2 现要求 PR 扫描显式传入 GitHub 自动令牌；该 job 只读取本仓库提交。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+
   backend-check:
     name: Deno 格式 / lint / 类型 / 单测
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.5
         with:
           deno-version: v2.x
 
@@ -27,9 +59,9 @@ jobs:
     name: 迁移 + RLS 验证
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1 # v1.7.1
         with:
           version: latest
 
@@ -52,4 +84,3 @@ jobs:
       # 而不是被存量 WARN 卡住合并。
       - name: 安全体检（Advisors）
         run: supabase db advisors --local --type security --level warn --fail-on error
-
