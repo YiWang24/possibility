@@ -34,6 +34,8 @@ jobs:
           fetch-depth: 0
       - uses: gitleaks/gitleaks-action@v2
         env:
+          # gitleaks-action v2 现要求 PR 扫描显式传入 GitHub 自动令牌；该 job 只读取本仓库提交。
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
 
   backend-check:
@@ -78,4 +80,3 @@ jobs:
       # 而不是被存量 WARN 卡住合并。
       - name: 安全体检（Advisors）
         run: supabase db advisors --local --type security --level warn --fail-on error
-
