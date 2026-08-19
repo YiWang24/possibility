@@ -152,6 +152,11 @@ scripts/ios-testflight.sh
 ### CI
 
 `.github/workflows/ios.yml`：push 到 main 且改动落在 `ios/**` 时自动跑，也可手动触发。
+它会先在 GitHub macOS runner 的可用 iPhone 模拟器上运行 `PossibilityTests`；只有全部通过，
+后续 job 才会归档、导出并上传 TestFlight。失败测试会上传 `ios-unit-test-results`（`.xcresult`）
+artifact。需要麦克风、语音识别、真实 LLM 或生产网络的 `PossibilityUITests` 不作为发布门禁，
+避免第三方服务波动把可发布构建随机拦下；它们仍保留在工程中供真机/回归环境执行。
+
 唯一的 GitHub secret 是 `DOPPLER_TOKEN`（与 `deploy.yml` 共用），其余由 `doppler run` 注入。
 构建号取 `100 + github.run_number` —— 留出的余量是因为 `1.0.0 (1)` 已被首次本地发布占用，
 而 `run_number` 从 1 起。撞号时手动触发并填 `build_number`。

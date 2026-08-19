@@ -6,10 +6,36 @@ on:
       - 'supabase/**'
       - 'scripts/**'
       - 'package.json'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/*.yml'
   workflow_dispatch:
 
 jobs:
+  # 起因：一个 workflow 文件里写了 `100 + github.run_number`，GitHub Actions 表达式
+  # 语法没有算术运算符，导致三次 push 都在 0 秒原地失败——而 YAML 语法本身是合法的，
+  # 普通 yamllint/ruby -ryaml 查不出这个错，得真的解析 workflow 语义才能抓到。
+  workflow-lint:
+    name: Workflow 语法检查
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: reviewdog/action-actionlint@v1
+        with:
+          fail_level: error
+
+  # 起因：一次误提交把 ios/build/ 整个带进仓库，里面 Xcode 写的 Packaging.log 含一个
+  # altool 现签的 App Store Connect bearer token。本该在推送前就被挡下来。
+  # gitleaks 只需扫本次 PR 新增的提交，不必每次全量翻 348 个历史提交。
+  secret-scan:
+    name: 密钥扫描（本次改动）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+
   backend-check:
     name: Deno 格式 / lint / 类型 / 单测
     runs-on: ubuntu-latest

@@ -22,9 +22,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    name: unit tests
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # SPM 依赖体积大；缓存不影响 Package.resolved 作为版本真相源。
+      - name: 缓存 Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData/SourcePackages
+          key: ${{ runner.os }}-spm-${{ hashFiles('ios/Possibility.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: 安装 xcodegen
+        run: brew install xcodegen
+
+      # project.yml 是工程配置的唯一真相源；测试与归档都必须从它生成项目，避免 CI
+      # 悄悄测试旧 project.pbxproj、发布新配置的分叉。
+      - name: 生成 Xcode 工程
+        run: ( cd ios && xcodegen generate )
+
+      # macOS runner 随 Xcode 镜像更新，固定某一台 iPhone 名称会在镜像切换时失效。
+      # 取当前运行时中第一台可用 iPhone，交由 xcodebuild 自行启动。
+      - name: 选择测试模拟器
+        run: |
+          SIMULATOR_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')"
+          test -n "$SIMULATOR_ID"
+          echo "SIMULATOR_ID=$SIMULATOR_ID" >> "$GITHUB_ENV"
+
+      # 只将不依赖真机权限、语音、LLM 或生产网络的确定性单元测试作为发布门禁。
+      # UI 回归保留在 PossibilityUITests target 内，避免外部服务波动阻断 TestFlight。
+      - name: 运行 iOS 单元测试
+        run: |
+          xcodebuild test \
+            -project ios/Possibility.xcodeproj \
+            -scheme Possibility \
+            -configuration Debug \
+            -destination "id=$SIMULATOR_ID" \
+            -only-testing:PossibilityTests \
+            -resultBundlePath ios/build/PossibilityTests.xcresult
+
+      - name: 上传测试结果
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unit-test-results
+          path: ios/build/PossibilityTests.xcresult
+          if-no-files-found: warn
+
   testflight:
     name: archive + export + upload
     runs-on: macos-15
+    needs: test
 
     # 唯一的 GitHub secret：Doppler 服务令牌（scoped 到 possibility/prd），与 deploy.yml 同一条通道。
     # Supabase 与 App Store Connect 凭据全部由 doppler run 注入：
@@ -36,6 +89,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 缓存 Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData/SourcePackages
+          key: ${{ runner.os }}-spm-${{ hashFiles('ios/Possibility.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
       # GitHub Actions 的表达式语法没有算术运算符（`100 + x` 会让整个 workflow
       # 解析失败、0 秒红叉），只能落到 shell 里算。
       # 加 100 的余量是因为 run_number 从 1 起，而 1.0.0 (1) 已被首次本地发布占用。
@@ -44,6 +105,9 @@ jobs:
           INPUT_BUILD_NUMBER: ${{ github.event.inputs.build_number }}
         run: |
           if [ -n "$INPUT_BUILD_NUMBER" ]; then
+            case "$INPUT_BUILD_NUMBER" in
+              *[!0-9]* | 0) echo "build_number 必须是正整数" >&2; exit 1 ;;
+            esac
             echo "BUILD_NUMBER=$INPUT_BUILD_NUMBER" >> "$GITHUB_ENV"
           else
             echo "BUILD_NUMBER=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
@@ -65,19 +129,33 @@ jobs:
           # shellcheck disable=SC2016  # 单引号是刻意的：$ASC_KEY_P8 要由 doppler run 的内层 shell 展开
           doppler run --command '
             set -euo pipefail
-            mkdir -p "$HOME/.appstoreconnect/private_keys"
+            key_dir="$RUNNER_TEMP/appstoreconnect/private_keys"
+            mkdir -p "$key_dir"
             umask 077
-            printf "%s" "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+            key_path="$key_dir/AuthKey_$ASC_KEY_ID.p8"
+            printf "%s" "$ASC_KEY_P8" > "$key_path"
+            printf "ASC_KEY_PATH=%s\n" "$key_path" >> "$GITHUB_ENV"
           '
 
       - name: 归档 → 导出 → 上传 TestFlight
         run: doppler run --command 'bash scripts/ios-testflight.sh'
 
-      # 失败时归档日志比 stdout 有用得多（签名错误常淹没在几千行编译输出里）。
-      - name: 上传构建产物（失败时排查用）
+      # Packaging.log 可能包含短时 bearer token，绝不作为 artifact 上传。
+      # GitHub Actions stdout 已保留完整失败上下文；这里仅上传可安全共享的签名元数据。
+      - name: 上传安全的构建元数据（失败时排查用）
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build-logs
-          path: ios/build/*.xcarchive/Info.plist
+          name: ios-build-metadata
+          path: |
+            ios/build/*.xcarchive/Info.plist
+            ios/build/export/DistributionSummary.plist
+            ios/build/export/ExportOptions.plist
           if-no-files-found: ignore
+
+      - name: 删除临时 App Store Connect API Key
+        if: always()
+        run: |
+          if [ -n "${ASC_KEY_PATH:-}" ]; then
+            rm -f "$ASC_KEY_PATH"
+          fi
