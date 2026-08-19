@@ -1,6 +1,6 @@
 name: Possibility
 options:
-  bundleIdPrefix: com.adventurex
+  bundleIdPrefix: com.possibility
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: "5.10"
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: JRHT3J6CWU
+    DEVELOPMENT_TEAM: 985WPAR345
 packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
@@ -50,6 +50,11 @@ targets:
       path: Possibility/Resources/Info.plist
       properties:
         CFBundleDisplayName: Possibility
+        # 版本号交给构建设置，CI/脚本可用 xcodebuild 覆盖 CURRENT_PROJECT_VERSION 递增构建号
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # 未使用非豁免加密（仅 HTTPS）。不声明的话每次上传 TestFlight 都会卡在人工填写出口合规
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -66,10 +71,20 @@ targets:
           NSAllowsLocalNetworking: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.possibility
+        PRODUCT_BUNDLE_IDENTIFIER: com.possibility.possibility
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      # xcodegen 的默认预设把两个配置的 CODE_SIGN_IDENTITY 都钉成 "iPhone Developer"，
+      # 于是连 archive 都去要开发描述文件；本团队没注册设备，开发描述文件根本签不出来。
+      # Release 留空 = 不钉身份，让自动签名在归档时自己挑 App Store 分发描述文件。
+      configs:
+        Debug:
+          CODE_SIGN_IDENTITY: Apple Development
+        Release:
+          CODE_SIGN_IDENTITY: ""
   PossibilityUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -79,7 +94,7 @@ targets:
       - target: Possibility
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.johnnywang.possibility.uitests
+        PRODUCT_BUNDLE_IDENTIFIER: com.possibility.possibility.uitests
         TEST_TARGET_NAME: Possibility
         GENERATE_INFOPLIST_FILE: YES
   PossibilityTests:
@@ -91,7 +106,7 @@ targets:
       - target: Possibility
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.adventurex.possibility.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.possibility.possibility.tests
         GENERATE_INFOPLIST_FILE: YES
 schemes:
   Possibility:

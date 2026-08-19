@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Possibility · App Store Connect（TestFlight）导出配置
+  由 scripts/ios-testflight.sh 使用；手动导出：
+    xcodebuild -exportArchive -archivePath <x>.xcarchive \
+      -exportOptionsPlist ios/ExportOptions.plist -exportPath <dir> -allowProvisioningUpdates
+-->
+<plist version="1.0">
+<dict>
+	<!-- Xcode 15 起 app-store 更名为 app-store-connect -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>teamID</key>
+	<string>985WPAR345</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<!-- 上传 dSYM，Sentry/Xcode Organizer 才能符号化线上崩溃栈 -->
+	<key>uploadSymbols</key>
+	<true/>
+	<!-- 构建号由 project.yml 的 CURRENT_PROJECT_VERSION 决定，不让 Xcode 偷改，
+	     否则仓库里的版本号和 TestFlight 上的对不上，出问题无法回溯到 commit -->
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+	<!-- export=只产出 ipa（上传另走一步，便于失败重试）；upload=导出并直接上传 -->
+	<key>destination</key>
+	<string>export</string>
+</dict>
+</plist>

@@ -62,3 +62,38 @@ PostHog / Sentry 为可选观测后端：在同一 `Config.xcconfig` 中填写
 ## 运行
 
 iOS 17+ 模拟器或真机构建运行即可。主线演示：首页发问 → 流式对话 → 岔路口 → 万花筒抽人 → 旅人主页 → ¥9.9 mock 解锁。
+
+## 发布到 TestFlight
+
+一条命令跑完「重生成工程 → 归档 → 导出 ipa → 上传」：
+
+```bash
+doppler run --project possibility --config prd -- scripts/gen-xcconfig.sh   # 注入密钥
+scripts/ios-testflight.sh                                                   # 构建并上传
+```
+
+签名相关的事实（都写在 `project.yml` 里，不要在 Xcode 里手改）：
+
+| 项 | 值 |
+|---|---|
+| Team | `985WPAR345` |
+| Bundle ID | `com.possibility.possibility`（测试 target 为其 `.tests` / `.uitests` 子级） |
+| 签名方式 | 自动（`CODE_SIGN_STYLE = Automatic`） |
+
+**Release 的 `CODE_SIGN_IDENTITY` 是故意留空的。** xcodegen 的默认预设会把它钉成
+`iPhone Developer`，于是连 archive 都去要*开发*描述文件；本团队没注册任何设备，
+开发描述文件根本签不出来，归档必然失败。留空 = 归档产出未签名包，随后由
+`xcodebuild -exportArchive`（`ExportOptions.plist`，method `app-store-connect`）
+统一做分发签名 —— 这也正是 Xcode Organizer「Distribute App」的内部流程。
+分发证书是 Apple 云托管的，本机钥匙串里看不到，靠 `-allowProvisioningUpdates` 现取。
+
+构建号（`CURRENT_PROJECT_VERSION`）在同一版本号下必须唯一，重传前先递增：
+
+```bash
+BUILD_NUMBER=2 scripts/ios-testflight.sh
+```
+
+上传凭证走环境变量，两种任选（都没配则只产出 ipa，并提示改用 Xcode Organizer 手动上传）：
+
+- App Store Connect API Key：`ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_KEY_PATH`
+- Apple ID + App 专用密码：`ASC_APPLE_ID` / `ASC_APP_PASSWORD`
