@@ -83,7 +83,9 @@ fun HomeScreen() {
 
     fun handleDimTap(dim: HomeModel.PortraitDim) {
         val key = dim.dimensionKey
-        if (key != null) activeDimension = key else assessmentKind = AssessmentKind.BIGFIVE
+        if (dim.selfDiscovery) showSelfDiscovery = true
+        else if (key != null) activeDimension = key
+        else assessmentKind = AssessmentKind.BIGFIVE
     }
 
     Box(Modifier.fillMaxSize().background(Theme.stage)) {

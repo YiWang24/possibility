@@ -343,7 +343,8 @@ enum AssessmentData {
 
 // MARK: - 喜欢 × 擅长完整探索（中文原创题目）
 
-enum DiscoveryAxis: String, Codable, Sendable { case like, skill, value }
+enum DiscoveryAxis: String, Codable, Sendable { case like, skill, evidence, environment, choice, value, open, energy, context }
+enum DiscoveryKind: String, Codable, Sendable { case interest, strength, select, environment, choice, open }
 
 struct DiscoveryOption: Identifiable, Sendable {
     var id: String { label }
@@ -359,11 +360,24 @@ struct DiscoveryQuestion: Identifiable, Sendable {
     let title: String
     let hint: String
     let options: [DiscoveryOption]
+    let kind: DiscoveryKind
+    let tag: String?
+    let left: String?
+    let right: String?
+
+    init(id: String, axis: DiscoveryAxis, eyebrow: String, title: String, hint: String, options: [DiscoveryOption], kind: DiscoveryKind = .select, tag: String? = nil, left: String? = nil, right: String? = nil) {
+        self.id = id; self.axis = axis; self.eyebrow = eyebrow; self.title = title; self.hint = hint; self.options = options
+        self.kind = kind; self.tag = tag; self.left = left; self.right = right
+    }
 }
 
 struct DiscoveryAnswer: Codable, Sendable {
     var selected: [String] = []
     var custom: [String] = []
+    var like: Int? = nil
+    var skill: Int? = nil
+    var scale: Int? = nil
+    var text: String? = nil
 }
 
 struct RankedDiscoveryTag: Codable, Sendable {
@@ -404,17 +418,30 @@ struct SelfDiscoveryAnalysis: Codable, Sendable {
 }
 
 struct SelfDiscoveryRequest: Codable, Sendable {
+    struct ResponseValue: Codable, Sendable {
+        let selected: [String]
+        let custom: [String]
+        let like: Int?
+        let skill: Int?
+        let scale: Int?
+        let text: String?
+    }
     struct Response: Codable, Sendable {
         let id: String
         let axis: DiscoveryAxis
+        let kind: DiscoveryKind
         let question: String
-        let selected: [String]
-        let custom: [String]
+        let tag: String?
+        let left: String?
+        let right: String?
+        let response: ResponseValue
     }
     struct Evidence: Codable, Sendable {
         let likes: [RankedDiscoveryTag]
         let strengths: [RankedDiscoveryTag]
         let values: [RankedDiscoveryTag]
+        let energy: [String]
+        let environment: [String]
     }
     let responses: [Response]
     let evidence: Evidence
@@ -429,7 +456,7 @@ enum SelfDiscoveryData {
                           options: rows.map { DiscoveryOption(label: $0.0, tag: $0.1, glyph: $0.2) })
     }
 
-    static let questions: [DiscoveryQuestion] = [
+    private static let legacyQuestions: [DiscoveryQuestion] = [
         q("like-pull", .like, "喜欢的事 · 自然靠近", "没有任务和评价时，你会主动靠近什么？", "选 1–3 项，也可以写下选项之外的真实答案。", [
             ("内容、画面、音乐或故事", "创造与表达", "✦"), ("一个值得追到底的问题", "知识与探索", "◎"),
             ("人的经历、感受与关系", "人类与连接", "♡"), ("工具、流程与系统如何运作", "系统与优化", "▦"),
@@ -490,29 +517,97 @@ enum SelfDiscoveryData {
             ("让人被看见、理解和支持", "关怀与连接", "♡"), ("让复杂世界更清晰有序", "秩序与清晰", "▦"),
             ("推动值得发生的真实变化", "影响与担当", "↗"), ("创造可触摸、可使用的成果", "真实与实践", "◇"),
         ]),
+        q("energy-recharge", .energy, "能量证据 · 越做越有劲", "完成哪类事情后，你通常会感到被充电？", "这里没有标准答案，只记录什么会让你愿意再次投入。", [
+            ("独自沉浸，把一个问题想透", "深度专注", "◎"), ("和人来回讨论，慢慢长出新想法", "共创激发", "♡"),
+            ("看见成果被真正使用或认可", "成果反馈", "↗"), ("把棘手问题啃下来", "挑战驱动", "◇"),
+            ("接触新的人、地方或观点", "新鲜变化", "✦"), ("陪伴或支持一个具体的人", "关系滋养", "♡"),
+        ]),
+        q("energy-sustain", .energy, "能量证据 · 持续投入", "什么会让你即使累，也仍愿意继续一会儿？", "它帮助区分一时兴奋和可持续的投入感。", [
+            ("还差一点就能想清楚或做完整", "深度专注", "◎"), ("伙伴之间正在产生默契", "共创激发", "♡"),
+            ("已经看见它能解决真实问题", "成果反馈", "↗"), ("困难本身让我想再试一次", "挑战驱动", "◇"),
+            ("前面还有没见过的可能", "新鲜变化", "✦"), ("有人因为这件事变得更好", "关系滋养", "♡"),
+        ]),
+        q("context-best", .context, "适配环境 · 最好发挥", "在哪种工作或学习状态里，你最容易进入好状态？", "环境不决定能力，但会明显影响你能否稳定发挥。", [
+            ("有自主空间，可以自己安排节奏", "自主空间", "✦"), ("和少数可靠的人紧密协作", "小团队共创", "♡"),
+            ("目标、边界和标准都很清楚", "目标清晰", "▦"), ("能留出长时间不被打断地投入", "连续深度", "◎"),
+            ("能快速看到真实用户或成果反馈", "现实反馈", "◇"), ("不断面对新任务和新可能", "多元变化", "↗"),
+        ]),
+        q("context-friction", .context, "适配环境 · 容易消耗", "什么情况最容易让你的好状态被打断？", "识别边界不是挑剔，而是为了选择更可持续的投入方式。", [
+            ("被过度控制、没有做法上的选择", "自主空间", "✦"), ("长期独自硬扛、缺少可信的讨论", "小团队共创", "♡"),
+            ("目标反复变化、规则模糊", "目标清晰", "▦"), ("不断被碎片消息和临时任务打断", "连续深度", "◎"),
+            ("做很久却不知道是否有用", "现实反馈", "◇"), ("长期重复、几乎没有新刺激", "多元变化", "↗"),
+        ]),
     ]
 
-    static func rankedTags(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
-        var counts: [String: Int] = [:]
-        var order: [String] = []
-        for question in questions where question.axis == axis {
-            for label in answers[question.id]?.selected ?? [] {
-                guard let tag = question.options.first(where: { $0.label == label })?.tag else { continue }
-                if counts[tag] == nil { order.append(tag) }
-                counts[tag, default: 0] += 1
-            }
-        }
-        // Swift 的 sorted(by:) 不保证稳定，计数相同时必须显式按首次出现顺序兜底，
-        // 否则同一份答案在 iOS 与 Web / Android 上可能给出不同的前三名。
-        return order.enumerated()
-            .sorted {
-                let left = counts[$0.element] ?? 0, right = counts[$1.element] ?? 0
-                return left == right ? $0.offset < $1.offset : left > right
-            }
-            .prefix(3).map { RankedDiscoveryTag(tag: $0.element, count: counts[$0.element] ?? 0) }
+    static let questions: [DiscoveryQuestion] = completeQuestions()
+
+    private static func completeQuestions() -> [DiscoveryQuestion] {
+        let interests: [(String, [String])] = [
+            ("人与心理", ["我会自然想知道：一个人为什么会这样想、这样感受、这样选择？", "心理、人格、自我成长或人际关系的内容，常让我持续看下去。"]),
+            ("社会与文化", ["热点事件出现后，我会想理解背后的群体、时代或社会机制。", "我喜欢比较不同群体、文化和生活方式的差异。"]),
+            ("商业与市场", ["看到流行产品时，我会好奇：它为什么能被人选择或付费？", "新的商业模式、消费趋势或创业故事容易吸引我。"]),
+            ("科技与未来", ["新技术出现时，我会主动想了解它能改变什么。", "我常会想象：技术继续发展后，人会怎样生活。"]),
+            ("生命与自然", ["我会对人体、健康、生命机制或自然规律产生持续好奇。", "动植物、环境与生命科学的内容容易让我投入。"]),
+            ("艺术与审美", ["我会不自觉观察画面、空间、产品或文字的美感。", "看到优秀作品时，我会想：如果由我来做，怎样会更好？"]),
+            ("知识与思想", ["遇到感兴趣的问题时，我会一路查下去，而不只满足于结论。", "哲学、历史、理论或科学解释，容易让我长时间沉浸。"]),
+            ("系统与效率", ["遇到混乱流程时，我会想把它重新整理得更清楚。", "理解复杂系统如何运转、怎样更有效率，会让我感到有趣。"]),
+            ("生活与体验", ["我会主动研究怎样让日常生活变得更有趣、更舒服。", "美食、旅行、运动、空间或新的生活体验中，总有让我投入的领域。"]),
+        ]
+        let actions: [(String, [String])] = [
+            ("探索求知", ["面对陌生问题时，我会主动找资料、追根究底。", "别人得到答案后，我常还会继续追问为什么。"]),
+            ("分析洞察", ["面对零散信息时，我比较容易发现规律或问题本质。", "别人讨论表面问题时，我常能想到隐藏的原因。"]),
+            ("创意构想", ["同一个问题，我通常能很快想到不止一种可能。", "听到一个想法后，我常会自然联想到新的做法。"]),
+            ("结构设计", ["别人说了很多零散信息后，我能较快整理出框架。", "面对复杂任务时，我会自然拆出目标、限制与步骤。"]),
+            ("表达呈现", ["我比较容易把复杂内容解释到别人能理解。", "我会自然思考怎样讲、写或呈现才能让人接受。"]),
+            ("共情理解", ["别人没有明说时，我有时也能察觉他真正介意什么。", "发生冲突时，我通常能理解不同的人各自在担心什么。"]),
+            ("教导赋能", ["看到别人不会一件事时，我会自然想到怎样教他。", "别人因为我的解释突然理解一个问题，会让我有满足感。"]),
+            ("连接协作", ["我比较容易想到：这件事可以找谁一起做。", "在陌生群体中，我能够比较自然地建立连接。"]),
+            ("影响推动", ["当我相信一件事值得做时，我会想办法争取支持。", "我不排斥说服、谈判或让别人对一件事产生兴趣。"]),
+            ("组织统筹", ["很多事情同时出现时，我通常知道应先处理什么。", "多人协作时，我会自然关注时间、人员与资源安排。"]),
+            ("执行推进", ["讨论足够以后，我会很快转向下一步具体做什么。", "长期任务中，我比较容易持续推进直到完成。"]),
+            ("实践制作", ["比起一直讨论，我更容易通过先做一个版本找到答案。", "面对工具、实物、空间或真实操作时，我往往更有感觉。"]),
+            ("优化精进", ["一个东西已经能用时，我还是会发现它可以改进的地方。", "重复做同一件事时，我会自然寻找更快、更准或更好的方法。"]),
+        ]
+        let glyphs = ["◎", "◌", "↗", "✦", "◇", "♡", "▦", "◈", "☼"]
+        let actionOptions = actions.enumerated().map { DiscoveryOption(label: $0.element.0, tag: $0.element.0, glyph: glyphs[$0.offset % glyphs.count]) }
+        let values = [("自由与创造", "✦"), ("成长与求真", "◎"), ("关怀与连接", "♡"), ("秩序与清晰", "▦"), ("影响与担当", "↗"), ("真实与实践", "◇")].map { DiscoveryOption(label: $0.0, tag: $0.0, glyph: $0.1) }
+        var items: [DiscoveryQuestion] = []
+        for (index, theme) in interests.enumerated() { for (subindex, title) in theme.1.enumerated() {
+            items.append(.init(id: "interest-\(index + 1)-\(subindex + 1)", axis: .like, eyebrow: "兴趣主题 · \(String(format: "%02d", index + 1)) / 09", title: title, hint: "按真实投入感评分：1 完全没兴趣，5 即使没人要求也愿意持续投入时间。", options: [], kind: .interest, tag: theme.0))
+        }}
+        for (index, action) in actions.enumerated() { for (subindex, title) in action.1.enumerated() {
+            items.append(.init(id: "strength-\(index + 1)-\(subindex + 1)", axis: .skill, eyebrow: "优势动作 · \(String(format: "%02d", index + 1)) / 13", title: title, hint: "同一件事分别评价：你是否享受，以及它是否是自然、可复用的优势。", options: [], kind: .strength, tag: action.0))
+        }}
+        let evidence = ["哪类事情即使没人教，你也比较容易知道怎么做？", "哪类事情你通常练习几次，就能明显进步？", "别人最经常因为什么事情来找你帮忙？", "在学习、工作和生活中，哪些行为反复成为你的优势？"]
+        for (index, title) in evidence.enumerated() { items.append(.init(id: "evidence-\(index + 1)", axis: .evidence, eyebrow: "外部证据 · E\(index + 1)", title: title, hint: "最多选 3 项。它用来交叉验证，而不是只听你对自己的判断。", options: actionOptions)) }
+        let environments = [("独立完成", "高频协作"), ("深度投入", "多任务切换"), ("稳定明确", "变化探索"), ("幕后分析创造", "台前表达影响"), ("自主定义方法", "清晰标准要求"), ("长期积累", "即时反馈"), ("专业深度", "综合统筹"), ("低频社交", "高频社交"), ("确定性", "不确定探索"), ("个人成果", "帮助他人")]
+        for (index, pair) in environments.enumerated() { items.append(.init(id: "environment-\(index + 1)", axis: .environment, eyebrow: "发挥环境 · \(String(format: "%02d", index + 1)) / 10", title: "哪一端更接近让你稳定发挥的状态？", hint: "不是选择更好的一端，而是选择你更可持续的工作与学习方式。", options: [], kind: .environment, left: pair.0, right: pair.1)) }
+        let choices = [("深入研究一个复杂问题", "快速把一个想法做出来"), ("帮一个人真正解决问题", "影响很多人接受一个观点"), ("从 0 到 1 想新方案", "把已有方案做到非常好"), ("自己深入思考", "和很多人讨论碰撞"), ("找规律和原因", "创造新的表达"), ("规划全局", "亲自推进执行")]
+        for (index, pair) in choices.enumerated() { items.append(.init(id: "choice-\(index + 1)", axis: .choice, eyebrow: "取舍判断 · \(String(format: "%02d", index + 1)) / 06", title: "如果只能选一种，你更愿意？", hint: "必须选择一项。它帮助结果在接近时形成更清晰的优先级。", options: [.init(label: pair.0, tag: pair.0, glyph: "A"), .init(label: pair.1, tag: pair.1, glyph: "B")], kind: .choice)) }
+        items.append(.init(id: "value-contribution", axis: .value, eyebrow: "价值判断 · 想带来的影响", title: "你希望自己的投入最终为谁带来什么？", hint: "最多选 3 项。它帮助判断方向是否值得。", options: values))
+        items.append(.init(id: "value-boundary", axis: .value, eyebrow: "价值判断 · 不愿妥协", title: "看到什么状态时，你最容易感到不舒服？", hint: "最多选 3 项。它会提示你长期选择中的边界。", options: values))
+        let open = ["小时候没有人要求你时，你最容易沉迷什么？", "过去几年，有哪三件事让你觉得“虽然累，但做完特别满足”？", "别人最经常因为什么事情找你帮忙？请举一个真实例子。", "你最容易对别人产生哪种“这有什么难的？”的感觉？", "如果未来一年不考虑赚钱和别人怎么看，你最想系统探索哪三件事？"]
+        for (index, title) in open.enumerated() { items.append(.init(id: "open-\(index + 1)", axis: .open, eyebrow: "真实叙事 · \(String(format: "%02d", index + 1)) / 05", title: title, hint: "写下 1–3 句真实经历。AI 会提取主题、动作、能量与外界证据，而不是只做文本摘要。", options: [], kind: .open)) }
+        return items
     }
 
-    private static func rankedWithCustom(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
+    static func rankedTags(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer], limit: Int = 3) -> [RankedDiscoveryTag] {
+        var counts: [String: Int] = [:]
+        for question in questions where question.axis == axis {
+            guard let answer = answers[question.id] else { continue }
+            if axis == .like, let tag = question.tag { counts[tag, default: 0] += answer.like ?? 0 }
+            if axis == .skill, let tag = question.tag { counts[tag, default: 0] += answer.skill ?? 0 }
+            if axis == .evidence || axis == .value || axis == .choice {
+                for label in answer.selected {
+                    let tag = question.options.first(where: { $0.label == label })?.tag ?? label
+                    counts[tag, default: 0] += axis == .evidence ? 2 : 1
+                }
+            }
+        }
+        return counts.sorted { $0.value > $1.value }.prefix(limit).map { RankedDiscoveryTag(tag: $0.key, count: $0.value) }
+    }
+
+    static func rankedWithCustom(_ axis: DiscoveryAxis, answers: [String: DiscoveryAnswer]) -> [RankedDiscoveryTag] {
         var ranked = rankedTags(axis, answers: answers)
         var seen = Set(ranked.map(\.tag))
         for question in questions where question.axis == axis {
@@ -527,12 +622,30 @@ enum SelfDiscoveryData {
             ? ["继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容"]
             : axis == .skill
                 ? ["继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功"]
-                : ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"]
+                : axis == .evidence
+                    ? ["记录他人反馈", "复盘重复行为", "观察跨场景优势"]
+                    : axis == .environment
+                        ? ["观察发挥条件", "记录环境边界", "寻找适配节奏"]
+                        : ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"]
         for tag in defaults where !seen.contains(tag) {
             ranked.append(RankedDiscoveryTag(tag: tag, count: 1)); seen.insert(tag)
             if ranked.count == 3 { break }
         }
         return Array(ranked.prefix(3))
+    }
+
+    static func energySignals(_ answers: [String: DiscoveryAnswer]) -> [String] {
+        var seen = Set<String>()
+        return questions.filter { $0.axis == .skill && (answers[$0.id]?.like ?? 0) >= 4 }
+            .compactMap(\.tag).filter { seen.insert($0).inserted }.prefix(3).map { $0 }
+    }
+
+    static func environmentSignals(_ answers: [String: DiscoveryAnswer]) -> [String] {
+        questions.filter { $0.axis == .environment }.compactMap { question in
+            guard let scale = answers[question.id]?.scale else { return nil }
+            if scale == 3 { return "\(question.left ?? "") / \(question.right ?? "")" }
+            return scale < 3 ? question.left : question.right
+        }.prefix(3).map { $0 }
     }
 
     static func localAnalysis(_ answers: [String: DiscoveryAnswer]) -> SelfDiscoveryAnalysis {
@@ -547,27 +660,26 @@ enum SelfDiscoveryData {
         }
         let value = values.first?.tag ?? "你重视的价值"
         let directions = likes.enumerated().map { index, like in
-            // max(count, 1) 只挡住除零，空数组仍会越界；这里与 Web 一致地回退到占位文案。
-            let strength = strengths.isEmpty
-                ? "你的优势"
-                : strengths[index % strengths.count].tag
+            let strength = strengths[index % max(strengths.count, 1)].tag
             return DiscoveryDirection(title: "用\(strength)，去探索\(like.tag)", why: "这组组合同时回应了你的兴趣证据，并靠近“\(value)”。", firstStep: "在一周内完成一个与“\(like.tag)”有关、能使用“\(strength)”的小行动。")
         }
         return SelfDiscoveryAnalysis(
-            summary: "你更容易被\(likes.map(\.tag).joined(separator: "、"))吸引，并倾向用\(strengths.map(\.tag).joined(separator: "、"))来解决问题。",
+            summary: "你的注意力更容易回到\(likes.map(\.tag).joined(separator: "、"))，面对问题时则习惯用\(strengths.map(\.tag).joined(separator: "、"))来推进。",
             likes: likeInsights, strengths: strengthInsights, directions: directions,
-            confidenceNote: "这是基于选择频次生成的初步假设；继续记录真实行动中的投入感和反馈，结论会更准确。")
+            confidenceNote: "这是一份基于兴趣强度、优势双评分、外部证据、环境偏好和真实叙事生成的行动假设；完成 30 天实验后回看，结论会更可靠。")
     }
 
     static func request(_ answers: [String: DiscoveryAnswer]) -> SelfDiscoveryRequest {
         SelfDiscoveryRequest(
             responses: questions.map { question in
                 let answer = answers[question.id] ?? DiscoveryAnswer()
-                return .init(id: question.id, axis: question.axis, question: question.title, selected: answer.selected, custom: answer.custom)
+                return .init(id: question.id, axis: question.axis, kind: question.kind, question: question.title, tag: question.tag, left: question.left, right: question.right, response: .init(selected: answer.selected, custom: answer.custom, like: answer.like, skill: answer.skill, scale: answer.scale, text: answer.text))
             },
             evidence: .init(
-                likes: rankedTags(.like, answers: answers),
-                strengths: rankedTags(.skill, answers: answers),
-                values: rankedTags(.value, answers: answers)))
+                likes: rankedTags(.like, answers: answers, limit: 9),
+                strengths: rankedTags(.skill, answers: answers, limit: 13),
+                values: rankedTags(.value, answers: answers, limit: 6),
+                energy: questions.filter { $0.axis == .skill && (answers[$0.id]?.like ?? 0) >= 4 }.compactMap(\.tag),
+                environment: questions.filter { $0.axis == .environment }.compactMap { question in guard let scale = answers[question.id]?.scale else { return nil }; return scale < 3 ? question.left : (scale > 3 ? question.right : "\(question.left ?? "") / \(question.right ?? "")") }))
     }
 }

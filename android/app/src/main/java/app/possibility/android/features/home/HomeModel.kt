@@ -314,6 +314,17 @@ class HomeModel(
     /** 人格底色（由大五测评结果写入）。 */
     val personalityText: String? get() = filledDims["personality"]
 
+    /** 首页完整探索入口的摘要，同时提示用户可得出喜欢与擅长。 */
+    val selfDiscoveryText: String?
+        get() {
+            val like = filledDims[DimensionKey.LIKE.id]?.split(" · ")?.firstOrNull().orEmpty()
+            val skill = filledDims[DimensionKey.SKILL.id]?.split(" · ")?.firstOrNull().orEmpty()
+            return listOfNotNull(
+                like.takeIf { it.isNotEmpty() }?.let { "喜欢：$it" },
+                skill.takeIf { it.isNotEmpty() }?.let { "擅长：$it" },
+            ).takeIf { it.isNotEmpty() }?.joinToString(" · ")
+        }
+
     private val allDimKeys: List<String> get() = listOf("personality") + DimensionKey.entries.map { it.id }
 
     /** 冷启动读取本地已填维度，随后云端 facts 合并（换机 / 重装漫游）。 */
@@ -379,17 +390,18 @@ class HomeModel(
         val iconTint: Long,
         val label: String,
         val value: String?,
-        /** null 表示人格底色，直接进入大五测评。 */
+        /** null 表示完整探索入口或旧人格测评入口。 */
         val dimensionKey: DimensionKey?,
+        val selfDiscovery: Boolean = false,
     ) {
         val isTodo: Boolean get() = value == null
     }
 
-    /** 六维画像卡（人格底色 + 五软维度）。 */
+    /** 六张画像卡：完整探索入口 + 五个结果维度。 */
     val portraitDims: List<PortraitDim>
         get() {
             val rows = mutableListOf(
-                PortraitDim("personality", "◎", 0x5968D9, "人格底色", personalityText, null),
+                PortraitDim("want-to-do", "✦", 0xA77CFF, "我喜欢 × 我擅长", selfDiscoveryText, null, selfDiscovery = true),
             )
             for (key in DimensionKey.entries) {
                 val cfg = DimensionData.config(key)
@@ -399,10 +411,12 @@ class HomeModel(
         }
 
     private fun completion(): Triple<Int, Int, Int> {
-        val keys = allDimKeys
-        val completed = keys.count { key -> filledDims[key]?.trim()?.isNotEmpty() == true }
-        val percent = Math.round(completed.toFloat() / keys.size * 100)
-        return Triple(completed, keys.size, percent)
+        val dimKeys = DimensionKey.entries.map { it.id }
+        var completed = dimKeys.count { key -> filledDims[key]?.trim()?.isNotEmpty() == true }
+        if (filledDims[DimensionKey.LIKE.id]?.isNotBlank() == true && filledDims[DimensionKey.SKILL.id]?.isNotBlank() == true) completed++
+        val total = dimKeys.size + 1
+        val percent = Math.round(completed.toFloat() / total * 100)
+        return Triple(completed, total, percent)
     }
 
     val completedPortraitDimensionCount: Int get() = completion().first

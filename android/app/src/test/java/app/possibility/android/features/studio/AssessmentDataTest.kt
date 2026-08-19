@@ -26,10 +26,12 @@ class AssessmentDataTest {
 
     @Test
     fun selfDiscoveryUsesTheCompleteChineseQuestionSet() {
-        assertEquals(12, SelfDiscoveryData.questions.size)
+        assertEquals(16, SelfDiscoveryData.questions.size)
         assertTrue(SelfDiscoveryData.questions.all { it.options.size == 6 })
         assertEquals(5, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.LIKE })
         assertEquals(5, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.SKILL })
+        assertEquals(2, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.ENERGY })
+        assertEquals(2, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.CONTEXT })
         assertEquals(2, SelfDiscoveryData.questions.count { it.axis == DiscoveryAxis.VALUE })
     }
 }

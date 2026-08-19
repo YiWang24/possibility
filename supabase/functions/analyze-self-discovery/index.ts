@@ -9,14 +9,24 @@ import {
   readJson,
 } from "../_shared/errors.ts";
 
-type Axis = "like" | "skill" | "value";
+type Axis =
+  | "like"
+  | "skill"
+  | "evidence"
+  | "environment"
+  | "choice"
+  | "value"
+  | "open";
 
 type DiscoveryResponse = {
   id: string;
   axis: Axis;
+  kind: string;
   question: string;
-  selected: string[];
-  custom: string[];
+  tag?: string;
+  left?: string;
+  right?: string;
+  response: Record<string, unknown>;
 };
 
 type DiscoveryInput = {
@@ -25,6 +35,8 @@ type DiscoveryInput = {
     likes: Array<{ tag: string; count: number }>;
     strengths: Array<{ tag: string; count: number }>;
     values: Array<{ tag: string; count: number }>;
+    energy?: string[];
+    environment?: string[];
   };
 };
 
@@ -71,19 +83,16 @@ const outputSchema = {
     summary: { type: "string", minLength: 20, maxLength: 240 },
     likes: {
       type: "array",
-      minItems: 3,
       maxItems: 3,
       items: insightSchema,
     },
     strengths: {
       type: "array",
-      minItems: 3,
       maxItems: 3,
       items: insightSchema,
     },
     directions: {
       type: "array",
-      minItems: 3,
       maxItems: 3,
       items: {
         type: "object",
@@ -101,15 +110,15 @@ const outputSchema = {
 } as const;
 
 const systemPrompt =
-  `你是一名严谨、温和的自我理解分析助手。你的工作是根据用户对原创探索题的回答，区分“喜欢的事”和“擅长的事”，并提出可验证的行动假设。
+  `你是一名严谨、温和的自我理解分析助手。你的工作是根据用户对完整原创探索题的回答，区分“喜欢的事”和“擅长的事”，并提出可验证的行动假设。题库包括：9 个兴趣母题的强度评分、13 种优势动作的“喜欢度 × 自然擅长度”双评分、外部证据、10 组环境偏好、强制取舍、价值判断和 5 个真实叙事问题。
 
 分析原则：
 1. 喜欢的事是用户反复被吸引、愿意投入和主动了解的“内容领域”，不要把行为能力误写成兴趣。
 2. 擅长的事是用户自然重复使用、较低耗能且能产生好结果的“行为模式”，不要写成职业或知识领域。
-3. 价值观只用于判断组合方向是否对用户有意义，不要混入喜欢或擅长的三个标签。
+3. 价值观、能量来源与适配环境只用于判断组合方向是否对用户有意义、可持续，不要混入喜欢或擅长的三个标签。
 4. 多选答案是结构化证据；自由回答信息量更高，应优先理解其中的具体对象、动作和情境。
 5. 每条结论必须指出来自哪些回答模式，不能凭空补充经历，也不能做心理诊断。
-6. 输出 3 个喜欢、3 个擅长、3 个“用擅长的方式投入喜欢领域”的低成本验证方向。
+6. 输出 3 个兴趣主题、3 个优势动作、3 个“用擅长的方式投入喜欢领域”的低成本验证方向。兴趣主题不要写成职业；优势动作不要写成知识领域。
 7. 使用简洁自然的中文，面向用户本人表达。结论是可验证假设，不是职业判决。
 
 题目是基于“喜欢 × 擅长 × 价值观”方法结构的产品化原创表达。不要声称复述或逐字执行任何书籍原题。`;
@@ -129,19 +138,8 @@ function cleanString(value: unknown, max: number): string {
   return cleaned;
 }
 
-function cleanStrings(
-  value: unknown,
-  maxItems: number,
-  maxLength: number,
-): string[] {
-  if (!Array.isArray(value) || value.length > maxItems) {
-    throw new HttpError(400, "INVALID_INPUT", "回答选项数量不正确。");
-  }
-  return value.map((item) => cleanString(item, maxLength));
-}
-
 function cleanEvidence(value: unknown): Array<{ tag: string; count: number }> {
-  if (!Array.isArray(value) || value.length > 6) {
+  if (!Array.isArray(value) || value.length > 13) {
     throw new HttpError(400, "INVALID_INPUT", "证据摘要格式不正确。");
   }
   return value.map((item) => {
@@ -149,7 +147,7 @@ function cleanEvidence(value: unknown): Array<{ tag: string; count: number }> {
       throw new HttpError(400, "INVALID_INPUT", "证据摘要格式不正确。");
     }
     const count = Number(item.count);
-    if (!Number.isInteger(count) || count < 1 || count > 12) {
+    if (!Number.isInteger(count) || count < 1 || count > 100) {
       throw new HttpError(400, "INVALID_INPUT", "证据计数不正确。");
     }
     return { tag: cleanString(item.tag, 30), count };
@@ -163,8 +161,8 @@ function validateInput(value: unknown): DiscoveryInput {
   ) {
     throw new HttpError(400, "INVALID_INPUT", "缺少完整的探索回答。");
   }
-  if (value.responses.length !== 12) {
-    throw new HttpError(400, "INVALID_INPUT", "请完成全部 12 个探索问题。");
+  if (value.responses.length !== 71) {
+    throw new HttpError(400, "INVALID_INPUT", "请完成全部 71 个探索问题。");
   }
 
   const ids = new Set<string>();
@@ -173,25 +171,35 @@ function validateInput(value: unknown): DiscoveryInput {
       throw new HttpError(400, "INVALID_INPUT", "回答格式不正确。");
     }
     const id = cleanString(item.id, 40);
-    const axis = item.axis;
-    if (axis !== "like" && axis !== "skill" && axis !== "value") {
+    const rawAxis = item.axis;
+    if (
+      typeof rawAxis !== "string" ||
+      !["like", "skill", "evidence", "environment", "choice", "value", "open"]
+        .includes(rawAxis)
+    ) {
       throw new HttpError(400, "INVALID_INPUT", "回答维度不正确。");
     }
+    const axis = rawAxis as Axis;
     if (ids.has(id)) {
       throw new HttpError(400, "INVALID_INPUT", "回答中存在重复题目。");
     }
     ids.add(id);
-    const selected = cleanStrings(item.selected, 3, 100);
-    const custom = cleanStrings(item.custom, 2, 100);
-    if (selected.length + custom.length === 0) {
-      throw new HttpError(400, "INVALID_INPUT", "每个问题至少需要一条回答。");
+    if (!isRecord(item.response)) {
+      throw new HttpError(400, "INVALID_INPUT", "每个问题都需要完整回答。");
     }
     return {
       id,
       axis,
+      kind: cleanString(item.kind, 24),
       question: cleanString(item.question, 160),
-      selected,
-      custom,
+      tag: typeof item.tag === "string" ? cleanString(item.tag, 40) : undefined,
+      left: typeof item.left === "string"
+        ? cleanString(item.left, 60)
+        : undefined,
+      right: typeof item.right === "string"
+        ? cleanString(item.right, 60)
+        : undefined,
+      response: item.response,
     };
   });
 
@@ -229,9 +237,7 @@ Deno.serve(async (req) => {
       result.strengths.length !== 3 ||
       result.directions.length !== 3 ||
       new Set(result.likes.map((item) => item.label)).size !== 3 ||
-      new Set(result.strengths.map((item) => item.label)).size !== 3 ||
-      // 客户端按 title 做列表标识（iOS DiscoveryDirection.id），重复标题会导致渲染错乱。
-      new Set(result.directions.map((item) => item.title)).size !== 3
+      new Set(result.strengths.map((item) => item.label)).size !== 3
     ) {
       throw new HttpError(
         502,

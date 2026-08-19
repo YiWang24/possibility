@@ -77,7 +77,7 @@ requireText(
 );
 requireText(
   "features/studio/self-discovery.ts",
-  "用${strength?.tag ?? \"你的优势\"}，去探索${like.tag}",
+  "实验：用${strength}探索${like.tag}",
   "结果页必须把喜欢与擅长组合为可验证方向",
 );
 requireText(
@@ -87,8 +87,18 @@ requireText(
 );
 requireText(
   "features/studio/WantToDoView.tsx",
-  "写下真实答案，按回车添加",
-  "每个探索问题必须支持用户自由输入",
+  "写下 1–3 句真实经历",
+  "开放叙事题必须支持用户自由输入真实经历",
+);
+requireText(
+  "features/home/PortraitSection.tsx",
+  'label: "我喜欢 × 我擅长"',
+  "动态画像首卡必须直达喜欢与擅长的完整探索",
+);
+requireText(
+  "features/studio/WantToDoView.tsx",
+  "解锁完整深入报告 ¥9.9",
+  "完整探索必须先展示免费基本结论，再提供 ¥9.9 完整行动报告",
 );
 requireText(
   "features/home/DimensionSheet.tsx",
@@ -123,8 +133,16 @@ for (const [path, socialKind, discoveryMarker] of [
   const discoveryPath = path.includes("android")
     ? "../android/app/src/main/java/app/possibility/android/features/studio/SelfDiscoveryScreen.kt"
     : path;
+  const deepAnalysisPath = path.includes("android")
+    ? "../android/app/src/main/java/app/possibility/android/features/studio/SelfDiscoveryScreen.kt"
+    : "../ios/Possibility/Features/Studio/AssessmentView.swift";
   requireText(discoveryPath, discoveryMarker, `${discoveryPath} 必须同步喜欢 × 擅长完整探索`);
-  requireText(discoveryPath, "value-contribution", `${discoveryPath} 必须保留全部 12 题的最后一题`);
+  // 71 题量表由「兴趣主题 09 + 优势动作 13 + 证据 + 环境 10 + 取舍 06 + 价值 + 叙事 05」生成，
+  // 锁生成器的题组标签而非某道题的 id：题干可改写，题组结构不能少。
+  for (const marker of ["兴趣主题 · ", "优势动作 · ", "外部证据 · E", "发挥环境 · ", "取舍判断 · ", "真实叙事 · "]) {
+    requireText(discoveryPath, marker, `${discoveryPath} 必须保留完整的 71 题探索结构（缺少「${marker.trim()}」题组）`);
+  }
+  requireText(deepAnalysisPath, "解锁完整深入报告 ¥9.9", `${deepAnalysisPath} 必须同步完整行动报告 ¥9.9 入口`);
 }
 for (const path of [
   "../ios/Possibility/Core/Models/DimensionData.swift",
@@ -135,8 +153,8 @@ for (const path of [
 }
 requireText(
   "../supabase/functions/analyze-self-discovery/index.ts",
-  'value.responses.length !== 12',
-  "完整探索必须覆盖全部 12 个原创证据问题",
+  'value.responses.length !== 71',
+  "完整探索必须覆盖全部 71 个原创证据问题",
 );
 requireText(
   "features/community/CommunityView.tsx",

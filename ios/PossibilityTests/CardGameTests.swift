@@ -263,8 +263,8 @@ final class HomeModelTests: XCTestCase {
             "skill": "   ",
         ])
 
-        XCTAssertEqual(progress.completed, 1)
-        XCTAssertEqual(progress.percent, 17)
+        XCTAssertEqual(progress.completed, 0)
+        XCTAssertEqual(progress.percent, 0)
     }
 }
 

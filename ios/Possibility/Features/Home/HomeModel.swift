@@ -273,8 +273,10 @@ final class HomeModel {
         let label: String
         /// nil 表示尚未填写（todo 虚线态）
         let value: String?
-        /// 点击打开的维度浮层；nil 表示人格底色，直接进入大五人格测评
+        /// 点击打开的维度浮层；完整探索入口与旧人格测评入口均为 nil。
         let dimensionKey: DimensionKey?
+        /// 首页首个入口：用同一套测评同时得到「我喜欢」与「我擅长」。
+        let selfDiscovery: Bool
         var isTodo: Bool { value == nil }
     }
 
@@ -285,6 +287,15 @@ final class HomeModel {
 
     /// 人格底色（由大五人格测评结果写入）
     var personalityText: String? { filledDims["personality"] }
+
+    var selfDiscoveryText: String? {
+        let like = filledDims[DimensionKey.like.rawValue]?
+            .components(separatedBy: " · ").first ?? ""
+        let skill = filledDims[DimensionKey.skill.rawValue]?
+            .components(separatedBy: " · ").first ?? ""
+        let parts = [like.isEmpty ? nil : "喜欢：\(like)", skill.isEmpty ? nil : "擅长：\(skill)"].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
 
     /// 从本地读取已填维度（冷启动调用），随后云端画像合并（换机 / 重装漫游）
     func loadPortrait(using supabase: SupabaseService? = nil) {
@@ -376,30 +387,34 @@ final class HomeModel {
         }
     }
 
-    /// 五维画像卡（人格底色 + 四软维度）
+    /// 六张画像卡：完整探索入口 + 五个结果维度。
     var portraitDims: [PortraitDim] {
         var rows: [PortraitDim] = [
-            PortraitDim(id: "personality", icon: "◎", iconTint: 0x5968D9,
-                        label: "人格底色", value: personalityText, dimensionKey: nil),
+            PortraitDim(id: "want-to-do", icon: "✦", iconTint: 0xA77CFF,
+                        label: "我喜欢 × 我擅长", value: selfDiscoveryText,
+                        dimensionKey: nil, selfDiscovery: true),
         ]
         for key in DimensionKey.allCases {
             let cfg = DimensionData.config(key)
             rows.append(PortraitDim(id: key.rawValue, icon: cfg.icon, iconTint: cfg.tint,
-                                    label: cfg.title, value: filledDims[key.rawValue], dimensionKey: key))
+                                    label: cfg.title, value: filledDims[key.rawValue], dimensionKey: key,
+                                    selfDiscovery: false))
         }
         return rows
     }
 
-    /// 完成度只统计首页实际展示的 6 个维度，忽略云端 dims 中的其他业务字段。
+    /// 完成度统计完整探索入口和五个展示维度，忽略旧人格字段。
     static func portraitCompletion(for dims: [String: String]) -> (completed: Int, total: Int, percent: Int) {
-        let keys = ["personality"] + DimensionKey.allCases.map(\.rawValue)
-        let completed = keys.reduce(into: 0) { count, key in
+        let keys = DimensionKey.allCases.map(\.rawValue)
+        var completed = keys.reduce(into: 0) { count, key in
             if let value = dims[key], !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 count += 1
             }
         }
-        let percent = Int((Double(completed) / Double(keys.count) * 100).rounded())
-        return (completed, keys.count, percent)
+        if dims[DimensionKey.like.rawValue] != nil, dims[DimensionKey.skill.rawValue] != nil { completed += 1 }
+        let total = keys.count + 1
+        let percent = Int((Double(completed) / Double(total) * 100).rounded())
+        return (completed, total, percent)
     }
 
     var completedPortraitDimensionCount: Int { Self.portraitCompletion(for: filledDims).completed }

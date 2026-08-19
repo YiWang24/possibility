@@ -1,49 +1,46 @@
 /**
- * “喜欢 × 擅长”探索的数据与本地证据分析。
+ * 「喜欢 × 擅长」完整探索题库。
  *
- * 方法结构参考八木仁平的自我理解框架；题目、选项、标签与计分均为本产品
- * 的原创表达，不复刻书中受版权保护的题目文本。
+ * 题目采用产品化原创表达：兴趣 WHAT、优势动作 HOW、外部证据、环境 CONTEXT、
+ * 价值判断与开放叙事共同生成结论；不复刻任何书籍或商业量表的原题。
  */
 
-export type DiscoveryAxis = "like" | "skill" | "value";
+export type DiscoveryAxis = "like" | "skill" | "evidence" | "environment" | "choice" | "value" | "open";
+export type DiscoveryKind = "interest" | "strength" | "select" | "environment" | "choice" | "open";
 
-export interface DiscoveryOption {
-  label: string;
-  tag: string;
-  glyph: string;
-}
-
+export interface DiscoveryOption { label: string; tag: string; glyph: string; detail?: string; }
 export interface DiscoveryQuestion {
   id: string;
   axis: DiscoveryAxis;
+  kind: DiscoveryKind;
   eyebrow: string;
   title: string;
   hint: string;
-  options: DiscoveryOption[];
+  tag?: string;
+  options?: DiscoveryOption[];
+  left?: string;
+  right?: string;
 }
 
 export interface DiscoveryAnswer {
   selected: string[];
   custom: string[];
+  like?: number;
+  skill?: number;
+  scale?: number;
+  text?: string;
 }
 
-export interface RankedTag {
+export interface RankedTag { tag: string; count: number; score?: number; }
+export interface InterestProfile { tag: string; like: number; }
+export interface StrengthProfile {
   tag: string;
-  count: number;
+  like: number;
+  skill: number;
+  zone: "天赋热爱区" | "兴趣潜力区" | "熟练消耗区" | "非优先区";
 }
-
-export interface DiscoveryInsight {
-  label: string;
-  evidence: string;
-  reason: string;
-}
-
-export interface DiscoveryDirection {
-  title: string;
-  why: string;
-  first_step: string;
-}
-
+export interface DiscoveryInsight { label: string; evidence: string; reason: string; }
+export interface DiscoveryDirection { title: string; why: string; first_step: string; }
 export interface SelfDiscoveryAnalysis {
   summary: string;
   likes: DiscoveryInsight[];
@@ -52,325 +49,233 @@ export interface SelfDiscoveryAnalysis {
   confidence_note: string;
 }
 
-const q = (
-  id: string,
-  axis: DiscoveryAxis,
-  eyebrow: string,
-  title: string,
-  hint: string,
-  rows: Array<[string, string, string]>,
-): DiscoveryQuestion => ({
-  id,
-  axis,
-  eyebrow,
-  title,
-  hint,
-  options: rows.map(([label, tag, glyph]) => ({ label, tag, glyph })),
-});
+const icon = (index: number) => ["◎", "◌", "↗", "✦", "◇", "♡", "▦", "◈", "☼"][index % 9];
+const interestThemes = [
+  ["人与心理", ["我会自然想知道：一个人为什么会这样想、这样感受、这样选择？", "心理、人格、自我成长或人际关系的内容，常让我持续看下去。"]],
+  ["社会与文化", ["热点事件出现后，我会想理解背后的群体、时代或社会机制。", "我喜欢比较不同群体、文化和生活方式的差异。"]],
+  ["商业与市场", ["看到流行产品时，我会好奇：它为什么能被人选择或付费？", "新的商业模式、消费趋势或创业故事容易吸引我。"]],
+  ["科技与未来", ["新技术出现时，我会主动想了解它能改变什么。", "我常会想象：技术继续发展后，人会怎样生活。"]],
+  ["生命与自然", ["我会对人体、健康、生命机制或自然规律产生持续好奇。", "动植物、环境与生命科学的内容容易让我投入。"]],
+  ["艺术与审美", ["我会不自觉观察画面、空间、产品或文字的美感。", "看到优秀作品时，我会想：如果由我来做，怎样会更好？"]],
+  ["知识与思想", ["遇到感兴趣的问题时，我会一路查下去，而不只满足于结论。", "哲学、历史、理论或科学解释，容易让我长时间沉浸。"]],
+  ["系统与效率", ["遇到混乱流程时，我会想把它重新整理得更清楚。", "理解复杂系统如何运转、怎样更有效率，会让我感到有趣。"]],
+  ["生活与体验", ["我会主动研究怎样让日常生活变得更有趣、更舒服。", "美食、旅行、运动、空间或新的生活体验中，总有让我投入的领域。"]],
+] as const;
 
-export const DISCOVERY_QUESTIONS: DiscoveryQuestion[] = [
-  q(
-    "like-pull",
-    "like",
-    "喜欢的事 · 自然靠近",
-    "没有任务和评价时，你会主动靠近什么？",
-    "选 1–3 项，也可以写下选项之外的真实答案。",
-    [
-      ["内容、画面、音乐或故事", "创造与表达", "✦"],
-      ["一个值得追到底的问题", "知识与探索", "◎"],
-      ["人的经历、感受与关系", "人类与连接", "♡"],
-      ["工具、流程与系统如何运作", "系统与优化", "▦"],
-      ["社会变化与真实影响", "影响与推动", "↗"],
-      ["自然、身体与动手体验", "实践与体验", "◇"],
-    ],
-  ),
-  q(
-    "like-flow",
-    "like",
-    "喜欢的事 · 心流证据",
-    "哪些活动曾让你忘记时间？",
-    "回想真实发生过的时刻，不选“理想中应该喜欢”的事。",
-    [
-      ["把想法做成作品", "创造与表达", "✦"],
-      ["阅读、研究或拆解原理", "知识与探索", "◎"],
-      ["深聊、陪伴或理解别人", "人类与连接", "♡"],
-      ["整理、规划或持续改进", "系统与优化", "▦"],
-      ["组织大家完成一件事", "影响与推动", "↗"],
-      ["制作、运动或走进自然", "实践与体验", "◇"],
-    ],
-  ),
-  q(
-    "like-invest",
-    "like",
-    "喜欢的事 · 投入意愿",
-    "你愿意持续把时间或金钱花在哪里？",
-    "真正的兴趣通常会留下持续投入的痕迹。",
-    [
-      ["创作工具、审美与表达训练", "创造与表达", "✦"],
-      ["课程、书籍与新知识", "知识与探索", "◎"],
-      ["社群、关系与助人体验", "人类与连接", "♡"],
-      ["效率工具、方法与系统", "系统与优化", "▦"],
-      ["项目、公共议题与行动", "影响与推动", "↗"],
-      ["手作、旅行、运动与体验", "实践与体验", "◇"],
-    ],
-  ),
-  q(
-    "like-admire",
-    "like",
-    "喜欢的事 · 羡慕线索",
-    "你最容易羡慕哪种人的日常？",
-    "羡慕不等于要成为对方，它可能提示你想靠近的内容世界。",
-    [
-      ["持续输出独特作品的人", "创造与表达", "✦"],
-      ["不断发现和解释新知的人", "知识与探索", "◎"],
-      ["真正理解并改善他人处境的人", "人类与连接", "♡"],
-      ["把复杂事物变得清晰高效的人", "系统与优化", "▦"],
-      ["召集别人创造真实变化的人", "影响与推动", "↗"],
-      ["以身体和双手探索世界的人", "实践与体验", "◇"],
-    ],
-  ),
-  q(
-    "like-learn",
-    "like",
-    "喜欢的事 · 好奇方向",
-    "即使短期没有回报，你仍想学什么？",
-    "先把职业名称放在一边，只看你想持续理解的对象。",
-    [
-      ["叙事、视觉、音乐或设计", "创造与表达", "✦"],
-      ["科学、技术、历史或思想", "知识与探索", "◎"],
-      ["心理、教育、沟通或关系", "人类与连接", "♡"],
-      ["商业、产品、流程或组织", "系统与优化", "▦"],
-      ["领导力、社会创新或公共议题", "影响与推动", "↗"],
-      ["自然、工艺、运动或生活实践", "实践与体验", "◇"],
-    ],
-  ),
-  q(
-    "skill-asked",
-    "skill",
-    "擅长的事 · 他人证据",
-    "别人通常会来找你帮什么忙？",
-    "擅长常是你觉得普通、别人却认为可靠的行为方式。",
-    [
-      ["想点子或打开新角度", "创意生成", "✦"],
-      ["快速摸清陌生领域", "快速学习", "◎"],
-      ["听懂没被说出口的需要", "共情连接", "♡"],
-      ["把混乱信息理出主线", "结构化思考", "▦"],
-      ["找到下一步并推动完成", "推动落地", "↗"],
-      ["直接动手排查和解决", "实践解决", "◇"],
-    ],
-  ),
-  q(
-    "skill-natural",
-    "skill",
-    "擅长的事 · 自然反应",
-    "面对一个混乱问题，你会自然先做什么？",
-    "不是问应该怎么做，而是你往往不假思索就会怎么做。",
-    [
-      ["提出几种不同可能", "创意生成", "✦"],
-      ["边做边学并找到规律", "快速学习", "◎"],
-      ["理解每个人真正担心什么", "共情连接", "♡"],
-      ["拆目标、约束与优先级", "结构化思考", "▦"],
-      ["拉齐分工、时间和下一步", "推动落地", "↗"],
-      ["先做一个能验证的版本", "实践解决", "◇"],
-    ],
-  ),
-  q(
-    "skill-success",
-    "skill",
-    "擅长的事 · 成功模式",
-    "过去做成一件事时，你最常贡献什么？",
-    "寻找多次成功背后重复出现的行为，而不只是职位和技能名。",
-    [
-      ["给出别人没想到的方案", "创意生成", "✦"],
-      ["从反馈中迅速学会", "快速学习", "◎"],
-      ["让不同的人愿意继续对话", "共情连接", "♡"],
-      ["把复杂问题讲清楚", "结构化思考", "▦"],
-      ["让卡住的事情重新前进", "推动落地", "↗"],
-      ["把问题真正修好或做出来", "实践解决", "◇"],
-    ],
-  ),
-  q(
-    "skill-effortless",
-    "skill",
-    "擅长的事 · 低耗能优势",
-    "哪些事你做起来不太费力，却常得到好反馈？",
-    "优势不是“永远轻松”，而是相较别人更自然、更容易复现。",
-    [
-      ["迅速联想到新表达或新方案", "创意生成", "✦"],
-      ["短时间抓住新事物重点", "快速学习", "◎"],
-      ["察觉气氛并让人安心", "共情连接", "♡"],
-      ["归纳信息并清楚表达", "结构化思考", "▦"],
-      ["协调资源并按时交付", "推动落地", "↗"],
-      ["试出来、修出来、做出来", "实践解决", "◇"],
-    ],
-  ),
-  q(
-    "skill-friction",
-    "skill",
-    "擅长的事 · 过度使用",
-    "你最常因为哪种“做得太多”被提醒？",
-    "优势用过头也会制造摩擦，这类反馈常藏着可用的能力。",
-    [
-      ["想法太多、容易跳出原方案", "创意生成", "✦"],
-      ["总想再查清楚、再学一点", "快速学习", "◎"],
-      ["太在意别人感受", "共情连接", "♡"],
-      ["过度分析、追求逻辑完整", "结构化思考", "▦"],
-      ["推进太快、总想立即行动", "推动落地", "↗"],
-      ["不爱空谈、习惯先动手", "实践解决", "◇"],
-    ],
-  ),
-  q(
-    "value-discomfort",
-    "value",
-    "价值观 · 不适线索",
-    "看到什么状态时，你最容易感到不舒服？",
-    "这部分帮助 AI 判断你为何喜欢某件事，不会代替“喜欢”和“擅长”的结果。",
-    [
-      ["表达被限制、没有选择", "自由与创造", "✦"],
-      ["停止成长、拒绝求真", "成长与求真", "◎"],
-      ["人被忽略、关系缺少理解", "关怀与连接", "♡"],
-      ["混乱低效、规则不透明", "秩序与清晰", "▦"],
-      ["明知能改变却无人行动", "影响与担当", "↗"],
-      ["脱离现实、只有概念没有体验", "真实与实践", "◇"],
-    ],
-  ),
-  q(
-    "value-contribution",
-    "value",
-    "价值观 · 贡献方向",
-    "你希望自己的投入最终带来什么？",
-    "这会作为组合“喜欢 × 擅长”时的判断标准。",
-    [
-      ["让人拥有更多表达与选择", "自由与创造", "✦"],
-      ["让知识和成长更容易发生", "成长与求真", "◎"],
-      ["让人被看见、理解和支持", "关怀与连接", "♡"],
-      ["让复杂世界更清晰有序", "秩序与清晰", "▦"],
-      ["推动值得发生的真实变化", "影响与担当", "↗"],
-      ["创造可触摸、可使用的成果", "真实与实践", "◇"],
-    ],
-  ),
+const strengthActions = [
+  ["探索求知", ["面对陌生问题时，我会主动找资料、追根究底。", "别人得到答案后，我常还会继续追问为什么。"]],
+  ["分析洞察", ["面对零散信息时，我比较容易发现规律或问题本质。", "别人讨论表面问题时，我常能想到隐藏的原因。"]],
+  ["创意构想", ["同一个问题，我通常能很快想到不止一种可能。", "听到一个想法后，我常会自然联想到新的做法。"]],
+  ["结构设计", ["别人说了很多零散信息后，我能较快整理出框架。", "面对复杂任务时，我会自然拆出目标、限制与步骤。"]],
+  ["表达呈现", ["我比较容易把复杂内容解释到别人能理解。", "我会自然思考怎样讲、写或呈现才能让人接受。"]],
+  ["共情理解", ["别人没有明说时，我有时也能察觉他真正介意什么。", "发生冲突时，我通常能理解不同的人各自在担心什么。"]],
+  ["教导赋能", ["看到别人不会一件事时，我会自然想到怎样教他。", "别人因为我的解释突然理解一个问题，会让我有满足感。"]],
+  ["连接协作", ["我比较容易想到：这件事可以找谁一起做。", "在陌生群体中，我能够比较自然地建立连接。"]],
+  ["影响推动", ["当我相信一件事值得做时，我会想办法争取支持。", "我不排斥说服、谈判或让别人对一件事产生兴趣。"]],
+  ["组织统筹", ["很多事情同时出现时，我通常知道应先处理什么。", "多人协作时，我会自然关注时间、人员与资源安排。"]],
+  ["执行推进", ["讨论足够以后，我会很快转向下一步具体做什么。", "长期任务中，我比较容易持续推进直到完成。"]],
+  ["实践制作", ["比起一直讨论，我更容易通过先做一个版本找到答案。", "面对工具、实物、空间或真实操作时，我往往更有感觉。"]],
+  ["优化精进", ["一个东西已经能用时，我还是会发现它可以改进的地方。", "重复做同一件事时，我会自然寻找更快、更准或更好的方法。"]],
+] as const;
+
+const strengthOptionDetails: Record<string, string> = {
+  "探索求知": "例如：主动查资料、追问原因、把陌生问题研究透。",
+  "分析洞察": "例如：从零散信息中找到规律、关键矛盾或隐藏原因。",
+  "创意构想": "例如：快速想到多种方案，或把两个想法连接成新做法。",
+  "结构设计": "例如：把混乱内容整理成框架、步骤和优先级。",
+  "表达呈现": "例如：把复杂内容说清楚、写明白，或做成易理解的呈现。",
+  "共情理解": "例如：察觉他人没有说出口的担心，并理解不同立场。",
+  "教导赋能": "例如：把自己的做法拆开，让别人也能学会。",
+  "连接协作": "例如：想到合适的人一起做，并自然建立协作关系。",
+  "影响推动": "例如：争取支持、说服他人，推动值得做的事开始发生。",
+  "组织统筹": "例如：安排人、时间和资源，让多人事情不失控。",
+  "执行推进": "例如：把讨论变成下一步行动，并持续推进到完成。",
+  "实践制作": "例如：先做一个可验证版本，通过真实操作找到答案。",
+  "优化精进": "例如：发现可改进处，并让流程或成果更快、更好。",
+};
+const strengthOptions: DiscoveryOption[] = strengthActions.map(([label], index) => ({ label, tag: label, glyph: icon(index), detail: strengthOptionDetails[label] }));
+const valueOptions: DiscoveryOption[] = [
+  ["自由与创造", "✦", "希望有表达空间，并能按自己的方式创造与选择。"], ["成长与求真", "◎", "希望持续理解、学习，并接近更真实的答案。"], ["关怀与连接", "♡", "希望人被看见、理解、支持，关系有温度。"], ["秩序与清晰", "▦", "希望复杂事情有逻辑、边界与清楚的规则。"], ["影响与担当", "↗", "希望行动能带来真实改变，并愿意承担推动责任。"], ["真实与实践", "◇", "希望产出能落到现实、被使用或直接体验到。"],
+].map(([label, glyph, detail]) => ({ label, tag: label, glyph, detail }));
+
+const evidencePrompts = [
+  "哪类事情即使没人教，你也比较容易知道怎么做？",
+  "哪类事情你通常练习几次，就能明显进步？",
+  "别人最经常因为什么事情来找你帮忙？",
+  "在学习、工作和生活中，哪些行为反复成为你的优势？",
 ];
 
-export function rankedTags(
-  axis: DiscoveryAxis,
-  answers: Record<string, DiscoveryAnswer>,
-): RankedTag[] {
-  const score = new Map<string, { count: number; order: number }>();
-  let order = 0;
-  for (const question of DISCOVERY_QUESTIONS.filter((item) => item.axis === axis)) {
-    for (const label of answers[question.id]?.selected ?? []) {
-      const option = question.options.find((item) => item.label === label);
-      if (!option) continue;
-      const current = score.get(option.tag);
-      score.set(option.tag, {
-        count: (current?.count ?? 0) + 1,
-        order: current?.order ?? order++,
-      });
-    }
-  }
-  return [...score.entries()]
-    .sort((a, b) => b[1].count - a[1].count || a[1].order - b[1].order)
-    .slice(0, 3)
-    .map(([tag, meta]) => ({ tag, count: meta.count }));
+const environmentPairs = [
+  ["独立完成", "高频协作"], ["深度投入", "多任务切换"], ["稳定明确", "变化探索"], ["幕后分析创造", "台前表达影响"], ["自主定义方法", "清晰标准要求"],
+  ["长期积累", "即时反馈"], ["专业深度", "综合统筹"], ["低频社交", "高频社交"], ["确定性", "不确定探索"], ["个人成果", "帮助他人"],
+] as const;
+
+const forcedChoices = [
+  ["深入研究一个复杂问题", "快速把一个想法做出来"], ["帮一个人真正解决问题", "影响很多人接受一个观点"], ["从 0 到 1 想新方案", "把已有方案做到非常好"],
+  ["自己深入思考", "和很多人讨论碰撞"], ["找规律和原因", "创造新的表达"], ["规划全局", "亲自推进执行"],
+] as const;
+
+const openPrompts = [
+  "小时候没有人要求你时，你最容易沉迷什么？",
+  "过去几年，有哪三件事让你觉得“虽然累，但做完特别满足”？",
+  "别人最经常因为什么事情找你帮忙？请举一个真实例子。",
+  "你最容易对别人产生哪种“这有什么难的？”的感觉？",
+  "如果未来一年不考虑赚钱和别人怎么看，你最想系统探索哪三件事？",
+] as const;
+
+export const DISCOVERY_QUESTIONS: DiscoveryQuestion[] = [
+  ...interestThemes.flatMap(([tag, prompts], themeIndex) => prompts.map((title, statementIndex) => ({
+    id: `interest-${themeIndex + 1}-${statementIndex + 1}`, axis: "like" as const, kind: "interest" as const,
+    eyebrow: `兴趣主题 · ${String(themeIndex + 1).padStart(2, "0")} / 09`, title, hint: "按真实投入感评分：1 完全没兴趣，5 即使没人要求也愿意持续投入时间。", tag,
+  }))),
+  ...strengthActions.flatMap(([tag, prompts], actionIndex) => prompts.map((title, statementIndex) => ({
+    id: `strength-${actionIndex + 1}-${statementIndex + 1}`, axis: "skill" as const, kind: "strength" as const,
+    eyebrow: `优势动作 · ${String(actionIndex + 1).padStart(2, "0")} / 13`, title, hint: "同一件事分别评价：你是否享受，以及它是否是自然、可复用的优势。", tag,
+  }))),
+  ...evidencePrompts.map((title, index) => ({
+    id: `evidence-${index + 1}`, axis: "evidence" as const, kind: "select" as const, eyebrow: `外部证据 · E${index + 1}`,
+    title, hint: "最多选 3 项。它们会用来交叉验证，而不是只听你对自己的判断。", options: strengthOptions,
+  })),
+  ...environmentPairs.map(([left, right], index) => ({
+    id: `environment-${index + 1}`, axis: "environment" as const, kind: "environment" as const, eyebrow: `发挥环境 · ${String(index + 1).padStart(2, "0")} / 10`,
+    title: "哪一端更接近让你稳定发挥的状态？", hint: "不是选择更好的一端，而是选择你更可持续的工作与学习方式。", left, right,
+  })),
+  ...forcedChoices.map(([left, right], index) => ({
+    id: `choice-${index + 1}`, axis: "choice" as const, kind: "choice" as const, eyebrow: `取舍判断 · ${String(index + 1).padStart(2, "0")} / 06`,
+    title: "如果只能选一种，你更愿意？", hint: "必须选择一项。它帮助结果在接近时形成更清晰的优先级。", options: [{ label: left, tag: left, glyph: "A" }, { label: right, tag: right, glyph: "B" }],
+  })),
+  {
+    id: "value-contribution", axis: "value", kind: "select", eyebrow: "价值判断 · 想带来的影响", title: "你希望自己的投入最终为谁带来什么？", hint: "最多选 3 项。它不会改变你的喜欢和擅长，只帮助判断方向是否值得。", options: valueOptions,
+  },
+  {
+    id: "value-boundary", axis: "value", kind: "select", eyebrow: "价值判断 · 不愿妥协", title: "看到什么状态时，你最容易感到不舒服？", hint: "最多选 3 项。它会提示你长期选择中的边界。", options: valueOptions,
+  },
+  ...openPrompts.map((title, index) => ({
+    id: `open-${index + 1}`, axis: "open" as const, kind: "open" as const, eyebrow: `真实叙事 · ${String(index + 1).padStart(2, "0")} / 05`,
+    title, hint: "写下 1–3 句真实经历。AI 会提取主题词、动作词、能量词与外界证据，而不是只做文本摘要。",
+  })),
+];
+
+export const DISCOVERY_FIXED_COUNT = DISCOVERY_QUESTIONS.filter((question) => question.kind !== "open").length;
+
+function answersFor(axis: DiscoveryAxis, answers: Record<string, DiscoveryAnswer>) {
+  return DISCOVERY_QUESTIONS.filter((question) => question.axis === axis).map((question) => [question, answers[question.id]] as const);
 }
 
-function localInsight(item: RankedTag, axis: "like" | "skill"): DiscoveryInsight {
-  return {
-    label: item.tag,
-    evidence: `在 ${item.count} 个不同情境中重复出现`,
-    reason: axis === "like"
-      ? "它多次出现在你的注意力、投入感与主动选择中，值得优先用真实行动验证。"
-      : "它多次出现在你的自然反应、他人反馈与成功模式中，可能是可复用的优势。",
+export function rankedTags(axis: DiscoveryAxis, answers: Record<string, DiscoveryAnswer>, limit = 3): RankedTag[] {
+  const scores = new Map<string, number>();
+  const add = (tag: string, score: number) => scores.set(tag, (scores.get(tag) ?? 0) + score);
+  for (const [question, answer] of answersFor(axis, answers)) {
+    if (!answer) continue;
+    if (axis === "like" && question.tag) add(question.tag, answer.like ?? 0);
+    if (axis === "skill" && question.tag) add(question.tag, answer.skill ?? 0);
+    if (axis === "evidence" || axis === "value" || axis === "choice") {
+      for (const label of answer.selected) add(question.options?.find((item) => item.label === label)?.tag ?? label, axis === "evidence" ? 2 : 1);
+    }
+  }
+  return [...scores.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit).map(([tag, score]) => ({ tag, count: Math.round(score), score }));
+}
+
+export function interestProfiles(answers: Record<string, DiscoveryAnswer>): InterestProfile[] {
+  const grouped = new Map<string, number[]>();
+  for (const [question, answer] of answersFor("like", answers)) {
+    if (!question.tag || !answer?.like) continue;
+    grouped.set(question.tag, [...(grouped.get(question.tag) ?? []), answer.like]);
+  }
+  return [...grouped.entries()]
+    .map(([tag, scores]) => ({ tag, like: Number((scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1)) }))
+    .sort((a, b) => b.like - a.like);
+}
+
+export function strengthProfiles(answers: Record<string, DiscoveryAnswer>): StrengthProfile[] {
+  const grouped = new Map<string, Array<{ like: number; skill: number }>>();
+  for (const [question, answer] of answersFor("skill", answers)) {
+    if (!question.tag || !answer?.like || !answer.skill) continue;
+    grouped.set(question.tag, [...(grouped.get(question.tag) ?? []), { like: answer.like, skill: answer.skill }]);
+  }
+  return [...grouped.entries()].map(([tag, scores]) => {
+    const like = Number((scores.reduce((sum, score) => sum + score.like, 0) / scores.length).toFixed(1));
+    const skill = Number((scores.reduce((sum, score) => sum + score.skill, 0) / scores.length).toFixed(1));
+    const zone: StrengthProfile["zone"] = like >= 3.5
+      ? skill >= 3.5 ? "天赋热爱区" : "兴趣潜力区"
+      : skill >= 3.5 ? "熟练消耗区" : "非优先区";
+    return { tag, like, skill, zone };
+  }).sort((a, b) => (b.like + b.skill) - (a.like + a.skill));
+}
+
+export function energySignals(answers: Record<string, DiscoveryAnswer>) {
+  return answersFor("skill", answers).filter(([, answer]) => answer?.like && answer.like >= 4)
+    .sort(([, a], [, b]) => (b?.like ?? 0) - (a?.like ?? 0)).map(([question]) => question.tag ?? "").filter(Boolean).filter((item, index, list) => list.indexOf(item) === index).slice(0, 3);
+}
+
+export function environmentSignals(answers: Record<string, DiscoveryAnswer>) {
+  return answersFor("environment", answers).map(([question, answer]) => {
+    if (!answer?.scale) return "";
+    if (answer.scale === 3) return `${question.left} / ${question.right}`;
+    return answer.scale < 3 ? question.left ?? "" : question.right ?? "";
+  }).filter(Boolean).slice(0, 3);
+}
+
+export function rankedWithCustom(axis: DiscoveryAxis, answers: Record<string, DiscoveryAnswer>) {
+  const ranked = rankedTags(axis, answers, 3);
+  const defaults: Record<DiscoveryAxis, string[]> = {
+    like: ["继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容"], skill: ["继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功"],
+    evidence: ["记录他人反馈", "复盘重复行为", "观察跨场景优势"], environment: ["观察发挥条件", "记录环境边界", "寻找适配节奏"],
+    choice: ["继续做取舍", "用真实行动验证", "避免平均用力"], value: ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"], open: ["补充真实经历", "记录能量变化", "回看外部反馈"],
   };
-}
-
-function rankedWithCustom(
-  axis: DiscoveryAxis,
-  answers: Record<string, DiscoveryAnswer>,
-): RankedTag[] {
-  const ranked = rankedTags(axis, answers);
   const seen = new Set(ranked.map((item) => item.tag));
-  for (const question of DISCOVERY_QUESTIONS.filter((item) => item.axis === axis)) {
-    for (const custom of answers[question.id]?.custom ?? []) {
-      const tag = custom.trim().slice(0, 18);
-      if (!tag || seen.has(tag)) continue;
-      ranked.push({ tag, count: 1 });
-      seen.add(tag);
-      if (ranked.length === 3) return ranked;
-    }
-  }
-  const defaults = axis === "like"
-    ? ["继续观察投入感", "寻找主动靠近的主题", "记录持续好奇的内容"]
-    : axis === "skill"
-      ? ["继续收集他人反馈", "复盘自然行动模式", "记录低耗能的成功"]
-      : ["继续澄清价值排序", "记录重要选择", "观察不愿妥协之处"];
-  for (const tag of defaults) {
-    if (seen.has(tag)) continue;
-    ranked.push({ tag, count: 1 });
-    if (ranked.length === 3) break;
-  }
+  for (const tag of defaults[axis]) { if (!seen.has(tag)) ranked.push({ tag, count: 1 }); if (ranked.length === 3) break; }
   return ranked.slice(0, 3);
 }
 
-export function localAnalysis(
-  answers: Record<string, DiscoveryAnswer>,
-): SelfDiscoveryAnalysis {
-  const likes = rankedWithCustom("like", answers);
-  const strengths = rankedWithCustom("skill", answers);
-  const values = rankedWithCustom("value", answers);
-  const likeInsights = likes.map((item) => localInsight(item, "like"));
-  const strengthInsights = strengths.map((item) => localInsight(item, "skill"));
-  const value = values[0]?.tag ?? "你重视的价值";
-
+function insight(item: RankedTag, axis: "like" | "skill") : DiscoveryInsight {
+  const repeat = Math.max(1, Math.round(item.score ? item.score / 5 : item.count));
   return {
-    summary: `你更容易被${likes.map((item) => item.tag).join("、")}吸引，并倾向用${strengths.map((item) => item.tag).join("、")}来解决问题。`,
-    likes: likeInsights,
-    strengths: strengthInsights,
-    directions: likes.map((like, index) => {
-      const strength = strengths[index % Math.max(strengths.length, 1)];
-      return {
-        title: `用${strength?.tag ?? "你的优势"}，去探索${like.tag}`,
-        why: `这组组合同时回应了你的兴趣证据，并靠近“${value}”。`,
-        first_step: `在一周内完成一个与“${like.tag}”有关、能使用“${strength?.tag ?? "你的优势"}”的小行动。`,
-      };
-    }),
-    confidence_note: "这是基于选择频次生成的初步假设；继续记录真实行动中的投入感和反馈，结论会更准确。",
+    label: item.tag,
+    evidence: axis === "like" ? `在 ${repeat} 组兴趣强度回答中持续靠前` : `在优势双评分与外部证据中反复出现`,
+    reason: axis === "like" ? "这说明它更像会让你主动靠近和持续投入的主题，而不只是当前身份或职业。" : "它同时考虑了自然程度、投入感与他人反馈，更接近可复用的优势动作。",
   };
 }
 
-export function analysisRequest(
-  answers: Record<string, DiscoveryAnswer>,
-): Record<string, unknown> {
+export function localAnalysis(answers: Record<string, DiscoveryAnswer>): SelfDiscoveryAnalysis {
+  const likes = rankedWithCustom("like", answers);
+  const strengths = rankedWithCustom("skill", answers);
+  const values = rankedWithCustom("value", answers);
+  const energy = energySignals(answers);
+  const context = environmentSignals(answers);
+  const likeInsights = likes.map((item) => insight(item, "like"));
+  const strengthInsights = strengths.map((item) => insight(item, "skill"));
+  return {
+    summary: `你的注意力更容易回到${likes.map((item) => item.tag).join("、")}，面对问题时则习惯用${strengths.map((item) => item.tag).join("、")}来推进。`,
+    likes: likeInsights,
+    strengths: strengthInsights,
+    directions: likes.map((like, index) => {
+      const strength = strengths[index % strengths.length]?.tag ?? "你的优势";
+      const kind = ["职业", "副业", "兴趣"][index];
+      return {
+        title: `${kind}实验：用${strength}探索${like.tag}`,
+        why: `它同时回应兴趣主题、优势动作，并靠近“${values[0]?.tag ?? "你重视的价值"}”。${energy.length ? ` 你会更容易从“${energy.slice(0, 2).join("、")}”中获得能量。` : ""}`,
+        first_step: `这一周完成一个有关“${like.tag}”、能使用“${strength}”的小任务，并记录投入感、成果与外部反馈。${context.length ? ` 尽量放在“${context.slice(0, 2).join("、")}”的环境中进行。` : ""}`,
+      };
+    }),
+    confidence_note: "这是一份基于兴趣强度、优势双评分、外部证据、环境偏好和真实叙事生成的行动假设；完成 30 天实验后回看，结论会更可靠。",
+  };
+}
+
+export function analysisRequest(answers: Record<string, DiscoveryAnswer>): Record<string, unknown> {
   return {
     responses: DISCOVERY_QUESTIONS.map((question) => ({
-      id: question.id,
-      axis: question.axis,
-      question: question.title,
-      selected: answers[question.id]?.selected ?? [],
-      custom: answers[question.id]?.custom ?? [],
+      id: question.id, axis: question.axis, kind: question.kind, question: question.title, tag: question.tag,
+      left: question.left, right: question.right, response: answers[question.id] ?? { selected: [], custom: [] },
     })),
-    evidence: {
-      likes: rankedTags("like", answers),
-      strengths: rankedTags("skill", answers),
-      values: rankedTags("value", answers),
-    },
+    evidence: { likes: rankedTags("like", answers, 9), strengths: rankedTags("skill", answers, 13), values: rankedTags("value", answers, 6), energy: energySignals(answers), environment: environmentSignals(answers) },
   };
 }
 
 export function isSelfDiscoveryAnalysis(value: unknown): value is SelfDiscoveryAnalysis {
   if (!value || typeof value !== "object") return false;
   const data = value as Partial<SelfDiscoveryAnalysis>;
-  const validInsights = (items: unknown) => Array.isArray(items) && items.length === 3 &&
-    items.every((item) => item && typeof item === "object" &&
-      typeof (item as DiscoveryInsight).label === "string" &&
-      typeof (item as DiscoveryInsight).evidence === "string" &&
-      typeof (item as DiscoveryInsight).reason === "string");
-  const validDirections = Array.isArray(data.directions) && data.directions.length === 3 &&
-    data.directions.every((item) => item && typeof item === "object" &&
-      typeof (item as DiscoveryDirection).title === "string" &&
-      typeof (item as DiscoveryDirection).why === "string" &&
-      typeof (item as DiscoveryDirection).first_step === "string");
-  return typeof data.summary === "string" &&
-    typeof data.confidence_note === "string" &&
-    validInsights(data.likes) && validInsights(data.strengths) && validDirections;
+  const validInsights = (items: unknown) => Array.isArray(items) && items.length === 3 && items.every((item) => item && typeof item === "object" && typeof (item as DiscoveryInsight).label === "string" && typeof (item as DiscoveryInsight).evidence === "string" && typeof (item as DiscoveryInsight).reason === "string");
+  const validDirections = Array.isArray(data.directions) && data.directions.length === 3 && data.directions.every((item) => item && typeof item === "object" && typeof (item as DiscoveryDirection).title === "string" && typeof (item as DiscoveryDirection).why === "string" && typeof (item as DiscoveryDirection).first_step === "string");
+  return typeof data.summary === "string" && typeof data.confidence_note === "string" && validInsights(data.likes) && validInsights(data.strengths) && validDirections;
 }
