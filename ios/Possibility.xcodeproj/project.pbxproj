@@ -14,6 +14,7 @@
 		0B988993311EC55E2D91E0C6 /* PersonaCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC9D6969230C7843E1CA15D4 /* PersonaCanvasView.swift */; };
 		0C1BD169207B532422288263 /* DialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C99882E0720270DA61E74FF /* DialView.swift */; };
 		0DA76CB6E54B752FBDC2B889 /* DiaryData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D78345014AE4314E5701CAB /* DiaryData.swift */; };
+		0EEEA3906E054E181CEB2F35 /* ConsultChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2544FC877A85B4A08AB623 /* ConsultChatView.swift */; };
 		12BB5C70922DCCEFB89AB46E /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 942DB63872F1EF197E082875 /* AppConfig.swift */; };
 		13DEC256816F24F5543582D1 /* AnalyticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A208138BF922934372D678 /* AnalyticsTests.swift */; };
 		16DBCAB9BD3183A235A5897A /* AsyncTimeout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00A8EA0211BA0086E22D165 /* AsyncTimeout.swift */; };
@@ -26,6 +27,7 @@
 		255F3FAC100045FDD33B318D /* CardIconTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 787FBC923D38D9AC621071DF /* CardIconTests.swift */; };
 		27267E91C34A60C559F306D4 /* ContentModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2F9977BB46AD27AC3EDBF0 /* ContentModels.swift */; };
 		27851D89398520A277F50AE8 /* ChatStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A66E7957C018F28AE0D5320 /* ChatStreamClient.swift */; };
+		2BE2EE215F488A69DE70967F /* TarotPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC5E1964CBB40F7E753AC489 /* TarotPanel.swift */; };
 		31840B944EB082620402CFB8 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D42332B2DD677F8FDB1F33 /* PaywallView.swift */; };
 		3234F079D7394368B20B0FB4 /* HomeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D93FD99C770031C1C3DC0D15 /* HomeModel.swift */; };
 		33D70AA22000628C8AD028AE /* AppStoreScreenshots.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64161A4A56C068BECFE28DF /* AppStoreScreenshots.swift */; };
@@ -79,9 +81,11 @@
 		D8D271485C35A4FE742F437A /* LoginSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C05558C74F36CDCC0D567615 /* LoginSheet.swift */; };
 		D9CAECCE89B2F747D858E33E /* AssessmentData.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDACB8F9FFF74798EA374752 /* AssessmentData.swift */; };
 		DFC8C3FF32441FC376B71483 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE1701FFA9A291608DFD07D /* CommunityView.swift */; };
+		E155512A18E04474E50FADA8 /* TarotModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51BAE886C48207E9FE4B5236 /* TarotModels.swift */; };
 		E472EC82D2D90D79064CFC45 /* DiarySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FBA6DE37272B60B7002A572 /* DiarySummaryView.swift */; };
 		E4F2DEBBF09B21B08DC8DB8D /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80DD8BCDB6B6B539C375A75A /* ChatView.swift */; };
 		E820F4D20ECA8F3ED91A4664 /* EmotionEmoji.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BB7CC2566701F07DF75914 /* EmotionEmoji.swift */; };
+		EE294E8C9B6D90B3080B4C22 /* TarotEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5347EAB0727399C9A2B38E12 /* TarotEngineTests.swift */; };
 		F4A3DC948386FADBE7EF0BA3 /* DimensionData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C17CB41196E6C4CFEA056FD /* DimensionData.swift */; };
 		F68D11E3AAC0C5F304DD9BB2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E040A36FFA64D2C2BCD3C549 /* Assets.xcassets */; };
 		F96A892ECA6A4FF48676170F /* ResultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 736BF2D8C2A484E4C55AB6F8 /* ResultView.swift */; };
@@ -125,7 +129,10 @@
 		443EDC936DC407B871300814 /* BountyDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BountyDetailView.swift; sourceTree = "<group>"; };
 		466E1B5A1FB645D0239638EA /* ProfileStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStudioView.swift; sourceTree = "<group>"; };
 		4821E4633242563373929DB8 /* PossibilityApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PossibilityApp.swift; sourceTree = "<group>"; };
+		4A2544FC877A85B4A08AB623 /* ConsultChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsultChatView.swift; sourceTree = "<group>"; };
 		51129B1B7F87093065CCC8EC /* OrbView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrbView.swift; sourceTree = "<group>"; };
+		51BAE886C48207E9FE4B5236 /* TarotModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarotModels.swift; sourceTree = "<group>"; };
+		5347EAB0727399C9A2B38E12 /* TarotEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarotEngineTests.swift; sourceTree = "<group>"; };
 		569429CC69045121D40BB4AE /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
 		57437573FD471B7814617946 /* CardGameHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameHubView.swift; sourceTree = "<group>"; };
 		596CED23DDA137C050489897 /* DiaryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryDetailView.swift; sourceTree = "<group>"; };
@@ -180,6 +187,7 @@
 		DDFF75D5E912238827A3C43E /* PostHogBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostHogBackend.swift; sourceTree = "<group>"; };
 		E040A36FFA64D2C2BCD3C549 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E469AE164513C33035CA855A /* SupabaseEventBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseEventBackend.swift; sourceTree = "<group>"; };
+		EC5E1964CBB40F7E753AC489 /* TarotPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TarotPanel.swift; sourceTree = "<group>"; };
 		EC9D6969230C7843E1CA15D4 /* PersonaCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaCanvasView.swift; sourceTree = "<group>"; };
 		ED1FB90120DA8234D01EACDA /* CardGameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardGameTests.swift; sourceTree = "<group>"; };
 		F1737689E7DF58902AFD6C50 /* AssessmentModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssessmentModel.swift; sourceTree = "<group>"; };
@@ -218,6 +226,8 @@
 				2F84742DA98A7269C4291830 /* ChatModel.swift */,
 				91D0601A6197ADCC554061D2 /* ChatSummaryView.swift */,
 				80DD8BCDB6B6B539C375A75A /* ChatView.swift */,
+				51BAE886C48207E9FE4B5236 /* TarotModels.swift */,
+				EC5E1964CBB40F7E753AC489 /* TarotPanel.swift */,
 			);
 			path = Chat;
 			sourceTree = "<group>";
@@ -279,6 +289,7 @@
 				736E8B6CAA00A257FFE7D83D /* AuthErrorMessageTests.swift */,
 				ED1FB90120DA8234D01EACDA /* CardGameTests.swift */,
 				787FBC923D38D9AC621071DF /* CardIconTests.swift */,
+				5347EAB0727399C9A2B38E12 /* TarotEngineTests.swift */,
 			);
 			path = PossibilityTests;
 			sourceTree = "<group>";
@@ -370,6 +381,7 @@
 		D1830C10CEAA5A32EC803BB5 /* Profile */ = {
 			isa = PBXGroup;
 			children = (
+				4A2544FC877A85B4A08AB623 /* ConsultChatView.swift */,
 				A6D42332B2DD677F8FDB1F33 /* PaywallView.swift */,
 				9FDCA88F55ACD0DBABD184F5 /* ProfileModel.swift */,
 				8F98BB133326413E6F49B7A5 /* ProfilePanels.swift */,
@@ -551,16 +563,16 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					651A2602E3AA0C22DBDB2DCE = {
-						DevelopmentTeam = JRHT3J6CWU;
+						DevelopmentTeam = 985WPAR345;
 						ProvisioningStyle = Automatic;
 					};
 					97C3EF562E8333EE867AAEF9 = {
-						DevelopmentTeam = JRHT3J6CWU;
+						DevelopmentTeam = 985WPAR345;
 						ProvisioningStyle = Automatic;
 						TestTargetID = C2474A909F3B0387E61B95D1;
 					};
 					C2474A909F3B0387E61B95D1 = {
-						DevelopmentTeam = JRHT3J6CWU;
+						DevelopmentTeam = 985WPAR345;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -630,6 +642,7 @@
 				E4F2DEBBF09B21B08DC8DB8D /* ChatView.swift in Sources */,
 				DFC8C3FF32441FC376B71483 /* CommunityView.swift in Sources */,
 				80CCB759BAAE3E58E98D20A9 /* Components.swift in Sources */,
+				0EEEA3906E054E181CEB2F35 /* ConsultChatView.swift in Sources */,
 				27267E91C34A60C559F306D4 /* ContentModels.swift in Sources */,
 				3D8D13DB57A9F32615A1E89B /* DemoData.swift in Sources */,
 				0C1BD169207B532422288263 /* DialView.swift in Sources */,
@@ -672,6 +685,8 @@
 				72F5CF76B70A42CE42B8FBEC /* SupabaseService+AuthErrors.swift in Sources */,
 				C18D90D9775C8FA60B893FC3 /* SupabaseService.swift in Sources */,
 				83533EF621F6867BF037A0F2 /* SupabaseTimestamp.swift in Sources */,
+				E155512A18E04474E50FADA8 /* TarotModels.swift in Sources */,
+				2BE2EE215F488A69DE70967F /* TarotPanel.swift in Sources */,
 				1E850B5E9CD65299DED6CBE5 /* Theme.swift in Sources */,
 				C81CD1325F9E939713AE3359 /* UserModels.swift in Sources */,
 				B823F60BE259745431D9063C /* WatchModeView.swift in Sources */,
@@ -696,6 +711,7 @@
 				1BD8BEA038F18F90E846FE7A /* AuthErrorMessageTests.swift in Sources */,
 				A77CBCE5DCCE295A0EBB91E1 /* CardGameTests.swift in Sources */,
 				255F3FAC100045FDD33B318D /* CardIconTests.swift in Sources */,
+				EE294E8C9B6D90B3080B4C22 /* TarotEngineTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -751,7 +767,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = JRHT3J6CWU;
+				DEVELOPMENT_TEAM = 985WPAR345;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -783,7 +799,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.possibility.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.possibility.possibility.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Possibility.app/Possibility";
@@ -826,7 +842,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = JRHT3J6CWU;
+				DEVELOPMENT_TEAM = 985WPAR345;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -865,7 +881,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.possibility.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.possibility.possibility.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Possibility;
@@ -878,14 +894,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Possibility/Possibility.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Possibility/Resources/Info.plist;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.possibility;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.possibility.possibility;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -901,7 +919,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.adventurex.possibility.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.possibility.possibility.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Possibility.app/Possibility";
@@ -918,7 +936,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.possibility.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.possibility.possibility.uitests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Possibility;
@@ -931,14 +949,16 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Possibility/Possibility.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = Possibility/Resources/Info.plist;
 				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.johnnywang.possibility;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.possibility.possibility;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};

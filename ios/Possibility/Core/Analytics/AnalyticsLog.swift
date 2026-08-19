@@ -9,12 +9,12 @@ extension Logger {
     /// 所以「为什么看板没数据」只能靠这里回答 —— 用 os.Logger 而非 print，
     /// 生产构建里可以用 Console.app 按 subsystem/category 过滤出来。
     static let analytics = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "com.johnnywang.possibility",
+        subsystem: Bundle.main.bundleIdentifier ?? "com.possibility.possibility",
         category: "analytics"
     )
 
     static let network = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "com.johnnywang.possibility",
+        subsystem: Bundle.main.bundleIdentifier ?? "com.possibility.possibility",
         category: "network"
     )
 }
