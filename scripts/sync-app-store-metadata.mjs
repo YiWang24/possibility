@@ -5,6 +5,7 @@ const metadataFile = new URL("../docs/app-store/metadata.zh-Hans.json", import.m
 const metadata = JSON.parse(fs.readFileSync(metadataFile, "utf8"));
 const locale = "zh-Hans";
 const write = process.argv.includes("--write");
+const apiBaseUrl = "https://api.appstoreconnect.apple.com/v1";
 
 if (process.argv.some((argument) => argument !== "--write" && argument !== process.argv[0] && argument !== process.argv[1])) {
   throw new Error("Usage: node scripts/sync-app-store-metadata.mjs [--write]");
@@ -38,7 +39,8 @@ function createToken() {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`https://api.appstoreconnect.apple.com/v1${path}`, {
+  if (!/^\/[A-Za-z0-9./?&=_,\-\[\]]+$/.test(path)) throw new Error("Invalid App Store Connect API path.");
+  const response = await fetch(`${apiBaseUrl}${path}`, {
     ...options,
     headers: {
       Authorization: `Bearer ${createToken()}`,
@@ -48,8 +50,7 @@ async function request(path, options = {}) {
   });
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    const detail = body?.errors?.map((error) => error.detail || error.title).filter(Boolean).join("; ");
-    throw new Error(`${options.method || "GET"} ${path} failed (${response.status})${detail ? `: ${detail}` : ""}`);
+    throw new Error(`App Store Connect API request failed with HTTP ${response.status}.`);
   }
   return body;
 }
@@ -63,13 +64,12 @@ async function collection(path, label) {
 async function applyResource(resource, attributes) {
   const changed = Object.entries(attributes).filter(([key, value]) => resource.attributes[key] !== value);
   if (changed.length === 0) {
-    console.log(`No change: ${resource.type}/${resource.id}`);
+    console.log("No resource metadata change.");
     return;
   }
 
-  const summary = changed.map(([key]) => key).join(", ");
   if (!write) {
-    console.log(`Would update ${resource.type}/${resource.id}: ${summary}`);
+    console.log("Would update resource metadata.");
     return;
   }
 
@@ -77,17 +77,17 @@ async function applyResource(resource, attributes) {
     method: "PATCH",
     body: JSON.stringify({ data: { type: resource.type, id: resource.id, attributes } }),
   });
-  console.log(`Updated ${resource.type}/${resource.id}: ${summary}`);
+  console.log("Updated resource metadata.");
 }
 
 async function applyRelationship(resource, relationship, categoryId) {
   const current = resource.relationships?.[relationship]?.data?.id;
   if (current === categoryId) {
-    console.log(`No change: ${relationship} category (${categoryId})`);
+    console.log("No category change.");
     return;
   }
   if (!write) {
-    console.log(`Would set ${relationship} category: ${current || "none"} -> ${categoryId}`);
+    console.log("Would update app category.");
     return;
   }
   await request(`/appInfos/${resource.id}`, {
@@ -100,7 +100,7 @@ async function applyRelationship(resource, relationship, categoryId) {
       },
     }),
   });
-  console.log(`Updated ${relationship} category: ${categoryId}`);
+  console.log("Updated app category.");
 }
 
 async function applyReviewDetail(resource, attributes, appStoreVersionId) {
