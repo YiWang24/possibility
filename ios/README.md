@@ -157,6 +157,9 @@ scripts/ios-testflight.sh
 artifact。需要麦克风、语音识别、真实 LLM 或生产网络的 `PossibilityUITests` 不作为发布门禁，
 避免第三方服务波动把可发布构建随机拦下；它们仍保留在工程中供真机/回归环境执行。
 
+归档 / 上传 job 使用 `macos-26`（Xcode 26.6，iOS 26 SDK）。App Store Connect 已拒绝使用
+iOS 18 SDK 构建的上传包，因此不要改回 `macos-15`。
+
 唯一的 GitHub secret 是 `DOPPLER_TOKEN`（与 `deploy.yml` 共用），其余由 `doppler run` 注入。
 构建号取 `100 + github.run_number` —— 留出的余量是因为 `1.0.0 (1)` 已被首次本地发布占用，
 而 `run_number` 从 1 起。撞号时手动触发并填 `build_number`。

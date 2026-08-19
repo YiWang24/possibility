@@ -76,7 +76,9 @@ jobs:
 
   testflight:
     name: archive + export + upload
-    runs-on: macos-15
+    # App Store Connect currently requires iOS 26 SDK or later for uploads.
+    # macos-26 ships Xcode 26.6; macos-15 only has Xcode 16.x / iOS 18 SDK.
+    runs-on: macos-26
     needs: test
 
     # 唯一的 GitHub secret：Doppler 服务令牌（scoped 到 possibility/prd），与 deploy.yml 同一条通道。
