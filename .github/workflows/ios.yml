@@ -1,0 +1,70 @@
+name: iOS TestFlight
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ios/**'
+      - 'scripts/ios-testflight.sh'
+      - 'scripts/gen-xcconfig.sh'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: '构建号（留空则用 run_number）'
+        required: false
+
+# TestFlight 同版本号下构建号必须唯一，并发上传会撞号；串行执行，且不取消已在跑的。
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    name: archive + export + upload
+    runs-on: macos-15
+
+    # 唯一的 GitHub secret：Doppler 服务令牌（scoped 到 possibility/prd），与 deploy.yml 同一条通道。
+    # Supabase 与 App Store Connect 凭据全部由 doppler run 注入：
+    #   SUPABASE_URL / SUPABASE_ANON_KEY  → Config.xcconfig（gen-xcconfig.sh）
+    #   ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 → 签名与上传
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dopplerhq/cli-action@v3
+
+      - name: 安装 xcodegen
+        run: brew install xcodegen
+
+      - name: 注入 Supabase 密钥（Doppler → Config.xcconfig）
+        run: doppler run --command 'bash scripts/gen-xcconfig.sh'
+
+      # .p8 只以 Doppler secret 形态存在，落盘到 runner 的临时 HOME 下，随 runner 一起销毁。
+      # altool 不接受任意路径，只按 AuthKey_<id>.p8 在固定几个目录里找，所以文件名不能改。
+      - name: 落盘 App Store Connect API Key
+        run: |
+          doppler run --command '
+            set -euo pipefail
+            mkdir -p "$HOME/.appstoreconnect/private_keys"
+            umask 077
+            printf "%s" "$ASC_KEY_P8" > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          '
+
+      - name: 归档 → 导出 → 上传 TestFlight
+        run: doppler run --command 'bash scripts/ios-testflight.sh'
+
+      # 失败时归档日志比 stdout 有用得多（签名错误常淹没在几千行编译输出里）。
+      - name: 上传构建产物（失败时排查用）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            ios/build/*.xcarchive/Info.plist
+            ~/Library/Logs/gym
+          if-no-files-found: ignore
