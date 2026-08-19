@@ -77,14 +77,18 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-      # xcodegen 的默认预设把两个配置的 CODE_SIGN_IDENTITY 都钉成 "iPhone Developer"，
-      # 于是连 archive 都去要开发描述文件；本团队没注册设备，开发描述文件根本签不出来。
-      # Release 留空 = 不钉身份，让自动签名在归档时自己挑 App Store 分发描述文件。
+      # 归档也用开发身份签名，分发签名由 -exportArchive 统一换。这不是将就，是 Xcode
+      # Organizer「Distribute App」的原生流程：命令行 archive 的自动签名只会解析*开发*
+      # 描述文件（试过钉 Apple Distribution，会和自动签名冲突而失败）。
+      # 关键是**不能**把归档做成不签名/ad-hoc —— 那样 Xcode 会跳过「嵌入框架并重签」，
+      # 预编译的 Sentry.xcframework 桩二进制会带着 linker-signed 的 ad-hoc 签名进包，
+      # 事后补签只覆盖到原 codeLimit（49KB 的二进制只哈希 2 页），上传必被 ASC 拒
+      # （90035 Invalid Signature，指向 Sentry.framework/Sentry）。
       configs:
         Debug:
           CODE_SIGN_IDENTITY: Apple Development
         Release:
-          CODE_SIGN_IDENTITY: ""
+          CODE_SIGN_IDENTITY: Apple Development
   PossibilityUITests:
     type: bundle.ui-testing
     platform: iOS
