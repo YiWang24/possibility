@@ -11,24 +11,23 @@
       "sexualContentOrNudity": "NONE",
       "sexualContentGraphicAndNudity": "NONE",
       "alcoholTobaccoOrDrugUseOrReferences": "NONE",
-      "gambling": "NONE",
+      "gambling": false,
       "gamblingSimulated": "NONE",
       "horrorOrFearThemes": "NONE",
       "matureOrSuggestiveThemes": "NONE",
       "medicalOrTreatmentInformation": "NONE",
-      "userGeneratedContent": "FREQUENT_OR_INTENSE",
-      "messagingAndChat": "FREQUENT_OR_INTENSE",
-      "socialMedia": "FREQUENT_OR_INTENSE",
-      "advertising": "NONE",
-      "lootBox": "NONE",
-      "unrestrictedWebAccess": "NONE",
-      "kidsAgeBand": "NONE",
-      "healthOrWellnessTopics": "NONE",
+      "userGeneratedContent": true,
+      "messagingAndChat": true,
+      "socialMedia": true,
+      "advertising": false,
+      "lootBox": false,
+      "unrestrictedWebAccess": false,
+      "healthOrWellnessTopics": false,
       "contests": "NONE",
-      "parentalControls": "NONE",
+      "parentalControls": false,
       "gunsOrOtherWeapons": "NONE",
-      "ageAssurance": "NONE",
-      "socialMediaAgeRestricted": "NONE"
+      "ageAssurance": false,
+      "socialMediaAgeRestricted": false
     }
   },
   "localizations": {
@@ -40,8 +39,7 @@
       "supportUrl": "https://maybeio.com/support",
       "marketingUrl": "https://maybeio.com",
       "privacyPolicyUrl": "https://maybeio.com/privacy",
-      "copyright": "© 2026 Yi Wang",
-      "whatsNew": "首个公开测试版本：AI 探索对话、人生实验室、语音日记、画像管理与万花筒社区。"
+      "copyright": "© 2026 Yi Wang"
     }
   },
   "screenshots": [
@@ -70,7 +68,7 @@
     "contactFirstName": "Yi",
     "contactLastName": "Wang",
     "contactEmail": "yiwang2457@gmail.com",
-    "contactPhone": null,
+    "contactPhone": "19898024931",
     "demoAccountRequired": false,
     "notes": "这是公开测试版本。首次启动需要注册或登录；可使用任意可接收邮件的测试邮箱注册。核心功能包括 AI 探索对话、人生实验室、语音日记、画像工作室和万花筒社区。付费界面当前为演示流程，不会产生真实扣款。应用不提供医疗诊断、心理治疗或对未来的保证。"
   }

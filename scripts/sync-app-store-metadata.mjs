@@ -90,9 +90,15 @@ async function applyRelationship(resource, relationship, categoryId) {
     console.log(`Would set ${relationship} category: ${current || "none"} -> ${categoryId}`);
     return;
   }
-  await request(`/appInfos/${resource.id}/relationships/${relationship}`, {
+  await request(`/appInfos/${resource.id}`, {
     method: "PATCH",
-    body: JSON.stringify({ data: { type: "appCategories", id: categoryId } }),
+    body: JSON.stringify({
+      data: {
+        type: resource.type,
+        id: resource.id,
+        relationships: { [relationship]: { data: { type: "appCategories", id: categoryId } } },
+      },
+    }),
   });
   console.log(`Updated ${relationship} category: ${categoryId}`);
 }
@@ -148,7 +154,7 @@ await applyResource(versionLocalization, {
   marketingUrl: localized.marketingUrl,
   promotionalText: localized.promotionalText,
   supportUrl: localized.supportUrl,
-  whatsNew: localized.whatsNew,
+  ...(localized.whatsNew === undefined ? {} : { whatsNew: localized.whatsNew }),
 });
 await applyResource(version, { copyright: localized.copyright });
 await applyResource(ageRating, metadata.app.ageRating);

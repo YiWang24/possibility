@@ -24,6 +24,8 @@ doppler run --project possibility --config prd -- node scripts/sync-app-store-me
 
 同步工具不会打印 API key、P8 私钥或 JWT。它只更新当前 `zh-Hans` 本地化、1.0 版本、分类、年龄分级和审核信息，不会上传构建或提交审核。
 
+首发版本不填写 `whatsNew`；后续新版本才在对应本地化中加入该字段。App Store Connect 不允许为首发版本保存这一项。
+
 ## 上线前检查
 
 1. 将本分支合并到生产部署分支，使 `/privacy`、`/terms` 和 `/support` 在 `https://maybeio.com` 可访问。

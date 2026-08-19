@@ -12,7 +12,6 @@ const limits = {
   supportUrl: 255,
   marketingUrl: 255,
   privacyPolicyUrl: 255,
-  whatsNew: 4000,
 };
 
 for (const [field, limit] of Object.entries(limits)) {
@@ -20,6 +19,10 @@ for (const [field, limit] of Object.entries(limits)) {
   if (typeof value !== "string" || value.length > limit || value.trim().length === 0) {
     throw new Error(`${field} must be a non-empty string of at most ${limit} characters`);
   }
+}
+
+if (localization.whatsNew !== undefined && (typeof localization.whatsNew !== "string" || localization.whatsNew.length > 4000)) {
+  throw new Error("whatsNew must be a string of at most 4000 characters when present");
 }
 
 if (localization.keywords.split(",").some((keyword) => keyword.trim().length === 0)) {
