@@ -8,7 +8,14 @@ settings:
   base:
     SWIFT_VERSION: "5.10"
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: JRHT3J6CWU
+    # 985WPAR345 = Jiaxin Li（Individual，付费）。此前写的 JRHT3J6CWU 本机无对应账号，
+    # archive 会以 "No Account for Team" 失败。换号后需同步这里。
+    DEVELOPMENT_TEAM: 985WPAR345
+    # 版本号单点维护：Info.plist 里的 CFBundle* 引用这两个变量，改这里即可。
+    # MARKETING_VERSION 是用户可见版本；CURRENT_PROJECT_VERSION 是 build 号，
+    # 每次上传 TestFlight 必须比上一次大（同一 marketing version 下也不能重复）。
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
 packages:
   Supabase:
     url: https://github.com/supabase/supabase-swift
@@ -30,6 +37,9 @@ targets:
       - path: Possibility/Core
       - path: Possibility/Features
       - path: Possibility/Resources/Assets.xcassets
+      # 单文件列出而不是整个 Resources/：Info.plist 走 info.path 生成，
+      # 若把目录整体纳入会被重复拷进 bundle。
+      - path: Possibility/Resources/PrivacyInfo.xcprivacy
     dependencies:
       - package: Supabase
         product: Supabase
@@ -50,6 +60,11 @@ targets:
       path: Possibility/Resources/Info.plist
       properties:
         CFBundleDisplayName: Possibility
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        # App 只用系统 HTTPS/TLS（Supabase、PostHog、Sentry），属出口管制豁免类。
+        # 不声明的话每个 TestFlight build 都会卡在 "Missing Compliance" 等人工勾选。
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -70,6 +85,16 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UIUserInterfaceStyle: Dark
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        # 自动签名下 CODE_SIGN_IDENTITY 必须留空：
+        #  - 保留 xcodegen 预设的 "iPhone Developer" → Release archive 去申请开发描述文件，
+        #    报 "Your team has no devices..."；
+        #  - 手写 "Apple Distribution" → 报 "conflicting provisioning settings"，
+        #    因为自动签名不接受手工指定身份。
+        # 置空后由 Xcode 按 archive/export 的用途自行选证书，分发类型交给
+        # exportOptions 的 method: app-store-connect 决定。
+        Release:
+          CODE_SIGN_IDENTITY: ""
   PossibilityUITests:
     type: bundle.ui-testing
     platform: iOS

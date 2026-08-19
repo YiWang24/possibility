@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 隐私清单（Apple 自 2024-05-01 起强制）。缺失会让上传被 ITMS-91053
+	     "Missing API declaration" 拦下：App 用到了 required-reason API 却没声明理由。
+
+	     本清单只覆盖 App 自身代码；Supabase / PostHog / Sentry 各自在自己的
+	     bundle 里带 .xcprivacy，不需要在这里替它们声明。 -->
+
+	<!-- 不做跨 App / 跨网站追踪：没有 IDFA、没有 ATT 弹窗。
+	     PostHog 与 Sentry 都按第一方分析用，不与第三方数据做身份拼接。 -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- 留空是有意的：这里只影响 Xcode 生成的隐私报告，不是提交用的声明。
+	     对外测试和上架要在 App Store Connect 的隐私问卷里填实际收集项
+	     （账号邮箱、日记内容、使用数据等），那份问卷才是权威声明。 -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!-- UserDefaults：本地缓存画像/评测/卡牌进度与首启标记，
+			     只读写本 App 自己的 domain，对应理由码 CA92.1。 -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
