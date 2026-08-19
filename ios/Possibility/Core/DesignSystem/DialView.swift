@@ -212,7 +212,7 @@ private struct DialTicks: View {
     private func labelPoint(horizon: SimulationHorizon) -> CGPoint {
         let c = size / 2
         let r = size / 2 - 26
-        let rad = angle(horizon) * .pi / 180
+        let rad = CGFloat(angle(horizon) * .pi / 180)
         return CGPoint(x: c + sin(rad) * r, y: c - cos(rad) * r)
     }
 
@@ -223,7 +223,7 @@ private struct DialTicks: View {
         for a in stride(from: -Self.sweep, through: Self.sweep + 0.01, by: Self.minorStep) {
             let major = idx % 3 == 0
             let len: CGFloat = major ? 12 : 6
-            let rad = a * .pi / 180
+            let rad = CGFloat(a * .pi / 180)
             let dir = CGPoint(x: sin(rad), y: -cos(rad))
             let p1 = CGPoint(x: c.x + dir.x * rOuter, y: c.y + dir.y * rOuter)
             let p2 = CGPoint(x: c.x + dir.x * (rOuter - len), y: c.y + dir.y * (rOuter - len))
