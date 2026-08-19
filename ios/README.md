@@ -86,22 +86,39 @@ scripts/ios-testflight.sh                                                   # �
 会直接报「automatically signed for development ... conflicting identity」。
 
 **不要试图跳过归档签名**（`CODE_SIGN_IDENTITY = ""` 或 `CODE_SIGNING_ALLOWED=NO`）。
-那样 Xcode 会跳过「嵌入框架并重签」这一步，预编译的 `Sentry.xcframework`（binaryTarget，
-内含一个只承载 `PrivacyInfo.xcprivacy` 的桩 dylib）会带着 `identifier=arm64-apple` 的
-linker-signed ad-hoc 签名进包；事后补签只覆盖到原 codeLimit，上传会被 App Store Connect
-以 **90035 Invalid Signature** 拒掉，且本地 `codesign --verify --deep --strict` 完全看不出问题。
-手动签名同样不可行：分发证书是云托管的（本机钥匙串里没有私钥），且 Store 描述文件是
-Xcode 托管的，手动模式不允许引用。
+实测过：那样导出的 ipa 本地 `codesign --verify --deep --strict` 全绿，上传却被
+App Store Connect 以 **90035 Invalid Signature** 拒掉，报错直指
+`Possibility.app/Frameworks/Sentry.framework/Sentry`；换成正经签名的归档后，同一条
+导出上传链路一次通过。
 
-### 前置：设备必须已注册
+（值得记一笔：两次导出产物里 `Sentry.framework` 的 `codesign -dvvv` 输出是一样的
+——同为 `Identifier=io.sentry.Sentry`、`hashes=2+3`、Apple Distribution 签发。
+所以差异不在这个框架的最终签名本身，本地无从复现，只能靠上传结果判定。
+`Sentry` 是 binaryTarget 预编译 xcframework，包里那个 49KB 二进制只是承载
+`PrivacyInfo.xcprivacy` 的桩，Sentry 真正的代码静态链进了 app 主二进制。）
+
+手动签名也不可行，两个硬约束：分发证书是云托管的，本机钥匙串里没有私钥
+（`No "iOS Distribution" signing certificate ... with a private key was found`）；
+Store 描述文件是 Xcode 托管的，手动模式不允许引用。
+
+### 前置：团队里至少有一台已注册设备
 
 开发描述文件必须包含至少一台已注册设备，否则归档直接失败
 （`Your team has no devices from which to generate a provisioning profile`）。
-`-allowProvisioningUpdates` **不会**自动注册设备（Xcode GUI 会弹窗问，命令行不会），
-需先在 developer.apple.com/account → Devices 里登记 UDID。
+`-allowProvisioningUpdates` **不会**自动注册设备 —— Xcode GUI 会弹窗问，命令行只会
+报 `Device "..." isn't registered in your developer account` 然后退出。
+
+团队当前已注册 `Xiao Mi 17 Pro Max`（iPhone 14 Pro）。再加设备走
+developer.apple.com/account → Devices，或用 API：
+
+```bash
+curl -X POST https://api.appstoreconnect.apple.com/v1/devices \
+  -H "Authorization: Bearer <JWT>" -H "Content-Type: application/json" \
+  -d '{"data":{"type":"devices","attributes":{"name":"<名字>","platform":"IOS","udid":"<UDID>"}}}'
+```
 
 真机 destination 若报 `The developer disk image could not be mounted`，先跑一次
-`xcrun devicectl device info processes --device <UDID>` 强制挂载调试镜像，再重试构建。
+`xcrun devicectl device info processes --device <UDID>` 强制挂载调试镜像，再重试。
 
 ### 构建号
 
@@ -111,12 +128,34 @@ Xcode 托管的，手动模式不允许引用。
 BUILD_NUMBER=2 scripts/ios-testflight.sh
 ```
 
-### 上传凭证
+### 凭证
 
-走环境变量，两种任选；都没配则只产出 ipa 并提示改用 Xcode Organizer 手动上传。
+签名与上传都走 App Store Connect API Key，本地和 CI 同一套。三个值存在
+Doppler `possibility/prd`：`ASC_KEY_ID`、`ASC_ISSUER_ID`、`ASC_KEY_P8`。
 
-- App Store Connect API Key：`ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_KEY_PATH`
-- Apple ID + App 专用密码：`ASC_APPLE_ID` / `ASC_APP_PASSWORD`
+本地：把 `.p8` 放到 `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`（权限 600），
+然后
 
-`xcodebuild -exportArchive` 配 `destination=upload` 也能直接上传（复用 Xcode 已登录账号，
-无需上述凭证），脚本未采用是因为失败时无法单独重试上传。
+```bash
+export ASC_KEY_ID=... ASC_ISSUER_ID=...
+scripts/ios-testflight.sh
+```
+
+文件名不能改 —— `altool` 不接受任意路径，只在几个固定目录里按 `AuthKey_<id>.p8` 找。
+
+三件套缺任何一个，脚本整体回落到 Xcode 已登录账号（本机能跑，CI 上必失败）；
+上传还可回落到 `ASC_APPLE_ID` + `ASC_APP_PASSWORD`（App 专用密码）。
+
+> `ASC_*` 已加进 `scripts/doppler-sync.sh` 的排除前缀：签名私钥不该被同步进
+> Supabase Edge Function Secrets。新增同类凭据请沿用 `ASC_` 前缀。
+
+### CI
+
+`.github/workflows/ios.yml`：push 到 main 且改动落在 `ios/**` 时自动跑，也可手动触发。
+唯一的 GitHub secret 是 `DOPPLER_TOKEN`（与 `deploy.yml` 共用），其余由 `doppler run` 注入。
+构建号取 `github.run_number`。
+
+⚠️ CI 上用的是自动签名 + API Key，每次 runner 都是全新钥匙串，Xcode 会**新建一张
+开发证书**。Apple 对开发证书有数量上限，跑得频繁会撞上限。真到那一步，
+把证书导成 `.p12` 存进 Doppler、CI 里导入临时钥匙串并改用手动签名
+（即 fastlane match 的做法）。
