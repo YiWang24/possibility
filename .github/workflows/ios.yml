@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - ios-testflight   # TEMP: 合并前实跑验证，跑通即移除
     paths:
       - 'ios/**'
       - 'scripts/ios-testflight.sh'
