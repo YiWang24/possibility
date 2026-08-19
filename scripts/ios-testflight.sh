@@ -1,20 +1,21 @@
 #!/usr/bin/env bash
 #
-# Possibility · iOS → TestFlight 一键构建上传
+# Possibility · iOS → TestFlight：归档 → 导出 → 上传
 #
 # 用法：
-#   scripts/ios-testflight.sh                  # 归档 + 导出 + 上传（构建号取 project.yml）
-#   BUILD_NUMBER=7 scripts/ios-testflight.sh   # 覆盖构建号（TestFlight 要求同版本号下唯一）
-#   SKIP_UPLOAD=1 scripts/ios-testflight.sh    # 只产出 ipa，不上传
+#   scripts/ios-testflight.sh                  # 全流程
+#   BUILD_NUMBER=7 scripts/ios-testflight.sh   # 覆盖构建号（同版本号下必须唯一）
+#   SKIP_UPLOAD=1 scripts/ios-testflight.sh    # 只产出 ipa
 #
-# 上传凭证（二选一，都没有则跳过上传并提示改用 Xcode Organizer 手动传）：
-#   A. App Store Connect API Key（推荐，可进 CI）：
-#        ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH(.p8 路径)
-#   B. Apple ID + App 专用密码（appleid.apple.com 生成）：
-#        ASC_APPLE_ID / ASC_APP_PASSWORD
+# 凭证（App Store Connect API Key，本地和 CI 同一套）：
+#   ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH（默认 ~/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8）
+# 没有 API Key 时：
+#   - 归档/导出回落到 Xcode 已登录账号（只能在本机跑，CI 上必失败）
+#   - 上传可改用 ASC_APPLE_ID / ASC_APP_PASSWORD（App 专用密码）
+#   - 两者都没有则只产出 ipa，并提示改走 Xcode Organizer
 #
-# 前置：Config.xcconfig 需先由 Doppler 生成 ——
-#   doppler run --project possibility --config prd -- scripts/gen-xcconfig.sh
+# 前置见 ios/README.md「发布到 TestFlight」：Config.xcconfig 需先由 Doppler 生成；
+# 团队里必须至少注册一台设备，否则归档拿不到开发描述文件。
 #
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -28,11 +29,28 @@ ARCHIVE="$BUILD_DIR/$SCHEME.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 IPA="$EXPORT_DIR/$SCHEME.ipa"
 
+ASC_KEY_ID="${ASC_KEY_ID:-}"
+ASC_ISSUER_ID="${ASC_ISSUER_ID:-}"
+ASC_KEY_PATH="${ASC_KEY_PATH:-$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8}"
+
 log() { printf '\n\033[1;36m▸ %s\033[0m\n' "$*"; }
 die() { printf '\n\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 
-# ── 前置检查：密钥文件缺失时 Supabase 会回落到 AppConfig 内置值，PostHog/Sentry 直接不注册。
-# 发到 TestFlight 的包没埋点等于线上瞎跑，所以这里出声而不是静默通过。
+# API Key 三件套齐了才用；缺任何一个都退回 Xcode 账号，不半途而废地传一半参数。
+AUTH_ARGS=()
+if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -f "$ASC_KEY_PATH" ]; then
+  AUTH_ARGS=(
+    -authenticationKeyPath "$ASC_KEY_PATH"
+    -authenticationKeyID "$ASC_KEY_ID"
+    -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+  )
+  log "签名凭证：App Store Connect API Key $ASC_KEY_ID"
+else
+  log "签名凭证：Xcode 已登录账号（未配 API Key —— CI 上会失败）"
+fi
+
+# 密钥文件缺失时 Supabase 回落到 AppConfig 内置值，PostHog/Sentry 直接不注册。
+# 发上 TestFlight 的包没埋点等于线上瞎跑，所以出声而不是静默通过。
 [ -f ios/Config/Config.xcconfig ] || cat <<'WARN' >&2
 
 ⚠ ios/Config/Config.xcconfig 不存在。
@@ -54,32 +72,29 @@ xcodebuild archive \
   -destination 'generic/platform=iOS' \
   -archivePath "$ARCHIVE" \
   -allowProvisioningUpdates \
+  "${AUTH_ARGS[@]}" \
   ${BUILD_NUMBER:+CURRENT_PROJECT_VERSION="$BUILD_NUMBER"}
 
-log "导出 ipa（app-store-connect）"
+log "导出 ipa（app-store-connect，此步才换上分发签名）"
 xcodebuild -exportArchive \
   -archivePath "$ARCHIVE" \
   -exportOptionsPlist ios/ExportOptions.plist \
   -exportPath "$EXPORT_DIR" \
-  -allowProvisioningUpdates
+  -allowProvisioningUpdates \
+  "${AUTH_ARGS[@]}"
 
 [ -f "$IPA" ] || die "导出没产出 $IPA"
-PLIST="$ARCHIVE/Info.plist"
-VERSION=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$PLIST")
-BUILD=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$PLIST")
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$ARCHIVE/Info.plist")
+BUILD=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$ARCHIVE/Info.plist")
 log "已产出 $IPA（$BUNDLE_ID $VERSION ($BUILD)）"
 
-if [ -n "${SKIP_UPLOAD:-}" ]; then
-  echo "SKIP_UPLOAD 已设置，到此为止。"
-  exit 0
-fi
+[ -n "${SKIP_UPLOAD:-}" ] && { echo "SKIP_UPLOAD 已设置，到此为止。"; exit 0; }
 
 # ── 上传 ──────────────────────────────────────────────────────────────────────
-if [ -n "${ASC_KEY_ID:-}" ] && [ -n "${ASC_ISSUER_ID:-}" ] && [ -n "${ASC_KEY_PATH:-}" ]; then
-  [ -f "$ASC_KEY_PATH" ] || die "ASC_KEY_PATH 指向的 .p8 不存在：$ASC_KEY_PATH"
-  # altool 只认 ~/.appstoreconnect/private_keys 或 --apiKey 搭配 API_PRIVATE_KEYS_DIR
-  export API_PRIVATE_KEYS_DIR
-  API_PRIVATE_KEYS_DIR="$(dirname "$ASC_KEY_PATH")"
+if [ ${#AUTH_ARGS[@]} -gt 0 ]; then
+  # altool 不接受任意路径，只在固定几个目录里按 AuthKey_<id>.p8 找；
+  # API_PRIVATE_KEYS_DIR 是唯一能指定别处的开关。
+  export API_PRIVATE_KEYS_DIR="$(dirname "$ASC_KEY_PATH")"
   log "上传 TestFlight（API Key $ASC_KEY_ID）"
   xcrun altool --upload-app -f "$IPA" -t ios \
     --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
@@ -93,16 +108,13 @@ else
 ⚠ 没有上传凭证，ipa 已就绪但未上传：
     $IPA
 
-  三条路任选：
+  两条路任选：
     1. Xcode → Window → Organizer → 选中归档 → Distribute App → App Store Connect
        归档位置：$ARCHIVE
-    2. 配 API Key 后重跑：
-       ASC_KEY_ID=xxx ASC_ISSUER_ID=xxx ASC_KEY_PATH=~/AuthKey_xxx.p8 scripts/ios-testflight.sh
-    3. 配 App 专用密码后重跑：
-       ASC_APPLE_ID=you@example.com ASC_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx scripts/ios-testflight.sh
+    2. 配好 ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_PATH 后重跑本脚本
 
 EOF
   exit 0
 fi
 
-log "上传完成。App Store Connect → TestFlight，等处理完成（通常 5–30 分钟）后分发给测试员。"
+log "上传完成。App Store Connect → TestFlight，处理完成（通常 5–30 分钟）后即可分发给测试员。"
