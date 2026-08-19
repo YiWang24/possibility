@@ -62,7 +62,7 @@ WARN
 log "重新生成 Xcode 工程（project.yml 是唯一真相源）"
 ( cd ios && xcodegen generate )
 
-log "归档 $SCHEME（Release）"
+log "归档 ${SCHEME}（Release）"
 rm -rf "$ARCHIVE" "$EXPORT_DIR"
 mkdir -p "$BUILD_DIR"
 xcodebuild archive \
@@ -86,7 +86,7 @@ xcodebuild -exportArchive \
 [ -f "$IPA" ] || die "导出没产出 $IPA"
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$ARCHIVE/Info.plist")
 BUILD=$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$ARCHIVE/Info.plist")
-log "已产出 $IPA（$BUNDLE_ID $VERSION ($BUILD)）"
+log "已产出 ${IPA}（${BUNDLE_ID} ${VERSION} (${BUILD})）"
 
 [ -n "${SKIP_UPLOAD:-}" ] && { echo "SKIP_UPLOAD 已设置，到此为止。"; exit 0; }
 
@@ -95,11 +95,11 @@ if [ ${#AUTH_ARGS[@]} -gt 0 ]; then
   # altool 不接受任意路径，只在固定几个目录里按 AuthKey_<id>.p8 找；
   # API_PRIVATE_KEYS_DIR 是唯一能指定别处的开关。
   export API_PRIVATE_KEYS_DIR="$(dirname "$ASC_KEY_PATH")"
-  log "上传 TestFlight（API Key $ASC_KEY_ID）"
+  log "上传 TestFlight（API Key ${ASC_KEY_ID}）"
   xcrun altool --upload-app -f "$IPA" -t ios \
     --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 elif [ -n "${ASC_APPLE_ID:-}" ] && [ -n "${ASC_APP_PASSWORD:-}" ]; then
-  log "上传 TestFlight（Apple ID $ASC_APPLE_ID）"
+  log "上传 TestFlight（Apple ID ${ASC_APPLE_ID}）"
   xcrun altool --upload-app -f "$IPA" -t ios \
     -u "$ASC_APPLE_ID" -p "$ASC_APP_PASSWORD"
 else
