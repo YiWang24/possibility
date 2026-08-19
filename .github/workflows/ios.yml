@@ -31,7 +31,10 @@ jobs:
     #   ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_P8 → 签名与上传
     env:
       DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
-      BUILD_NUMBER: ${{ inputs.build_number || github.run_number }}
+      # 构建号从 100 起跳：run_number 从 1 开始，而 1.0.0 (1) 已被首次本地发布占用，
+      # 不留这段余量首次 CI 运行就会因撞号被 App Store Connect 拒掉。
+      # 真撞上了就手动触发并填 build_number。
+      BUILD_NUMBER: ${{ inputs.build_number || 100 + github.run_number }}
 
     steps:
       - uses: actions/checkout@v4

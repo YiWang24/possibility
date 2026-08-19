@@ -153,7 +153,8 @@ scripts/ios-testflight.sh
 
 `.github/workflows/ios.yml`：push 到 main 且改动落在 `ios/**` 时自动跑，也可手动触发。
 唯一的 GitHub secret 是 `DOPPLER_TOKEN`（与 `deploy.yml` 共用），其余由 `doppler run` 注入。
-构建号取 `github.run_number`。
+构建号取 `100 + github.run_number` —— 留出的余量是因为 `1.0.0 (1)` 已被首次本地发布占用，
+而 `run_number` 从 1 起。撞号时手动触发并填 `build_number`。
 
 ⚠️ CI 上用的是自动签名 + API Key，每次 runner 都是全新钥匙串，Xcode 会**新建一张
 开发证书**。Apple 对开发证书有数量上限，跑得频繁会撞上限。真到那一步，
