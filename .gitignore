@@ -42,6 +42,36 @@ ios/Config/Config.xcconfig
 xcuserdata/
 DerivedData/
 .build/
+*.hmap
+*.moved-aside
+*.xcscmblueprint
+*.xccheckout
+*.xcresult/
+.swiftpm/
+# 例外提醒：ios/Possibility.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+# 必须入库 —— 它锁住 SPM 依赖版本，CI 靠它复现同一套依赖。上面的 .swiftpm/ 只命中
+# 同名目录，命不中它；别顺手加 swiftpm/ 这种更宽的规则。
+
+# 发布产物：scripts/ios-testflight.sh 的归档与 ipa 落在 ios/build/。
+# 两个理由必须挡住：单个 dSYM 就有 50MB+；且 Xcode 写的 export/Packaging.log 里
+# 含 altool 用 .p8 现签的 App Store Connect bearer token（曾误入库一次，见 PR 说明）。
+ios/build/
+*.xcarchive/
+*.ipa
+*.dSYM/
+*.dSYM.zip
+
+# 签名材料：一律不入库。分发凭据走 Doppler（ASC_KEY_P8 等），证书私钥留在本机钥匙串。
+*.p8
+*.p12
+*.pfx
+*.pem
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+*.keystore
+*.jks
 
 # Android / Gradle
 android/.gradle/
