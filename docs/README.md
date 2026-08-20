@@ -44,6 +44,7 @@
 
 | 目录 | 放什么 |
 |---|---|
+| [brand/](design/brand/) | 品牌标记：主标记母版 + 各尺寸导出 + 社交预览图 + 六张候选 |
 | [prototype/](design/prototype/) | 高保真原型 HTML（`seed.sql` 的数据来源） |
 | [screens/](design/screens/) | 各界面设计稿 |
 | [app-icon-iterations/](design/app-icon-iterations/) | App 图标迭代 |

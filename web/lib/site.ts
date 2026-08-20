@@ -9,7 +9,7 @@
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://maybeio.com";
 
-export const SITE_NAME = "Possibility · 万花筒";
+export const SITE_NAME = "Possibility";
 export const SITE_SHORT_NAME = "Possibility";
 export const SITE_DESCRIPTION = "认识你自己，推演你的人生可能性";
 export const SITE_LOCALE = "zh_CN";

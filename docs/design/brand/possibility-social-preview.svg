@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-label="Possibility">
+  <defs>
+    <clipPath id="plate"><rect x="188" y="140" width="360" height="360" rx="92"/></clipPath>
+  </defs>
+  <rect width="1280" height="640" fill="#0B0F1C"/>
+  <rect x="188" y="140" width="360" height="360" rx="92" fill="#0F1426"/>
+  <g clip-path="url(#plate)">
+    <g transform="translate(188,140) scale(0.703125)">
+
+  <!-- 成对耳朵：钝圆收尾，不做尖角 -->
+  <ellipse cx="140" cy="178" rx="42" ry="70" fill="#5E96FF" transform="rotate(-20 140 178)"/>
+  <ellipse cx="372" cy="178" rx="42" ry="70" fill="#5E96FF" transform="rotate(20 372 178)"/>
+
+  <!-- 主体：胶囊形，下缘出血裁切 -->
+  <rect x="64" y="170" width="384" height="420" rx="192" fill="#5E96FF"/>
+
+  <!-- 唯一的第二色块：暖杏口鼻 -->
+  <g clip-path="url(#markBody)">
+    <ellipse cx="256" cy="452" rx="112" ry="108" fill="#FFB067"/>
+  </g>
+
+  <!-- 面部标记复用底色，全图仍只有三色 -->
+  <circle cx="194" cy="294" r="26" fill="#0F1426"/>
+  <circle cx="318" cy="294" r="26" fill="#0F1426"/>
+  <ellipse cx="256" cy="404" rx="21" ry="14" fill="#0F1426"/>
+</g>
+  </g>
+  <text x="634" y="316" font-family="Liberation Sans, DejaVu Sans, sans-serif" font-size="96" font-weight="bold" fill="#F2F4F9" letter-spacing="-2">Possibility</text>
+  <text x="638" y="374" font-family="WenQuanYi Zen Hei, Liberation Sans, sans-serif" font-size="34" fill="#98A0B3">AI 决策陪伴 · 青年人生 OS</text>
+  <rect x="638" y="416" width="132" height="8" rx="4" fill="#5E96FF"/>
+  <rect x="782" y="416" width="60" height="8" rx="4" fill="#FFB067"/>
+</svg>

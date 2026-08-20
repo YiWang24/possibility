@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Possibility">
+  <!-- 光芽小兽 —— Possibility 的 IP 标记。
+       依 ip-as-logo 规则：一条连续轮廓（身体 + 两只钝圆耳）、
+       三个语义色（品牌蓝 + 暖杏 + 深夜底），无描边无渐变，32×32 仍读得出。
+       蓝身是「AI 接住迷茫」，暖杏口鼻是「真人经验的那点温度」。 -->
+  <defs>
+    <clipPath id="body">
+      <rect x="64" y="170" width="384" height="420" rx="192"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" fill="#0F1426"/>
+
+  <!-- 成对耳朵：钝圆收尾，不做尖角 -->
+  <ellipse cx="140" cy="178" rx="42" ry="70" fill="#5E96FF" transform="rotate(-20 140 178)"/>
+  <ellipse cx="372" cy="178" rx="42" ry="70" fill="#5E96FF" transform="rotate(20 372 178)"/>
+
+  <!-- 主体：胶囊形，下缘出血裁切 -->
+  <rect x="64" y="170" width="384" height="420" rx="192" fill="#5E96FF"/>
+
+  <!-- 唯一的第二色块：暖杏口鼻 -->
+  <g clip-path="url(#body)">
+    <ellipse cx="256" cy="452" rx="112" ry="108" fill="#FFB067"/>
+  </g>
+
+  <!-- 面部标记复用底色，全图仍只有三色 -->
+  <circle cx="194" cy="294" r="26" fill="#0F1426"/>
+  <circle cx="318" cy="294" r="26" fill="#0F1426"/>
+  <ellipse cx="256" cy="404" rx="21" ry="14" fill="#0F1426"/>
+</svg>
