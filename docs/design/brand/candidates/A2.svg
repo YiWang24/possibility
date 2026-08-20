@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Possibility A2">
+  <defs><clipPath id="orb"><circle cx="274" cy="326" r="204"/></clipPath></defs>
+  <rect width="512" height="512" fill="#0E1322"/>
+  <circle cx="114" cy="200" r="50" fill="#FFB067"/>
+  <circle cx="434" cy="200" r="50" fill="#FFB067"/>
+  <circle cx="274" cy="326" r="204" fill="#FFB067"/>
+  <g clip-path="url(#orb)"><circle cx="274" cy="586" r="228" fill="#2F63E8"/></g>
+  <circle cx="212" cy="292" r="27" fill="#0E1322"/>
+  <circle cx="336" cy="292" r="27" fill="#0E1322"/>
+</svg>

@@ -1,6 +1,8 @@
 <div align="center">
 
-# Possibility · 万花筒
+<img src="docs/design/brand/possibility-mark-256.png" alt="Possibility" width="128" height="128">
+
+# Possibility
 
 **AI 决策陪伴 · 青年人生 OS**
 
@@ -25,7 +27,7 @@
 
 > 用户真正缺少的不是更多建议或更多内容，而是两件事的组合：**在迷茫时被承接、被初步判断**，以及**在决策时看到与自己此刻处境高度相关的他人经验**。
 
-ChatGPT 能承接迷茫却给不出真人经验；小红书/知乎有真人经验却承接不了迷茫、也不精准。万花筒把两者串成一条漏斗——AI 对话承接前者，经验匹配负责后者，在急性时刻用一次性买断变现。
+ChatGPT 能承接迷茫却给不出真人经验；小红书/知乎有真人经验却承接不了迷茫、也不精准。Possibility 把两者串成一条漏斗——AI 对话承接前者，经验匹配负责后者，在急性时刻用一次性买断变现。
 
 ### 核心价值链
 
@@ -287,7 +289,7 @@ possibility/
 │   ├── product/                 # 产品定义与 PRD
 │   ├── engineering/             # 技术设计 · 后端架构 · 埋点方案（Swift/TS 镜像的唯一事实来源）
 │   ├── features/                # 单功能模块设计
-│   ├── design/                  # 原型 · 设计稿 · 图标 · 上架截图 · 图片母版
+│   ├── design/                  # 品牌标记 · 原型 · 设计稿 · 图标 · 上架截图 · 图片母版
 │   ├── marketing/               # 海报 · 人生决策扑克牌
 │   └── demo-video/              # 产品 demo 视频的 Remotion 工程（独立 npm 工程）
 │
@@ -310,6 +312,7 @@ possibility/
 | 文档 | 讲什么 |
 |---|---|
 | [`docs/README.md`](docs/README.md) | 全部非产物资料的索引（先看这个） |
+| [`docs/design/brand/README.md`](docs/design/brand/README.md) | 品牌标记：造型/配色说明、各尺寸导出与候选方案 |
 | [`ios/README.md`](ios/README.md) | iOS 目录结构、xcodegen 约定、构建与签名 |
 | [`android/README.md`](android/README.md) | Android 环境要求与构建 |
 | [`supabase/README.md`](supabase/README.md) | 后端函数职责说明 |

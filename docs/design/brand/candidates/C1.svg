@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Possibility C1">
+  <defs><clipPath id="bird"><ellipse cx="256" cy="330" rx="180" ry="196"/></clipPath></defs>
+  <rect width="512" height="512" fill="#0F1424"/>
+  <ellipse cx="88" cy="352" rx="48" ry="92" fill="#5E96FF" transform="rotate(-12 88 352)"/>
+  <ellipse cx="424" cy="352" rx="48" ry="92" fill="#5E96FF" transform="rotate(12 424 352)"/>
+  <ellipse cx="256" cy="330" rx="180" ry="196" fill="#5E96FF"/>
+  <g clip-path="url(#bird)"><ellipse cx="256" cy="462" rx="106" ry="100" fill="#FF7A4D"/></g>
+  <circle cx="196" cy="262" r="25" fill="#0F1424"/>
+  <circle cx="316" cy="262" r="25" fill="#0F1424"/>
+  <ellipse cx="256" cy="322" rx="52" ry="34" fill="#FF7A4D"/>
+</svg>
